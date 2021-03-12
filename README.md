@@ -2,6 +2,9 @@
 
 # EventSourcing.JS
 
+## Samples
+
+1. Simple Event Sourcing sample: [samples/simple](./samples/simple).
 ## NodeJS project configuration
 
 1. Install NodeJS - https://nodejs.org/en/download/. Recommended NVM.
