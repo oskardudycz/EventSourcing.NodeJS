@@ -217,4 +217,4 @@
 - [ ] Add EventStoreDB gRPC client samples with basic streams operations
 - [ ] Add samples for Aggregates
 - [ ] Add samples for Subscriptions and projections to SQL lite
-- [ ] Create project template like `Create React App` for creating `EventStoreDB NodeJS App)
+- [ ] Create project template like `Create React App` for creating `EventStoreDB NodeJS App`
