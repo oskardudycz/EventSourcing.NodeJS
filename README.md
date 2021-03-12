@@ -37,7 +37,7 @@
     ```bash
     npm i -D @typescript-eslint/eslint-plugin eslint-config-standard eslint eslint-plugin-import eslint-plugin-node eslint-plugin-promise @typescript-eslint/parser
     ```
-    - this should generate [.eslintrc.json`](./samples/simple/.eslintrc.json) file with ESLint configuration:
+    - this should generate [.eslintrc.json](./samples/simple/.eslintrc.json) file with ESLint configuration:
     ```json
     {
         "env": {
@@ -59,7 +59,7 @@
         }
     }
     ```
-    - add [.eslintignore`](./samples/simple/.eslintignore) to configure exclusion for files that we don't want to analyse:
+    - add [.eslintignore](./samples/simple/.eslintignore) to configure exclusion for files that we don't want to analyse:
     ```bash
     /node_modules/*
     
@@ -73,11 +73,55 @@
     /src/types/
     ```
 
-6. Install Prettier, as we aim to write pretty code:
+6. [Prettier](https://prettier.io), as we aim to write pretty code:
+    - install:
     ```bash
     npm i -D prettier eslint-config-prettier eslint-plugin-prettier
     ```
-7. Install nodemon (to have hot reload of changes):
-
-- [Sailesh Subramanian - Kickstart your Node-Typescript application with Express](https://medium.com/@saileshsubramanian7/kickstart-your-node-typescript-application-with-express-ddbc169128b3)
-- [Robert Cooper - Using ESLint and Prettier in a TypeScript Project](https://robertcooper.me/post/using-eslint-and-prettier-in-a-typescript-project)
+    - add [.prettierrc.json](./samples/simple/.prettierrc.json) with Prettier config:
+    ```json
+    {
+        "tabWidth": 2,
+        "singleQuote": true
+    }
+    ```
+    - add Prettier plugin to [.eslintrc.json](./samples/simple/.eslintrc.json) to make sure that then collide with each other:
+    ```bash
+    {
+        "env": {
+            "es2021": true,
+            "node": true
+        },
+        "extends": [
+            "plugin:@typescript-eslint/recommended",
+            "prettier/@typescript-eslint", -- added
+            "plugin:prettier/recommended" -- added
+        ],
+        "parser": "@typescript-eslint/parser",
+        "parserOptions": {
+            "ecmaVersion": 12,
+            "sourceType": "module"
+        },
+        "plugins": [
+            "@typescript-eslint"
+        ],
+        "rules": {
+        }
+    }
+    ``` 
+7. [Husky](https://github.com/typicode/husky#readme) to run `ESLint` and `Prettier` on precommit git hook to make sure that code is formatted and following rules.
+   - install
+   ```bash
+   npm i -D husky
+   ```
+   - add Husky configuration to [package.json](./samples/simple/package.json)
+   ```json
+   {
+        "husky": {
+            "hooks": {
+                "pre-commit": "pretty-quick --staged"
+            }
+        }
+   }
+   ```
+8. Install nodemon (to have hot reload of changes):
