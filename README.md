@@ -86,7 +86,7 @@
     }
     ```
     - add Prettier plugin to [.eslintrc.json](./samples/simple/.eslintrc.json) to make sure that then collide with each other:
-    ```bash
+    ```json
     {
         "env": {
             "es2021": true,
@@ -94,8 +94,8 @@
         },
         "extends": [
             "plugin:@typescript-eslint/recommended",
-            "prettier/@typescript-eslint", -- added
-            "plugin:prettier/recommended" -- added
+            "prettier/@typescript-eslint", <-- added
+            "plugin:prettier/recommended" <-- added
         ],
         "parser": "@typescript-eslint/parser",
         "parserOptions": {
@@ -109,19 +109,36 @@
         }
     }
     ``` 
-7. [Husky](https://github.com/typicode/husky#readme) to run `ESLint` and `Prettier` on precommit git hook to make sure that code is formatted and following rules.
-   - install
+    - if you're using VSCode, I recommend to install [Prettier plugin](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+7. Define tasks for ESLint and Prettier in [package.json](./samples/simple/package.json):
+    - checks:
+    ```json
+    {        
+        "lint": "npm run lint:eslint && npm run lint:prettier",
+        "lint:prettier": "prettier --check \"src/**/**/!(*.d).{ts,json,md}\"",
+        "lint:eslint": "eslint src/**/*.ts",
+    }
+    ```
+    - fixes:
+    ```json
+    { 
+        "lint:eslint": "eslint src/**/*.ts",
+        "prettier:fix": "prettier --write \"src/**/**/!(*.d).{ts,json,md}\"",
+    }
+    ```
+8. [Husky](https://github.com/typicode/husky#readme) is a tool that enables to run scripts on precommit git hook. We'll use it to run `ESLint` and `Prettier` to make sure that code is formatted and following rules.
+   - install version 4 (Starting for version 5 it's free only for OSS projects):
    ```bash
-   npm i -D husky
+   npm i -D husky@4
    ```
    - add Husky configuration to [package.json](./samples/simple/package.json)
    ```json
    {
         "husky": {
             "hooks": {
-                "pre-commit": "pretty-quick --staged"
+                "pre-commit": "npm run lint"
             }
         }
    }
    ```
-8. Install nodemon (to have hot reload of changes):
+9.  Install nodemon (to have hot reload of changes):

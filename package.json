@@ -1,0 +1,31 @@
+{
+  "name": "eventsourcing.js",
+  "version": "1.0.0-alpha.1",
+  "description": "Samples of Event Sourcing in JavaScript and TypeScript",
+  "scripts": {
+    "lint": "npm run lint:samples:simple",
+    "lint:samples:simple": "cd ./samples/simple/ && npm run lint",
+    "prepare": "husky install"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oskardudycz/EventSourcing.JS.git"
+  },
+  "keywords": [
+    "Event Sourcing"
+  ],
+  "author": "Oskar Dudycz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/oskardudycz/EventSourcing.JS/issues"
+  },
+  "homepage": "https://github.com/oskardudycz/EventSourcing.JS#readme",
+  "devDependencies": {
+    "husky": "^4.3.8"
+  }
+}
