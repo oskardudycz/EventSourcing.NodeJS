@@ -28,3 +28,4 @@
 7. Install nodemon (to have hot reload of changes)
 
 - [Sailesh Subramanian - Kickstart your Node-Typescript application with Express](https://medium.com/@saileshsubramanian7/kickstart-your-node-typescript-application-with-express-ddbc169128b3)
+- [Robert Cooper - Using ESLint and Prettier in a TypeScript Project](https://robertcooper.me/post/using-eslint-and-prettier-in-a-typescript-project)
