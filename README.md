@@ -1,7 +1,9 @@
 ![Twitter Follow](https://img.shields.io/twitter/follow/oskar_at_net?style=social) [![Github Sponsors](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/oskardudycz/)](https://github.com/sponsors/oskardudycz/) [![blog](https://img.shields.io/badge/blog-event--driven.io-brightgreen)](https://event-driven.io/)
 
 # EventSourcing.JS
+## Samples
 
+1. Simple Event Sourcing sample: [samples/simple](./samples/simple).
 ## NodeJS project configuration
 
 1. Install NodeJS - https://nodejs.org/en/download/. Recommended NVM.
@@ -200,3 +202,12 @@
     ```json
     { "greeting": "Hello World!" }
     ```
+
+## Tasks List
+
+[x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
+[ ] Add tests with Jest and Github Actions
+[ ] Add EventStoreDB gRPC client samples with basic streams operations
+[ ] Add samples for Aggregates
+[ ] Add samples for Subscriptions and projections to SQL lite
+[ ] Create project template like `Create React App` for creating `EventStoreDB NodeJS App)
