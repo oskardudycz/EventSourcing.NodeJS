@@ -2,6 +2,14 @@
 
 # EventSourcing.JS
 
+- [EventSourcing.JS](#eventsourcingjs)
+  - [Samples](#samples)
+  - [NodeJS project configuration](#nodejs-project-configuration)
+  - [Tasks List](#tasks-list)
+
+## Samples
+
+1. Simple Event Sourcing sample: [samples/simple](./samples/simple).
 ## NodeJS project configuration
 
 1. Install NodeJS - https://nodejs.org/en/download/. Recommended NVM.
@@ -179,7 +187,7 @@
         }
    }
    ```
-9. [Nodemon}(https://nodemon.io/) to have hot-reload of the running Express server code.
+9. [Nodemon](https://nodemon.io/) to have hot-reload of the running Express server code.
     - install:
     ```bash
     npm i -D nodemon
@@ -200,3 +208,13 @@
     ```json
     { "greeting": "Hello World!" }
     ```
+
+## Tasks List
+
+- [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
+- [ ] Add tests with Jest and Github Actions
+- [ ] Start Live Coding on Twitch
+- [ ] Add EventStoreDB gRPC client samples with basic streams operations
+- [ ] Add samples for Aggregates
+- [ ] Add samples for Subscriptions and projections to SQL lite
+- [ ] Create project template like `Create React App` for creating `EventStoreDB NodeJS App)
