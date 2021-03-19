@@ -6,6 +6,7 @@
   - [Samples](#samples)
   - [NodeJS project configuration](#nodejs-project-configuration)
     - [VSCode debug configuration](#vscode-debug-configuration)
+    - [Test with Jest](#test-with-jest)
   - [Tasks List](#tasks-list)
 
 ## Samples
@@ -233,12 +234,98 @@ To not need to synchronise two separate configurations, we'll reuse the existing
 
 As we have TypeScript configured, then we don't need any additional setup. We're reusing the native node debugging capabilities by using the `--inspect-brk=9229` parameter. Read more in the [Node.js documentation](https://nodejs.org/en/docs/guides/debugging-getting-started/)
 
+### Test with Jest
+
+1. Install [Jest]() together with [ts-jest]() package and needed typings to make it work with TypeScript.
+```bash
+npm i -D jest @types/jest ts-jest
+```
+2. Configure Jest with using npx installer:
+```bash
+npx ts-jest config:init
+```
+3. This will create [jest.config.js](./samples/simple/jest.config.js) with Jest needed configuration:
+```javascript
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+};
+```
+4. Let's add some dummy code to make sure that our tests are working. This can be e.g. `src/greetings/getGreeting.ts`
+```typescript
+export function getGreeting() {
+  return {
+    greeting: 'Hello World!',
+  };
+}
+```
+5. Let's add also some dummy unit test running this code. I'll put it in the same directory, as in my opinion it makes easier development and focus on the specific test instead of jumping from one place to another. In this case it will be `src/greetings/getGreetings.unit.test.ts`
+```typescript
+import { getGreeting } from './getGreeting';
+
+describe('getGreeting', () => {
+  it('should return greeting "Hello World!"', () => {
+    const result = getGreeting();
+
+    expect(result).toBeDefined();
+    expect(result.greeting).toBe('Hello World!');
+  });
+});
+```
+6. To run Jest we need to add new NPM script to [package.json](./samples/simple/package.json):
+```json
+{
+    "scripts": {        
+        "test:unit": "jest unit",
+    }
+}
+```
+Now you can run them with:
+```bash
+npm run test:unit
+```
+Jest will be smart enough to find by convention all files with `.unit.test.ts` suffix.
+7. To be able to debug our tests we have to add new debug configurations to [launch.json](./samples/simple/.vscode/launch.json). We'll be using `watch` settings, so we don't have re-run tests when we updated logic or test code. 
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Jest all tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+      "args": ["--verbose", "-i", "--no-cache", "--watchAll"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Jest current test",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+      "args": [
+        "${fileBasename}",
+        "--verbose",
+        "-i",
+        "--no-cache",
+        "--watchAll"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}
+```
 
 ## Tasks List
 
-- [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
-- [x] Add VSCode debugging configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/2)
-- [ ] Add tests with Jest and Github Actions
+- [ ] Configuration
+  - [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
+  - [x] Add VSCode debugging configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/2)
+  - [x] Add Jest unit test configuration with VSCode debug settings [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/3)
+  - [ ] Run tests with Github Actions
+  - [ ] Add Jest api tests with SuperTest
 - [ ] Start Live Coding on Twitch
 - [ ] Add EventStoreDB gRPC client samples with basic streams operations
 - [ ] Add samples for Aggregates
