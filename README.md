@@ -4,17 +4,21 @@
 
 - [EventSourcing.JS](#eventsourcingjs)
   - [Samples](#samples)
-  - [NodeJS project configuration](#nodejs-project-configuration)
+  - [Node.js project configuration](#nodejs-project-configuration)
+    - [General configuration](#general-configuration)
     - [VSCode debug configuration](#vscode-debug-configuration)
-    - [Test with Jest](#test-with-jest)
+    - [Unit tests with Jest](#unit-tests-with-jest)
+    - [CI - Run tests with Github Actions](#ci---run-tests-with-github-actions)
   - [Tasks List](#tasks-list)
 
 ## Samples
 
 1. Simple Event Sourcing sample: [samples/simple](./samples/simple).
-## NodeJS project configuration
+## Node.js project configuration
 
-1. Install NodeJS - https://nodejs.org/en/download/. Recommended NVM.
+### General configuration
+
+1. Install Node.js - https://Node.js.org/en/download/. Recommended NVM.
 2. Create project:
     ```bash
     npm init -y
@@ -25,7 +29,7 @@
     npm i express
     ```
 4. [TypeScript](typescriptlang.org/) - We'll be doing Type Driven Development
-    - install together with types for `NodeJS` and `Express` and [TS Node](https://github.com/TypeStrong/ts-node)
+    - install together with types for `Node.js` and `Express` and [TS Node](https://github.com/TypeStrong/ts-node)
     ```bash
     npm i -D typescript @types/express @types/node ts-node
     ```
@@ -137,7 +141,7 @@
             "node": true
         },
         "extends": [
-            "plugin:@typescript-eslint/recommended",
+            "plugin:@typescript-eslint/recommended", <-- updated
             "prettier/@typescript-eslint", <-- added
             "plugin:prettier/recommended" <-- added
         ],
@@ -232,9 +236,9 @@ To not need to synchronise two separate configurations, we'll reuse the existing
 }
 ```
 
-As we have TypeScript configured, then we don't need any additional setup. We're reusing the native node debugging capabilities by using the `--inspect-brk=9229` parameter. Read more in the [Node.js documentation](https://nodejs.org/en/docs/guides/debugging-getting-started/)
+As we have TypeScript configured, then we don't need any additional setup. We're reusing the native node debugging capabilities by using the `--inspect-brk=9229` parameter. Read more in the [Node.js documentation](https://Node.js.org/en/docs/guides/debugging-getting-started/)
 
-### Test with Jest
+### Unit tests with Jest
 
 1. Install [Jest]() together with [ts-jest]() package and needed typings to make it work with TypeScript.
 ```bash
@@ -318,16 +322,106 @@ Jest will be smart enough to find by convention all files with `.unit.test.ts` s
 }
 ```
 
+### CI - Run tests with Github Actions
+
+It's important to have your changes be verified during the pull request process. We'll use GitHuba Actions as the sample of how to do that. You need to create the [.github/workflows](./.github/workflows) folder and putt there new file (e.g. [samples_simple.yml](./.github/workflows/samples_simple.yml)). This file will contain YAML configuration for your action:
+
+The simplest setup will look like:
+
+```yaml
+name: Node.js CI
+
+on:
+  # run it on push to the default repository branch
+  push:
+    branches: [$default-branch]
+  # run it during pull request
+  pull_request:
+
+defaults:
+  run:
+    # relative path to the place where source code (with package.json) is located
+    working-directory: samples/simple
+
+jobs:
+  build:
+    # use system defined below in the tests matrix
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          # use the node version defined in matrix above
+          node-version: 14.x
+      # install dependencies based on the package log
+      - run: npm ci
+      # run linting (ESlint and Prettier)
+      - run: npm run lint
+      # run build
+      - run: npm run build:ts
+      # run tests
+      - run: npm run test:unit
+```
+
+If you want to make sure that your code will be running properly for a few Node.js versions and different opeating systems (e.g. because developers may have different environment configuration) then you can use matrix tests:
+
+```yaml
+name: Node.js CI
+
+on:
+  # run it on push to the default repository branch
+  push:
+    branches: [$default-branch]
+  # run it during pull request
+  pull_request:
+
+defaults:
+  run:
+    # relative path to the place where source code (with package.json) is located
+    working-directory: samples/simple
+
+jobs:
+  build:
+    # use system defined below in the tests matrix
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # define the test matrix
+      matrix:
+        # selected operation systems to run CI
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        # selected node version to run CI
+        node-version: [14.x, 15.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          # use the node version defined in matrix above
+          node-version: ${{ matrix.node-version }}
+      # install dependencies
+      - run: npm ci
+      # run linting (ESlint and Prettier)
+      - run: npm run lint
+      # run build
+      - run: npm run build:ts
+      # run tests
+      - run: npm run test:unit
+```
+
 ## Tasks List
 
 - [ ] Configuration
   - [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
   - [x] Add VSCode debugging configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/2)
   - [x] Add Jest unit test configuration with VSCode debug settings [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/3)
-  - [ ] Run tests with Github Actions
+  - [x] CI - Run tests with Github Actions
   - [ ] Add Jest api tests with SuperTest
 - [ ] Start Live Coding on Twitch
 - [ ] Add EventStoreDB gRPC client samples with basic streams operations
 - [ ] Add samples for Aggregates
 - [ ] Add samples for Subscriptions and projections to SQL lite
-- [ ] Create project template like `Create React App` for creating `EventStoreDB NodeJS App`
+- [ ] Create project template like `Create React App` for creating `EventStoreDB Node.js App`
