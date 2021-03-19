@@ -1,11 +1,12 @@
 import express, { Application, Request, Response } from 'express';
+import { getGreeting } from './greetings/getGreeting';
 import http from 'http';
 
 const app: Application = express();
 const server = http.createServer(app);
 
 app.get('/', (req: Request, res: Response) => {
-  res.json({ greeting: 'Hello World!' });
+  res.json(getGreeting());
 });
 
 const PORT = 5000;
