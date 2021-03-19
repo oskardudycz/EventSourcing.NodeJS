@@ -1,0 +1,42 @@
+name: Node.js CI
+
+on:
+  # run it on push to the default repository branch
+  push:
+    branches: [$default-branch]
+  # run it during pull request
+  pull_request:
+
+defaults:
+  run:
+    # relative path to the place where source code (with package.json) is located
+    working-directory: samples/simple
+
+jobs:
+  build:
+    # use system defined below in the tests matrix
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # define the test matrix
+      matrix:
+        # selected operation systems to run CI
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        # selected node version to run CI
+        node-version: [14.x, 15.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          # use the node version defined in matrix above
+          node-version: ${{ matrix.node-version }}
+      # install dependencies
+      - run: npm ci
+      # run linting (ESlint and Prettier)
+      - run: npm run lint
+      # run build
+      - run: npm run build:ts
+      # run tests
+      - run: npm run test:unit
