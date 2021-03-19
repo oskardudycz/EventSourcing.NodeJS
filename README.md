@@ -5,6 +5,7 @@
 - [EventSourcing.JS](#eventsourcingjs)
   - [Samples](#samples)
   - [NodeJS project configuration](#nodejs-project-configuration)
+    - [VCode debug configuration](#vcode-debug-configuration)
   - [Tasks List](#tasks-list)
 
 ## Samples
@@ -208,10 +209,35 @@
     ```json
     { "greeting": "Hello World!" }
     ```
+### VCode debug configuration
+
+To configure VSCode debug you need to add [launch.json](./samples/simple/.vscode/launch.json) file in the [.vscode](./samples/simple/.vscode) folder.
+
+To not need to synchronise two separate configurations, we'll reuse the existing NPM script `dev:start` that starts the application. 
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "dev:start", "--", "--inspect-brk=9229"],
+      "port": 9229
+    }
+  ]
+}
+```
+
+As we have TypeScript configured, then we don't need any additional setup. We're reusing the native node debugging capabilities by using the `--inspect-brk=9229` parameter. Read more in the [Node.js documentation](https://nodejs.org/en/docs/guides/debugging-getting-started/)
+
 
 ## Tasks List
 
 - [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
+- [x] Add VSCode debugging configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/2)
 - [ ] Add tests with Jest and Github Actions
 - [ ] Start Live Coding on Twitch
 - [ ] Add EventStoreDB gRPC client samples with basic streams operations

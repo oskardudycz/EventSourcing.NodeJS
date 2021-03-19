@@ -1,6 +1,6 @@
 {
   "name": "eventsourcing.js",
-  "version": "1.0.0-alpha.1",
+  "version": "2.0.0",
   "description": "Samples of Event Sourcing in JavaScript and TypeScript",
   "scripts": {
     "lint": "npm run lint:samples:simple",
