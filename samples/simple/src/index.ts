@@ -1,13 +1,7 @@
-import express, { Application, Request, Response } from 'express';
-import { getGreeting } from './greetings/getGreeting';
+import app from './app';
 import http from 'http';
 
-const app: Application = express();
 const server = http.createServer(app);
-
-app.get('/', (req: Request, res: Response) => {
-  res.json(getGreeting());
-});
 
 const PORT = 5000;
 

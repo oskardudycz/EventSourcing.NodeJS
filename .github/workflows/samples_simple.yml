@@ -39,4 +39,4 @@ jobs:
       # run build
       - run: npm run build:ts
       # run tests
-      - run: npm run test:unit
+      - run: npm test

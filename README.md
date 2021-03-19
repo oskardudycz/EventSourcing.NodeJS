@@ -8,6 +8,7 @@
     - [General configuration](#general-configuration)
     - [VSCode debug configuration](#vscode-debug-configuration)
     - [Unit tests with Jest](#unit-tests-with-jest)
+    - [API tests with SuperTest](#api-tests-with-supertest)
     - [CI - Run tests with Github Actions](#ci---run-tests-with-github-actions)
   - [Tasks List](#tasks-list)
 
@@ -193,7 +194,29 @@
         }
    }
    ```
-9. [Nodemon](https://nodemon.io/) to have hot-reload of the running Express server code.
+9. To make sure that all is working fine we'll create the new app (e.g. in the `src/index.ts`)
+```typescript
+import express, { Application, Request, Response } from 'express';
+import http from 'http';
+
+const app: Application = express();
+const server = http.createServer(app);
+
+app.get('/', (req: Request, res: Response) => {
+  res.json({ greeting: 'Hello World!' });
+});
+
+const PORT = 5000;
+
+server.listen(PORT);
+
+server.on('listening', () => {
+  console.info('server up listening');
+});
+
+```
+This will create an Express application that will be listening on port `5000` and return the JSON (with dummy data greeting with `"Hello World!"`).
+10. [Nodemon](https://nodemon.io/) to have hot-reload of the running Express server code.
     - install:
     ```bash
     npm i -D nodemon
@@ -240,7 +263,7 @@ As we have TypeScript configured, then we don't need any additional setup. We're
 
 ### Unit tests with Jest
 
-1. Install [Jest]() together with [ts-jest]() package and needed typings to make it work with TypeScript.
+1. Install [Jest](https://jestjs.io/) together with [ts-jest](https://kulshekhar.github.io/ts-jest/) package and needed typings to make it work with TypeScript.
 ```bash
 npm i -D jest @types/jest ts-jest
 ```
@@ -322,6 +345,78 @@ Jest will be smart enough to find by convention all files with `.unit.test.ts` s
 }
 ```
 
+### API tests with SuperTest
+
+[SuperTest](https://github.com/visionmedia/supertest#readme) is a useful library that allows testing Express HTTP applications.
+
+To install it run:
+```bash
+npm i -D supertest @types/supertest
+```
+
+`SuperTest` takes as input Express application. We have to structure our code to return it, e.g.
+
+```typescript
+import express, { Application, Request, Response } from 'express';
+import { getGreeting } from './greetings/getGreeting';
+
+const app: Application = express();
+
+app.get('/', (_req: Request, res: Response) => {
+  res.json(getGreeting());
+});
+
+export default app;
+```
+
+Our updated intex will look like:
+
+```typescript
+import app from './app';
+import http from 'http';
+
+const server = http.createServer(app);
+
+const PORT = 5000;
+
+server.listen(PORT);
+
+server.on('listening', () => {
+  console.info('server up listening');
+});
+
+```
+
+Let's create the test for the default route. For that, create a file, e.g. `getGreetings.api.test.ts`. We'll be using a different prefix, `api.test.ts`, as those tests are not unit but integration/acceptance. They will be running the Express server. Having the Express app extracted, we can use the `SuperTest` library as:
+
+```typescript
+import request from 'supertest';
+import app from '../app';
+
+describe('GET /', () => {
+  it('should return greeting "Hello World!"', () => {
+    return request(app)
+      .get('/')
+      .expect('Content-Type', /json/)
+      .expect(200, { greeting: 'Hello World!' });
+  });
+});
+```
+
+`SuperTest` wraps the Express app and making the API calls easier. It also provides a set of useful methods to check the response params.
+
+As the final step we'll add a separate NPM script to [package.json](./samples/simple/package.json) for running API tests and also script to run all of them.
+
+```json
+{
+  "scripts": {
+    "test": "npm run test:unit && npm run test:api", // <-- added
+    "test:unit": "jest unit",
+    "test:api": "jest api" // <-- added
+  }
+}
+```
+
 ### CI - Run tests with Github Actions
 
 It's important to have your changes be verified during the pull request process. We'll use GitHub Actions as a sample of how to do that. You need to create the [.github/workflows](./.github/workflows) folder and putt there new file (e.g. [samples_simple.yml](./.github/workflows/samples_simple.yml)). This file will contain YAML configuration for your action:
@@ -362,7 +457,7 @@ jobs:
       # run build
       - run: npm run build:ts
       # run tests
-      - run: npm run test:unit
+      - run: npm test
 ```
 
 If you want to make sure that your code will be running properly for a few Node.js versions and different operating systems (e.g. because developers may have different environment configuration) then you can use matrix tests:
@@ -409,7 +504,7 @@ jobs:
       # run build
       - run: npm run build:ts
       # run tests
-      - run: npm run test:unit
+      - run: npm test
 ```
 
 ## Tasks List
@@ -418,10 +513,12 @@ jobs:
   - [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
   - [x] Add VSCode debugging configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/2)
   - [x] Add Jest unit test configuration with VSCode debug settings [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/3)
-  - [x] CI - Run tests with Github Actions
-  - [ ] Add Jest api tests with SuperTest
+  - [x] CI - Run tests with Github Actions [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/4)
+  - [x] Add Jest API tests with SuperTest
+  - [ ] Configure Swagger
 - [ ] Start Live Coding on Twitch
 - [ ] Add EventStoreDB gRPC client samples with basic streams operations
 - [ ] Add samples for Aggregates
 - [ ] Add samples for Subscriptions and projections to SQL lite
 - [ ] Create project template like `Create React App` for creating `EventStoreDB Node.js App`
+- [ ] Add React application
