@@ -1,9 +1,9 @@
-name: Node.js CI
+name: Node.js Continuous Integration and Continuous Delivery
 
 on:
   # run it on push to the default repository branch
   push:
-    branches: [$default-branch]
+    branches: [main]
   # run it during pull request
   pull_request:
 
@@ -13,7 +13,8 @@ defaults:
     working-directory: samples/simple
 
 jobs:
-  build:
+  build-and-test-code:
+    name: Build and test application code
     # use system defined below in the tests matrix
     runs-on: ${{ matrix.os }}
 
@@ -40,3 +41,45 @@ jobs:
       - run: npm run build:ts
       # run tests
       - run: npm test
+
+  build-and-push-docker-image:
+    name: Build Docker image and push to repositories
+    # run only when code is compiling and tests are passing
+    needs: build-and-test-code
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # setup Docker buld action
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to Github Packages
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+      
+      - name: Build image and push to Docker Hub and GitHub Container Registry
+        uses: docker/build-push-action@v2
+        with:
+          # relative path to the place where source code (with package.json) is located
+          context: ./samples/simple
+          # Note: tags has to be all lower-case
+          tags: |
+            oskardudycz/eventsourcing.nodejs.simple:latest 
+            ghcr.io/oskardudycz/eventsourcing.nodejs/simple:latest
+          # build on feature branches, push only on main branc
+          push: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
