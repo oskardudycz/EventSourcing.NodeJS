@@ -9,7 +9,15 @@
     - [VSCode debug configuration](#vscode-debug-configuration)
     - [Unit tests with Jest](#unit-tests-with-jest)
     - [API tests with SuperTest](#api-tests-with-supertest)
-    - [CI - Run tests with Github Actions](#ci---run-tests-with-github-actions)
+    - [Continuous Integration - Run tests with Github Actions](#continuous-integration---run-tests-with-github-actions)
+    - [Continuous Delivery - Build Docker image and publish to Docker Hub and GitHub Container Registry](#continuous-delivery---build-docker-image-and-publish-to-docker-hub-and-github-container-registry)
+      - [Docker](#docker)
+      - [Image](#image)
+      - [Useful commands](#useful-commands)
+      - [Container registry](#container-registry)
+      - [Docker Hub publishing setup](#docker-hub-publishing-setup)
+      - [Github Container Registry publishing setup](#github-container-registry-publishing-setup)
+      - [Publish through GitHub Actions](#publish-through-github-actions)
   - [Tasks List](#tasks-list)
 
 ## Samples
@@ -417,19 +425,19 @@ As the final step we'll add a separate NPM script to [package.json](./samples/si
 }
 ```
 
-### CI - Run tests with Github Actions
+### Continuous Integration - Run tests with Github Actions
 
 It's important to have your changes be verified during the pull request process. We'll use GitHub Actions as a sample of how to do that. You need to create the [.github/workflows](./.github/workflows) folder and putt there new file (e.g. [samples_simple.yml](./.github/workflows/samples_simple.yml)). This file will contain YAML configuration for your action:
 
 The simplest setup will look like this:
 
 ```yaml
-name: Node.js CI
+name: Node.js Continuous Integration
 
 on:
   # run it on push to the default repository branch
   push:
-    branches: [$default-branch]
+    branches: [main]
   # run it during pull request
   pull_request:
 
@@ -440,15 +448,13 @@ defaults:
 
 jobs:
   build:
-    # use system defined below in the tests matrix
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js 14.x
         uses: actions/setup-node@v1
         with:
-          # use the node version defined in matrix above
           node-version: 14.x
       # install dependencies based on the package log
       - run: npm ci
@@ -463,12 +469,12 @@ jobs:
 If you want to make sure that your code will be running properly for a few Node.js versions and different operating systems (e.g. because developers may have different environment configuration) then you can use matrix tests:
 
 ```yaml
-name: Node.js CI
+name: Node.js Continuous Integration
 
 on:
   # run it on push to the default repository branch
   push:
-    branches: [$default-branch]
+    branches: [main]
   # run it during pull request
   pull_request:
 
@@ -479,6 +485,217 @@ defaults:
 
 jobs:
   build:
+    # use system defined below in the tests matrix
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # define the test matrix
+      matrix:
+        # selected operation systems to run Continuous Integration
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        # selected node version to run Continuous Integration
+        node-version: [14.x, 15.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          # use the node version defined in matrix above
+          node-version: ${{ matrix.node-version }}
+      # install dependencies
+      - run: npm ci
+      # run linting (ESlint and Prettier)
+      - run: npm run lint
+      # run build
+      - run: npm run build:ts
+      # run tests
+      - run: npm test
+```
+
+### Continuous Delivery - Build Docker image and publish to Docker Hub and GitHub Container Registry
+
+#### Docker
+
+Docker allows creating lightweight images with preconfigured services. Thanks to its immutable nature, it allows having the same experience in runtime configuration independent of the operating systems. It makes deployment and testing easier and more predictable. Most of the hosting (both cloud and on-premise) supports Docker images deployment.
+
+#### Image
+
+The basis of the Docker configuration is an image definition. It's defined as the text file and usually named by convention as `Dockerfile`. It starts with information of which base image we'll be using and then customisation.  Most of the technologies provide various types of base images. We'll use `node:lts-alpine`. Which represent the latest Long-Term Support version. Alpine type of image is recommended as usually the smallest with a minimum set of dependencies.
+
+The best practice for building the docker image is to use [multistage build](https://docs.docker.com/develop/develop-images/multistage-build/) feature. It allows to use at the first image with all build dependencies, build artefacts and copy it to the final *"smaller"* image.
+
+Each line in the Dockerfile will create a separate _layer_. Such _layer_ is immutable, and if the file, if this line was not changed or, e.g. copied file in this file, was not changed, it won't be rebuilt and reused. That's why it's essential to at first copy files that are changed rarely (e.g. `package.json` file and running installing node modules), then copy source codes.
+
+[Sample Dockerfile](./samples/simple/Dockerfile) looks like:
+
+```dockerfile
+########################################
+#  First stage of multistage build
+########################################
+#  Use Build image with label `builder
+########################################
+# use 
+FROM node:lts-alpine AS builder
+
+# Setup working directory for project
+WORKDIR /app
+
+COPY ./package.json ./
+COPY ./package-lock.json ./
+COPY ./tsconfig.json ./
+
+# install node modules
+# use `npm ci` instead of `npm install`
+# to install exact version from `package-lock.json`
+RUN npm ci
+
+# Copy project files
+COPY src ./src
+
+# Build project
+RUN npm run build:ts
+
+# sets environment to production
+# and removes packages from devDependencies
+RUN npm prune --production
+
+########################################
+#  Second stage of multistage build
+########################################
+#  Use other build image as the final one
+#    that won't have source codes
+########################################
+FROM node:lts-alpine
+
+# Setup working directory for project
+WORKDIR /app
+
+# Copy published in previous stage binaries
+# from the `builder` image
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+
+# Set URL that App will be exposed
+EXPOSE 5000
+
+# sets entry point command to automatically
+# run application on `docker run`
+ENTRYPOINT ["node", "./dist/index.js"]
+```
+
+It's also worth adding [.dockerignore](./samples/simple/.dockerignore) file and exclude local built artefacts (e.g. from `dist` folder) and dependencies (e.g. `node_modules` folder). It will speed up the build time and ensure that platform-specific files won't clash with each other.
+
+```
+**/dist/
+**/node_modules/
+```
+
+Docker also allows orchestration of multiple Docker containers with [Docker Compose](https://docs.docker.com/compose/) YAML file. It should be named by convention as `docker-compose.yml`. For our single service, [sample docker-compose.yml](./samples/simple/docker-compose.yml) will look as such:
+
+```yaml
+version: '3.5'
+services:
+  app:
+    build:
+      # use local image
+      dockerfile: Dockerfile
+      context: .
+    container_name: eventsourcing_js
+    ports:
+      - '5555:5000'
+```
+
+#### Useful commands
+
+1. Build an image with tag `eventsourcing.js.simple` based on the `Dockerfile` in the current directory:
+```bash
+$ docker build -t . eventsourcing.js.simple
+```
+2. Run image with tag `eventsourcing.js.simple`
+```bash
+$ docker run -it eventsourcing.js.simple
+```
+3. Pulling image from registry
+```bash
+$ docker pull oskardudycz/eventsourcing.js.simple
+```
+4. Build Docker Compose based on the `docker-compose.yml` file in the current directory
+```bash
+$ docker-compose build
+```
+5. Show running containers
+```bash
+$ docker ps
+```
+6. Show all containers (also stopped)
+```bash
+$ docker ps -a
+```
+7. Start services with docker-compose
+```bash
+$ docker-compose up
+```
+8. Kill all services from docker-compose
+```bash
+$ docker-compose kill
+```
+6. Remove all services and clean the data from docker-compose
+```bash
+$ docker-compose down -v
+```
+
+#### Container registry
+
+As an example of continuous delivery, we'll use deployment do Docker registry. 
+
+Docker Hub is the default, free registry that Docker provides, and it's commonly used for the public available images. However, from November 2020, it has [significant limits for free accounts](https://www.docker.com/blog/docker-hub-image-retention-policy-delayed-and-subscription-updates/).
+
+GitHub introduced its own [container registry](https://github.com/features/packages). It allows both public and private hosting (which is crucial for commercial projects).
+
+#### Docker Hub publishing setup
+
+1. Create an account and sign in to [Docker Hub](https://hub.docker.com).
+2. Go to Account Settings => Security: [link](https://hub.docker.com/settings/security) and click **New Access Token**.
+3. Provide the name of your access token, save it and copy the value (you won't be able to see it again, you'll need to regenerate it).
+4. Go to your GitHub secrets settings (Settings => Secrets, url `https://github.com/{your_username}/{your_repository_name}/settings/secrets/actions`).
+5. Create two secrets (they won't be visible for other users and will be used in the non-forked builds)
+- `DOCKERHUB_USERNAME` - with the name of your Docker Hub account (do not mistake it with GitHub account)
+- `DOCKERHUB_TOKEN` - with the pasted value of a token generated in point 3.
+
+#### Github Container Registry publishing setup
+
+1. [Enable GitHub Container Registry](https://docs.github.com/en/packages/guides/enabling-improved-container-support). Profile => Feature Preview => Improved Container Support => Enable.
+2. Create [GitHub Personal Access Token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token) in your profile [developer settings page](https://github.com/settings/tokens). Copy the value (you won't be able to see it again, you'll need to regenerate it). Select at least following scopes:
+- `repo`
+- `read:packages`
+- `write:packages`
+4. Go to your GitHub secrets settings (Settings => Secrets, url `https://github.com/{your_username}/{your_repository_name}/settings/secrets/actions`).
+5. Create secret (they won't be visible for other users and will be used in the non-forked builds)
+- `GHCR_PAT` - with the pasted value of a token generated in point 2.
+
+#### Publish through GitHub Actions
+
+Let's add a new step to the GitHub Action to publish to both containers. It should be only run if the first step with build and tests passed. Updated worfklow ([samples_simple.yml](./.github/workflows/samples_simple.yml)):
+
+```yaml
+name: Node.js Continuous Integration and Continuous Delivery
+
+on:
+  # run it on push to the default repository branch
+  push:
+    branches: [main]
+  # run it during pull request
+  pull_request:
+
+defaults:
+  run:
+    # relative path to the place where source code (with package.json) is located
+    working-directory: samples/simple
+
+jobs:
+  build-and-test-code:
+    name: Build and test application code
     # use system defined below in the tests matrix
     runs-on: ${{ matrix.os }}
 
@@ -505,6 +722,48 @@ jobs:
       - run: npm run build:ts
       # run tests
       - run: npm test
+
+  build-and-push-docker-image:
+    name: Build Docker image and push to repositories
+    # run only when code is compiling and tests are passing
+    needs: build-and-test-code
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # setup Docker buld action
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to Github Packages
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+      
+      - name: Build image and push to Docker Hub and GitHub Container Registry
+        uses: docker/build-push-action@v2
+        with:
+          # relative path to the place where source code (with package.json) is located
+          context: ./samples/simple
+          # Note: tags has to be all lower-case
+          tags: |
+            oskardudycz/eventsourcing.nodejs.simple:latest 
+            ghcr.io/oskardudycz/eventsourcing.nodejs/simple:latest
+          # build on feature branches, push only on main branch
+          push: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
 ```
 
 ## Tasks List
@@ -513,8 +772,9 @@ jobs:
   - [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
   - [x] Add VSCode debugging configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/2)
   - [x] Add Jest unit test configuration with VSCode debug settings [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/3)
-  - [x] CI - Run tests with Github Actions [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/4)
-  - [x] Add Jest API tests with SuperTest
+  - [x] Continuous Integration - Run tests with Github Actions [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/4)
+  - [x] Add Jest API tests with SuperTest [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/5)
+  - [x] Continuous Delivery - Build Docker image and publish to Docker Hub and GitHub Container Registry [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/6)
   - [ ] Configure Swagger
 - [ ] Start Live Coding on Twitch
 - [ ] Add EventStoreDB gRPC client samples with basic streams operations
