@@ -781,4 +781,9 @@ jobs:
 - [ ] Add samples for Aggregates
 - [ ] Add samples for Subscriptions and projections to SQL lite
 - [ ] Create project template like `Create React App` for creating `EventStoreDB Node.js App`
+  - Links:
+    - https://dev.to/duwainevandriel/build-your-own-project-template-generator-59k4
+    - https://medium.com/@pongsatt/how-to-build-your-own-project-templates-using-node-cli-c976d3109129
+    - https://medium.com/northcoders/creating-a-project-generator-with-node-29e13b3cd309
+    - https://github.com/jondot/hygen
 - [ ] Add React application
