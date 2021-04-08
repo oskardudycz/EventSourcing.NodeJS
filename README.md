@@ -778,8 +778,13 @@ jobs:
   - [ ] Configure Swagger
 - [ ] Start Live Coding on Twitch
 - [ ] Add EventStoreDB gRPC client samples with basic streams operations
-- [ ] Add samples for Aggregates
-- [ ] Add samples for Subscriptions and projections to SQL lite
+- [ ] Add samples of Aggregates
+- [ ] Add samples of Subscriptions and projections to SQL lite
+- [ ] Add samples of Event Schema Versioning
+  - [ ] Breaking changes examples
+  - [ ] Basic versioning strategies
+    - [ ] Double write
+  - [ ] Weak Schema
 - [ ] Create project template like `Create React App` for creating `EventStoreDB Node.js App`
   - Links:
     - https://dev.to/duwainevandriel/build-your-own-project-template-generator-59k4
