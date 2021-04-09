@@ -20,11 +20,12 @@ describe('Event Schema Versioning', () => {
       };
 
       const eventStore = new EventStore();
-      eventStore.appendToStream(orderId, [orderInitialised]);
+      eventStore.appendToStream(orderId, orderInitialised);
 
       const eventsFromStore = eventStore.readFromStream<OrderEvent>(orderId);
 
       expect(eventsFromStore).toBeDefined();
+
       expect(eventsFromStore).not.toBe([]);
 
       const orderInitialisedFromStore = eventsFromStore[0];
