@@ -11,6 +11,14 @@ export type OrderPaymentRecorded = Event<
   }
 >;
 
+function isOrderPaymentRecorded(event: any): event is OrderPaymentRecorded {
+  return (
+    event.orderId instanceof String &&
+    event.paymentId instanceof String &&
+    event.paymentRecordedAt instanceof Date
+  );
+}
+
 export type OrderPaymentRecordedV2 = Event<
   ORDER_PAYMENT_RECORDED,
   {
