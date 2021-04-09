@@ -1,19 +1,10 @@
-const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
-
-function reviver(key: any, value: any): any {
-  if (typeof value === 'string' && dateFormat.test(value)) {
-    return new Date(value);
-  }
-
-  return value;
-}
-
+import { serializeToJSON, deserializeFromJSON } from './parsing/json';
 export class EventStore {
   private events: { readonly streamId: string; readonly data: string }[] = [];
 
   appendToStream(streamId: string, ...events: any[]): void {
     const serialisedEvents = events.map((event) => {
-      return { streamId: streamId, data: JSON.stringify(event) };
+      return { streamId: streamId, data: serializeToJSON(event) };
     });
 
     this.events.push(...serialisedEvents);
@@ -22,6 +13,6 @@ export class EventStore {
   readFromStream<T = any>(streamId: string): T[] {
     return this.events
       .filter((event) => event.streamId === streamId)
-      .map<T>((event) => JSON.parse(event.data, reviver));
+      .map<T>((event) => deserializeFromJSON<T>(event.data));
   }
 }
