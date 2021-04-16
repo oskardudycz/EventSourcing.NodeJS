@@ -1,4 +1,4 @@
-[![Twitter Follow](https://img.shields.io/twitter/follow/oskar_at_net?style=social)](https://twitter.com/oskar_at_net) [![Github Sponsors](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/oskardudycz/)](https://github.com/sponsors/oskardudycz/) [![blog](https://img.shields.io/badge/blog-event--driven.io-brightgreen)](https://event-driven.io/)
+[![Twitter Follow](https://img.shields.io/twitter/follow/oskar_at_net?style=social)](https://twitter.com/oskar_at_net) [![Github Sponsors](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/oskardudycz/)](https://github.com/sponsors/oskardudycz/) [![blog](https://img.shields.io/badge/blog-event--driven.io-brightgreen)](https://event-driven.io/?utm_source=event_sourcing_nodejs)
 
 # EventSourcing.JS
 
@@ -286,7 +286,20 @@ module.exports = {
   testEnvironment: 'node',
 };
 ```
-4. Let's add some dummy code to make sure that our tests are working. This can be e.g. `src/greetings/getGreeting.ts`
+We'll update it to match our configuration. Without that it'll match both source `ts` files and generated `js` running tests twice.
+```javascript
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  // tells Jest where are our test files
+  roots: ['<rootDir>/src'],
+  // tells Jest to use only TypeScript files
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
+};
+```
+1. Let's add some dummy code to make sure that our tests are working. This can be e.g. `src/greetings/getGreeting.ts`
 ```typescript
 export function getGreeting() {
   return {
