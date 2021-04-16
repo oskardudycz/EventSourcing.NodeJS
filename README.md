@@ -3,6 +3,12 @@
 # EventSourcing.JS
 
 - [EventSourcing.JS](#eventsourcingjs)
+  - [Event Sourcing](#event-sourcing)
+    - [What is Event Sourcing?](#what-is-event-sourcing)
+    - [What is Event?](#what-is-event)
+    - [What is Stream?](#what-is-stream)
+    - [Event representation](#event-representation)
+    - [Event Store](#event-store)
   - [Samples](#samples)
   - [Node.js project configuration](#nodejs-project-configuration)
     - [General configuration](#general-configuration)
@@ -19,6 +25,162 @@
       - [Github Container Registry publishing setup](#github-container-registry-publishing-setup)
       - [Publish through GitHub Actions](#publish-through-github-actions)
   - [Tasks List](#tasks-list)
+
+## Event Sourcing
+
+### What is Event Sourcing?
+
+Event Sourcing is a design pattern in results of business operations are stored as a series of events. 
+
+It is an alternative way to persist data. In contrast with state-oriented persistence that only keeps the latest version of the entity state, Event Sourcing stores each state change as a separate event.
+
+Thanks for that, no business data is lost. Each operation results in the event stored in the databse. Thanks for that you get extended auditing and diagnostics capabilities (both technically and business-wise). What's more, as events contains the business context so it allows extended business analysis and reporting.
+
+In this repo I'm showing different aspects, patterns around Event Sourcing. From the basic to advanced practices.
+
+### What is Event?
+
+Events, represent facts in the past. They carry information about something accomplished. It should be named in the past tense, e.g. "user added", "order status changed to confirmed". Events are not directed to a specific recipient - they're broadcasted information. It's like telling a story at a party. We hope that someone listens to us, but we may quickly realise that no one is paying attention.
+
+Events:
+- are immutable: _"What has been seen, cannot be unseen"_.
+- can be ignored but cannot be retracted (as you cannot change the past).
+- can be interpreted differently. The basketball match result is a fact. Winning team fans will interpret it positively. Losing team fans - not so much.
+
+Read more in my blog posts:
+-   📝 [What's the difference between a command and an event?](https://event-driven.io/en/whats_the_difference_between_event_and_command/?utm_source=event_sourcing_net)
+-   📝 [Events should be as small as possible, right?](https://event-driven.io/en/whats_the_difference_between_event_and_command/?utm_source=event_sourcing_net)
+
+### What is Stream?
+
+Events are logically grouped into streams. In Event Sourcing, streams are the representation of the entities. All the entity state mutation ends up as the persisted event. Entity state is retrieved by reading all the events and applying them one by one in the order of appearance.
+
+A stream should have a unique identifier representing the specific object. Each event has its own unique position within a stream. This position is usually represented by a numeric, incremental value. This number can be used to define the order of the events while retrieving the state. It can be also used to detect concurrency issues. 
+
+### Event representation
+
+Technically events are messages. 
+
+They may be represented, e.g. in JSON, Binary, XML format. Besides the data, they usually contain:
+- **id**:
+- **type**: name of the event, e.g. _"invoice issued"_.
+- **stream id**: object id for which event was registered (e.g. invoice id).
+- **stream position** (also named _version_, _order of occurrence_, etc.): the number used to decide the order of the event's occurrence for the specific object (stream).
+- **timestamp**: representing a time at which the event happened.
+- other metadata like `correlation id`, `causation id`, etc.
+
+Sample event JSON can look like:
+
+```json
+{
+  "id": "e44f813c-1a2f-4747-aed5-086805c6450e",
+  "type": "invoice-issued",
+  "streamId": "INV/2021/11/01",
+  "streamPosition": 1,
+  "timestamp": "2021-11-01T00:05:32.000Z",
+
+  "data":
+  {
+    "issuer": {
+      "name": "Oscar the Grouch",
+      "address": "123 Sesame Street",
+    },
+    "amount": 34.12,
+    "number": "INV/2021/11/01",
+    "issuedAt": "2021-11-01T00:05:32.000Z"
+  },
+
+  "metadata": 
+  {
+    "correlationId": "1fecc92e-3197-4191-b929-bd306e1110a4",
+    "causationId": "c3cf07e8-9f2f-4c2d-a8e9-f8a612b4a7f1"
+  }
+}
+```
+
+This structure could be translated directly into the TypeScript class. However, to make the code less redundant and ensure that all events follow the same convention, it's worth adding the base type. It could look as follows:
+
+```typescript
+type Event<
+  EventType extends string = string,
+  EventData extends Record<string, unknown> = Record<string, unknown>
+> = {
+  readonly type: EventType;
+  readonly data: EventData;
+};
+```
+Several things are going on there:
+- event type definition is not directly string, but it might be defined differently (`EventType extends string = string`). It's added to be able to define the alias for the event type. Thanks to that, we're getting compiler check and IntelliSense support,
+- event data is defined as [Record](https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeystype) (`EventData extends Record<string, unknown> = Record<string, unknown>`). It is the way of telling the TypeScript compiler that it may expect any type but allows you to specify your own and get a proper type check.
+- both `type` and `data` are marked as `readonly`. Having that compiler won't allow us to change the value after the initial object assignment. Thanks to that, we're getting the immutability.
+
+Having that we can define the event as eg.:
+
+```typescript
+// alias for event type
+type INVOICE_ISSUED = 'invoice-issued';
+
+// issuer DTO used in event data
+type Issuer = {
+  readonly name: string,
+  readonly address: string,
+}
+
+// event type definition
+type InvoiceIssued = Event<
+  INVOICE_ISSUED,
+  {
+    readonly issuer: Issuer,
+    readonly amount: number,
+    readonly number: string,
+    readonly issuedAt: Date
+  }
+>
+```
+
+then create it as:
+
+```typescript
+const invoiceIssued: InvoiceIssued = {
+  type: 'invoice-issued',
+  data: {
+    issuer: {
+      name: 'Oscar the Grouch',
+      address: '123 Sesame Street',
+    },
+    amount: 34.12,
+    number: 'INV/2021/11/01',
+    issuedAt: new Date()
+  },
+}
+```
+### Event Store
+
+Event Sourcing is not related to any type of storage implementation. As long as it fulfils the assumptions, it can be implemented having any backing database (relational, document, etc.). The state has to be represented by the append-only log of events. The events are stored in chronological order, and new events are appended to the previous event. Event Stores is the databases' category explicitly designed for such purpose. 
+
+The simplest (dummy and in-memory) Event Store can be defined in TypeScript as:
+
+```typescript
+class EventStore {
+  private events: { readonly streamId: string; readonly data: string }[] = [];
+
+  appendToStream(streamId: string, ...events: any[]): void {
+    const serialisedEvents = events.map((event) => {
+      return { streamId: streamId, data: JSON.stringify(event) };
+    });
+
+    this.events.push(...serialisedEvents);
+  }
+
+  readFromStream<T = any>(streamId: string): T[] {
+    return this.events
+      .filter((event) => event.streamId === streamId)
+      .map<T>((event) => JSON.parse(event.data));
+  }
+}
+```
+
+In the further samples, I'll use [EventStoreDB](https://developers.eventstore.com/). It's the battle-tested OSS database created and maintained by the Event Sourcing authorities (e.g. Greg Young). It supports many dev environments via gRPC clients, including NodeJS.
 
 ## Samples
 
@@ -781,6 +943,16 @@ jobs:
 
 ## Tasks List
 
+- [ ] Event Sourcing
+  - [x] Description of Event Sourcing foundations [PR](https://github.com/oskardudycz/EventSourcing.NodeJS/pull/8)
+  - [ ] Add EventStoreDB gRPC client samples with basic streams operations
+  - [ ] Add samples of Aggregates
+  - [ ] Add samples of Subscriptions and projections to SQL lite
+  - [ ] Add samples of Event Schema Versioning
+    - [ ] Breaking changes examples
+    - [ ] Basic versioning strategies
+      - [ ] Double write
+    - [ ] Weak Schema
 - [ ] Configuration
   - [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/1)
   - [x] Add VSCode debugging configuration [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/2)
@@ -790,14 +962,6 @@ jobs:
   - [x] Continuous Delivery - Build Docker image and publish to Docker Hub and GitHub Container Registry [PR](https://github.com/oskardudycz/EventSourcing.JS/pull/6)
   - [ ] Configure Swagger
 - [ ] Start Live Coding on Twitch
-- [ ] Add EventStoreDB gRPC client samples with basic streams operations
-- [ ] Add samples of Aggregates
-- [ ] Add samples of Subscriptions and projections to SQL lite
-- [ ] Add samples of Event Schema Versioning
-  - [ ] Breaking changes examples
-  - [ ] Basic versioning strategies
-    - [ ] Double write
-  - [ ] Weak Schema
 - [ ] Create project template like `Create React App` for creating `EventStoreDB Node.js App`
   - Links:
     - https://dev.to/duwainevandriel/build-your-own-project-template-generator-59k4
