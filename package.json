@@ -1,5 +1,5 @@
 {
-  "name": "eventsourcing.js",
+  "name": "eventsourcing.nodejs",
   "version": "3.0.0",
   "description": "Samples of Event Sourcing in JavaScript and TypeScript",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/oskardudycz/EventSourcing.JS.git"
+    "url": "git+https://github.com/oskardudycz/EventSourcing.NodeJS.git"
   },
   "keywords": [
     "Event Sourcing"
@@ -22,9 +22,9 @@
   "author": "Oskar Dudycz",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/oskardudycz/EventSourcing.JS/issues"
+    "url": "https://github.com/oskardudycz/EventSourcing.NodeJS/issues"
   },
-  "homepage": "https://github.com/oskardudycz/EventSourcing.JS#readme",
+  "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
   "devDependencies": {
     "husky": "^4.3.8"
   }
