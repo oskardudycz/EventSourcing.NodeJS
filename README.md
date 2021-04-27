@@ -8,6 +8,7 @@
     - [What is Event?](#what-is-event)
     - [What is Stream?](#what-is-stream)
     - [Event representation](#event-representation)
+    - [Retrieving the current state from events](#retrieving-the-current-state-from-events)
     - [Event Store](#event-store)
   - [Samples](#samples)
   - [Node.js project configuration](#nodejs-project-configuration)
@@ -81,7 +82,7 @@ Sample event JSON can look like:
 
   "data":
   {
-    "issuer": {
+    "issuedTo": {
       "name": "Oscar the Grouch",
       "address": "123 Sesame Street",
     },
@@ -101,39 +102,99 @@ Sample event JSON can look like:
 This structure could be translated directly into the TypeScript class. However, to make the code less redundant and ensure that all events follow the same convention, it's worth adding the base type. It could look as follows:
 
 ```typescript
-type Event<
+export type Event<
   EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>
-> = {
+> = Readonly<{
+  type: Readonly<EventType>;
+  data: Readonly<EventData>;
+}>;
+```
+Several things are going on there:
+1. Event type definition is not directly string, but it might be defined differently (`EventType extends string = string`). It's added to be able to define the alias for the event type. Thanks to that, we're getting compiler check and IntelliSense support,
+2. Event data is defined as [Record](https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeystype) (`EventData extends Record<string, unknown> = Record<string, unknown>`). It is the way of telling the TypeScript compiler that it may expect any type but allows you to specify your own and get a proper type check.
+3. We're using [Readonly<>](https://www.typescriptlang.org/docs/handbook/utility-types.html#readonlytype) wrapper around the Event type definition. We want to be sure that our event is immutable. Neither type nor data should change once it was initialised. `Readonly<>` constructs a type with all properties set as `readonly`. Syntax:
+
+```typescript
+Readonly<{
+  type: EventType;
+  data: EventData;
+}>;
+```
+is equal to:
+
+```typescript
+{
   readonly type: EventType;
   readonly data: EventData;
 };
 ```
-Several things are going on there:
-- event type definition is not directly string, but it might be defined differently (`EventType extends string = string`). It's added to be able to define the alias for the event type. Thanks to that, we're getting compiler check and IntelliSense support,
-- event data is defined as [Record](https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeystype) (`EventData extends Record<string, unknown> = Record<string, unknown>`). It is the way of telling the TypeScript compiler that it may expect any type but allows you to specify your own and get a proper type check.
-- both `type` and `data` are marked as `readonly`. Having that compiler won't allow us to change the value after the initial object assignment. Thanks to that, we're getting the immutability.
 
-Having that we can define the event as eg.:
+I prefer the former, as, in my opinion, it's making the type definition less cluttered. 
+
+We're also wrapping the `EventType` and `EventData` with `Readonly<>`. This is needed as `Readonly<>` does only shallow type copy. It won't change the nested types definition. So:
+
+```typescript
+Readonly<{
+  type: 'invoice-issued';
+  data: {    
+    number: string;
+    issuedBy: string;
+    issuedAt: Date;
+  }
+}>;
+```
+
+is the equivalent of:
+
+```typescript
+{
+  readonly type: 'invoice-issued';
+  readonly data: {    
+    number: string;
+    issuedBy: string;
+    issuedAt: Date;
+  }
+};
+```
+
+while we want to have:
+
+```typescript
+{
+  readonly type: 'invoice-issued';
+  readonly data: {    
+    readonly number: string;
+    readonly issuedBy: string;
+    readonly issuedAt: Date;
+  }
+};
+```
+
+Wrapping `EventType` and `EventType` and `EventData` with `Readonly<>` does that for us and enables immutability. 
+
+_**Note**: we still need to remember to wrap nested structures inside the event data into `Readonly<>` to have all properties set as `readonly`._
+
+Having that, we can define the event as eg.:
 
 ```typescript
 // alias for event type
 type INVOICE_ISSUED = 'invoice-issued';
 
-// issuer DTO used in event data
-type Issuer = {
-  readonly name: string,
-  readonly address: string,
-}
+// person DTO used in issued by event data
+type Person = Readonly<{
+  name: string;
+  address: string;
+}>
 
 // event type definition
 type InvoiceIssued = Event<
   INVOICE_ISSUED,
   {
-    readonly issuer: Issuer,
-    readonly amount: number,
-    readonly number: string,
-    readonly issuedAt: Date
+    issuedTo: Person,
+    amount: number,
+    number: string,
+    issuedAt: Date
   }
 >
 ```
@@ -144,7 +205,7 @@ then create it as:
 const invoiceIssued: InvoiceIssued = {
   type: 'invoice-issued',
   data: {
-    issuer: {
+    issuedTo: {
       name: 'Oscar the Grouch',
       address: '123 Sesame Street',
     },
@@ -154,6 +215,227 @@ const invoiceIssued: InvoiceIssued = {
   },
 }
 ```
+
+### Retrieving the current state from events
+
+In Event Sourcing, the state is stored in events. Events are logically grouped into streams. Streams can be thought of as the entities' representation. Traditionally (e.g. in relational or document approach), each entity is stored as a separate record.
+
+| Id       | IssuerName       | IssuerAddress     | Amount | Number         | IssuedAt   |
+| -------- | ---------------- | ----------------- | ------ | -------------- | ---------- |
+| e44f813c | Oscar the Grouch | 123 Sesame Street | 34.12  | INV/2021/11/01 | 2021-11-01 |
+
+ In Event Sourcing, the entity is stored as the series of events that happened for this specific object, e.g. `InvoiceInitiated`, `InvoiceIssued`, `InvoiceSent`. 
+
+```json          
+[
+    {
+        "id": "e44f813c-1a2f-4747-aed5-086805c6450e",
+        "type": "invoice-initiated",
+        "streamId": "INV/2021/11/01",
+        "streamPosition": 1,
+        "timestamp": "2021-11-01T00:05:32.000Z",
+
+        "data":
+        {
+            "issuedTo": {
+                "name": "Oscar the Grouch",
+                "address": "123 Sesame Street",
+            },
+            "amount": 34.12,
+            "number": "INV/2021/11/01",
+            "initiatedAt": "2021-11-01T00:05:32.000Z"
+        }
+    },        
+    {
+        "id": "5421d67d-d0fe-4c4c-b232-ff284810fb59",
+        "type": "invoice-issued",
+        "streamId": "INV/2021/11/01",
+        "streamPosition": 2,
+        "timestamp": "2021-11-01T00:11:32.000Z",
+
+        "data":
+        {
+            "issuedTo": "Cookie Monster",
+            "issuedAt": "2021-11-01T00:11:32.000Z"
+        }
+    },        
+    {
+        "id": "637cfe0f-ed38-4595-8b17-2534cc706abf",
+        "type": "invoice-sent",
+        "streamId": "INV/2021/11/01",
+        "streamPosition": 3,
+        "timestamp": "2021-11-01T00:12:01.000Z",
+
+        "data":
+        {
+            "sentVia": "email",
+            "sentAt": "2021-11-01T00:12:01.000Z"
+        }
+    }
+]
+```
+
+All of those events shares the stream id (`"streamId": "INV/2021/11/01"`), and have incremented stream position.
+
+We can get to conclusion that in Event Sourcing entity is represented by stream, so sequence of event correlated by the stream id ordered by stream position.
+
+To get the current state of entity we need to perform the stream aggregation process. We're translating the set of events into a single entity. This can be done with the following the steps:
+1. Read all events for the specific stream.
+2. Order them ascending in the order of appearance (by the event's stream position).
+3. Apply each event on the entity.
+
+This process is called also _stream aggregation_ or _state rehydration_.
+
+For this process we'll use the [reduce function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce). It executes a reducer function (that you can provide) on each array element, resulting in a single output value. TypeScript extends it with the type guarantees:
+1. reduce in TypeScript is a generic method. It allows to provide the result type as a parameter. It doesn’t have to be the same as type of the array elements.
+2. You can also use optional param to provide the default value for accumulation.
+3. Use [Partial<Type>](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype) as the generic reduce param. It constructs a type with all properties of Type set to optional. This utility will return a type that represents all subsets of a given type. This is extremely important, as TypeScript forces you to define all required properties. We'll be merging different states of the aggregate state into the final one. Only the first event (`InvoiceInitiated`) will provide all required fields. The other events will just do a partial update (`InvoiceSent` only changes the status and sets the sending method and date).
+
+Having event types defined as:
+
+```typescript
+type InvoiceInitiated = Event<
+  'invoice-initiated',
+  {
+    number: string;
+    amount: number;
+    issuedTo: Person;
+    initiatedAt: Date;
+  }
+>;
+
+type InvoiceIssued = Event<
+  'invoice-issued',
+  {
+    number: string;
+    issuedBy: string;
+    issuedAt: Date;
+  }
+>;
+
+type InvoiceSent = Event<
+  'invoice-sent',
+  {
+    number: string;
+    sentVia: InvoiceSendMethod;
+    sentAt: Date;
+  }
+>;
+```
+
+Entity as:
+
+```typescript
+type Invoice = Readonly<{
+  number: string;
+  amount: number;
+  status: InvoiceStatus;
+
+  issuedTo: Person;
+  initiatedAt: Date;
+
+  issued?: Readonly<{
+    by?: string;
+    at?: Date;
+  }>;
+
+  sent?: Readonly<{
+    via?: InvoiceSendMethod;
+    at?: Date;
+  }>;
+}>;
+```
+
+We can rebuild the state with events using the reduce function:
+
+```typescript
+const result = events.reduce<Partial<Invoice>>((currentState, event) => {
+  switch (event.type) {
+    case 'invoice-initiated':
+      return {
+        number: event.data.number,
+        amount: event.data.amount,
+        status: InvoiceStatus.INITIATED,
+        issuedTo: event.data.issuedTo,
+        initiatedAt: event.data.initiatedAt,
+      };
+    case 'invoice-issued': {
+      return {
+        ...currentState,
+        status: InvoiceStatus.ISSUED,
+        issued: {
+          by: event.data.issuedBy,
+          at: event.data.issuedAt,
+        },
+      };
+    }
+    case 'invoice-sent': {
+      return {
+        ...currentState,
+        status: InvoiceStatus.SENT,
+        sent: {
+          via: event.data.sentVia,
+          at: event.data.sentAt,
+        },
+      };
+    }
+    default:
+      throw 'Unexpected event type';
+  }
+}, {});
+```
+
+The only thing left is to translate `Partial<Invoice>` into properly typed `Invoice`. We'll use [type guard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-guards-and-differentiating-types) for that:
+
+```typescript
+function isInvoice(invoice: Partial<Invoice>): invoice is Invoice {
+  return (
+    !!invoice.number &&
+    !!invoice.amount &&
+    !!invoice.status &&
+    !!invoice.issuedTo &&
+    !!invoice.initiatedAt &&
+    (!invoice.issued || (!!invoice.issued.at && !!invoice.issued.by)) &&
+    (!invoice.sent || (!!invoice.sent.via && !!invoice.sent.at))
+  );
+}
+
+if(!isInvoice(result))
+    throw "Invoice state is not valid!";
+
+const reservation: Invoice = result;
+```
+
+Thanks to that, we have a proper type definition. We can make the stream aggregation more generic and reusable:
+
+```typescript
+export function aggregateStream<Aggregate, StreamEvents extends Event>(
+  events: StreamEvents[],
+  when: (
+    currentState: Partial<Aggregate>,
+    event: StreamEvents,
+    currentIndex: number,
+    allEvents: StreamEvents[]
+  ) => Partial<Aggregate>,
+  check?: (state: Partial<Aggregate>) => state is Aggregate
+): Aggregate {
+  const state = events.reduce<Partial<Aggregate>>(when, {});
+
+  if (!check) {
+    console.warn('No type check method was provided in the aggregate method');
+    return <Aggregate>state;
+  }
+
+  if (!check(state)) throw 'Aggregate state is not valid';
+
+  return state;
+}
+```
+
+See full sample: [link](./samples/foundations/src/invoices/invoice.unit.test.ts).
+
+Read more in my article:
+-   📝 [Why Partial<Type> is an extremely useful TypeScript feature?](https://event-driven.io/en/partial_typescript//?utm_source=event_sourcing_nodejs)
 
 ### Event Store
 
