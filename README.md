@@ -110,7 +110,7 @@ export type Event<
   data: Readonly<EventData>;
 }>;
 ```
-Several things are going on there:
+Several things are going on here:
 1. Event type definition is not directly string, but it might be defined differently (`EventType extends string = string`). It's added to be able to define the alias for the event type. Thanks to that, we're getting compiler check and IntelliSense support,
 2. Event data is defined as [Record](https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeystype) (`EventData extends Record<string, unknown> = Record<string, unknown>`). It is the way of telling the TypeScript compiler that it may expect any type but allows you to specify your own and get a proper type check.
 3. We're using [Readonly<>](https://www.typescriptlang.org/docs/handbook/utility-types.html#readonlytype) wrapper around the Event type definition. We want to be sure that our event is immutable. Neither type nor data should change once it was initialised. `Readonly<>` constructs a type with all properties set as `readonly`. Syntax:

@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "dev:start", "--", "--inspect-brk=9229"],
+      "port": 9229
+    },
+    {
+      "name": "Jest all tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
+      "args": ["--verbose", "-i", "--no-cache", "--watchAll"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Jest current test",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+      "args": [
+        "${fileBasename}",
+        "--verbose",
+        "-i",
+        "--no-cache",
+        "--watchAll"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
+}
