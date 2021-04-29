@@ -1,8 +1,10 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
+import { EventStoreDBClient, StreamSubscription } from '@eventstore/db-client';
 import { Event } from '../../events';
+import { SnapshotEvent } from './snapshotEvent';
 import { appendToStream } from '../appending/appendToStream';
 import { readFromStream } from '../reading/readFromStream';
 import { subscribeToStream } from '../subscribing/subscribeToStream';
+import { aggregateStream } from '../../streams';
 
 export const addSnapshotPrefixToStreamName = function <
   Aggregate,
@@ -13,7 +15,8 @@ export const addSnapshotPrefixToStreamName = function <
 
 export async function appendEventsAndSnapshotsToTheSameStream<
   Aggregate,
-  StreamEvent extends Event
+  StreamEvent extends Event,
+  SnapshotStreamEvent extends SnapshotEvent
 >(
   client: EventStoreDBClient,
   currentState: Aggregate,
@@ -22,7 +25,7 @@ export async function appendEventsAndSnapshotsToTheSameStream<
     streamName: string,
     currentState: Aggregate,
     event: StreamEvent
-  ) => StreamEvent | undefined,
+  ) => SnapshotStreamEvent | undefined,
   ...events: StreamEvent[]
 ): Promise<boolean> {
   const eventsAndSnapshots = events
@@ -33,13 +36,17 @@ export async function appendEventsAndSnapshotsToTheSameStream<
     })
     .flat();
 
-  return appendToStream<StreamEvent>(client, streamName, ...eventsAndSnapshots);
+  return appendToStream<StreamEvent | SnapshotStreamEvent>(
+    client,
+    streamName,
+    ...eventsAndSnapshots
+  );
 }
 
 export async function appendEventsAndSnapshotsToTheSeparateStreams<
   Aggregate,
   StreamEvent extends Event,
-  SnapshotStreamEvent extends Event
+  SnapshotStreamEvent extends SnapshotEvent
 >(
   client: EventStoreDBClient,
   currentState: Aggregate,
@@ -81,7 +88,7 @@ export async function appendEventsAndSnapshotsToTheSeparateStreams<
 export async function snapshotOnSubscription<
   Aggregate,
   StreamEvent extends Event,
-  SnapshotStreamEvent extends Event
+  SnapshotStreamEvent extends SnapshotEvent
 >(
   client: EventStoreDBClient,
   streamName: string,
@@ -91,8 +98,14 @@ export async function snapshotOnSubscription<
     streamName: string,
     currentState: Aggregate,
     event: StreamEvent
-  ) => SnapshotStreamEvent
-): StreamSubscription {
+  ) => SnapshotStreamEvent,
+  when: (
+    currentState: Partial<Aggregate>,
+    event: StreamEvent,
+    currentIndex: number,
+    allEvents: StreamEvent[]
+  ) => Partial<Aggregate>
+): Promise<StreamSubscription> {
   return subscribeToStream(
     client,
     streamName,
@@ -102,7 +115,8 @@ export async function snapshotOnSubscription<
       }
       const snapshotStreamName = buildSnapshotStreamName(streamName);
 
-      const lastSnapshot = await readFromStream<SnapshotStreamEvent>(
+      const result = await readFromStream<SnapshotStreamEvent>(
+        client,
         snapshotStreamName,
         {
           maxCount: 1,
@@ -110,7 +124,33 @@ export async function snapshotOnSubscription<
         }
       );
 
-      const snapshot = tryDoSnapshot(streamName, currentState, event);
+      const streamPositionFromSnapshot =
+        result !== 'STREAM_NOT_FOUND'
+          ? result[0].metadata.streamVersion
+          : undefined;
+
+      const eventsAfterSnapshot =
+        streamPositionFromSnapshot === position - 1n
+          ? []
+          : await readFromStream<StreamEvent>(client, streamName, {
+              fromRevision: streamPositionFromSnapshot,
+              maxCount: position - (streamPositionFromSnapshot || 0n),
+            });
+
+      if (eventsAfterSnapshot == 'STREAM_NOT_FOUND') return;
+
+      const currentState = aggregateStream<Aggregate, StreamEvent>(
+        [...eventsAfterSnapshot, event],
+        when
+      );
+
+      const snapshot = doSnapshot(streamName, currentState, event);
+
+      await appendToStream<SnapshotStreamEvent>(
+        client,
+        buildSnapshotStreamName(streamName),
+        snapshot
+      );
     }
   );
 }
