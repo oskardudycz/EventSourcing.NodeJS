@@ -11,5 +11,11 @@ export async function appendSnapshotToTheSameStream<
 ): Promise<boolean> {
   const result = await appendToStream(eventStore, streamName, snapshot);
 
+  if (result.success && result.position) {
+    await eventStore.setStreamMetadata(streamName, {
+      lastSnapshotVersion: result.position,
+    });
+  }
+
   return result.success;
 }

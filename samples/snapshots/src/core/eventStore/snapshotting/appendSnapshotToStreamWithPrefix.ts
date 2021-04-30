@@ -1,5 +1,5 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { SnapshotEvent } from '.';
+import { addSnapshotPrefix, SnapshotEvent } from '.';
 import { appendToStream } from '../appending/appendToStream';
 
 export async function appendSnapshotToStreamWithPrefix<
@@ -9,7 +9,9 @@ export async function appendSnapshotToStreamWithPrefix<
   snapshot: SnapshotStreamEvent,
   streamName: string
 ): Promise<boolean> {
-  const result = await appendToStream(eventStore, streamName, snapshot);
+  const snapshotStreamName = addSnapshotPrefix(streamName);
+
+  const result = await appendToStream(eventStore, snapshotStreamName, snapshot);
 
   return result.success;
 }
