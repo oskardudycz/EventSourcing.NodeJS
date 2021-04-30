@@ -18,16 +18,15 @@ export async function readFromStreamAndSnapshot<
 >(
   eventStore: EventStoreDBClient,
   streamName: string,
-  getSnapshot: (
+  getLastSnapshot: (
     streamName: string
   ) => Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND>,
-
   options?: ReadStreamOptions
 ): Promise<
   | ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>
   | STREAM_NOT_FOUND
 > {
-  const snapshot = await getSnapshot(streamName);
+  const snapshot = await getLastSnapshot(streamName);
 
   let lastSnapshotVersion: bigint | undefined = undefined;
   let snapshotEvent: SnapshotStreamEvent[] = [];

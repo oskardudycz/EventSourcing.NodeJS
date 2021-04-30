@@ -66,6 +66,11 @@ export async function appendEventsAndSnapshotsToTheSeparateStreams<
   client: EventStoreDBClient,
   streamName: string,
   currentState: Aggregate,
+  appendSnapshot: (
+    streamName: string,
+    currentState: Aggregate,
+    event: StreamEvent
+  ) => Promise<boolean>,
   options: SnapshotOptions<Aggregate, StreamEvent, SnapshotStreamEvent>,
   ...events: StreamEvent[]
 ): Promise<boolean> {

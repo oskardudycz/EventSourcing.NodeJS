@@ -1,11 +1,13 @@
 import { EventStoreDBClient, StreamSubscription } from '@eventstore/db-client';
+import { SubscribeToStreamOptions } from '@eventstore/db-client/dist/streams';
 
 import { Event } from '../../events';
 
 export async function subscribeToStream<StreamEvent extends Event>(
   client: EventStoreDBClient,
   streamName: string,
-  handleEvent: (event: StreamEvent, position: bigint) => Promise<void>
+  handleEvent: (event: StreamEvent, position: bigint) => Promise<void>,
+  options?: SubscribeToStreamOptions
 ): Promise<StreamSubscription> {
   return client
     .subscribeToStream(streamName)

@@ -1,6 +1,6 @@
 import { ShiftStarted } from './startingShift';
 import { PlacedAtWorkStation } from './placeAtWorkStation';
-import { CashRegisterSnapshoted } from './snapshotting';
+import { CashRegisterSnapshotted } from './snapshotting';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -29,7 +29,7 @@ export type CashRegister = Readonly<{
 export type CashRegisterEvent =
   | PlacedAtWorkStation
   | ShiftStarted
-  | CashRegisterSnapshoted;
+  | CashRegisterSnapshotted;
 
 export function when(
   currentState: Partial<CashRegister>,
@@ -42,12 +42,15 @@ export function when(
         workstation: event.data.workstation,
         float: 0,
       };
-    case 'shift-started': {
+    case 'shift-started':
       return {
         ...currentState,
         currentCashierId: event.data.cashierId,
       };
-    }
+    case 'cash-register-snapshotted':
+      return {
+        ...event.data,
+      };
     default:
       throw 'Unexpected event type';
   }

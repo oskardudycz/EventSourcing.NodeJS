@@ -1,15 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { StartShift } from './startShift';
-import { CashRegisterSnapshoted } from '../snapshotting';
 import { getEventStore } from '../../core/eventStore';
-import {
-  getSnapshotFromSeparateStream,
-  readFromStreamAndSnapshot,
-} from '../../core/eventStore/snapshotting';
-import { CashRegisterEvent, getCashRegisterStreamName } from '../cash-register';
+import { getCashRegisterStreamName } from '../cashRegister';
 import { handleStartShift } from './handleStartShift';
-import { appendToStream } from '../../core/eventStore/appending/appendToStream';
-import { addSnapshotPrefix } from '../../core/eventStore/snapshotting/snapshotToStream';
+import { getCashRegisterEvents } from '../getCashRegisterEvents';
+import { saveCashRegister } from '../saveCashRegister';
 
 const router = Router();
 router.post(
@@ -21,38 +16,31 @@ router.post(
 
     const streamName = getCashRegisterStreamName(command.data.cashRegisterId);
 
-    const getSnapshot = (streamName: string) =>
-      getSnapshotFromSeparateStream<CashRegisterSnapshoted>(
-        eventStore,
-        streamName,
-        addSnapshotPrefix
-      );
+    const currentEvents = await getCashRegisterEvents(eventStore, streamName);
 
-    const result = await readFromStreamAndSnapshot<
-      CashRegisterEvent,
-      CashRegisterSnapshoted
-    >(eventStore, streamName, getSnapshot);
-
-    if (result === 'STREAM_NOT_FOUND') {
-      response.status(404);
-      response.end();
+    if (currentEvents === 'STREAM_NOT_FOUND') {
+      response.sendStatus(404);
       return;
     }
 
-    const { events, lastSnapshotVersion } = result;
+    const { events, lastSnapshotVersion } = currentEvents;
 
     const newEvent = handleStartShift(events, command);
 
     if (newEvent === 'SHIFT_ALREADY_STARTED') {
-      response.status(409);
-      response.end();
+      response.sendStatus(409);
       return;
     }
 
-    await appendToStream(eventStore, command.data.cashRegisterId, newEvent);
+    await saveCashRegister(
+      eventStore,
+      streamName,
+      events,
+      lastSnapshotVersion,
+      newEvent
+    );
 
-    response.status(200);
-    response.end();
+    response.sendStatus(200);
   }
 );
 
