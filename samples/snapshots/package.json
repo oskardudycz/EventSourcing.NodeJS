@@ -4,6 +4,7 @@
   "description": "Samples of Event Sourcing in JavaScript and TypeScript",
   "main": "index.js",
   "scripts": {
+    "build": "npm run build:ts",
     "build:ts": "tsc",
     "dev:start": "nodemon src/index.ts",
     "test": "npm run test:unit && npm run test:int",
