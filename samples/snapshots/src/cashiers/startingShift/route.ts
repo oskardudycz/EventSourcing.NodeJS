@@ -3,9 +3,9 @@ import { StartShift } from './startShift';
 import { CashRegisterSnapshoted } from '../snapshotting';
 import { getEventStore } from '../../core/eventStore';
 import {
-  readFromStream,
-  readLastEventFromStream,
-} from '../../core/eventStore/reading';
+  getSnapshotFromSeparateStream,
+  readFromStreamAndSnapshot,
+} from '../../core/eventStore/snapshotting';
 import { CashRegisterEvent, getCashRegisterStreamName } from '../cash-register';
 import { handleStartShift } from './handleStartShift';
 import { appendToStream } from '../../core/eventStore/appending/appendToStream';
@@ -21,34 +21,27 @@ router.post(
 
     const streamName = getCashRegisterStreamName(command.data.cashRegisterId);
 
-    const snapshotStreamName = addSnapshotPrefix(streamName);
+    const getSnapshot = (streamName: string) =>
+      getSnapshotFromSeparateStream<CashRegisterSnapshoted>(
+        eventStore,
+        streamName,
+        addSnapshotPrefix
+      );
 
-    const snapshot = await readLastEventFromStream<CashRegisterSnapshoted>(
-      eventStore,
-      snapshotStreamName
-    );
+    const result = await readFromStreamAndSnapshot<
+      CashRegisterEvent,
+      CashRegisterSnapshoted
+    >(eventStore, streamName, getSnapshot);
 
-    let lastSnapshotVersion: bigint | undefined = undefined;
-    let snapshotEvent: CashRegisterSnapshoted[] = [];
-
-    if (snapshot !== 'STREAM_NOT_FOUND' && snapshot !== 'NO_EVENTS_FOUND') {
-      lastSnapshotVersion = snapshot.metadata.streamVersion;
-      snapshotEvent = [snapshot];
-    }
-
-    const events = await readFromStream<CashRegisterEvent>(
-      eventStore,
-      getCashRegisterStreamName(command.data.cashRegisterId),
-      { fromRevision: lastSnapshotVersion }
-    );
-
-    if (events === 'STREAM_NOT_FOUND') {
+    if (result === 'STREAM_NOT_FOUND') {
       response.status(404);
       response.end();
       return;
     }
 
-    const newEvent = handleStartShift([...snapshotEvent, ...events], command);
+    const { events, lastSnapshotVersion } = result;
+
+    const newEvent = handleStartShift(events, command);
 
     if (newEvent === 'SHIFT_ALREADY_STARTED') {
       response.status(409);
