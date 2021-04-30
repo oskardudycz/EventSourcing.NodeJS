@@ -1,7 +1,7 @@
 import { SnapshotEvent } from '../../core/eventStore/snapshotting/snapshotEvent';
-import { CashRegister } from '../cash-register';
+import { CashRegister } from '../cashRegister';
 
-export type CashRegisterSnapshoted = SnapshotEvent<
-  'cash-register-snapshoted',
+export type CashRegisterSnapshotted = SnapshotEvent<
+  'cash-register-snapshotted',
   CashRegister
 >;

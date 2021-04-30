@@ -1,6 +1,6 @@
 import { StartShift, ShiftStarted } from '.';
 import { aggregateStream } from '../../core/streams';
-import { CashRegisterEvent, when } from '../cash-register';
+import { CashRegister, CashRegisterEvent, when } from '../cashRegister';
 
 export type ShiftAlreadyStarted = 'SHIFT_ALREADY_STARTED';
 
@@ -8,7 +8,10 @@ export function handleStartShift(
   events: CashRegisterEvent[],
   command: StartShift
 ): ShiftStarted | ShiftAlreadyStarted {
-  const cashRegister = aggregateStream(events, when);
+  const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
+    events,
+    when
+  );
 
   if (cashRegister.currentCashierId !== undefined) {
     return 'SHIFT_ALREADY_STARTED';
