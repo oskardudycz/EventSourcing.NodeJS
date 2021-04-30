@@ -1,10 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { StartShift } from './startShift';
+import { CashRegisterSnapshoted } from '../snapshotting';
 import { getEventStore } from '../../core/eventStore';
-import { readFromStream } from '../../core/eventStore/reading/readFromStream';
+import {
+  readFromStream,
+  readLastEventFromStream,
+} from '../../core/eventStore/reading';
 import { CashRegisterEvent, getCashRegisterStreamName } from '../cash-register';
 import { handleStartShift } from './handleStartShift';
 import { appendToStream } from '../../core/eventStore/appending/appendToStream';
+import { addSnapshotPrefix } from '../../core/eventStore/snapshotting/snapshotToStream';
 
 const router = Router();
 router.post(
@@ -14,9 +19,27 @@ router.post(
 
     const eventStore = getEventStore();
 
+    const streamName = getCashRegisterStreamName(command.data.cashRegisterId);
+
+    const snapshotStreamName = addSnapshotPrefix(streamName);
+
+    const snapshot = await readLastEventFromStream<CashRegisterSnapshoted>(
+      eventStore,
+      snapshotStreamName
+    );
+
+    let lastSnapshotVersion: bigint | undefined = undefined;
+    let snapshotEvent: CashRegisterSnapshoted[] = [];
+
+    if (snapshot !== 'STREAM_NOT_FOUND' && snapshot !== 'NO_EVENTS_FOUND') {
+      lastSnapshotVersion = snapshot.metadata.streamVersion;
+      snapshotEvent = [snapshot];
+    }
+
     const events = await readFromStream<CashRegisterEvent>(
       eventStore,
-      getCashRegisterStreamName(command.data.cashRegisterId)
+      getCashRegisterStreamName(command.data.cashRegisterId),
+      { fromRevision: lastSnapshotVersion }
     );
 
     if (events === 'STREAM_NOT_FOUND') {
@@ -25,7 +48,7 @@ router.post(
       return;
     }
 
-    const newEvent = handleStartShift(events, command);
+    const newEvent = handleStartShift([...snapshotEvent, ...events], command);
 
     if (newEvent === 'SHIFT_ALREADY_STARTED') {
       response.status(409);

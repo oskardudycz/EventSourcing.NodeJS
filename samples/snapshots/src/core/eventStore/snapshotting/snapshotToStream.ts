@@ -5,10 +5,10 @@ import { appendToStream } from '../appending/appendToStream';
 import { readFromStream } from '../reading/readFromStream';
 import { subscribeToStream } from '../subscribing/subscribeToStream';
 
-export const addSnapshotPrefixToStreamName = function <
+export const addSnapshotPrefix = function <
   Aggregate,
   StreamEvent extends Event
->(streamName: string, _currentState: Aggregate, _event: StreamEvent): string {
+>(streamName: string): string {
   return `snapshot-${streamName}`;
 };
 

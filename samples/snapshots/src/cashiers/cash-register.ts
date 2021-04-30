@@ -1,5 +1,6 @@
 import { ShiftStarted } from './startingShift';
 import { PlacedAtWorkStation } from './placeAtWorkStation';
+import { CashRegisterSnapshoted } from './snapshotting';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -25,7 +26,10 @@ export type CashRegister = Readonly<{
   currentCashierId?: string;
 }>;
 
-export type CashRegisterEvent = PlacedAtWorkStation | ShiftStarted;
+export type CashRegisterEvent =
+  | PlacedAtWorkStation
+  | ShiftStarted
+  | CashRegisterSnapshoted;
 
 export function when(
   currentState: Partial<CashRegister>,
