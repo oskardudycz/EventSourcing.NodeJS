@@ -1,4 +1,5 @@
 import {
+  AppendResult,
   EventData,
   EventStoreDBClient,
   jsonEvent,
@@ -10,12 +11,10 @@ export async function appendToStream<StreamEvent extends Event>(
   client: EventStoreDBClient,
   streamName: string,
   ...events: StreamEvent[]
-): Promise<boolean> {
+): Promise<AppendResult> {
   const jsonEvents: EventData[] = events.map((event) =>
     jsonEvent({ type: event.type, data: event.data })
   );
 
-  const result = await client.appendToStream(streamName, jsonEvents);
-
-  return result.success;
+  return client.appendToStream(streamName, jsonEvents);
 }
