@@ -39,6 +39,9 @@ Thanks for that, no business data is lost. Each operation results in the event s
 
 In this repository I'm showing different aspects, patterns around Event Sourcing. From the basic to advanced practices.
 
+Read more in my article:
+-   📝 [How using events helps in a teams' autonomy](https://event-driven.io/en/how_using_events_help_in_teams_autonomy/?utm_source=event_sourcing_nodejs)
+
 ### What is Event?
 
 Events, represent facts in the past. They carry information about something accomplished. It should be named in the past tense, e.g. _"user added"_, _"order confirmed"_. Events are not directed to a specific recipient - they're broadcasted information. It's like telling a story at a party. We hope that someone listens to us, but we may quickly realise that no one is paying attention.
