@@ -1,12 +1,15 @@
 import { EventStoreDBClient, StreamSubscription } from '@eventstore/db-client';
-import { NO_SHAPSHOT_FOUND, SnapshotEvent } from '.';
+import {
+  NO_SHAPSHOT_FOUND,
+  readFromStreamAndSnapshot,
+  SnapshotEvent,
+} from '..';
 import { SnapshotOptions } from './appendEventAndSnapshot';
-import { Event } from '../../events';
-import { subscribeToStream } from '../subscribing/subscribeToStream';
-import { readFromStreamAndSnapshot } from './readFromStreamAndSnapshots';
-import { aggregateStream } from '../../streams';
+import { Event } from '../../../events';
+import { subscribeToStream } from '../../subscribing/subscribeToStream';
+import { aggregateStream } from '../../../streams';
 
-export async function doSnapshotOnSubscription<
+export async function appendSnapshotOnSubscription<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
   StreamEvent extends Event = Event,
   SnapshotStreamEvent extends SnapshotEvent = SnapshotEvent

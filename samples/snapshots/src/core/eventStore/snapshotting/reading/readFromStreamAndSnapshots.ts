@@ -1,9 +1,9 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { ReadStreamOptions } from '@eventstore/db-client/dist/streams';
-import { NO_SHAPSHOT_FOUND, SnapshotEvent } from '.';
+import { NO_SHAPSHOT_FOUND, SnapshotEvent } from '../';
 
-import { Event } from '../../events';
-import { readFromStream, STREAM_NOT_FOUND } from '../reading';
+import { Event } from '../../../events';
+import { readFromStream, STREAM_NOT_FOUND } from '../../reading';
 
 export type ReadFromStreamAndSnapshotsResult<
   StreamEvent extends Event = Event

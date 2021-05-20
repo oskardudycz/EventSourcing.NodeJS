@@ -1,6 +1,6 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { appendSnapshotToStreamWithPrefix } from '../core/eventStore/snapshotting';
-import { appendEventAndSnapshot } from '../core/eventStore/snapshotting/appendEventAndSnapshot';
+import { appendEventAndSnapshot } from '../core/eventStore/snapshotting/appending/appendEventAndSnapshot';
 import { aggregateStream } from '../core/streams';
 import { CashRegister, CashRegisterEvent, when } from './cashRegister';
 import { CashRegisterSnapshotted } from './snapshotting';

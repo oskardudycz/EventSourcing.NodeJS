@@ -1,7 +1,7 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { Event } from '../../events';
-import { SnapshotEvent } from '.';
-import { appendToStream } from '../appending/appendToStream';
+import { Event } from '../../../events';
+import { SnapshotEvent } from '..';
+import { appendToStream } from '../../appending/appendToStream';
 
 export type SnapshotOptions<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
