@@ -1,6 +1,7 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { addSnapshotPrefix, SnapshotEvent } from '.';
-import { appendToStream } from '../appending/appendToStream';
+import { SnapshotEvent } from '..';
+import { appendToStream } from '../../appending/appendToStream';
+import { addSnapshotPrefix } from '../snapshotToStream';
 
 export async function appendSnapshotToStreamWithPrefix<
   SnapshotStreamEvent extends SnapshotEvent

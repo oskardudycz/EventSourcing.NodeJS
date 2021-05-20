@@ -6,6 +6,7 @@
   "scripts": {
     "build": "npm run build:ts",
     "build:ts": "tsc",
+    "build:ts:watch": "tsc  --watch",
     "dev:start": "nodemon src/index.ts",
     "test": "npm run test:unit && npm run test:int",
     "test:unit": "jest unit",
