@@ -1,2 +1,2 @@
-export * from './readFromStreamAndSnapshots';
+export * from './readFromSnapshotAndStream';
 export * from './readSnapshotFromSeparateStream';

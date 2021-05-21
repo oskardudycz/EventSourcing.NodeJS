@@ -1,7 +1,7 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { SnapshotEvent } from '..';
 import { readLastEventFromStream } from '../../reading';
-import { addSnapshotPrefix } from '../snapshotToStream';
+import { addSnapshotPrefix } from '..';
 
 export type NO_SHAPSHOT_FOUND = 'NO_SHAPSHOT_FOUND';
 
