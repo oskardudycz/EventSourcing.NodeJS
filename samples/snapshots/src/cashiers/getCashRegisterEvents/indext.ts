@@ -6,6 +6,7 @@ import {
   ReadFromStreamAndSnapshotsResult,
 } from '../../core/eventStore/snapshotting';
 import { addSnapshotPrefix } from '../../core/eventStore/snapshotting';
+import { Failure } from '../../core/primitives/result';
 import { CashRegisterEvent } from '../cashRegister';
 import { CashRegisterSnapshoted } from '../snapshot';
 
@@ -13,7 +14,8 @@ export function getCashRegisterEvents(
   eventStore: EventStoreDBClient,
   streamName: string
 ): Promise<
-  ReadFromStreamAndSnapshotsResult<CashRegisterEvent> | STREAM_NOT_FOUND
+  | ReadFromStreamAndSnapshotsResult<CashRegisterEvent>
+  | Failure<STREAM_NOT_FOUND>
 > {
   const getSnapshot = (streamName: string) =>
     readSnapshotFromSeparateStream<CashRegisterSnapshoted>(

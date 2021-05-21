@@ -4,6 +4,8 @@ import { SnapshotEvent } from './snapshotEvent';
 import { appendToStream } from '../appending/appendToStream';
 import { readFromStream } from '../reading/readFromStream';
 import { subscribeToStream } from '../subscribing/subscribeToStream';
+import { isFailureOf, succeeded } from '../../primitives/result';
+import { readSnapshotFromSeparateStream } from './reading';
 
 export type SnapshotOptions<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
@@ -105,7 +107,7 @@ export async function snapshotOnSubscription<
   StreamEvent extends Event = Event,
   SnapshotStreamEvent extends SnapshotEvent = SnapshotEvent
 >(
-  client: EventStoreDBClient,
+  eventStore: EventStoreDBClient,
   streamName: string,
   aggregateStream: (events: StreamEvent[]) => Aggregate,
   options: SnapshotOptions<Aggregate, StreamEvent, SnapshotStreamEvent>
@@ -113,44 +115,47 @@ export async function snapshotOnSubscription<
   const { shouldDoSnapshot, buildSnapshotStreamName, doSnapshot } = options;
 
   return subscribeToStream(
-    client,
+    eventStore,
     streamName,
     async (event: StreamEvent, position: bigint) => {
       if (!shouldDoSnapshot(streamName, event)) {
         return;
       }
-      const snapshotStreamName = buildSnapshotStreamName(streamName);
-
-      const result = await readFromStream<SnapshotStreamEvent>(
-        client,
-        snapshotStreamName,
-        {
-          maxCount: 1,
-          direction: 'backwards',
-        }
+      const lastSnapshot = await readSnapshotFromSeparateStream<SnapshotStreamEvent>(
+        eventStore,
+        streamName,
+        buildSnapshotStreamName
       );
 
-      const streamPositionFromSnapshot =
-        result !== 'STREAM_NOT_FOUND'
-          ? result[0].metadata.streamVersion
-          : undefined;
+      let streamPositionFromSnapshot: bigint | undefined = undefined;
 
-      const eventsAfterSnapshot =
-        streamPositionFromSnapshot === position - 1n
-          ? []
-          : await readFromStream<StreamEvent>(client, streamName, {
-              fromRevision: streamPositionFromSnapshot,
-              maxCount: position - (streamPositionFromSnapshot || 0n),
-            });
+      if (succeeded(lastSnapshot)) {
+        streamPositionFromSnapshot = lastSnapshot.value.metadata.streamVersion;
+      }
 
-      if (eventsAfterSnapshot == 'STREAM_NOT_FOUND') return;
+      let eventsAfterSnapshot: StreamEvent[] = [];
+
+      if (streamPositionFromSnapshot !== position - 1n) {
+        var eventsAfterSnapshotResult = await readFromStream<StreamEvent>(
+          eventStore,
+          streamName,
+          {
+            fromRevision: streamPositionFromSnapshot,
+            maxCount: position - (streamPositionFromSnapshot || 0n),
+          }
+        );
+
+        if (isFailureOf(eventsAfterSnapshotResult, 'STREAM_NOT_FOUND')) return;
+
+        eventsAfterSnapshot = eventsAfterSnapshotResult.value;
+      }
 
       const currentState = aggregateStream([...eventsAfterSnapshot, event]);
 
       const snapshot = doSnapshot(currentState, streamName, event);
 
       await appendToStream<SnapshotStreamEvent>(
-        client,
+        eventStore,
         buildSnapshotStreamName(streamName),
         snapshot
       );

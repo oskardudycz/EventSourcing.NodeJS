@@ -4,13 +4,14 @@ import { NO_SHAPSHOT_FOUND, SnapshotEvent } from '..';
 
 import { Event } from '../../../events';
 import { readFromStream, STREAM_NOT_FOUND } from '../../reading';
+import { Success, Failure } from '../../../../core/primitives/result';
 
 export type ReadFromStreamAndSnapshotsResult<
   StreamEvent extends Event = Event
-> = {
+> = Success<{
   events: StreamEvent[];
   lastSnapshotVersion?: bigint;
-};
+}>;
 
 export async function readFromSnapshotAndStream<
   StreamEvent extends Event,
@@ -24,7 +25,7 @@ export async function readFromSnapshotAndStream<
   options?: ReadStreamOptions
 ): Promise<
   | ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>
-  | STREAM_NOT_FOUND
+  | Failure<STREAM_NOT_FOUND>
 > {
   const snapshot = await getLastSnapshot(streamName);
 
