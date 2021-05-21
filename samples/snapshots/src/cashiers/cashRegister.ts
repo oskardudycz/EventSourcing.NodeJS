@@ -1,6 +1,6 @@
 import { ShiftStarted } from './startingShift';
 import { PlacedAtWorkStation } from './placeAtWorkStation';
-import { CashRegisterSnapshotted } from './snapshotting';
+import { CashRegisterSnapshoted } from './snapshot';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -29,7 +29,7 @@ export type CashRegister = Readonly<{
 export type CashRegisterEvent =
   | PlacedAtWorkStation
   | ShiftStarted
-  | CashRegisterSnapshotted;
+  | CashRegisterSnapshoted;
 
 export function when(
   currentState: Partial<CashRegister>,
@@ -47,7 +47,7 @@ export function when(
         ...currentState,
         currentCashierId: event.data.cashierId,
       };
-    case 'cash-register-snapshotted':
+    case 'cash-register-snapshoted':
       return {
         ...event.data,
       };

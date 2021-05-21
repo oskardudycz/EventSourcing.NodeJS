@@ -1,13 +1,13 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { STREAM_NOT_FOUND } from '../core/eventStore/reading';
+import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
 import {
   readSnapshotFromSeparateStream,
-  readFromStreamAndSnapshot,
+  readFromSnapshotAndStream,
   ReadFromStreamAndSnapshotsResult,
-} from '../core/eventStore/snapshotting';
-import { addSnapshotPrefix } from '../core/eventStore/snapshotting/snapshotToStream';
-import { CashRegisterEvent } from './cashRegister';
-import { CashRegisterSnapshotted } from './snapshotting';
+} from '../../core/eventStore/snapshotting';
+import { addSnapshotPrefix } from '../../core/eventStore/snapshotting';
+import { CashRegisterEvent } from '../cashRegister';
+import { CashRegisterSnapshoted } from '../snapshot';
 
 export function getCashRegisterEvents(
   eventStore: EventStoreDBClient,
@@ -16,13 +16,13 @@ export function getCashRegisterEvents(
   ReadFromStreamAndSnapshotsResult<CashRegisterEvent> | STREAM_NOT_FOUND
 > {
   const getSnapshot = (streamName: string) =>
-    readSnapshotFromSeparateStream<CashRegisterSnapshotted>(
+    readSnapshotFromSeparateStream<CashRegisterSnapshoted>(
       eventStore,
       streamName,
       addSnapshotPrefix
     );
 
-  return readFromStreamAndSnapshot<CashRegisterEvent, CashRegisterSnapshotted>(
+  return readFromSnapshotAndStream<CashRegisterEvent, CashRegisterSnapshoted>(
     eventStore,
     streamName,
     getSnapshot

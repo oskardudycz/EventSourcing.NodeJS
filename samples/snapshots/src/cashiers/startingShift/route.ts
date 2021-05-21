@@ -1,59 +1,53 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { StartShift } from './startShift';
-import { getEventStore } from '../../core/eventStore';
-import { getCashRegisterStreamName } from '../cashRegister';
 import { handleStartShift } from './handleStartShift';
-import { getCashRegisterEvents } from '../getCashRegisterEvents';
-import { saveCashRegister } from '../saveCashRegister';
+import { cashierRouter as router } from '..';
+import { updateCashRegister } from '../processCashRegister';
+import { getCashRegisterStreamName } from '../cashRegister';
 
-const router = Router();
 router.post(
   '/cash-registers/:id/shift',
   async function (request: Request, response: Response) {
     const command = mapRequestToCommand(request);
 
-    const eventStore = getEventStore();
-
-    const streamName = getCashRegisterStreamName(command.data.cashRegisterId);
-
-    const currentEvents = await getCashRegisterEvents(eventStore, streamName);
-
-    if (currentEvents === 'STREAM_NOT_FOUND') {
+    if (command == 'CASH_REGISTER_NOT_FOUND') {
       response.sendStatus(404);
       return;
     }
 
-    const { events, lastSnapshotVersion } = currentEvents;
-
-    const newEvent = handleStartShift(events, command);
-
-    if (newEvent === 'SHIFT_ALREADY_STARTED') {
-      response.sendStatus(409);
+    if (command == 'MISSING_CASHIER_ID') {
+      response.sendStatus(400);
       return;
     }
 
-    await saveCashRegister(
-      eventStore,
+    const streamName = getCashRegisterStreamName(command.data.cashRegisterId);
+
+    const result = await updateCashRegister(
       streamName,
-      events,
-      lastSnapshotVersion,
-      newEvent
+      command,
+      handleStartShift
     );
+
+    if (result == 'STREAM_NOT_FOUND') response.sendStatus(404);
+
+    if (result == 'SHIFT_ALREADY_STARTED') response.sendStatus(409);
 
     response.sendStatus(200);
   }
 );
 
-function mapRequestToCommand(request: Request): StartShift {
+function mapRequestToCommand(
+  request: Request
+): StartShift | 'CASH_REGISTER_NOT_FOUND' | 'MISSING_CASHIER_ID' {
   if (!request.query.id || !(typeof request.query.id === 'string')) {
-    throw 'Missing cash register id';
+    return 'CASH_REGISTER_NOT_FOUND';
   }
 
   if (
     !request.body.cashierId ||
     !(typeof request.body.cashierId === 'string')
   ) {
-    throw 'Missing cashier id';
+    return 'MISSING_CASHIER_ID';
   }
 
   return {
