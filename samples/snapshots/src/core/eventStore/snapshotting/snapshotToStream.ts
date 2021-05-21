@@ -5,13 +5,6 @@ import { appendToStream } from '../appending/appendToStream';
 import { readFromStream } from '../reading/readFromStream';
 import { subscribeToStream } from '../subscribing/subscribeToStream';
 
-export const addSnapshotPrefix = function <
-  Aggregate,
-  StreamEvent extends Event
->(streamName: string): string {
-  return `snapshot-${streamName}`;
-};
-
 export type SnapshotOptions<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
   StreamEvent extends Event = Event,

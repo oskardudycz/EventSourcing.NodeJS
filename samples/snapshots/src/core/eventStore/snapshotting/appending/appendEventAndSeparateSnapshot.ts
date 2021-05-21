@@ -27,7 +27,7 @@ export type SnapshotOptions<
   ) => SnapshotStreamEvent;
 };
 
-export async function appendEventAndSnapshot<
+export async function appendEventAndSeparateSnapshot<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
   StreamEvent extends Event = Event,
   SnapshotStreamEvent extends SnapshotEvent = SnapshotEvent

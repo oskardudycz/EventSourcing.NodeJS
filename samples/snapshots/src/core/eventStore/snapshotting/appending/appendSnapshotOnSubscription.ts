@@ -1,10 +1,10 @@
 import { EventStoreDBClient, StreamSubscription } from '@eventstore/db-client';
 import {
   NO_SHAPSHOT_FOUND,
-  readFromStreamAndSnapshot,
+  readFromSnapshotAndStream,
   SnapshotEvent,
 } from '..';
-import { SnapshotOptions } from './appendEventAndSnapshot';
+import { SnapshotOptions } from './appendEventAndSeparateSnapshot';
 import { Event } from '../../../events';
 import { subscribeToStream } from '../../subscribing/subscribeToStream';
 import { aggregateStream } from '../../../streams';
@@ -27,7 +27,7 @@ export async function appendSnapshotOnSubscription<
 ): Promise<StreamSubscription | 'STREAM_NOT_FOUND'> {
   const { shouldDoSnapshot, buildSnapshot, appendSnapshot } = options;
 
-  const currentEvents = await readFromStreamAndSnapshot<
+  const currentEvents = await readFromSnapshotAndStream<
     StreamEvent,
     SnapshotStreamEvent
   >(eventStore, streamName, getLastSnapshot);
