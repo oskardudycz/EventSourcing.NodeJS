@@ -1,12 +1,12 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { Event } from '../../../events';
 import { SnapshotEvent } from '..';
-import { appendToStream } from '../../appending/appendToStream';
+import { appendToStream } from '../../eventStoreDB/appending/appendToStream';
 
 export type SnapshotOptions<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
   StreamEvent extends Event = Event,
-  SnapshotStreamEvent extends SnapshotEvent = SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
 > = {
   appendSnapshot: (
     snapshot: SnapshotStreamEvent,
@@ -30,7 +30,7 @@ export type SnapshotOptions<
 export async function appendEventAndSeparateSnapshot<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
   StreamEvent extends Event = Event,
-  SnapshotStreamEvent extends SnapshotEvent = SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
 >(
   client: EventStoreDBClient,
   streamName: string,

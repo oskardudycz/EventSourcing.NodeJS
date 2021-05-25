@@ -5,7 +5,7 @@ import {
   jsonEvent,
 } from '@eventstore/db-client';
 
-import { Event } from '../../events';
+import { Event } from '../../../events';
 
 export async function appendToStream<StreamEvent extends Event>(
   client: EventStoreDBClient,

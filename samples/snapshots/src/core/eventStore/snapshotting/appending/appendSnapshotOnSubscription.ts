@@ -1,21 +1,17 @@
 import { EventStoreDBClient, StreamSubscription } from '@eventstore/db-client';
-import {
-  NO_SHAPSHOT_FOUND,
-  readFromSnapshotAndStream,
-  SnapshotEvent,
-} from '..';
+import { NO_SHAPSHOT_FOUND, SnapshotEvent } from '..';
 import { SnapshotOptions } from './appendEventAndSeparateSnapshot';
 import { Event } from '../../../events';
 import { subscribeToStream } from '../../subscribing/subscribeToStream';
 import { aggregateStream } from '../../../streams';
+import { readEventsFromSnapshot } from '../../eventStoreDB/reading/readFromSnapshotAndStream';
 
 export async function appendSnapshotOnSubscription<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
   StreamEvent extends Event = Event,
-  SnapshotStreamEvent extends SnapshotEvent = SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
 >(
   eventStore: EventStoreDBClient,
-  streamName: string,
   getLastSnapshot: (
     streamName: string
   ) => Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND>,
@@ -23,14 +19,15 @@ export async function appendSnapshotOnSubscription<
     currentState: Partial<Aggregate>,
     event: StreamEvent | SnapshotEvent
   ) => Aggregate,
+  streamName: string,
   options: SnapshotOptions<Aggregate, StreamEvent, SnapshotStreamEvent>
 ): Promise<StreamSubscription | 'STREAM_NOT_FOUND'> {
   const { shouldDoSnapshot, buildSnapshot, appendSnapshot } = options;
 
-  const currentEvents = await readFromSnapshotAndStream<
+  const currentEvents = await readEventsFromSnapshot<
     StreamEvent,
     SnapshotStreamEvent
-  >(eventStore, streamName, getLastSnapshot);
+  >(eventStore, getLastSnapshot, streamName);
 
   // check if you can subscribe to stream when it does not exist
   // category stream

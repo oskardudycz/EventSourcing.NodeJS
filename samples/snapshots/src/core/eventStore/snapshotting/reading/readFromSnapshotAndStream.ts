@@ -1,9 +1,6 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { ReadStreamOptions } from '@eventstore/db-client/dist/streams';
 import { NO_SHAPSHOT_FOUND, SnapshotEvent } from '..';
-
 import { Event } from '../../../events';
-import { readFromStream, STREAM_NOT_FOUND } from '../../reading';
+import { STREAM_NOT_FOUND } from '../../reading';
 
 export type ReadFromStreamAndSnapshotsResult<
   StreamEvent extends Event = Event
@@ -16,12 +13,14 @@ export async function readFromSnapshotAndStream<
   StreamEvent extends Event,
   SnapshotStreamEvent extends SnapshotEvent
 >(
-  eventStore: EventStoreDBClient,
-  streamName: string,
   getLastSnapshot: (
     streamName: string
   ) => Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND>,
-  options?: ReadStreamOptions
+  readFromStream: (
+    streamName: string,
+    fromVersion?: bigint | undefined
+  ) => Promise<StreamEvent[] | STREAM_NOT_FOUND>,
+  streamName: string
 ): Promise<
   | ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>
   | STREAM_NOT_FOUND
@@ -36,10 +35,7 @@ export async function readFromSnapshotAndStream<
     snapshotEvent = snapshot;
   }
 
-  const events = await readFromStream<StreamEvent>(eventStore, streamName, {
-    ...options,
-    fromRevision: lastSnapshotVersion,
-  });
+  const events = await readFromStream(streamName, lastSnapshotVersion);
 
   if (events === 'STREAM_NOT_FOUND') {
     return 'STREAM_NOT_FOUND';
