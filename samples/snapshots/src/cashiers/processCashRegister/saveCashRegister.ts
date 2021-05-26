@@ -10,7 +10,7 @@ export function saveCashRegister(
   streamName: string,
   newEvent: CashRegisterEvent,
   currentEvents: CashRegisterEvent[] = [],
-  lastSnapshotVersion: bigint | undefined = undefined
+  lastSnapshotVersion?: bigint | undefined
 ): Promise<boolean> {
   const currentState = aggregateStream<CashRegister, CashRegisterEvent>(
     [...currentEvents, newEvent],
