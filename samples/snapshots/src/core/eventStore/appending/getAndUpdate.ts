@@ -7,7 +7,7 @@ export async function getAndUpdate<
   StreamEvent extends Event,
   Error = never
 >(
-  getEvents: (
+  getSnapshotAndEvents: (
     streamName: string
   ) => Promise<
     ReadFromStreamAndSnapshotsResult<StreamEvent> | STREAM_NOT_FOUND
@@ -25,7 +25,7 @@ export async function getAndUpdate<
     command: Command
   ) => StreamEvent | Error
 ): Promise<boolean | STREAM_NOT_FOUND | Error | never> {
-  const stream = await getEvents(streamName);
+  const stream = await getSnapshotAndEvents(streamName);
 
   if (stream === 'STREAM_NOT_FOUND') {
     return 'STREAM_NOT_FOUND';
@@ -39,5 +39,5 @@ export async function getAndUpdate<
     return newEvent;
   }
 
-  return await store(streamName, newEvent, events, lastSnapshotVersion);
+  return store(streamName, newEvent, events, lastSnapshotVersion);
 }

@@ -1,6 +1,6 @@
 import { getEventStore } from '../../core/eventStore';
 import { CashRegisterEvent } from '../cashRegister';
-import { saveCashRegister } from '../saveCashRegister';
+import { saveCashRegister } from './saveCashRegister';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
 import { add } from '../../core/eventStore/eventStoreDB/appending';
 

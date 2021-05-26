@@ -13,5 +13,5 @@ export async function add<Command, StreamEvent extends Event, Error = never>(
     return newEvent;
   }
 
-  return await store(streamName, newEvent);
+  return store(streamName, newEvent);
 }
