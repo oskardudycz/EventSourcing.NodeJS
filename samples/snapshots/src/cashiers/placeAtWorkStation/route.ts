@@ -1,4 +1,4 @@
-import { Request, Response, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import { addCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
 import { PlaceAtWorkStation } from '.';
@@ -8,23 +8,29 @@ import { v4 as uuid } from 'uuid';
 export const route = (router: Router) =>
   router.post(
     '/cash-registers/',
-    async function (request: Request, response: Response) {
-      const command = mapRequestToCommand(request);
+    async function (request: Request, response: Response, next: NextFunction) {
+      try {
+        const command = mapRequestToCommand(request);
 
-      if (command == 'MISSING_WORKSTATION') {
-        response.sendStatus(400);
-        return;
+        if (command == 'MISSING_WORKSTATION') {
+          response.sendStatus(400);
+          return;
+        }
+
+        const streamName = getCashRegisterStreamName(
+          command.data.cashRegisterId
+        );
+
+        await addCashRegister(streamName, command, handlePlaceAtWorkStation);
+
+        response.setHeader(
+          'Location',
+          `/cash-registers/${command.data.cashRegisterId}`
+        );
+        response.sendStatus(201);
+      } catch (error) {
+        next(error);
       }
-
-      const streamName = getCashRegisterStreamName(command.data.cashRegisterId);
-
-      await addCashRegister(streamName, command, handlePlaceAtWorkStation);
-
-      response.setHeader(
-        'Location',
-        `/cash-registers/${command.data.cashRegisterId}`
-      );
-      response.sendStatus(201);
     }
   );
 
