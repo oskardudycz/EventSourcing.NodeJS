@@ -1,10 +1,11 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
+import { config } from '../../../config';
 
 export function getEventStore(): EventStoreDBClient {
-  if (!process.env.ESDB_CONNECTION_STRING) {
+  if (!config.eventStoreDB.connectionString) {
     throw 'EventStoreDB conenction string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
   }
   return EventStoreDBClient.connectionString(
-    process.env.ESDB_CONNECTION_STRING
+    config.eventStoreDB.connectionString
   );
 }

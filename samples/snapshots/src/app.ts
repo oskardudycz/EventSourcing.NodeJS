@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import { cashRegisterRouter } from './cashiers';
+import { handleErrors } from './core/middlewares';
 
 const app: Application = express();
 
@@ -11,5 +12,7 @@ app.use(
 );
 
 app.use(cashRegisterRouter);
+
+app.use(handleErrors);
 
 export default app;
