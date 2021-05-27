@@ -1267,6 +1267,8 @@ jobs:
   - [ ] Add samples of Subscriptions and projections
 - [ ] Configuration
   - [x] Initial ExpressJS boilerplate configuration [PR](https://github.com/oskardudycz/EventSourcing.NodeJS/pull/1)
+  - [ ] Add ExpressJS JSON and URL encode middlewares
+  - [ ] Add configuration with Convict and DotEnv
   - [x] Add VSCode debugging configuration [PR](https://github.com/oskardudycz/EventSourcing.NodeJS/pull/2)
   - [x] Add Jest unit test configuration with VSCode debug settings [PR](https://github.com/oskardudycz/EventSourcing.NodeJS/pull/3)
   - [x] Continuous Integration - Run tests with Github Actions [PR](https://github.com/oskardudycz/EventSourcing.NodeJS/pull/4)
