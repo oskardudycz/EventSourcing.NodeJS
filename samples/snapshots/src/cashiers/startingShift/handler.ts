@@ -1,8 +1,26 @@
-import { StartShift, ShiftStarted } from '.';
+import { Command } from '../../core/commands';
+import { Event } from '../../core/events';
 import { aggregateStream } from '../../core/streams';
 import { CashRegister, CashRegisterEvent, when } from '../cashRegister';
 
 export type ShiftAlreadyStarted = 'SHIFT_ALREADY_STARTED';
+
+export type StartShift = Command<
+  'start-shift',
+  {
+    cashRegisterId: string;
+    cashierId: string;
+  }
+>;
+
+export type ShiftStarted = Event<
+  'shift-started',
+  {
+    cashRegisterId: string;
+    cashierId: string;
+    startedAt: Date;
+  }
+>;
 
 export function handleStartShift(
   events: CashRegisterEvent[],
