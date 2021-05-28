@@ -1,4 +1,4 @@
-name: Node.js Continuous Integration and Continuous Delivery
+name: Samples - Simple
 
 on:
   # run it on push to the default repository branch

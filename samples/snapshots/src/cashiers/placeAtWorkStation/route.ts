@@ -27,7 +27,7 @@ export const route = (router: Router) =>
           'Location',
           `/cash-registers/${command.data.cashRegisterId}`
         );
-        response.sendStatus(201);
+        response.status(201).json({ id: command.data.cashRegisterId });
       } catch (error) {
         next(error);
       }
