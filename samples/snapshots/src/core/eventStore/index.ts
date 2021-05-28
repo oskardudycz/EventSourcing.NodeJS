@@ -5,6 +5,8 @@ export function getEventStore(): EventStoreDBClient {
   if (!config.eventStoreDB.connectionString) {
     throw 'EventStoreDB conenction string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
   }
+  console.log(config.eventStoreDB.connectionString);
+
   return EventStoreDBClient.connectionString(
     config.eventStoreDB.connectionString
   );

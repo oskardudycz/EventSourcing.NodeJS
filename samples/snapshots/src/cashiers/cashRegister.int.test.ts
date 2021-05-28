@@ -6,7 +6,7 @@ async function delay(ms: number) {
 }
 
 describe('cashier', () => {
-  it('should store snapshot in the same process', async () => {
+  it.skip('should store snapshot in the same process', async () => {
     const client = EventStoreDBClient.connectionString(
       'esdb://127.0.0.1:2113?tls=false'
     );

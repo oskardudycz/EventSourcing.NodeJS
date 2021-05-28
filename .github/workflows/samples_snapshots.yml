@@ -1,4 +1,4 @@
-name: Samples - Foundations
+name: Samples - Snapshots
 
 on:
   # run it on push to the default repository branch
@@ -10,7 +10,7 @@ on:
 defaults:
   run:
     # relative path to the place where source code (with package.json) is located
-    working-directory: samples/foundations
+    working-directory: samples/snapshots
 
 jobs:
   build-and-test-code:
@@ -22,7 +22,7 @@ jobs:
       # define the test matrix
       matrix:
         # selected operation systems to run CI
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [ubuntu-latest] #, windows-latest, macos-latest]
         # selected node version to run CI
         node-version: [14.x, 15.x]
 

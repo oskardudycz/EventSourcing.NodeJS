@@ -8,6 +8,6 @@ export function handleErrors(
 ) {
   return res.status(500).json({
     status: 'error',
-    message: err.message,
+    message: err,
   });
 }
