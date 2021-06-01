@@ -31,7 +31,7 @@ export async function readFromSnapshotAndStream<
   let snapshotEvent: SnapshotStreamEvent | undefined = undefined;
 
   if (snapshot !== 'NO_SHAPSHOT_FOUND') {
-    lastSnapshotVersion = snapshot.metadata.streamVersion;
+    lastSnapshotVersion = BigInt(snapshot.metadata.streamVersion);
     snapshotEvent = snapshot;
   }
 

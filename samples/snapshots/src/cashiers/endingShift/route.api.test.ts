@@ -40,7 +40,7 @@ describe('DELETE /cash-registers/:id/shifts', () => {
           .expect('Content-Type', /plain/);
       });
 
-      it.only('should fail to end shift if shift was already ended', async () => {
+      it('should fail to end shift if shift was already ended', async () => {
         await request(app)
           .delete(`/cash-registers/${existingCashRegisterId}/shifts`)
           .expect(200);

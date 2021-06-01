@@ -16,7 +16,7 @@ describe('POST /cash-register/', () => {
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    //await esdbContainer.stop();
   });
 
   it('should place cash register at work station', async () => {

@@ -8,9 +8,14 @@ export async function appendSnapshotToStreamWithPrefix<
 >(
   eventStore: EventStoreDBClient,
   snapshot: SnapshotStreamEvent,
-  streamName: string
+  streamName: string,
+  lastSnapshotVersion: bigint | undefined
 ): Promise<boolean> {
   const snapshotStreamName = addSnapshotPrefix(streamName);
+
+  if (!lastSnapshotVersion) {
+    eventStore.setStreamMetadata(snapshotStreamName, { maxCount: 1 });
+  }
 
   const result = await appendToStream(eventStore, snapshotStreamName, snapshot);
 
