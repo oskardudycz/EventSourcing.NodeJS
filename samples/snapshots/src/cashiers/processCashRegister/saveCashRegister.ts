@@ -2,7 +2,12 @@ import { EventStoreDBClient } from '@eventstore/db-client';
 import { appendSnapshotToStreamWithPrefix } from '../../core/eventStore/snapshotting';
 import { appendEventAndSeparateSnapshot } from '../../core/eventStore/snapshotting/appending/appendEventAndSeparateSnapshot';
 import { aggregateStream } from '../../core/streams';
-import { CashRegister, CashRegisterEvent, when } from '../cashRegister';
+import {
+  CashRegister,
+  CashRegisterEvent,
+  isCashier,
+  when,
+} from '../cashRegister';
 import { CashRegisterSnapshoted } from '../snapshot';
 
 export function saveCashRegister(
@@ -14,7 +19,8 @@ export function saveCashRegister(
 ): Promise<boolean> {
   const currentState = aggregateStream<CashRegister, CashRegisterEvent>(
     [...currentEvents, newEvent],
-    when
+    when,
+    isCashier
   );
 
   return appendEventAndSeparateSnapshot(
@@ -25,7 +31,7 @@ export function saveCashRegister(
     newEvent,
     {
       shouldDoSnapshot: (event: CashRegisterEvent) => {
-        return event.type === 'shift-started';
+        return event.type === 'shift-ended';
       },
       buildSnapshot: (
         currentState: CashRegister,

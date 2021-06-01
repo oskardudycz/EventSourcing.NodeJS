@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import { StartShift, handleStartShift } from './handler';
+import { handleEndShift, EndShift } from './handler';
 import { updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
 import { isCommand } from '../../core/commands';
 
 export const route = (router: Router) =>
-  router.post(
+  router.delete(
     '/cash-registers/:id/shifts',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
@@ -23,14 +23,14 @@ export const route = (router: Router) =>
         const result = await updateCashRegister(
           streamName,
           command,
-          handleStartShift
+          handleEndShift
         );
 
         switch (result) {
           case 'STREAM_NOT_FOUND':
             response.sendStatus(404);
             break;
-          case 'SHIFT_ALREADY_STARTED':
+          case 'SHIFT_NOT_STARTED':
             response.sendStatus(409);
             break;
           default:
@@ -45,20 +45,15 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): StartShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
-  if (typeof request.params.id !== 'string') {
+): EndShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
+  if (!request.params.id || !(typeof request.params.id === 'string')) {
     return 'MISSING_CASH_REGISTER_ID';
   }
 
-  if (typeof request.body.cashierId !== 'string') {
-    return 'MISSING_CASHIER_ID';
-  }
-
   return {
-    type: 'start-shift',
+    type: 'end-shift',
     data: {
       cashRegisterId: request.params.id,
-      cashierId: request.body.cashierId,
     },
   };
 }

@@ -1,12 +1,13 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import { StartShift, handleStartShift } from './handler';
+import { handleRegisterTransaction, RegisterTransaction } from './handler';
 import { updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
 import { isCommand } from '../../core/commands';
+import isDecimal from 'validator/lib/isDecimal';
 
 export const route = (router: Router) =>
   router.post(
-    '/cash-registers/:id/shifts',
+    '/cash-registers/:id/transactions',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -23,14 +24,14 @@ export const route = (router: Router) =>
         const result = await updateCashRegister(
           streamName,
           command,
-          handleStartShift
+          handleRegisterTransaction
         );
 
         switch (result) {
           case 'STREAM_NOT_FOUND':
             response.sendStatus(404);
             break;
-          case 'SHIFT_ALREADY_STARTED':
+          case 'SHIFT_NOT_STARTED':
             response.sendStatus(409);
             break;
           default:
@@ -45,20 +46,20 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): StartShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
-  if (typeof request.params.id !== 'string') {
+): RegisterTransaction | 'MISSING_CASH_REGISTER_ID' | 'MISSING_AMOUNT' {
+  if (!request.params.id || !(typeof request.params.id === 'string')) {
     return 'MISSING_CASH_REGISTER_ID';
   }
 
-  if (typeof request.body.cashierId !== 'string') {
-    return 'MISSING_CASHIER_ID';
+  if (!request.body.amount || !isDecimal(request.body.amount)) {
+    return 'MISSING_AMOUNT';
   }
 
   return {
-    type: 'start-shift',
+    type: 'register-transaction',
     data: {
       cashRegisterId: request.params.id,
-      cashierId: request.body.cashierId,
+      amount: request.body.amount,
     },
   };
 }

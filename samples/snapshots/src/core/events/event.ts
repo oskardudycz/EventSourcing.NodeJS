@@ -13,5 +13,5 @@ export function isEvent<
   EventData extends Record<string, unknown> = Record<string, unknown>,
   EventMetadata extends Record<string, unknown> = Record<string, unknown>
 >(event: any): event is Event<EventType, EventData, EventMetadata> {
-  return typeof event.type !== undefined && typeof event.data !== undefined;
+  return typeof event.type !== 'undefined' && typeof event.data !== 'undefined';
 }

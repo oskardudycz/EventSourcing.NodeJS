@@ -6,8 +6,8 @@ export function handleErrors(
   res: Response,
   _next: NextFunction
 ) {
-  return res.status(500).json({
+  return res.status(err?.status ?? 500).json({
     status: 'error',
-    message: err,
+    message: err?.message,
   });
 }

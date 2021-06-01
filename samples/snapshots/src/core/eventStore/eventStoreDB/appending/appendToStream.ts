@@ -13,7 +13,7 @@ export async function appendToStream<StreamEvent extends Event>(
   ...events: StreamEvent[]
 ): Promise<AppendResult> {
   const jsonEvents: EventData[] = events.map((event) =>
-    jsonEvent({ type: event.type, data: event.data })
+    jsonEvent({ type: event.type, data: event.data, metadata: event.metadata })
   );
 
   return client.appendToStream(streamName, jsonEvents);

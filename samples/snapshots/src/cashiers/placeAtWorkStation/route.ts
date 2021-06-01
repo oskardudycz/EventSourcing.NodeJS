@@ -4,6 +4,8 @@ import { getCashRegisterStreamName } from '../cashRegister';
 import { PlaceAtWorkStation } from '.';
 import { handlePlaceAtWorkStation } from './handler';
 import { v4 as uuid } from 'uuid';
+import { isCommand } from '../../core/commands';
+import { sendCreated } from '../../core/responses';
 
 export const route = (router: Router) =>
   router.post(
@@ -12,8 +14,8 @@ export const route = (router: Router) =>
       try {
         const command = mapRequestToCommand(request);
 
-        if (command == 'MISSING_WORKSTATION') {
-          response.sendStatus(400);
+        if (!isCommand(command)) {
+          next({ status: 400, message: command });
           return;
         }
 
@@ -23,11 +25,7 @@ export const route = (router: Router) =>
 
         await addCashRegister(streamName, command, handlePlaceAtWorkStation);
 
-        response.setHeader(
-          'Location',
-          `/cash-registers/${command.data.cashRegisterId}`
-        );
-        response.status(201).json({ id: command.data.cashRegisterId });
+        sendCreated(response, command.data.cashRegisterId);
       } catch (error) {
         next(error);
       }
@@ -37,10 +35,7 @@ export const route = (router: Router) =>
 function mapRequestToCommand(
   request: Request
 ): PlaceAtWorkStation | 'MISSING_WORKSTATION' {
-  if (
-    !request.body.workstation ||
-    !(typeof request.body.workstation === 'string')
-  ) {
+  if (typeof request.body.workstation !== 'string') {
     return 'MISSING_WORKSTATION';
   }
 

@@ -22,9 +22,7 @@ export async function readFromStream<StreamEvent extends Event>(
   }
 
   return events
-    .filter(
-      (resolvedEvent) => !resolvedEvent.event && !resolvedEvent.commitPosition
-    )
+    .filter((resolvedEvent) => !!resolvedEvent.event)
     .map((resolvedEvent) => {
       return <StreamEvent>{
         type: resolvedEvent.event!.type,
