@@ -46,22 +46,20 @@ export async function appendSnapshotOnSubscription<
     eventStore,
     streamName,
     async (event: StreamEvent, position: bigint) => {
-      if (
-        !shouldDoSnapshot(
-          event,
-          lastSnapshotVersion,
-          position,
-          streamName,
-          currentState
-        )
-      ) {
+      if (!shouldDoSnapshot(event, position, streamName, currentState)) {
         events = [...events, event];
         return;
       }
 
-      const snapshot = buildSnapshot(currentState, position, streamName, event);
+      const snapshot = buildSnapshot(
+        currentState,
+        position,
+        lastSnapshotVersion,
+        streamName,
+        event
+      );
 
-      await appendSnapshot(snapshot, streamName);
+      await appendSnapshot(snapshot, streamName, lastSnapshotVersion);
 
       events = [snapshot];
     },

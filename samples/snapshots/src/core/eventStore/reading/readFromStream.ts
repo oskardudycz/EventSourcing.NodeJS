@@ -27,6 +27,7 @@ export async function readFromStream<StreamEvent extends Event>(
       return <StreamEvent>{
         type: resolvedEvent.event!.type,
         data: resolvedEvent.event!.data,
+        metadata: resolvedEvent.event?.metadata,
       };
     });
 }

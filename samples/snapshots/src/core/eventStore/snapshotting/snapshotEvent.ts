@@ -1,6 +1,6 @@
 import { Event } from '../../events';
 export type SnapshotMetadata = {
-  streamVersion: bigint;
+  streamVersion: string;
 };
 
 export type SnapshotEvent<

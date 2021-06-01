@@ -132,7 +132,7 @@ export async function snapshotOnSubscription<
 
       const streamPositionFromSnapshot =
         result !== 'STREAM_NOT_FOUND'
-          ? result[0].metadata.streamVersion
+          ? BigInt(result[0].metadata.streamVersion)
           : undefined;
 
       const eventsAfterSnapshot =

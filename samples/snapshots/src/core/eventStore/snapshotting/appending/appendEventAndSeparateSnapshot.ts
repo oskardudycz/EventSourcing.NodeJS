@@ -10,11 +10,11 @@ export type SnapshotOptions<
 > = {
   appendSnapshot: (
     snapshot: SnapshotStreamEvent,
-    streamName: string
+    streamName: string,
+    lastSnapshotVersion: bigint | undefined
   ) => Promise<boolean>;
   shouldDoSnapshot: (
     event: StreamEvent,
-    lastSnapshotVersion: bigint | undefined,
     currentStreamVersion: bigint,
     streamName: string,
     currentState: Aggregate
@@ -22,6 +22,7 @@ export type SnapshotOptions<
   buildSnapshot: (
     currentState: Aggregate,
     currentStreamVersion: bigint,
+    lastSnapshotVersion: bigint | undefined,
     streamName: string,
     event: StreamEvent
   ) => SnapshotStreamEvent;
@@ -41,33 +42,28 @@ export async function appendEventAndSeparateSnapshot<
 ): Promise<boolean> {
   const {
     success: eventWasAdded,
-    position: currentStreamPosition,
+    nextExpectedRevision: currentStreamVersion,
   } = await appendToStream(client, streamName, event);
 
-  if (!eventWasAdded || !currentStreamPosition) {
+  if (!eventWasAdded || !currentStreamVersion) {
     return false;
   }
 
   const { shouldDoSnapshot, buildSnapshot, appendSnapshot } = options;
 
   if (
-    !shouldDoSnapshot(
-      event,
-      lastSnapshotVersion,
-      currentStreamPosition.commit,
-      streamName,
-      currentState
-    )
+    !shouldDoSnapshot(event, currentStreamVersion, streamName, currentState)
   ) {
     return true;
   }
 
   const snapshot = buildSnapshot(
     currentState,
-    currentStreamPosition.commit,
+    currentStreamVersion,
+    lastSnapshotVersion,
     streamName,
     event
   );
 
-  return appendSnapshot(snapshot, streamName);
+  return appendSnapshot(snapshot, streamName, lastSnapshotVersion);
 }

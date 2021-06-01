@@ -40,13 +40,20 @@ export function saveCashRegister(
         return {
           type: 'cash-register-snapshoted',
           data: currentState,
-          metadata: { streamVersion },
+          metadata: { streamVersion: streamVersion.toString() },
         };
       },
       appendSnapshot: async (
         snapshot: CashRegisterSnapshoted,
-        streamName: string
-      ) => appendSnapshotToStreamWithPrefix(eventStore, snapshot, streamName),
+        streamName: string,
+        lastSnapshotVersion: bigint | undefined
+      ) =>
+        appendSnapshotToStreamWithPrefix(
+          eventStore,
+          snapshot,
+          streamName,
+          lastSnapshotVersion
+        ),
     }
   );
 }
