@@ -1,5 +1,7 @@
-import { ShiftStarted } from './startingShift';
 import { PlacedAtWorkStation } from './placeAtWorkStation';
+import { ShiftStarted } from './startingShift';
+import { TransactionRegistered } from './registeringTransaction';
+import { ShiftEnded } from './endingShift';
 import { CashRegisterSnapshoted } from './snapshot';
 
 /**
@@ -29,6 +31,8 @@ export type CashRegister = Readonly<{
 export type CashRegisterEvent =
   | PlacedAtWorkStation
   | ShiftStarted
+  | TransactionRegistered
+  | ShiftEnded
   | CashRegisterSnapshoted;
 
 export function when(
@@ -47,6 +51,16 @@ export function when(
         ...currentState,
         currentCashierId: event.data.cashierId,
       };
+    case 'transaction-registered':
+      return {
+        ...currentState,
+        float: (currentState.float ?? 0) + event.data.amount,
+      };
+    case 'shift-ended':
+      return {
+        ...currentState,
+        currentCashierId: undefined,
+      };
     case 'cash-register-snapshoted':
       return {
         ...event.data,
@@ -54,6 +68,16 @@ export function when(
     default:
       throw 'Unexpected event type';
   }
+}
+
+export function isCashier(cashRegister: any): cashRegister is CashRegister {
+  return (
+    typeof cashRegister.id === 'string' &&
+    typeof cashRegister.float === 'number' &&
+    typeof cashRegister.workstation === 'string' &&
+    (typeof cashRegister.currentCashierId === 'undefined' ||
+      typeof cashRegister.currentCashierId === 'string')
+  );
 }
 
 export function getCashRegisterStreamName(cashRegisterId: string) {

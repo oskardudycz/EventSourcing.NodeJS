@@ -8,45 +8,42 @@ import {
   when,
 } from '../cashRegister';
 
-export type ShiftAlreadyStarted = 'SHIFT_ALREADY_STARTED';
+export type ShiftNotStarted = 'SHIFT_NOT_STARTED';
 
-export type StartShift = Command<
-  'start-shift',
+export type EndShift = Command<
+  'end-shift',
   {
     cashRegisterId: string;
-    cashierId: string;
   }
 >;
 
-export type ShiftStarted = Event<
-  'shift-started',
+export type ShiftEnded = Event<
+  'shift-ended',
   {
     cashRegisterId: string;
-    cashierId: string;
-    startedAt: Date;
+    finishedAt: Date;
   }
 >;
 
-export function handleStartShift(
+export function handleEndShift(
   events: CashRegisterEvent[],
-  command: StartShift
-): ShiftStarted | ShiftAlreadyStarted {
+  _: EndShift
+): ShiftEnded | ShiftNotStarted {
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
     isCashier
   );
 
-  if (cashRegister.currentCashierId !== undefined) {
-    return 'SHIFT_ALREADY_STARTED';
+  if (cashRegister.currentCashierId === undefined) {
+    return 'SHIFT_NOT_STARTED';
   }
 
   return {
-    type: 'shift-started',
+    type: 'shift-ended',
     data: {
       cashRegisterId: cashRegister.id,
-      cashierId: command.data.cashierId,
-      startedAt: new Date(),
+      finishedAt: new Date(),
     },
   };
 }

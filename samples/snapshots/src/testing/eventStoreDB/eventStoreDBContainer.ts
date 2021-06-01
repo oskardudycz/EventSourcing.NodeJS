@@ -1,3 +1,4 @@
+import { EventStoreDBClient } from '@eventstore/db-client';
 import {
   GenericContainer,
   StartedTestContainer,
@@ -65,5 +66,9 @@ export class StartedEventStoreDBContainer {
     return `esdb://${this.container.getHost()}:${this.container.getMappedPort(
       2113
     )}?tls=false`;
+  }
+
+  getClient(): EventStoreDBClient {
+    return EventStoreDBClient.connectionString(this.getConnectionString());
   }
 }

@@ -5,6 +5,7 @@ import {
   StartedEventStoreDBContainer,
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
 import { config } from '../../../config';
+import isUUID from 'validator/lib/isUUID';
 
 describe('POST /cash-register/', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -18,12 +19,26 @@ describe('POST /cash-register/', () => {
     await esdbContainer.stop();
   });
 
-  it('should place cash register at work station', () => {
-    return request(app)
+  it('should place cash register at work station', async () => {
+    return await request(app)
       .post('/cash-registers/')
       .send({ workstation: 'WS#1' })
-      .set('Accept', 'application/json')
       .expect(201)
+      .expect('Content-Type', /json/)
+      .expect(async (res) => {
+        expect(res.body).toHaveProperty('id');
+        expect(isUUID(res.body.id)).toBeTruthy();
+
+        expect(res.headers['location']).toBeDefined();
+        expect(res.headers['location']).toBe(`/cash-registers/${res.body.id}`);
+      });
+  });
+
+  it('should return 400 for missing work station', () => {
+    return request(app)
+      .post('/cash-registers/')
+      .send({})
+      .expect(400)
       .expect('Content-Type', /json/);
   });
 });
