@@ -3,7 +3,6 @@ import { handleRegisterTransaction, RegisterTransaction } from './handler';
 import { updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
 import { isCommand } from '../../core/commands';
-import isDecimal from 'validator/lib/isDecimal';
 
 export const route = (router: Router) =>
   router.post(
@@ -47,11 +46,11 @@ export const route = (router: Router) =>
 function mapRequestToCommand(
   request: Request
 ): RegisterTransaction | 'MISSING_CASH_REGISTER_ID' | 'MISSING_AMOUNT' {
-  if (!request.params.id || !(typeof request.params.id === 'string')) {
+  if (typeof request.params.id !== 'string') {
     return 'MISSING_CASH_REGISTER_ID';
   }
 
-  if (!request.body.amount || !isDecimal(request.body.amount)) {
+  if (typeof request.body.amount !== 'number') {
     return 'MISSING_AMOUNT';
   }
 

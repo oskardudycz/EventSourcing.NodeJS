@@ -36,13 +36,12 @@ describe('EndShift command', () => {
       },
     };
 
-    expect(
-      await addCashRegister(
-        streamName,
-        placeAtWorkStation,
-        handlePlaceAtWorkStation
-      )
-    ).toBeTruthy();
+    const wasAdded = await addCashRegister(
+      streamName,
+      placeAtWorkStation,
+      handlePlaceAtWorkStation
+    );
+    expect(wasAdded).toBeTruthy();
 
     const startShift: StartShift = {
       type: 'start-shift',
@@ -52,9 +51,13 @@ describe('EndShift command', () => {
       },
     };
 
-    expect(
-      await updateCashRegister(streamName, startShift, handleStartShift)
-    ).toBeTruthy();
+    const wasShiftStarted = await updateCashRegister(
+      streamName,
+      startShift,
+      handleStartShift
+    );
+
+    expect(wasShiftStarted).toBeTruthy();
   });
 
   afterAll(async () => {

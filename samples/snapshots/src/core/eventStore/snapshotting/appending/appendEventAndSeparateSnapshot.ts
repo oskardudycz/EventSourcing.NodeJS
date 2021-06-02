@@ -45,7 +45,7 @@ export async function appendEventAndSeparateSnapshot<
     nextExpectedRevision: currentStreamVersion,
   } = await appendToStream(client, streamName, event);
 
-  if (!eventWasAdded || !currentStreamVersion) {
+  if (!eventWasAdded) {
     return false;
   }
 
