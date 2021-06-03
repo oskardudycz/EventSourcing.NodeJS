@@ -6,13 +6,13 @@ import {
 import { Event } from '../../../events';
 import { STREAM_NOT_FOUND } from '../../reading';
 
-export async function readFromSnapshotAndStream<
+export async function readEventsFromSnapshotInTheSameStream<
   StreamEvent extends Event,
   SnapshotStreamEvent extends SnapshotEvent
 >(
-  getLastSnapshot: (
+  getLastSnapshotVersion: (
     streamName: string
-  ) => Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND>,
+  ) => Promise<bigint | undefined | STREAM_NOT_FOUND>,
   readFromStream: (
     streamName: string,
     fromVersion?: bigint | undefined
@@ -22,27 +22,20 @@ export async function readFromSnapshotAndStream<
   | ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>
   | STREAM_NOT_FOUND
 > {
-  const snapshot = await getLastSnapshot(streamName);
+  const lastSnapshotVersion = await getLastSnapshotVersion(streamName);
 
-  let lastSnapshotVersion: bigint | undefined = undefined;
-  let snapshotEvent: SnapshotStreamEvent | undefined = undefined;
-
-  if (snapshot !== 'NO_SHAPSHOT_FOUND') {
-    lastSnapshotVersion = BigInt(snapshot.metadata.streamVersion);
-    snapshotEvent = snapshot;
+  if (lastSnapshotVersion === 'STREAM_NOT_FOUND') {
+    return 'STREAM_NOT_FOUND';
   }
 
-  const events = await readFromStream(
-    streamName,
-    lastSnapshotVersion !== undefined ? lastSnapshotVersion + 1n : undefined
-  );
+  const events = await readFromStream(streamName, lastSnapshotVersion);
 
   if (events === 'STREAM_NOT_FOUND') {
     return 'STREAM_NOT_FOUND';
   }
 
   return {
-    events: snapshotEvent ? [snapshotEvent, ...events] : events,
+    events,
     lastSnapshotVersion,
   };
 }
