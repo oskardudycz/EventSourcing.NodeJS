@@ -3,7 +3,6 @@ import {
   StartedEventStoreDBContainer,
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
 import { config } from '../../../config';
-import { EndShift, handleEndShift } from './handler';
 import {
   handlePlaceAtWorkStation,
   PlaceAtWorkStation,
@@ -19,6 +18,7 @@ import {
   handleRegisterTransaction,
   RegisterTransaction,
 } from '../registeringTransaction';
+import { EndShift, handleEndShift } from '../endingShift';
 
 describe('EndShift command', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -75,13 +75,7 @@ describe('EndShift command', () => {
         handleRegisterTransaction
       )
     ).toBeTruthy();
-  });
 
-  afterAll(async () => {
-    await esdbContainer.stop();
-  });
-
-  it('should end shift for existing, starting cash register shift', async () => {
     const command: EndShift = {
       type: 'end-shift',
       data: {
@@ -89,15 +83,33 @@ describe('EndShift command', () => {
       },
     };
 
+    expect(
+      await updateCashRegister(streamName, command, handleEndShift)
+    ).toBeTruthy();
+  });
+
+  afterAll(async () => {
+    await esdbContainer.stop();
+  });
+
+  it('should start shift for existing, cash register with ended shift', async () => {
+    const command: StartShift = {
+      type: 'start-shift',
+      data: {
+        cashRegisterId,
+        cashierId: uuid(),
+      },
+    };
+
     const result = await updateCashRegister(
       streamName,
       command,
-      handleEndShift
+      handleStartShift
     );
 
     expect(result).toBeTruthy();
 
-    await expectStreamToHaveNumberOfEvents(eventStore, streamName, 4);
+    await expectStreamToHaveNumberOfEvents(eventStore, streamName, 5);
     await expectStreamToHaveNumberOfEvents(
       eventStore,
       addSnapshotPrefix(streamName),
