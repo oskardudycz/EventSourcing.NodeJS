@@ -35,7 +35,10 @@ export async function readFromSnapshotAndStream<
     snapshotEvent = snapshot;
   }
 
-  const events = await readFromStream(streamName, lastSnapshotVersion);
+  const events = await readFromStream(
+    streamName,
+    lastSnapshotVersion !== undefined ? lastSnapshotVersion + 1n : undefined
+  );
 
   if (events === 'STREAM_NOT_FOUND') {
     return 'STREAM_NOT_FOUND';
