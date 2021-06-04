@@ -1,7 +1,13 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { Event } from '../../../events';
-import { SnapshotEvent } from '..';
-import { appendToStream } from '../../eventStoreDB/appending/appendToStream';
+import { FAILED_TO_APPEND_SNAPSHOT, SnapshotEvent } from '..';
+import {
+  AppendResult,
+  appendToStream,
+  WRONG_EXPECTED_VERSION,
+} from '../../eventStoreDB/appending/appendToStream';
+import { Result, success } from '../../../primitives/result';
+import { pipeResultAsync } from '../../../primitives/pipe';
 
 export type SnapshotOptions<
   Aggregate extends Record<string, unknown> = Record<string, unknown>,
@@ -12,7 +18,7 @@ export type SnapshotOptions<
     snapshot: SnapshotStreamEvent,
     streamName: string,
     lastSnapshotVersion: bigint | undefined
-  ) => Promise<boolean>;
+  ) => Promise<Result<boolean, FAILED_TO_APPEND_SNAPSHOT>>;
   shouldDoSnapshot: (
     event: StreamEvent,
     currentStreamVersion: bigint,
@@ -33,37 +39,42 @@ export async function appendEventAndSeparateSnapshot<
   StreamEvent extends Event = Event,
   SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
 >(
-  client: EventStoreDBClient,
+  eventStore: EventStoreDBClient,
   streamName: string,
   currentState: Aggregate,
   lastSnapshotVersion: bigint | undefined,
   event: StreamEvent,
   options: SnapshotOptions<Aggregate, StreamEvent, SnapshotStreamEvent>
-): Promise<boolean> {
-  const {
-    success: eventWasAdded,
-    nextExpectedRevision: currentStreamVersion,
-  } = await appendToStream(client, streamName, event);
-
-  if (!eventWasAdded) {
-    return false;
-  }
-
+): Promise<
+  Result<boolean, WRONG_EXPECTED_VERSION | FAILED_TO_APPEND_SNAPSHOT>
+> {
   const { shouldDoSnapshot, buildSnapshot, appendSnapshot } = options;
 
-  if (
-    !shouldDoSnapshot(event, currentStreamVersion, streamName, currentState)
-  ) {
-    return true;
-  }
+  const buildSnapshotIfNeeded = async ({
+    nextExpectedRevision: currentStreamVersion,
+  }: AppendResult) => {
+    if (
+      !shouldDoSnapshot(event, currentStreamVersion, streamName, currentState)
+    )
+      return success(undefined);
 
-  const snapshot = buildSnapshot(
-    currentState,
-    currentStreamVersion,
-    lastSnapshotVersion,
-    streamName,
-    event
-  );
+    return success(
+      buildSnapshot(
+        currentState,
+        currentStreamVersion,
+        lastSnapshotVersion,
+        streamName,
+        event
+      )
+    );
+  };
 
-  return appendSnapshot(snapshot, streamName, lastSnapshotVersion);
+  return pipeResultAsync(
+    () => appendToStream(eventStore, streamName, event),
+    buildSnapshotIfNeeded,
+    async (snapshot) => {
+      if (!snapshot) return success(false);
+      return appendSnapshot(snapshot, streamName, lastSnapshotVersion);
+    }
+  )();
 }

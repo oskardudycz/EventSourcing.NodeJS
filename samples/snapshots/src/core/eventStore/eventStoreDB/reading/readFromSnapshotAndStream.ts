@@ -6,6 +6,7 @@ import {
   readFromSnapshotAndStream as readFromSnapshotAndStreamGeneric,
   readSnapshotFromSeparateStream,
 } from '../../snapshotting/reading';
+import { Result } from '../../../primitives/result';
 
 export type ReadFromStreamAndSnapshotsResult<
   StreamEvent extends Event = Event
@@ -24,8 +25,10 @@ export async function readEventsFromSnapshot<
   ) => Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND>,
   streamName: string
 ): Promise<
-  | ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>
-  | STREAM_NOT_FOUND
+  Result<
+    ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
+    STREAM_NOT_FOUND
+  >
 > {
   return readFromSnapshotAndStreamGeneric<StreamEvent, SnapshotStreamEvent>(
     getLastSnapshot,
@@ -45,8 +48,10 @@ export async function readEventsFromSnapshotInSeparateStream<
   streamName: string,
   buildSnapshotStreamName?: (streamName: string) => string
 ): Promise<
-  | ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>
-  | STREAM_NOT_FOUND
+  Result<
+    ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
+    STREAM_NOT_FOUND
+  >
 > {
   return readFromSnapshotAndStreamGeneric<StreamEvent, SnapshotStreamEvent>(
     (streamName) =>

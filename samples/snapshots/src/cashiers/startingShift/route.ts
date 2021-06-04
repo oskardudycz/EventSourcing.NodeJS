@@ -26,17 +26,18 @@ export const route = (router: Router) =>
           handleStartShift
         );
 
-        switch (result) {
-          case 'STREAM_NOT_FOUND':
-            response.sendStatus(404);
-            break;
-          case 'SHIFT_ALREADY_STARTED':
-            response.sendStatus(409);
-            break;
-          default:
-            response.sendStatus(200);
-            break;
+        if (result.isError) {
+          switch (result.error) {
+            case 'STREAM_NOT_FOUND':
+              response.sendStatus(404);
+              break;
+            case 'SHIFT_ALREADY_STARTED':
+              response.sendStatus(409);
+              break;
+          }
         }
+
+        response.sendStatus(200);
       } catch (error) {
         next(error);
       }

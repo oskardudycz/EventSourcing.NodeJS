@@ -65,7 +65,7 @@ export class StartedEventStoreDBContainer {
   getConnectionString(): string {
     return `esdb://${this.container.getHost()}:${this.container.getMappedPort(
       2113
-    )}?tls=false`;
+    )}?tls=false&throwOnAppendFailure=false`;
   }
 
   getClient(): EventStoreDBClient {

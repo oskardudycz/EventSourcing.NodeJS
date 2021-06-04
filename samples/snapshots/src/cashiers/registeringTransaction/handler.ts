@@ -8,8 +8,9 @@ import {
   when,
 } from '../cashRegister';
 import { v4 as uuid } from 'uuid';
+import { failure, Result, success } from '../../core/primitives/result';
 
-export type ShiftNotStarted = 'SHIFT_NOT_STARTED';
+export type SHIFT_NOT_STARTED = 'SHIFT_NOT_STARTED';
 
 export type RegisterTransaction = Command<
   'register-transaction',
@@ -32,7 +33,7 @@ export type TransactionRegistered = Event<
 export function handleRegisterTransaction(
   events: CashRegisterEvent[],
   command: RegisterTransaction
-): TransactionRegistered | ShiftNotStarted {
+): Result<TransactionRegistered, SHIFT_NOT_STARTED> {
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
@@ -40,10 +41,10 @@ export function handleRegisterTransaction(
   );
 
   if (cashRegister.currentCashierId === undefined) {
-    return 'SHIFT_NOT_STARTED';
+    return failure('SHIFT_NOT_STARTED');
   }
 
-  return {
+  return success({
     type: 'transaction-registered',
     data: {
       cashRegisterId: cashRegister.id,
@@ -51,5 +52,5 @@ export function handleRegisterTransaction(
       amount: command.data.amount,
       registeredAt: new Date(),
     },
-  };
+  });
 }

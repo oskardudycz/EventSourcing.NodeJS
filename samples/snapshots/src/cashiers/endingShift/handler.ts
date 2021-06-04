@@ -1,5 +1,6 @@
 import { Command } from '../../core/commands';
 import { Event } from '../../core/events';
+import { failure, Result, success } from '../../core/primitives/result';
 import { aggregateStream } from '../../core/streams';
 import {
   CashRegister,
@@ -28,7 +29,7 @@ export type ShiftEnded = Event<
 export function handleEndShift(
   events: CashRegisterEvent[],
   _: EndShift
-): ShiftEnded | ShiftNotStarted {
+): Result<ShiftEnded, ShiftNotStarted> {
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
@@ -36,14 +37,14 @@ export function handleEndShift(
   );
 
   if (cashRegister.currentCashierId === undefined) {
-    return 'SHIFT_NOT_STARTED';
+    return failure('SHIFT_NOT_STARTED');
   }
 
-  return {
+  return success({
     type: 'shift-ended',
     data: {
       cashRegisterId: cashRegister.id,
       finishedAt: new Date(),
     },
-  };
+  });
 }

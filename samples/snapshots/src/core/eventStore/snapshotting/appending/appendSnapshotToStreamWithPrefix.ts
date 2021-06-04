@@ -1,7 +1,11 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { SnapshotEvent } from '..';
-import { appendToStream } from '../../eventStoreDB/appending/appendToStream';
+import { FAILED_TO_APPEND_SNAPSHOT, SnapshotEvent } from '..';
+import {
+  AppendResult,
+  appendToStream,
+} from '../../eventStoreDB/appending/appendToStream';
 import { addSnapshotPrefix } from '..';
+import { failure, Result } from '../../../primitives/result';
 
 export async function appendSnapshotToStreamWithPrefix<
   SnapshotStreamEvent extends SnapshotEvent
@@ -10,7 +14,7 @@ export async function appendSnapshotToStreamWithPrefix<
   snapshot: SnapshotStreamEvent,
   streamName: string,
   lastSnapshotVersion: bigint | undefined
-): Promise<boolean> {
+): Promise<Result<AppendResult, FAILED_TO_APPEND_SNAPSHOT>> {
   const snapshotStreamName = addSnapshotPrefix(streamName);
 
   if (!lastSnapshotVersion) {
@@ -19,5 +23,7 @@ export async function appendSnapshotToStreamWithPrefix<
 
   const result = await appendToStream(eventStore, snapshotStreamName, snapshot);
 
-  return result.success;
+  if (result.isError) return failure('FAILED_TO_APPEND_SNAPSHOT');
+
+  return result;
 }

@@ -1,81 +1,155 @@
 import { getEventStore } from '../../core/eventStore';
-import { CashRegisterEvent } from '../cashRegister';
-import { saveCashRegister } from './saveCashRegister';
+import {
+  CashRegister,
+  CashRegisterEvent,
+  isCashier,
+  when,
+} from '../cashRegister';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
-import { getAndUpdate } from '../../core/eventStore/eventStoreDB/appending';
-import { readEventsFromSnapshotInSeparateStream } from '../../core/eventStore/eventStoreDB/reading/readFromSnapshotAndStream';
-import { pipe } from '../../core/primitives/pipe';
-import { switchErrorAsync } from '../../core/primitives/switchError';
-import { isEvent } from '../../core/events';
-import { failure, Result, success } from '../../core/primitives/result';
+import {
+  readEventsFromSnapshotInSeparateStream,
+  ReadFromStreamAndSnapshotsResult,
+} from '../../core/eventStore/eventStoreDB/reading/readFromSnapshotAndStream';
+import {
+  mergeResults,
+  pipeResultAsync,
+  transformResults,
+} from '../../core/primitives/pipe';
+import { Result, success } from '../../core/primitives/result';
+import { EventStoreDBClient } from '@eventstore/db-client';
+import {
+  AppendResult,
+  appendToStream,
+  WRONG_EXPECTED_VERSION,
+} from '../../core/eventStore/eventStoreDB/appending';
+import { CashRegisterSnapshoted } from '../snapshot';
+import { aggregateStream } from '../../core/streams';
+import {
+  appendSnapshotToStreamWithPrefix,
+  FAILED_TO_APPEND_SNAPSHOT,
+} from '../../core/eventStore/snapshotting';
 
-export function updateCashRegister<Command, TError = never>(
+export async function updateCashRegister<Command, TError = never>(
   streamName: string,
   command: Command,
   handle: (
     currentEvents: CashRegisterEvent[],
     command: Command
-  ) => CashRegisterEvent | TError
-): Promise<boolean | STREAM_NOT_FOUND | TError | never> {
-  return getAndUpdate<Command, CashRegisterEvent, TError>(
-    getEventStore(),
-    (...args) =>
-      readEventsFromSnapshotInSeparateStream<CashRegisterEvent>(...args),
-    saveCashRegister,
-    streamName,
-    command,
-    handle
-  );
-}
-
-export async function updateCashRegister2<Command, TError = never>(
-  streamName: string,
-  command: Command,
-  handle: (
-    currentEvents: CashRegisterEvent[],
-    command: Command
-  ) => CashRegisterEvent | TError
-): Promise<Result<boolean, STREAM_NOT_FOUND | TError | never>> {
+  ) => Result<CashRegisterEvent, TError>
+): Promise<
+  Result<
+    boolean,
+    | STREAM_NOT_FOUND
+    | WRONG_EXPECTED_VERSION
+    | FAILED_TO_APPEND_SNAPSHOT
+    | TError
+    | never
+  >
+> {
   const eventStore = getEventStore();
 
-  return pipe(
-    async () => {
-      const result = await readEventsFromSnapshotInSeparateStream<CashRegisterEvent>(
-        eventStore,
-        streamName
-      );
+  const readEvents = (
+    eventStore: EventStoreDBClient,
+    streamName: string
+  ) => () =>
+    readEventsFromSnapshotInSeparateStream<CashRegisterEvent>(
+      eventStore,
+      streamName
+    );
 
-      if (result === 'STREAM_NOT_FOUND') return failure(result);
+  const handleCommand = (command: Command) => async ({
+    events: currentEvents,
+  }: ReadFromStreamAndSnapshotsResult<CashRegisterEvent>) => {
+    return handle(currentEvents, command);
+  };
 
-      return success(result);
-    },
-    switchErrorAsync(async (stream) => {
-      const { events, lastSnapshotVersion } = stream;
+  const appendEvent = (
+    eventStore: EventStoreDBClient,
+    streamName: string
+  ) => (result: {
+    newEvent: CashRegisterEvent;
+    lastSnapshotVersion?: bigint | undefined;
+    events: CashRegisterEvent[];
+  }) => appendToStream(eventStore, streamName, result.newEvent);
 
-      const newEvent = handle(events, command);
+  const shouldDoSnapshot = (event: CashRegisterEvent) => {
+    return event.type === 'shift-ended';
+  };
+  const buildSnapshot = (
+    currentState: CashRegister,
+    streamVersion: bigint
+  ): CashRegisterSnapshoted => {
+    return {
+      type: 'cash-register-snapshoted',
+      data: currentState,
+      metadata: { streamVersion: streamVersion.toString() },
+    };
+  };
 
-      if (!isEvent(newEvent)) {
-        return failure(newEvent);
+  const buildSnapshotIfNeeded = (streamName: string) => async ({
+    events: currentEvents,
+    newEvent,
+    nextExpectedRevision: currentStreamVersion,
+  }: AppendResult & {
+    newEvent: CashRegisterEvent;
+    lastSnapshotVersion?: bigint | undefined;
+    events: CashRegisterEvent[];
+  }) => {
+    const currentState = aggregateStream<CashRegister, CashRegisterEvent>(
+      [...currentEvents, newEvent],
+      when,
+      isCashier
+    );
+
+    if (
+      !shouldDoSnapshot(newEvent) //, currentStreamVersion, streamName, currentState)
+    )
+      return success(undefined);
+
+    return success(buildSnapshot(currentState, currentStreamVersion));
+  };
+
+  const appendSnapshot = (
+    eventStore: EventStoreDBClient,
+    streamName: string
+  ) => async ({
+    snapshot,
+    lastSnapshotVersion,
+  }: {
+    snapshot?: CashRegisterSnapshoted;
+    lastSnapshotVersion: bigint | undefined;
+  }) => {
+    if (!snapshot) return success(false);
+
+    const result = await appendSnapshotToStreamWithPrefix(
+      eventStore,
+      snapshot,
+      streamName,
+      lastSnapshotVersion
+    );
+
+    if (result.isError) return result;
+
+    return success(true);
+  };
+
+  return await pipeResultAsync(
+    readEvents(eventStore, streamName),
+    mergeResults(
+      transformResults(handleCommand(command), (newEvent) => {
+        return { newEvent };
+      })
+    ),
+    mergeResults(appendEvent(eventStore, streamName)),
+    transformResults(
+      buildSnapshotIfNeeded(streamName),
+      (snapshot, { lastSnapshotVersion }) => {
+        return {
+          snapshot,
+          lastSnapshotVersion: lastSnapshotVersion,
+        };
       }
-
-      return success({
-        lastSnapshotVersion,
-        newEvent,
-        events,
-      });
-    }),
-    switchErrorAsync(async (result) => {
-      const { lastSnapshotVersion, newEvent, events } = result;
-
-      return success(
-        await saveCashRegister(
-          eventStore,
-          streamName,
-          newEvent,
-          events,
-          lastSnapshotVersion
-        )
-      );
-    })
+    ),
+    appendSnapshot(eventStore, streamName)
   )();
 }
