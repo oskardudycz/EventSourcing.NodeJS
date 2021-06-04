@@ -180,3 +180,12 @@ export function transformResults<T = never, I = never, R = never, E = never>(
     return success(transform(result.value, input));
   };
 }
+
+export function mapResult<R = never, E = never, R2 = R, E2 = E>(
+  onResult: (result: R) => Result<R2, E2>,
+  onError: (error: E) => Result<R2, E2>
+): (result: Result<R, E>) => Promise<Result<R2, E2>> {
+  return async (result) => {
+    return !result.isError ? onResult(result.value) : onError(result.error);
+  };
+}

@@ -13,7 +13,7 @@ export async function appendSnapshotToStreamWithPrefix<
   eventStore: EventStoreDBClient,
   snapshot: SnapshotStreamEvent,
   streamName: string,
-  lastSnapshotVersion: bigint | undefined
+  lastSnapshotVersion?: bigint
 ): Promise<Result<AppendResult, FAILED_TO_APPEND_SNAPSHOT>> {
   const snapshotStreamName = addSnapshotPrefix(streamName);
 
