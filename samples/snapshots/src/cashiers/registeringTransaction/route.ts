@@ -26,17 +26,19 @@ export const route = (router: Router) =>
           handleRegisterTransaction
         );
 
-        switch (result) {
-          case 'STREAM_NOT_FOUND':
-            response.sendStatus(404);
-            break;
-          case 'SHIFT_NOT_STARTED':
-            response.sendStatus(409);
-            break;
-          default:
-            response.sendStatus(200);
-            break;
+        if (result.isError) {
+          switch (result.error) {
+            case 'STREAM_NOT_FOUND':
+              response.sendStatus(404);
+              break;
+            case 'SHIFT_NOT_STARTED':
+              response.sendStatus(409);
+              break;
+            default:
+              break;
+          }
         }
+        response.sendStatus(200);
       } catch (error) {
         next(error);
       }

@@ -4,6 +4,7 @@ import {
   SnapshotEvent,
 } from '..';
 import { Event } from '../../../events';
+import { failure, Result, success } from '../../../primitives/result';
 import { STREAM_NOT_FOUND } from '../../reading';
 
 export async function readFromSnapshotAndStream<
@@ -19,8 +20,10 @@ export async function readFromSnapshotAndStream<
   ) => Promise<StreamEvent[] | STREAM_NOT_FOUND>,
   streamName: string
 ): Promise<
-  | ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>
-  | STREAM_NOT_FOUND
+  Result<
+    ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
+    STREAM_NOT_FOUND
+  >
 > {
   const snapshot = await getLastSnapshot(streamName);
 
@@ -38,11 +41,11 @@ export async function readFromSnapshotAndStream<
   );
 
   if (events === 'STREAM_NOT_FOUND') {
-    return 'STREAM_NOT_FOUND';
+    return failure('STREAM_NOT_FOUND');
   }
 
-  return {
+  return success({
     events: snapshotEvent ? [snapshotEvent, ...events] : events,
     lastSnapshotVersion,
-  };
+  });
 }

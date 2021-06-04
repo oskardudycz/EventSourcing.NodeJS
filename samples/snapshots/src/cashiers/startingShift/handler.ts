@@ -1,5 +1,6 @@
 import { Command } from '../../core/commands';
 import { Event } from '../../core/events';
+import { failure, Result, success } from '../../core/primitives/result';
 import { aggregateStream } from '../../core/streams';
 import {
   CashRegister,
@@ -8,7 +9,7 @@ import {
   when,
 } from '../cashRegister';
 
-export type ShiftAlreadyStarted = 'SHIFT_ALREADY_STARTED';
+export type SHIFT_ALREADY_STARTED = 'SHIFT_ALREADY_STARTED';
 
 export type StartShift = Command<
   'start-shift',
@@ -30,7 +31,7 @@ export type ShiftStarted = Event<
 export function handleStartShift(
   events: CashRegisterEvent[],
   command: StartShift
-): ShiftStarted | ShiftAlreadyStarted {
+): Result<ShiftStarted, SHIFT_ALREADY_STARTED> {
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
@@ -38,15 +39,15 @@ export function handleStartShift(
   );
 
   if (cashRegister.currentCashierId !== undefined) {
-    return 'SHIFT_ALREADY_STARTED';
+    return failure('SHIFT_ALREADY_STARTED');
   }
 
-  return {
+  return success({
     type: 'shift-started',
     data: {
       cashRegisterId: cashRegister.id,
       cashierId: command.data.cashierId,
       startedAt: new Date(),
     },
-  };
+  });
 }

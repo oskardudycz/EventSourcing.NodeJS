@@ -13,7 +13,7 @@ const convictConfig = convict({
   eventStoreDB: {
     connectionString: {
       format: String,
-      default: 'esdb://localhost:2113?tls=false',
+      default: 'esdb://localhost:2113?tls=false&throwOnAppendFailure=false',
       arg: 'ESDB_CONNECTION_STRING',
       env: 'ESDB_CONNECTION_STRING',
     },

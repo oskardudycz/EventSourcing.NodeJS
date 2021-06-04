@@ -13,9 +13,15 @@ import { CashRegisterSnapshoted } from '../snapshot';
 export function saveCashRegister(
   eventStore: EventStoreDBClient,
   streamName: string,
-  newEvent: CashRegisterEvent,
-  currentEvents: CashRegisterEvent[] = [],
-  lastSnapshotVersion?: bigint | undefined
+  {
+    newEvent,
+    currentEvents,
+    lastSnapshotVersion,
+  }: {
+    newEvent: CashRegisterEvent;
+    currentEvents: CashRegisterEvent[] = [];
+    lastSnapshotVersion?: bigint | undefined;
+  }
 ): Promise<boolean> {
   const currentState = aggregateStream<CashRegister, CashRegisterEvent>(
     [...currentEvents, newEvent],
