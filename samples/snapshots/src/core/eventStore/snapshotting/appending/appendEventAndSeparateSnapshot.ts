@@ -4,7 +4,7 @@ import { FAILED_TO_APPEND_SNAPSHOT, SnapshotEvent } from '..';
 import {
   AppendResult,
   appendToStream,
-  WRONG_EXPECTED_VERSION,
+  FAILED_TO_APPEND_EVENT,
 } from '../../eventStoreDB/appending/appendToStream';
 import { Result, success } from '../../../primitives/result';
 import { pipeResultAsync } from '../../../primitives/pipe';
@@ -46,7 +46,7 @@ export async function appendEventAndSeparateSnapshot<
   event: StreamEvent,
   options: SnapshotOptions<Aggregate, StreamEvent, SnapshotStreamEvent>
 ): Promise<
-  Result<boolean, WRONG_EXPECTED_VERSION | FAILED_TO_APPEND_SNAPSHOT>
+  Result<boolean, FAILED_TO_APPEND_EVENT | FAILED_TO_APPEND_SNAPSHOT>
 > {
   const { shouldDoSnapshot, buildSnapshot, appendSnapshot } = options;
 

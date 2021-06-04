@@ -19,13 +19,13 @@ export interface AppendResult {
   position?: Position;
 }
 
-export type WRONG_EXPECTED_VERSION = 'WRONG_EXPECTED_VERSION';
+export type FAILED_TO_APPEND_EVENT = 'FAILED_TO_APPEND_EVENT';
 
 export async function appendToStream<StreamEvent extends Event>(
   client: EventStoreDBClient,
   streamName: string,
   ...events: StreamEvent[]
-): Promise<Result<AppendResult, WRONG_EXPECTED_VERSION>> {
+): Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT>> {
   const jsonEvents: EventData[] = events.map((event) =>
     jsonEvent({ type: event.type, data: event.data, metadata: event.metadata })
   );
@@ -36,7 +36,7 @@ export async function appendToStream<StreamEvent extends Event>(
     position,
   } = await client.appendToStream(streamName, jsonEvents);
 
-  if (!wasAppended) return failure('WRONG_EXPECTED_VERSION');
+  if (!wasAppended) return failure('FAILED_TO_APPEND_EVENT');
 
   return success({ nextExpectedRevision, position });
 }

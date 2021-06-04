@@ -1,8 +1,4 @@
-import {
-  NO_SHAPSHOT_FOUND,
-  ReadFromStreamAndSnapshotsResult,
-  SnapshotEvent,
-} from '..';
+import { ReadFromStreamAndSnapshotsResult, SnapshotEvent } from '..';
 import { Event } from '../../../events';
 import { STREAM_NOT_FOUND } from '../../reading';
 

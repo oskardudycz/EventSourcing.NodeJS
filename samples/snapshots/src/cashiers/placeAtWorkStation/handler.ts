@@ -1,5 +1,6 @@
 import { Command } from '../../core/commands';
 import { Event } from '../../core/events';
+import { Result, success } from '../../core/primitives/result';
 
 export type PlaceAtWorkStation = Command<
   'place-at-workstation',
@@ -20,13 +21,13 @@ export type PlacedAtWorkStation = Event<
 
 export function handlePlaceAtWorkStation(
   command: PlaceAtWorkStation
-): PlacedAtWorkStation {
-  return {
+): Result<PlacedAtWorkStation> {
+  return success({
     type: 'placed-at-workstation',
     data: {
       cashRegisterId: command.data.cashRegisterId,
       workstation: command.data.workstation,
       placedAt: new Date(),
     },
-  };
+  });
 }

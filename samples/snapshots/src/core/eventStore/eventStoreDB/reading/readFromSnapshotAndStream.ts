@@ -20,10 +20,10 @@ export async function readEventsFromSnapshot<
   SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
 >(
   eventStore: EventStoreDBClient,
+  streamName: string,
   getLastSnapshot: (
     streamName: string
-  ) => Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND>,
-  streamName: string
+  ) => Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND>
 ): Promise<
   Result<
     ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
