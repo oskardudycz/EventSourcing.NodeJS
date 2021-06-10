@@ -2,7 +2,7 @@ import { getEventStore } from '../../core/eventStore';
 import { CashRegisterEvent } from '../cashRegister';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
 import {
-  mergeResults,
+  forwardInputsAsResults,
   pipeResultAsync,
   transformResults,
 } from '../../core/primitives/pipe';
@@ -42,10 +42,10 @@ export async function addCashRegister<Command, TError = never>(
           return { newEvent };
         }
       ),
-      mergeResults(async ({ newEvent }) =>
+      forwardInputsAsResults(async ({ newEvent }) =>
         appendToStream(eventStore, streamName, newEvent)
       ),
-      mergeResults(
+      forwardInputsAsResults(
         async ({ nextExpectedRevision: currentStreamVersion, newEvent }) =>
           buildSnapshot({ currentStreamVersion, newEvent })
       ),

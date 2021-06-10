@@ -2,25 +2,25 @@ import { Result, success } from './result';
 import { switchError, switchErrorAsync } from './switchError';
 
 export function pipe<T1, R1, R2>(
-  f1: (arg?: T1) => R1,
+  f1: ((arg: T1) => R1) | (() => R1),
   f2: (arg: R1) => R2
 ): (arg?: T1) => R2;
 
 export function pipe<T1, R1, R2, R3>(
-  f1: (arg: T1) => R1,
+  f1: ((arg: T1) => R1) | (() => R1),
   f2: (arg: R1) => R2,
   f3: (arg: R2) => R3
 ): (arg?: T1) => R3;
 
 export function pipe<T1, R1, R2, R3, R4>(
-  f1: (arg?: T1) => R1,
+  f1: ((arg: T1) => R1) | (() => R1),
   f2: (arg: R1) => R2,
   f3: (arg: R2) => R3,
   f4: (arg: R3) => R4
 ): (arg?: T1) => R4;
 
 export function pipe<T1, R1, R2, R3, R4, R5>(
-  f1: (arg: T1) => R1,
+  f1: ((arg: T1) => R1) | (() => R1),
   f2: (arg: R1) => R2,
   f3: (arg: R2) => R3,
   f4: (arg: R3) => R4,
@@ -35,12 +35,12 @@ export function pipe(
 }
 
 export function pipeResult<T1, R1, R2, E1 = never, E2 = never>(
-  f1: (arg?: T1) => Result<R1, E1>,
+  f1: ((arg: T1) => Result<R1, E1>) | (() => Result<R1, E1>),
   f2: (arg: R1) => Result<R2, E2>
 ): (arg?: T1) => Result<R2, E1 | E2>;
 
 export function pipeResult<T1, R1, R2, R3, E1 = never, E2 = never, E3 = never>(
-  f1: (arg?: T1) => Result<R1, E1>,
+  f1: ((arg: T1) => Result<R1, E1>) | (() => Result<R1, E1>),
   f2: (arg: R1) => Result<R2, E2>,
   f3: (arg: R2) => Result<R3, E3>
 ): (arg?: T1) => Result<R3, E1 | E2 | E3>;
@@ -56,7 +56,7 @@ export function pipeResult<
   E3 = never,
   E4 = never
 >(
-  f1: (arg?: T1) => Result<R1, E1>,
+  f1: ((arg: T1) => Result<R1, E1>) | (() => Result<R1, E1>),
   f2: (arg: R1) => Result<R2, E2>,
   f3: (arg: R2) => Result<R3, E3>,
   f4: (arg: R3) => Result<R4, E4>
@@ -75,7 +75,7 @@ export function pipeResult<
   E4 = never,
   E5 = never
 >(
-  f1: (arg?: T1) => Result<R1, E1>,
+  f1: ((arg: T1) => Result<R1, E1>) | (() => Result<R1, E1>),
   f2: (arg: R1) => Result<R2, E2>,
   f3: (arg: R2) => Result<R3, E3>,
   f4: (arg: R3) => Result<R4, E4>,
@@ -92,7 +92,7 @@ export function pipeResult(
 }
 
 export function pipeResultAsync<T1, R1, R2, E1 = never, E2 = never>(
-  f1: (arg?: T1) => Promise<Result<R1, E1>>,
+  f1: ((arg: T1) => Promise<Result<R1, E1>>) | (() => Promise<Result<R1, E1>>),
   f2: (arg: R1) => Promise<Result<R2, E2>>
 ): (arg?: T1) => Promise<Result<R2, E1 | E2>>;
 
@@ -105,7 +105,7 @@ export function pipeResultAsync<
   E2 = never,
   E3 = never
 >(
-  f1: (arg?: T1) => Promise<Result<R1, E1>>,
+  f1: ((arg: T1) => Promise<Result<R1, E1>>) | (() => Promise<Result<R1, E1>>),
   f2: (arg: R1) => Promise<Result<R2, E2>>,
   f3: (arg: R2) => Promise<Result<R3, E3>>
 ): (arg?: T1) => Promise<Result<R3, E1 | E2 | E3>>;
@@ -121,7 +121,7 @@ export function pipeResultAsync<
   E3 = never,
   E4 = never
 >(
-  f1: (arg?: T1) => Promise<Result<R1, E1>>,
+  f1: ((arg: T1) => Promise<Result<R1, E1>>) | (() => Promise<Result<R1, E1>>),
   f2: (arg: R1) => Promise<Result<R2, E2>>,
   f3: (arg: R2) => Promise<Result<R3, E3>>,
   f4: (arg: R3) => Promise<Result<R4, E4>>
@@ -140,7 +140,7 @@ export function pipeResultAsync<
   E4 = never,
   E5 = never
 >(
-  f1: (arg?: T1) => Promise<Result<R1, E1>>,
+  f1: ((arg: T1) => Promise<Result<R1, E1>>) | (() => Promise<Result<R1, E1>>),
   f2: (arg: R1) => Promise<Result<R2, E2>>,
   f3: (arg: R2) => Promise<Result<R3, E3>>,
   f4: (arg: R3) => Promise<Result<R4, E4>>,
@@ -156,7 +156,7 @@ export function pipeResultAsync(
     .reduce((prevFn, nextFn) => (value) => nextFn(prevFn(value)), fn1);
 }
 
-export function mergeResults<I, R = never, E = never>(
+export function forwardInputsAsResults<I, R = never, E = never>(
   callback: (input: I) => Promise<Result<R, E>>
 ): (input: I) => Promise<Result<R & I, E>> {
   return async (input: I) => {

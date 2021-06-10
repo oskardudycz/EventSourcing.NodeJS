@@ -2,6 +2,7 @@ import { EventStoreDBClient } from '@eventstore/db-client';
 import { SnapshotEvent } from '..';
 import { readLastEventFromStream } from '../../reading';
 import { addSnapshotPrefix } from '..';
+import { failure, Result } from '../../../primitives/result';
 
 export type NO_SHAPSHOT_FOUND = 'NO_SHAPSHOT_FOUND';
 
@@ -11,7 +12,7 @@ export async function readSnapshotFromSeparateStream<
   eventStore: EventStoreDBClient,
   streamName: string,
   buildSnapshotStreamName?: (streamName: string) => string
-): Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND> {
+): Promise<Result<SnapshotStreamEvent, NO_SHAPSHOT_FOUND>> {
   const getSnapshotStreamName = buildSnapshotStreamName || addSnapshotPrefix;
   const snapshotStreamName = getSnapshotStreamName(streamName);
 
@@ -20,8 +21,8 @@ export async function readSnapshotFromSeparateStream<
     snapshotStreamName
   );
 
-  if (result === 'STREAM_NOT_FOUND' || result === 'NO_EVENTS_FOUND') {
-    return 'NO_SHAPSHOT_FOUND';
+  if (result.isError) {
+    return failure('NO_SHAPSHOT_FOUND');
   }
 
   return result;
