@@ -80,6 +80,19 @@ export function isCashier(cashRegister: any): cashRegister is CashRegister {
   );
 }
 
+export function isCashRegisterEvent(event: any): event is CashRegisterEvent {
+  switch (event.type) {
+    case 'placed-at-workstation':
+    case 'shift-started':
+    case 'transaction-registered':
+    case 'shift-ended':
+    case 'cash-register-snapshoted':
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function getCashRegisterStreamName(cashRegisterId: string) {
   return `cashregister-${cashRegisterId}`;
 }

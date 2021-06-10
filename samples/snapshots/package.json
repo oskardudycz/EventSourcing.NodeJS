@@ -8,6 +8,7 @@
     "build:ts": "tsc",
     "build:ts:watch": "tsc  --watch",
     "dev:start": "nodemon src/index.ts",
+    "dev:start:subscription": "nodemon src/subscription.ts",
     "test": "npm run test:unit && npm run test:int && npm run test:api",
     "test:unit": "jest unit",
     "test:int": "jest int",

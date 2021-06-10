@@ -23,7 +23,7 @@ export async function readEventsFromSnapshot<
   streamName: string,
   getLastSnapshot: (
     streamName: string
-  ) => Promise<SnapshotStreamEvent | NO_SHAPSHOT_FOUND>
+  ) => Promise<Result<SnapshotStreamEvent, NO_SHAPSHOT_FOUND>>
 ): Promise<
   Result<
     ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
@@ -46,13 +46,18 @@ export async function readEventsFromSnapshotInSeparateStream<
 >(
   eventStore: EventStoreDBClient,
   streamName: string,
-  buildSnapshotStreamName?: (streamName: string) => string
+  options?: {
+    buildSnapshotStreamName?: (streamName: string) => string;
+    toPosition?: bigint;
+  }
 ): Promise<
   Result<
     ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
     STREAM_NOT_FOUND
   >
 > {
+  const { buildSnapshotStreamName, toPosition } = options ?? {};
+
   return readFromSnapshotAndStreamGeneric<StreamEvent, SnapshotStreamEvent>(
     (streamName) =>
       readSnapshotFromSeparateStream(
@@ -63,6 +68,7 @@ export async function readEventsFromSnapshotInSeparateStream<
     (streamName, fromRevision) =>
       readFromStream<StreamEvent>(eventStore, streamName, {
         fromRevision,
+        toPosition,
       }),
     streamName
   );
