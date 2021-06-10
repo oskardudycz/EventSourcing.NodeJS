@@ -14,7 +14,7 @@ export async function appendSnapshotToTheSameStream<
   snapshot: SnapshotStreamEvent,
   streamName: string
 ): Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT>> {
-  const result = await appendToStream(eventStore, streamName, snapshot);
+  const result = await appendToStream(eventStore, streamName, [snapshot]);
 
   if (result.isError) return result;
 

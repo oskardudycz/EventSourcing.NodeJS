@@ -1,4 +1,4 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
+import { END, EventStoreDBClient } from '@eventstore/db-client';
 import { ReadStreamOptions } from '@eventstore/db-client/dist/streams';
 
 import { Event } from '../../events';
@@ -13,9 +13,10 @@ export async function readLastEventFromStream<StreamEvent extends Event>(
   options?: ReadStreamOptions
 ): Promise<Result<StreamEvent, STREAM_NOT_FOUND | NO_EVENTS_FOUND>> {
   const events = await readFromStream<StreamEvent>(eventStore, streamName, {
-    ...options,
     maxCount: 1,
     direction: 'backwards',
+    fromRevision: END,
+    ...options,
   });
 
   if (events.isError) {

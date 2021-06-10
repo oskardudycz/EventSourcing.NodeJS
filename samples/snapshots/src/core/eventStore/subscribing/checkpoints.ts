@@ -1,4 +1,9 @@
-import { EventStoreDBClient, Position } from '@eventstore/db-client';
+import {
+  EventStoreDBClient,
+  NO_STREAM,
+  Position,
+  STREAM_EXISTS,
+} from '@eventstore/db-client';
 import { failure, Result, success } from '../../primitives/result';
 import { Event } from '../../events';
 import { readLastEventFromStream } from '../reading';
@@ -37,7 +42,23 @@ export async function storeCheckpoint(
     },
   };
 
-  const result = await appendToStream(eventStore, streamName, event);
+  let result = await appendToStream(eventStore, streamName, [event], {
+    expectedRevision: STREAM_EXISTS,
+  });
+
+  if (!result.isError) {
+    return success(true);
+  }
+
+  const wasMetadataSet = await eventStore.setStreamMetadata(streamName, {
+    maxCount: 1,
+  });
+
+  if (!wasMetadataSet) return failure('FAILED_TO_STORE_CHECKPOINT');
+
+  result = await appendToStream(eventStore, streamName, [event], {
+    expectedRevision: NO_STREAM,
+  });
 
   if (result.isError) return failure('FAILED_TO_STORE_CHECKPOINT');
 

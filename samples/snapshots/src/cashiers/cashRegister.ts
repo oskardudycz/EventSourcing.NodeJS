@@ -66,7 +66,10 @@ export function when(
         ...event.data,
       };
     default:
-      throw 'Unexpected event type';
+      // Unexpected event type
+      return {
+        ...currentState,
+      };
   }
 }
 

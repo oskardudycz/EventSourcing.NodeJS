@@ -17,7 +17,7 @@ export function aggregateStream<Aggregate, StreamEvents extends Event>(
     return <Aggregate>state;
   }
 
-  if (!check(state)) throw 'Aggregate state is not valid';
+  //if (!check(state)) throw 'Aggregate state is not valid';
 
-  return state;
+  return <Aggregate>state;
 }

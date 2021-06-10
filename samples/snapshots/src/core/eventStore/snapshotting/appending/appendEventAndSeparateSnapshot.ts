@@ -70,7 +70,7 @@ export async function appendEventAndSeparateSnapshot<
   };
 
   return pipeResultAsync(
-    () => appendToStream(eventStore, streamName, event),
+    () => appendToStream(eventStore, streamName, [event]),
     buildSnapshotIfNeeded,
     async (snapshot) => {
       if (!snapshot) return success(false);

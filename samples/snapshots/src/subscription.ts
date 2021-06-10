@@ -6,13 +6,11 @@ import {
 } from './core/eventStore/subscribing/checkpoints';
 import { storeSnapshotOnSubscription } from './cashiers/processCashRegister/storeSnapshotOnSubscription';
 
-console.log('test');
-
 (async () => {
   return new Promise<void>(async (resolve, reject) => {
-    const eventStore = getEventStore();
-
     try {
+      const eventStore = getEventStore();
+
       const subscriptionResult = await subscribeToAll(
         eventStore,
         (subscriptionId) => loadCheckpoint(eventStore, subscriptionId),
@@ -30,7 +28,10 @@ console.log('test');
       const subscription = subscriptionResult.value;
 
       subscription
-        .on('error', (error) => reject(error))
+        .on('error', (error) => {
+          console.error(error ?? 'UNEXPECTED ERROR CLOSING');
+          reject(error);
+        })
         .on('close', () => resolve())
         .on('end', () => resolve());
     } catch (error) {
