@@ -52,7 +52,7 @@ export async function updateCashRegister<Command, TError = never>(
         }
       ),
       forwardInputsAsResults(async ({ newEvent }) =>
-        appendToStream(eventStore, streamName, newEvent)
+        appendToStream(eventStore, streamName, [newEvent])
       ),
       forwardInputsAsResults(
         async ({

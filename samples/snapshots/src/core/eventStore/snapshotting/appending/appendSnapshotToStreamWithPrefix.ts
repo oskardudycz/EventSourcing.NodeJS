@@ -21,7 +21,9 @@ export async function appendSnapshotToStreamWithPrefix<
     eventStore.setStreamMetadata(snapshotStreamName, { maxCount: 1 });
   }
 
-  const result = await appendToStream(eventStore, snapshotStreamName, snapshot);
+  const result = await appendToStream(eventStore, snapshotStreamName, [
+    snapshot,
+  ]);
 
   if (result.isError) return failure('FAILED_TO_APPEND_SNAPSHOT');
 

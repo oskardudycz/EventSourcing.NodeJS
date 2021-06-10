@@ -1,6 +1,7 @@
 import {
   AllStreamSubscription,
   EventStoreDBClient,
+  excludeSystemEvents,
   Position,
   START,
 } from '@eventstore/db-client';
@@ -33,34 +34,47 @@ export async function subscribeToAll<StreamEvent extends Event>(
     return success(
       eventStore
         .subscribeToAll(
-          { fromPosition: currentPosition || START, ...options },
+          {
+            fromPosition: currentPosition || START,
+            filter: excludeSystemEvents(),
+            ...options,
+          },
           readableOptions
         )
         .on('data', async function (resolvedEvent) {
-          if (!resolvedEvent.event) {
-            console.log(`Event without data received`);
-            return;
-          }
+          try {
+            if (!resolvedEvent.event) {
+              console.log('Event without data received');
+              return;
+            }
 
-          const event = {
-            type: resolvedEvent.event.type,
-            data: resolvedEvent.event.data,
-          } as StreamEvent;
+            if (resolvedEvent.event.type == 'check-point') {
+              console.log('Checkpoint event - ignoring');
+              return;
+            }
 
-          for (const handleEvent of handlers) {
+            const event = {
+              type: resolvedEvent.event.type,
+              data: resolvedEvent.event.data,
+            } as StreamEvent;
+
+            for (const handleEvent of handlers) {
+              //TODO: add here some retry logic
+              await handleEvent(event, {
+                position: resolvedEvent.event.position.commit,
+                revision: resolvedEvent.event.revision,
+                streamName: resolvedEvent.event.streamId,
+              });
+            }
+
             //TODO: add here some retry logic
-            await handleEvent(event, {
-              position: resolvedEvent.event.position.commit,
-              revision: resolvedEvent.event.revision,
-              streamName: resolvedEvent.event.streamId,
-            });
+            await storeCheckpoint(
+              subscriptionId,
+              resolvedEvent.event.position.commit
+            );
+          } catch (error) {
+            console.log(error ?? 'ERROR WHILE SUBSCRIBING');
           }
-
-          //TODO: add here some retry logic
-          await storeCheckpoint(
-            subscriptionId,
-            resolvedEvent.event.position.commit
-          );
         })
     );
   })(subscriptionId);

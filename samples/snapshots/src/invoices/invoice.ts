@@ -60,7 +60,10 @@ export function when(
       };
     }
     default:
-      throw 'Unexpected event type';
+      // Unexpected event type
+      return {
+        ...currentState,
+      };
   }
 }
 
