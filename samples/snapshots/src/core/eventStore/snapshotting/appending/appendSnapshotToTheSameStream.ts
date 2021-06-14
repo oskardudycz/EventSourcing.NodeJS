@@ -1,6 +1,7 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { SnapshotEvent } from '..';
-import { Result } from '../../../primitives/result';
+import { pipeResultAsync } from '../../../primitives/pipe';
+import { Result, success } from '../../../primitives/result';
 import {
   appendToStream,
   AppendResult,
@@ -14,15 +15,14 @@ export async function appendSnapshotToTheSameStream<
   snapshot: SnapshotStreamEvent,
   streamName: string
 ): Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT>> {
-  const result = await appendToStream(eventStore, streamName, [snapshot]);
-
-  if (result.isError) return result;
-
-  const { nextExpectedRevision: lastSnapshotVersion } = result.value;
-
-  await eventStore.setStreamMetadata(streamName, {
-    lastSnapshotVersion,
-  });
-
-  return result;
+  return pipeResultAsync(
+    async () => await appendToStream(eventStore, streamName, [snapshot]),
+    async (result) => {
+      const { nextExpectedRevision: lastSnapshotVersion } = result;
+      await eventStore.setStreamMetadata(streamName, {
+        lastSnapshotVersion,
+      });
+      return success(result);
+    }
+  )();
 }
