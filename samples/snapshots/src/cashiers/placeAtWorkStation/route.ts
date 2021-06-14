@@ -5,7 +5,7 @@ import { PlaceAtWorkStation } from '.';
 import { handlePlaceAtWorkStation } from './handler';
 import { v4 as uuid } from 'uuid';
 import { isCommand } from '../../core/commands';
-import { sendCreated } from '../../core/responses';
+import { sendCreated } from '../../core/http/responses';
 
 export const route = (router: Router) =>
   router.post(
