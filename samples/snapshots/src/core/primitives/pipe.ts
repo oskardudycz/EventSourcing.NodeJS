@@ -147,6 +147,29 @@ export function pipeResultAsync<
   f5: (arg: R4) => Promise<Result<R5, E5>>
 ): (arg?: T1) => Promise<Result<R5, E1 | E2 | E3 | E4 | E5>>;
 
+export function pipeResultAsync<
+  T1,
+  R1,
+  R2,
+  R3,
+  R4,
+  R5,
+  R6,
+  E1 = never,
+  E2 = never,
+  E3 = never,
+  E4 = never,
+  E5 = never,
+  E6 = never
+>(
+  f1: ((arg: T1) => Promise<Result<R1, E1>>) | (() => Promise<Result<R1, E1>>),
+  f2: (arg: R1) => Promise<Result<R2, E2>>,
+  f3: (arg: R2) => Promise<Result<R3, E3>>,
+  f4: (arg: R3) => Promise<Result<R4, E4>>,
+  f5: (arg: R4) => Promise<Result<R5, E5>>,
+  f6: (arg: R5) => Promise<Result<R6, E6>>
+): (arg?: T1) => Promise<Result<R5, E1 | E2 | E3 | E4 | E5 | E6>>;
+
 export function pipeResultAsync(
   fn1: (...args: any[]) => any,
   ...fns: Array<(a: any) => any>
