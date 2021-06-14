@@ -2,18 +2,14 @@ import { getEventStore } from '../../core/eventStore';
 import { CashRegisterEvent } from '../cashRegister';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
 import { readEventsFromSnapshotInSeparateStream } from '../../core/eventStore/eventStoreDB/reading/readFromSnapshotAndStream';
-import { pipeResultAsync, transformResults } from '../../core/primitives/pipe';
-import { Result, success } from '../../core/primitives/result';
-import {
-  appendToStream,
-  FAILED_TO_APPEND_EVENT,
-} from '../../core/eventStore/eventStoreDB/appending';
+import { Result } from '../../core/primitives/result';
+import { FAILED_TO_APPEND_EVENT } from '../../core/eventStore/eventStoreDB/appending';
 import { buildSnapshot, CashRegisterSnapshoted } from '../snapshot';
 import {
-  appendSnapshotToStreamWithPrefix,
+  appendEventAndSnapshotToStreamWithPrefix,
   FAILED_TO_APPEND_SNAPSHOT,
-  ignoreSnapshotSkipped,
 } from '../../core/eventStore/snapshotting';
+import { getAndUpdate } from '../../core/eventStore/eventStoreDB/appending';
 
 export async function updateCashRegister<Command, TError = never>(
   streamName: string,
@@ -29,80 +25,22 @@ export async function updateCashRegister<Command, TError = never>(
     | FAILED_TO_APPEND_EVENT
     | FAILED_TO_APPEND_SNAPSHOT
     | TError
-    | never
   >
 > {
-  const eventStore = getEventStore();
-
-  const readEventsFromSnapshot = () =>
-    readEventsFromSnapshotInSeparateStream<CashRegisterEvent>(
-      eventStore,
-      streamName
-    );
-
-  const handleCommand = transformResults(
-    async ({
-      events: currentEvents,
-    }: {
-      events: CashRegisterEvent[];
-      lastSnapshotVersion?: bigint;
-    }) => {
-      return handle(currentEvents, command);
-    },
-    (newEvent, { events: currentEvents, lastSnapshotVersion }) => {
-      return { newEvent, currentEvents, lastSnapshotVersion };
-    }
-  );
-
-  const appendNewEvent = transformResults(
-    async ({
-      newEvent,
-    }: {
-      newEvent: CashRegisterEvent;
-      currentEvents: CashRegisterEvent[];
-      lastSnapshotVersion?: bigint;
-    }) => appendToStream(eventStore, streamName, [newEvent]),
-    ({ nextExpectedRevision }, inputs) => {
-      return {
-        ...inputs,
-        currentStreamVersion: nextExpectedRevision,
-      };
-    }
-  );
-
-  const tryBuildSnapshot = transformResults(
-    async (params: {
-      currentStreamVersion: bigint;
-      newEvent: CashRegisterEvent;
-      lastSnapshotVersion?: bigint;
-    }) => buildSnapshot(params),
-    ({ snapshot }, { lastSnapshotVersion }) => {
-      return { snapshot, lastSnapshotVersion };
-    }
-  );
-
-  const appendSnapshot = ({
-    snapshot,
-    lastSnapshotVersion,
-  }: {
-    snapshot: CashRegisterSnapshoted;
-    lastSnapshotVersion?: bigint;
-  }) =>
-    appendSnapshotToStreamWithPrefix(
-      eventStore,
-      snapshot,
-      streamName,
-      lastSnapshotVersion
-    );
-
-  return ignoreSnapshotSkipped(
-    pipeResultAsync(
-      readEventsFromSnapshot,
-      handleCommand,
-      appendNewEvent,
-      tryBuildSnapshot,
-      appendSnapshot,
-      async (_) => success(true)
-    )
+  return getAndUpdate(
+    (eventStore, streamName) =>
+      readEventsFromSnapshotInSeparateStream<
+        CashRegisterEvent,
+        CashRegisterSnapshoted
+      >(eventStore, streamName),
+    handle,
+    (...args) =>
+      appendEventAndSnapshotToStreamWithPrefix(
+        (options) => buildSnapshot(options),
+        ...args
+      ),
+    getEventStore(),
+    streamName,
+    command
   );
 }

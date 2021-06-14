@@ -3,6 +3,7 @@ import { ShiftStarted } from './startingShift';
 import { TransactionRegistered } from './registeringTransaction';
 import { ShiftEnded } from './endingShift';
 import { CashRegisterSnapshoted } from './snapshot';
+import { aggregateStream } from '../core/streams';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -73,7 +74,9 @@ export function when(
   }
 }
 
-export function isCashier(cashRegister: any): cashRegister is CashRegister {
+export function isCashRegister(
+  cashRegister: any
+): cashRegister is CashRegister {
   return (
     typeof cashRegister.id === 'string' &&
     typeof cashRegister.float === 'number' &&
@@ -98,4 +101,8 @@ export function isCashRegisterEvent(event: any): event is CashRegisterEvent {
 
 export function getCashRegisterStreamName(cashRegisterId: string) {
   return `cashregister-${cashRegisterId}`;
+}
+
+export function getCashRegisterFrom(events: CashRegisterEvent[]): CashRegister {
+  return aggregateStream(events, when, isCashRegister);
 }

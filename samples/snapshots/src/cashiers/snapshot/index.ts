@@ -3,12 +3,10 @@ import {
   SNAPSHOT_CREATION_SKIPPED,
 } from '../../core/eventStore/snapshotting';
 import { failure, Result, success } from '../../core/primitives/result';
-import { aggregateStream } from '../../core/streams';
 import {
   CashRegister,
   CashRegisterEvent,
-  isCashier,
-  when,
+  getCashRegisterFrom,
 } from '../cashRegister';
 
 export type CashRegisterSnapshoted = SnapshotEvent<
@@ -25,23 +23,21 @@ export function buildSnapshot({
   newEvent,
   currentStreamVersion,
 }: {
-  currentEvents?: CashRegisterEvent[];
   newEvent: CashRegisterEvent;
+  currentEvents: CashRegisterEvent[];
   currentStreamVersion: bigint;
-}): Result<{ snapshot: CashRegisterSnapshoted }, SNAPSHOT_CREATION_SKIPPED> {
-  const currentState: CashRegister = aggregateStream(
-    [...currentEvents, newEvent],
-    when,
-    isCashier
-  );
+  streamName: string;
+}): Result<CashRegisterSnapshoted, SNAPSHOT_CREATION_SKIPPED> {
+  if (shouldDoSnapshot(newEvent)) return failure('SNAPSHOT_CREATION_SKIPPED');
 
-  return shouldDoSnapshot(newEvent)
-    ? success({
-        snapshot: {
-          type: 'cash-register-snapshoted',
-          data: currentState,
-          metadata: { streamVersion: currentStreamVersion.toString() },
-        },
-      })
-    : failure('SNAPSHOT_CREATION_SKIPPED');
+  const currentState: CashRegister = getCashRegisterFrom([
+    ...currentEvents,
+    newEvent,
+  ]);
+
+  return success({
+    type: 'cash-register-snapshoted',
+    data: currentState,
+    metadata: { streamVersion: currentStreamVersion.toString() },
+  });
 }
