@@ -5,7 +5,7 @@ import { aggregateStream } from '../../core/streams';
 import {
   CashRegister,
   CashRegisterEvent,
-  isCashier,
+  isCashRegister,
   when,
 } from '../cashRegister';
 
@@ -33,7 +33,7 @@ export function handleEndShift(
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
-    isCashier
+    isCashRegister
   );
 
   if (cashRegister.currentCashierId === undefined) {

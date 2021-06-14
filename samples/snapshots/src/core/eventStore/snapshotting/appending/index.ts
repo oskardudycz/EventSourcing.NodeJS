@@ -1,4 +1,5 @@
 export * from './appendEventAndSeparateSnapshot';
+export * from './appendEventAndSnapshotToStreamWithPrefix';
 // export * from './appendSnapshotOnSubscription';
 export * from './appendSnapshotToStreamWithPrefix';
 export * from './appendSnapshotToTheSameStream';

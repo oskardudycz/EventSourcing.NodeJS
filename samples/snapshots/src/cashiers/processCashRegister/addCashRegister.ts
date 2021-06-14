@@ -1,17 +1,15 @@
 import { getEventStore } from '../../core/eventStore';
 import { CashRegisterEvent } from '../cashRegister';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
-import { pipeResultAsync, transformResults } from '../../core/primitives/pipe';
-import { Result, success } from '../../core/primitives/result';
+import { Result } from '../../core/primitives/result';
 import {
-  appendToStream,
+  add,
   FAILED_TO_APPEND_EVENT,
 } from '../../core/eventStore/eventStoreDB/appending';
-import { buildSnapshot, CashRegisterSnapshoted } from '../snapshot';
+import { buildSnapshot } from '../snapshot';
 import {
-  appendSnapshotToStreamWithPrefix,
+  appendEventAndSnapshotToStreamWithPrefix,
   FAILED_TO_APPEND_SNAPSHOT,
-  ignoreSnapshotSkipped,
 } from '../../core/eventStore/snapshotting';
 
 export async function addCashRegister<Command, TError = never>(
@@ -25,41 +23,17 @@ export async function addCashRegister<Command, TError = never>(
     | FAILED_TO_APPEND_EVENT
     | FAILED_TO_APPEND_SNAPSHOT
     | TError
-    | never
   >
 > {
-  const eventStore = getEventStore();
-
-  const handleCommand = async () => {
-    return handle(command);
-  };
-
-  const appendNewEvent = transformResults(
-    async (newEvent: CashRegisterEvent) =>
-      appendToStream(eventStore, streamName, [newEvent]),
-    ({ nextExpectedRevision }, newEvent) => {
-      return {
-        newEvent,
-        currentStreamVersion: nextExpectedRevision,
-      };
-    }
-  );
-
-  const tryBuildSnapshot = async (params: {
-    currentStreamVersion: bigint;
-    newEvent: CashRegisterEvent;
-  }) => buildSnapshot(params);
-
-  const appendSnapshot = ({ snapshot }: { snapshot: CashRegisterSnapshoted }) =>
-    appendSnapshotToStreamWithPrefix(eventStore, snapshot, streamName);
-
-  return ignoreSnapshotSkipped(
-    pipeResultAsync(
-      handleCommand,
-      appendNewEvent,
-      tryBuildSnapshot,
-      appendSnapshot,
-      async (_) => success(true)
-    )
+  return add(
+    handle,
+    (...args) =>
+      appendEventAndSnapshotToStreamWithPrefix(
+        (options) => buildSnapshot(options),
+        ...args
+      ),
+    getEventStore(),
+    streamName,
+    command
   );
 }

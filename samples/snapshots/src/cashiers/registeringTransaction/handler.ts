@@ -4,7 +4,7 @@ import { aggregateStream } from '../../core/streams';
 import {
   CashRegister,
   CashRegisterEvent,
-  isCashier,
+  isCashRegister,
   when,
 } from '../cashRegister';
 import { v4 as uuid } from 'uuid';
@@ -37,7 +37,7 @@ export function handleRegisterTransaction(
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
-    isCashier
+    isCashRegister
   );
 
   if (cashRegister.currentCashierId === undefined) {

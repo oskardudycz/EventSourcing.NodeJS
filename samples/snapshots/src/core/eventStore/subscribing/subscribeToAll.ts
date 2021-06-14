@@ -13,7 +13,7 @@ import { pipeResultAsync } from '../../primitives/pipe';
 import { Result, success } from '../../primitives/result';
 import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 
-export async function subscribeToAll<StreamEvent extends Event>(
+export async function subscribeToAll<StreamEvent extends Event, TError = never>(
   eventStore: EventStoreDBClient,
   loadCheckpoint: (
     subscriptionId: string
@@ -25,7 +25,7 @@ export async function subscribeToAll<StreamEvent extends Event>(
   handlers: ((
     event: StreamEvent,
     options: { position: bigint; revision: bigint; streamName: string }
-  ) => Promise<Result<boolean>>)[],
+  ) => Promise<Result<boolean, TError>>)[],
   subscriptionId: string,
   options?: SubscribeToAllOptions,
   readableOptions?: ReadableOptions
