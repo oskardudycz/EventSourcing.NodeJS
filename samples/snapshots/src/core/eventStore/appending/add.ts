@@ -1,16 +1,17 @@
 import { Event, isEvent } from '../../events';
+import { failure, Result, success } from '../../primitives/result';
 
 export async function add<Command, StreamEvent extends Event, Error = never>(
   store: (streamName: string, newEvent: StreamEvent) => Promise<boolean>,
   streamName: string,
   command: Command,
   handle: (command: Command) => StreamEvent | Error
-): Promise<boolean | Error | never> {
+): Promise<Result<boolean, Error>> {
   const newEvent = handle(command);
 
   if (!isEvent(newEvent)) {
-    return newEvent;
+    return failure(newEvent);
   }
 
-  return store(streamName, newEvent);
+  return success(await store(streamName, newEvent));
 }
