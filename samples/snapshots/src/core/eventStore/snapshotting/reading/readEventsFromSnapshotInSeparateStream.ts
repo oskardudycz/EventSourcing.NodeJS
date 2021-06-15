@@ -1,7 +1,7 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { ReadFromStreamAndSnapshotsResult, SnapshotEvent } from '..';
 import { Event } from '../../../events';
-import { Result } from '../../../primitives/result';
+import { Result } from '../../../primitives';
 import { ReadFromStreamOptions, STREAM_NOT_FOUND } from '../../reading';
 import { readEventsFromExternalSnapshot } from './readEventsFromExternalSnapshot';
 import { readSnapshotFromSeparateStream } from './readSnapshotFromSeparateStream';

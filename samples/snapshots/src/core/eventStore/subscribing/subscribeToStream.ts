@@ -7,7 +7,7 @@ import { SubscribeToStreamOptions } from '@eventstore/db-client/dist/streams';
 
 import { Event } from '../../events';
 import { pipeResultAsync } from '../../primitives/pipe';
-import { Result, success } from '../../primitives/result';
+import { Result, success } from '../../primitives';
 import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 
 export async function subscribeToStream<StreamEvent extends Event>(

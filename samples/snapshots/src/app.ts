@@ -1,6 +1,6 @@
 import express, { Application } from 'express';
 import { cashRegisterRouter } from './cashiers';
-import { handleErrors } from './core/http/middlewares';
+import { handleErrors } from '#core/http/middlewares';
 
 const app: Application = express();
 

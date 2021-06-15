@@ -4,11 +4,11 @@ import {
   Position,
   STREAM_EXISTS,
 } from '@eventstore/db-client';
-import { failure, Result, success } from '../../primitives/result';
+import { failure, Result, success } from '../../primitives';
 import { Event } from '../../events';
 import { readLastEventFromStream } from '../reading';
 import { appendToStream } from '../appending';
-import { getCurrentTime } from '../../primitives/getCurrentTime';
+import { getCurrentTime } from '../../primitives';
 
 export type CheckPointEvent = Event<
   'check-point',

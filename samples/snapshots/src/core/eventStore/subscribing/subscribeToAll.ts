@@ -10,7 +10,7 @@ import { ReadableOptions } from 'node:stream';
 
 import { Event } from '../../events';
 import { pipeResultAsync } from '../../primitives/pipe';
-import { Result, success } from '../../primitives/result';
+import { Result, success } from '../../primitives';
 import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 
 export async function subscribeToAll<StreamEvent extends Event, TError = never>(

@@ -1,7 +1,6 @@
-import { Command } from '../../core/commands';
-import { Event } from '../../core/events';
-import { getCurrentTime } from '../../core/primitives/getCurrentTime';
-import { Result, success } from '../../core/primitives/result';
+import { Command } from '#core/commands';
+import { Event } from '#core/events';
+import { getCurrentTime, Result, success } from '#core/primitives';
 
 export type PlaceAtWorkStation = Command<
   'place-at-workstation',

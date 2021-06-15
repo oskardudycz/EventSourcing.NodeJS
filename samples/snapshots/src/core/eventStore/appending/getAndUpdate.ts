@@ -2,7 +2,7 @@ import { ReadFromStreamAndSnapshotsResult } from '../snapshotting/reading/';
 import { Event } from '../../events';
 import { STREAM_NOT_FOUND } from '../reading';
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { Result } from '../../primitives/result';
+import { Result } from '../../primitives';
 import { FAILED_TO_APPEND_EVENT } from '.';
 
 export async function getAndUpdate<

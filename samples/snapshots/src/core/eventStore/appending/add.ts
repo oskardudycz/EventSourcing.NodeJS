@@ -1,6 +1,6 @@
 import { Event } from '../../events';
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { Result } from '../../primitives/result';
+import { Result } from '../../primitives';
 import { FAILED_TO_APPEND_EVENT } from '.';
 
 export async function add<

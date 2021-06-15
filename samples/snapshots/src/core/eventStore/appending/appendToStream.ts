@@ -7,7 +7,7 @@ import {
 import { AppendToStreamOptions } from '@eventstore/db-client/dist/streams';
 
 import { Event } from '../../events';
-import { failure, Result, success } from '../../primitives/result';
+import { failure, Result, success } from '../../primitives';
 
 export interface AppendResult {
   /**

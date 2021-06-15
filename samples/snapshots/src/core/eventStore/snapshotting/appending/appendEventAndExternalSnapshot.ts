@@ -11,7 +11,7 @@ import {
   appendToStream,
   FAILED_TO_APPEND_EVENT,
 } from '../../appending/appendToStream';
-import { Result, success } from '../../../primitives/result';
+import { Result, success } from '../../../primitives';
 import { pipeResultAsync } from '../../../primitives/pipe';
 
 export async function appendEventAndExternalSnapshot<

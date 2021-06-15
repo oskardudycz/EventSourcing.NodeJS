@@ -1,8 +1,8 @@
 import {
   SnapshotEvent,
   SNAPSHOT_CREATION_SKIPPED,
-} from '../../core/eventStore/snapshotting';
-import { failure, Result, success } from '../../core/primitives/result';
+} from '#core/eventStore/snapshotting';
+import { failure, Result, success } from '#core/primitives';
 import {
   CashRegister,
   CashRegisterEvent,

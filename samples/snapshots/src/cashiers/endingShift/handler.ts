@@ -1,8 +1,8 @@
-import { Command } from '../../core/commands';
-import { Event } from '../../core/events';
-import { failure, Result, success } from '../../core/primitives/result';
-import { getCurrentTime } from '../../core/primitives/getCurrentTime';
-import { aggregateStream } from '../../core/streams';
+import { Command } from '#core/commands';
+import { Event } from '#core/events';
+import { failure, Result, success } from '#core/primitives';
+import { getCurrentTime } from '#core/primitives';
+import { aggregateStream } from '#core/streams';
 import {
   CashRegister,
   CashRegisterEvent,

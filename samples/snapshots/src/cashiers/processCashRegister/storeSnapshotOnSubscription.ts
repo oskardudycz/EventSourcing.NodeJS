@@ -1,13 +1,13 @@
-import { getEventStore } from '../../core/eventStore';
+import { getEventStore } from '#core/eventStore';
 import { CashRegisterEvent, isCashRegisterEvent } from '../cashRegister';
-import { Result, success } from '../../core/primitives/result';
+import { Result, success } from '#core/primitives';
 import { buildSnapshot, shouldDoSnapshot } from '../snapshot';
 import {
   appendSnapshotToStreamWithPrefix,
   readEventsFromSnapshotInSeparateStream,
-} from '../../core/eventStore/snapshotting';
-import { Event } from '../../core/events';
-import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
+} from '#core/eventStore/snapshotting';
+import { Event } from '#core/events';
+import { STREAM_NOT_FOUND } from '#core/eventStore/reading';
 
 export async function storeSnapshotOnSubscription(
   event: Event,
