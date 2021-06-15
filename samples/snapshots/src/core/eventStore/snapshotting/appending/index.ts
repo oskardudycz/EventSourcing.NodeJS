@@ -1,6 +1,6 @@
 import { failure, Result, success } from '../../../primitives/result';
 
-export * from './appendEventAndSeparateSnapshot';
+export * from './appendEventAndExternalSnapshot';
 export * from './appendEventAndSnapshotToStreamWithPrefix';
 // export * from './appendSnapshotOnSubscription';
 export * from './appendSnapshotToStreamWithPrefix';

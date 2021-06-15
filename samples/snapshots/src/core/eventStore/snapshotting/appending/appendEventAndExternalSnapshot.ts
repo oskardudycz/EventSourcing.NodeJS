@@ -14,7 +14,7 @@ import {
 import { Result, success } from '../../../primitives/result';
 import { pipeResultAsync } from '../../../primitives/pipe';
 
-export async function appendEventAndSeparateSnapshot<
+export async function appendEventAndExternalSnapshot<
   StreamEvent extends Event = Event,
   SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
 >(
