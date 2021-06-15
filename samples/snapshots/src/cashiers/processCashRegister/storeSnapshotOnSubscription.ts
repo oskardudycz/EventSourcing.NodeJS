@@ -1,9 +1,11 @@
 import { getEventStore } from '../../core/eventStore';
 import { CashRegisterEvent, isCashRegisterEvent } from '../cashRegister';
-import { readEventsFromSnapshotInSeparateStream } from '../../core/eventStore/eventStoreDB/reading/readFromSnapshotAndStream';
 import { Result, success } from '../../core/primitives/result';
 import { buildSnapshot, shouldDoSnapshot } from '../snapshot';
-import { appendSnapshotToStreamWithPrefix } from '../../core/eventStore/snapshotting';
+import {
+  appendSnapshotToStreamWithPrefix,
+  readEventsFromSnapshotInSeparateStream,
+} from '../../core/eventStore/snapshotting';
 import { Event } from '../../core/events';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
 

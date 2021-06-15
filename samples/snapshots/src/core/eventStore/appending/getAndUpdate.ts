@@ -43,15 +43,17 @@ export async function getAndUpdate<
 
   const { events: currentEvents, lastSnapshotVersion } = result.value;
 
-  const newEvent = handle(currentEvents, command);
+  const handleResult = handle(currentEvents, command);
 
-  if (newEvent.isError) return newEvent;
+  if (handleResult.isError) return handleResult;
+
+  const newEvent = handleResult.value;
 
   return store(
     eventStore,
     streamName,
     currentEvents,
-    newEvent.value,
+    newEvent,
     lastSnapshotVersion
   );
 }
