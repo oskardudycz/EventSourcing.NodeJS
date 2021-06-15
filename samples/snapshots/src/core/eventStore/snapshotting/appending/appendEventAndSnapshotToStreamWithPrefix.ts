@@ -6,7 +6,7 @@ import {
   SNAPSHOT_CREATION_SKIPPED,
 } from '..';
 import { FAILED_TO_APPEND_EVENT } from '../../appending/appendToStream';
-import { Result } from '../../../primitives/result';
+import { Result } from '../../../primitives';
 import { appendEventAndExternalSnapshot } from './appendEventAndExternalSnapshot';
 import { appendSnapshotToStreamWithPrefix } from './appendSnapshotToStreamWithPrefix';
 

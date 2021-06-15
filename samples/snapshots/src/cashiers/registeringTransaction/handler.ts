@@ -1,15 +1,14 @@
-import { Command } from '../../core/commands';
-import { Event } from '../../core/events';
-import { aggregateStream } from '../../core/streams';
+import { v4 as uuid } from 'uuid';
+import { Command } from '#core/commands';
+import { Event } from '#core/events';
+import { aggregateStream } from '#core/streams';
+import { failure, Result, success, getCurrentTime } from '#core/primitives';
 import {
   CashRegister,
   CashRegisterEvent,
   isCashRegister,
   when,
 } from '../cashRegister';
-import { v4 as uuid } from 'uuid';
-import { failure, Result, success } from '../../core/primitives/result';
-import { getCurrentTime } from '../../core/primitives/getCurrentTime';
 
 export type SHIFT_NOT_STARTED = 'SHIFT_NOT_STARTED';
 

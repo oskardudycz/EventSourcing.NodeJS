@@ -1,3 +1,5 @@
+import { EventStoreDBClient } from '@eventstore/db-client';
+import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
@@ -10,8 +12,6 @@ import {
 import { v4 as uuid } from 'uuid';
 import { addCashRegister, updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { addSnapshotPrefix } from '../../core/eventStore/snapshotting';
 import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
 import { handleStartShift, StartShift } from '../startingShift';
 import {

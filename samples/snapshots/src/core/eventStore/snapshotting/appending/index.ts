@@ -1,4 +1,4 @@
-import { failure, Result, success } from '../../../primitives/result';
+import { failure, Result, success } from '../../../primitives';
 
 export * from './appendEventAndExternalSnapshot';
 export * from './appendEventAndSnapshotToStreamWithPrefix';

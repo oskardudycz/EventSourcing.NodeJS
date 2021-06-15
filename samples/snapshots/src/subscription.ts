@@ -1,9 +1,10 @@
-import { subscribeToAll } from './core/eventStore/subscribing/subscribeToAll';
-import { getEventStore } from './core/eventStore';
 import {
+  subscribeToAll,
   loadCheckpoint,
   storeCheckpoint,
-} from './core/eventStore/subscribing/checkpoints';
+} from '#core/eventStore/subscribing';
+import { getEventStore } from '#core/eventStore';
+import {} from '#core/eventStore/subscribing';
 import { storeSnapshotOnSubscription } from './cashiers/processCashRegister/storeSnapshotOnSubscription';
 
 (async () => {

@@ -8,7 +8,7 @@ import { v4 as uuid } from 'uuid';
 import { addCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { addSnapshotPrefix } from '../../core/eventStore/snapshotting';
+import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
 import {
   expectStreamToHaveNumberOfEvents,
   expectStreamToNotExist,

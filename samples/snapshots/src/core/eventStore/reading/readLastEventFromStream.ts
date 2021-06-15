@@ -3,7 +3,7 @@ import { ReadStreamOptions } from '@eventstore/db-client/dist/streams';
 
 import { Event } from '../../events';
 import { readFromStream, STREAM_NOT_FOUND } from '.';
-import { failure, Result, success } from '../../primitives/result';
+import { failure, Result, success } from '../../primitives';
 
 export type NO_EVENTS_FOUND = 'NO_EVENTS_FOUND';
 

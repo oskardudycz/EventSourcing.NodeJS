@@ -10,5 +10,10 @@
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint"],
-  "rules": {}
+  "rules": {},
+  "settings": {
+    "import/resolver": {
+      "typescript": {}
+    }
+  }
 }

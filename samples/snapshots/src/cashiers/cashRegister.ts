@@ -3,7 +3,7 @@ import { ShiftStarted } from './startingShift';
 import { TransactionRegistered } from './registeringTransaction';
 import { ShiftEnded } from './endingShift';
 import { CashRegisterSnapshoted } from './snapshot';
-import { aggregateStream } from '../core/streams';
+import { aggregateStream } from '#core/streams';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments

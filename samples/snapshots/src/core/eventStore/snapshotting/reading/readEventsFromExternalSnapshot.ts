@@ -5,7 +5,7 @@ import {
   SnapshotEvent,
 } from '..';
 import { Event } from '../../../events';
-import { Result, success } from '../../../primitives/result';
+import { Result, success } from '../../../primitives';
 import {
   readFromStream,
   ReadFromStreamOptions,

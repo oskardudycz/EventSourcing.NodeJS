@@ -1,7 +1,7 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { SnapshotEvent } from '..';
 import { pipeResultAsync } from '../../../primitives/pipe';
-import { Result, success } from '../../../primitives/result';
+import { Result, success } from '../../../primitives';
 import {
   appendToStream,
   AppendResult,

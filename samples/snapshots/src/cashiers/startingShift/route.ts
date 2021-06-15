@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response, Router } from 'express';
+import { isCommand } from '#core/commands';
 import { StartShift, handleStartShift } from './handler';
 import { updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
-import { isCommand } from '../../core/commands';
 
 export const route = (router: Router) =>
   router.post(
