@@ -12,7 +12,7 @@ import {
   STREAM_NOT_FOUND,
 } from '../../reading';
 
-export async function readEventsFromSeparateSnapshot<
+export async function readEventsFromExternalSnapshot<
   StreamEvent extends Event,
   SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
 >(

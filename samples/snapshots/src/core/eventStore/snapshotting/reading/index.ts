@@ -1,4 +1,4 @@
-export * from './readEventsFromSeparateSnapshot';
+export * from './readEventsFromExternalSnapshot';
 export * from './readEventsFromSnapshotInSeparateStream';
 export * from './readEventsFromSnapshotInTheSameStream';
 export * from './readSnapshotFromSeparateStream';

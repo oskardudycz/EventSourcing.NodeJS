@@ -7,7 +7,7 @@ import {
 } from '..';
 import { FAILED_TO_APPEND_EVENT } from '../../appending/appendToStream';
 import { Result } from '../../../primitives/result';
-import { appendEventAndSeparateSnapshot } from './appendEventAndSeparateSnapshot';
+import { appendEventAndExternalSnapshot } from './appendEventAndExternalSnapshot';
 import { appendSnapshotToStreamWithPrefix } from './appendSnapshotToStreamWithPrefix';
 
 export async function appendEventAndSnapshotToStreamWithPrefix<
@@ -29,7 +29,7 @@ export async function appendEventAndSnapshotToStreamWithPrefix<
 ): Promise<
   Result<boolean, FAILED_TO_APPEND_EVENT | FAILED_TO_APPEND_SNAPSHOT>
 > {
-  return appendEventAndSeparateSnapshot(
+  return appendEventAndExternalSnapshot(
     (...args) => appendSnapshotToStreamWithPrefix(eventStore, ...args),
     tryBuildSnapshot,
     eventStore,

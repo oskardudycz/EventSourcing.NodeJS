@@ -3,7 +3,7 @@ import { ReadFromStreamAndSnapshotsResult, SnapshotEvent } from '..';
 import { Event } from '../../../events';
 import { Result } from '../../../primitives/result';
 import { ReadFromStreamOptions, STREAM_NOT_FOUND } from '../../reading';
-import { readEventsFromSeparateSnapshot } from './readEventsFromSeparateSnapshot';
+import { readEventsFromExternalSnapshot } from './readEventsFromExternalSnapshot';
 import { readSnapshotFromSeparateStream } from './readSnapshotFromSeparateStream';
 
 export async function readEventsFromSnapshotInSeparateStream<
@@ -20,7 +20,7 @@ export async function readEventsFromSnapshotInSeparateStream<
     STREAM_NOT_FOUND
   >
 > {
-  return readEventsFromSeparateSnapshot<StreamEvent, SnapshotStreamEvent>(
+  return readEventsFromExternalSnapshot<StreamEvent, SnapshotStreamEvent>(
     (streamName) =>
       readSnapshotFromSeparateStream(
         eventStore,
