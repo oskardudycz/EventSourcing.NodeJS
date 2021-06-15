@@ -1,43 +1,57 @@
 import { ReadFromStreamAndSnapshotsResult } from '../snapshotting/reading/';
-import { Event, isEvent } from '../../events';
+import { Event } from '../../events';
 import { STREAM_NOT_FOUND } from '../reading';
+import { EventStoreDBClient } from '@eventstore/db-client';
+import { Result } from '../../primitives/result';
+import { FAILED_TO_APPEND_EVENT } from '.';
 
 export async function getAndUpdate<
   Command,
   StreamEvent extends Event,
-  Error = never
+  HANDLE_ERROR = never,
+  STORE_ERROR = never
 >(
-  getSnapshotAndEvents: (
+  getEvents: (
+    eventStore: EventStoreDBClient,
     streamName: string
   ) => Promise<
-    ReadFromStreamAndSnapshotsResult<StreamEvent> | STREAM_NOT_FOUND
+    Result<ReadFromStreamAndSnapshotsResult<StreamEvent>, STREAM_NOT_FOUND>
   >,
-  store: (
-    streamName: string,
-    newEvent: StreamEvent,
-    currentEvents: StreamEvent[],
-    lastSnapshotVersion?: bigint | undefined
-  ) => Promise<boolean>,
-  streamName: string,
-  command: Command,
   handle: (
     currentEvents: StreamEvent[],
     command: Command
-  ) => StreamEvent | Error
-): Promise<boolean | STREAM_NOT_FOUND | Error | never> {
-  const stream = await getSnapshotAndEvents(streamName);
+  ) => Result<StreamEvent, HANDLE_ERROR>,
+  store: (
+    eventStore: EventStoreDBClient,
+    streamName: string,
+    currentEvents: StreamEvent[],
+    newEvent: StreamEvent,
+    lastSnapshotVersion?: bigint | undefined
+  ) => Promise<Result<boolean, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
+  eventStore: EventStoreDBClient,
+  streamName: string,
+  command: Command
+): Promise<
+  Result<
+    boolean,
+    STREAM_NOT_FOUND | FAILED_TO_APPEND_EVENT | HANDLE_ERROR | STORE_ERROR
+  >
+> {
+  const result = await getEvents(eventStore, streamName);
 
-  if (stream === 'STREAM_NOT_FOUND') {
-    return 'STREAM_NOT_FOUND';
-  }
+  if (result.isError) return result;
 
-  const { events, lastSnapshotVersion } = stream;
+  const { events: currentEvents, lastSnapshotVersion } = result.value;
 
-  const newEvent = handle(events, command);
+  const newEvent = handle(currentEvents, command);
 
-  if (!isEvent(newEvent)) {
-    return newEvent;
-  }
+  if (newEvent.isError) return newEvent;
 
-  return store(streamName, newEvent, events, lastSnapshotVersion);
+  return store(
+    eventStore,
+    streamName,
+    currentEvents,
+    newEvent.value,
+    lastSnapshotVersion
+  );
 }

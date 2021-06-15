@@ -10,7 +10,7 @@ import {
   AppendResult,
   appendToStream,
   FAILED_TO_APPEND_EVENT,
-} from '../../eventStoreDB/appending/appendToStream';
+} from '../../appending/appendToStream';
 import { Result, success } from '../../../primitives/result';
 import { pipeResultAsync } from '../../../primitives/pipe';
 

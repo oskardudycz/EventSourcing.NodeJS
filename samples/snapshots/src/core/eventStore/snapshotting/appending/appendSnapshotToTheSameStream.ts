@@ -6,7 +6,7 @@ import {
   appendToStream,
   AppendResult,
   FAILED_TO_APPEND_EVENT,
-} from '../../eventStoreDB/appending/appendToStream';
+} from '../../appending/appendToStream';
 
 export async function appendSnapshotToTheSameStream<
   SnapshotStreamEvent extends SnapshotEvent
@@ -16,7 +16,7 @@ export async function appendSnapshotToTheSameStream<
   streamName: string
 ): Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT>> {
   return pipeResultAsync(
-    async () => await appendToStream(eventStore, streamName, [snapshot]),
+    () => appendToStream(eventStore, streamName, [snapshot]),
     async (result) => {
       const { nextExpectedRevision: lastSnapshotVersion } = result;
       await eventStore.setStreamMetadata(streamName, {

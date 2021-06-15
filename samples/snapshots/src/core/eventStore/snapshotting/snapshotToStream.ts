@@ -1,7 +1,7 @@
 // import { EventStoreDBClient, StreamSubscription } from '@eventstore/db-client';
 // import { Event } from '../../events';
 // import { SnapshotEvent } from './snapshotEvent';
-// import { appendToStream } from '../eventStoreDB/appending/appendToStream';
+// import { appendToStream } from '../appending/appendToStream';
 // import { readFromStream } from '../reading/readFromStream';
 // import { subscribeToStream } from '../subscribing/subscribeToStream';
 

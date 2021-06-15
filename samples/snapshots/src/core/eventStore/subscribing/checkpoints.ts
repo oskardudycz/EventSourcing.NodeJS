@@ -7,7 +7,7 @@ import {
 import { failure, Result, success } from '../../primitives/result';
 import { Event } from '../../events';
 import { readLastEventFromStream } from '../reading';
-import { appendToStream } from '../eventStoreDB/appending';
+import { appendToStream } from '../appending';
 
 export type CheckPointEvent = Event<
   'check-point',

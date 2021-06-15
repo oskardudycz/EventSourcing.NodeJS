@@ -1,9 +1,6 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { FAILED_TO_APPEND_SNAPSHOT, SnapshotEvent } from '..';
-import {
-  AppendResult,
-  appendToStream,
-} from '../../eventStoreDB/appending/appendToStream';
+import { AppendResult, appendToStream } from '../../appending/appendToStream';
 import { addSnapshotPrefix } from '..';
 import { failure, Result } from '../../../primitives/result';
 

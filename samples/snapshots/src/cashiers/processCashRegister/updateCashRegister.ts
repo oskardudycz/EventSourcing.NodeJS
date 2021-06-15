@@ -3,13 +3,13 @@ import { CashRegisterEvent } from '../cashRegister';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
 import { readEventsFromSnapshotInSeparateStream } from '../../core/eventStore/eventStoreDB/reading/readFromSnapshotAndStream';
 import { Result } from '../../core/primitives/result';
-import { FAILED_TO_APPEND_EVENT } from '../../core/eventStore/eventStoreDB/appending';
+import { FAILED_TO_APPEND_EVENT } from '../../core/eventStore/appending';
 import { buildSnapshot, CashRegisterSnapshoted } from '../snapshot';
 import {
   appendEventAndSnapshotToStreamWithPrefix,
   FAILED_TO_APPEND_SNAPSHOT,
 } from '../../core/eventStore/snapshotting';
-import { getAndUpdate } from '../../core/eventStore/eventStoreDB/appending';
+import { getAndUpdate } from '../../core/eventStore/appending';
 
 export async function updateCashRegister<Command, TError = never>(
   streamName: string,
