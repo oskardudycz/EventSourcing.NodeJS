@@ -9,6 +9,7 @@ import {
 } from '../cashRegister';
 import { v4 as uuid } from 'uuid';
 import { failure, Result, success } from '../../core/primitives/result';
+import { getCurrentTime } from '../../core/primitives/getCurrentTime';
 
 export type SHIFT_NOT_STARTED = 'SHIFT_NOT_STARTED';
 
@@ -50,7 +51,7 @@ export function handleRegisterTransaction(
       cashRegisterId: cashRegister.id,
       transactionId: uuid(),
       amount: command.data.amount,
-      registeredAt: new Date(),
+      registeredAt: getCurrentTime(),
     },
   });
 }

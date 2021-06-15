@@ -1,5 +1,6 @@
 import { Command } from '../../core/commands';
 import { Event } from '../../core/events';
+import { getCurrentTime } from '../../core/primitives/getCurrentTime';
 import { Result, success } from '../../core/primitives/result';
 
 export type PlaceAtWorkStation = Command<
@@ -27,7 +28,7 @@ export function handlePlaceAtWorkStation(
     data: {
       cashRegisterId: command.data.cashRegisterId,
       workstation: command.data.workstation,
-      placedAt: new Date(),
+      placedAt: getCurrentTime(),
     },
   });
 }

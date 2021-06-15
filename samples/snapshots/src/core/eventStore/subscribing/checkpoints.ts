@@ -8,6 +8,7 @@ import { failure, Result, success } from '../../primitives/result';
 import { Event } from '../../events';
 import { readLastEventFromStream } from '../reading';
 import { appendToStream } from '../appending';
+import { getCurrentTime } from '../../primitives/getCurrentTime';
 
 export type CheckPointEvent = Event<
   'check-point',
@@ -38,7 +39,7 @@ export async function storeCheckpoint(
     data: {
       commit,
       prepare: commit,
-      checkPointedAt: new Date(),
+      checkPointedAt: getCurrentTime(),
     },
   };
 
