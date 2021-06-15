@@ -11,7 +11,7 @@ import {
   appendToStream,
   FAILED_TO_APPEND_EVENT,
 } from '../../eventStoreDB/appending/appendToStream';
-import { Result } from '../../../primitives/result';
+import { Result, success } from '../../../primitives/result';
 import { pipeResultAsync } from '../../../primitives/pipe';
 
 export async function appendEventAndSeparateSnapshot<
@@ -39,7 +39,7 @@ export async function appendEventAndSeparateSnapshot<
   Result<boolean, FAILED_TO_APPEND_EVENT | FAILED_TO_APPEND_SNAPSHOT>
 > {
   return ignoreSnapshotSkipped(
-    pipeResultAsync(
+    await pipeResultAsync(
       () => appendToStream(eventStore, streamName, [event]),
       async ({ nextExpectedRevision: currentStreamVersion }) =>
         tryBuildSnapshot({
@@ -51,7 +51,8 @@ export async function appendEventAndSeparateSnapshot<
         }),
       async (snapshot) => {
         return appendSnapshot(snapshot, streamName, lastSnapshotVersion);
-      }
-    )
+      },
+      async (_) => success(true)
+    )()
   );
 }
