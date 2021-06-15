@@ -32,6 +32,7 @@ export const route = (router: Router) =>
               response.sendStatus(404);
               break;
             case 'SHIFT_NOT_STARTED':
+            case 'FAILED_TO_APPEND_EVENT':
               response.sendStatus(409);
               break;
             default:
