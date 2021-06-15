@@ -1,5 +1,6 @@
 import { Command } from '../../core/commands';
 import { Event } from '../../core/events';
+import { getCurrentTime } from '../../core/primitives/getCurrentTime';
 import { failure, Result, success } from '../../core/primitives/result';
 import { aggregateStream } from '../../core/streams';
 import {
@@ -47,7 +48,7 @@ export function handleStartShift(
     data: {
       cashRegisterId: cashRegister.id,
       cashierId: command.data.cashierId,
-      startedAt: new Date(),
+      startedAt: getCurrentTime(),
     },
   });
 }
