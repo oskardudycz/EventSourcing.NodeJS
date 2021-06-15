@@ -1,4 +1,6 @@
-export * from './readFromSnapshotAndStream';
+export * from './readEventsFromSeparateSnapshot';
+export * from './readEventsFromSnapshotInSeparateStream';
+export * from './readEventsFromSnapshotInTheSameStream';
 export * from './readSnapshotFromSeparateStream';
 
 import { Event } from '../../../events';

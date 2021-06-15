@@ -23,9 +23,11 @@ export async function add<
 ): Promise<
   Result<boolean, FAILED_TO_APPEND_EVENT | HANDLE_ERROR | STORE_ERROR>
 > {
-  const newEvent = handle(command);
+  const handleResult = handle(command);
 
-  if (newEvent.isError) return newEvent;
+  if (handleResult.isError) return handleResult;
 
-  return store(eventStore, streamName, [], newEvent.value);
+  const newEvent = handleResult.value;
+
+  return store(eventStore, streamName, [], newEvent);
 }

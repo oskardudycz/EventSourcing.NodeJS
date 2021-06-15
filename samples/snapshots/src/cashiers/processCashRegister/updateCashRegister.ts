@@ -1,7 +1,7 @@
 import { getEventStore } from '../../core/eventStore';
 import { CashRegisterEvent } from '../cashRegister';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
-import { readEventsFromSnapshotInSeparateStream } from '../../core/eventStore/eventStoreDB/reading/readFromSnapshotAndStream';
+import { readEventsFromSnapshotInSeparateStream } from '../../core/eventStore/snapshotting';
 import { Result } from '../../core/primitives/result';
 import { FAILED_TO_APPEND_EVENT } from '../../core/eventStore/appending';
 import { buildSnapshot, CashRegisterSnapshoted } from '../snapshot';
