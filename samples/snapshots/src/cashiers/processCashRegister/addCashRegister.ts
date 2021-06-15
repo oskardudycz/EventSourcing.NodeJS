@@ -2,10 +2,7 @@ import { getEventStore } from '../../core/eventStore';
 import { CashRegisterEvent } from '../cashRegister';
 import { STREAM_NOT_FOUND } from '../../core/eventStore/reading';
 import { Result } from '../../core/primitives/result';
-import {
-  add,
-  FAILED_TO_APPEND_EVENT,
-} from '../../core/eventStore/eventStoreDB/appending';
+import { add, FAILED_TO_APPEND_EVENT } from '../../core/eventStore/appending';
 import { buildSnapshot } from '../snapshot';
 import {
   appendEventAndSnapshotToStreamWithPrefix,

@@ -1,17 +1,31 @@
-import { Event, isEvent } from '../../events';
-import { failure, Result, success } from '../../primitives/result';
+import { Event } from '../../events';
+import { EventStoreDBClient } from '@eventstore/db-client';
+import { Result } from '../../primitives/result';
+import { FAILED_TO_APPEND_EVENT } from '.';
 
-export async function add<Command, StreamEvent extends Event, Error = never>(
-  store: (streamName: string, newEvent: StreamEvent) => Promise<boolean>,
+export async function add<
+  Command,
+  StreamEvent extends Event,
+  HANDLE_ERROR = never,
+  STORE_ERROR = never
+>(
+  handle: (command: Command) => Result<StreamEvent, HANDLE_ERROR>,
+  store: (
+    eventStore: EventStoreDBClient,
+    streamName: string,
+    currentEvents: StreamEvent[],
+    newEvent: StreamEvent,
+    lastSnapshotVersion?: bigint | undefined
+  ) => Promise<Result<boolean, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
+  eventStore: EventStoreDBClient,
   streamName: string,
-  command: Command,
-  handle: (command: Command) => StreamEvent | Error
-): Promise<Result<boolean, Error>> {
+  command: Command
+): Promise<
+  Result<boolean, FAILED_TO_APPEND_EVENT | HANDLE_ERROR | STORE_ERROR>
+> {
   const newEvent = handle(command);
 
-  if (!isEvent(newEvent)) {
-    return failure(newEvent);
-  }
+  if (newEvent.isError) return newEvent;
 
-  return success(await store(streamName, newEvent));
+  return store(eventStore, streamName, [], newEvent.value);
 }
