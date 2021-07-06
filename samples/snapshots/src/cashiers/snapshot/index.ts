@@ -14,8 +14,12 @@ export type CashRegisterSnapshoted = SnapshotEvent<
   CashRegister
 >;
 
-export function shouldDoSnapshot(event: CashRegisterEvent) {
-  return event.type === 'shift-ended';
+export function shouldDoSnapshot({
+  newEvent,
+}: {
+  newEvent: CashRegisterEvent;
+}) {
+  return newEvent.type === 'shift-ended';
 }
 
 export function buildSnapshot({
@@ -28,7 +32,8 @@ export function buildSnapshot({
   currentStreamVersion: bigint;
   streamName: string;
 }): Result<CashRegisterSnapshoted, SNAPSHOT_CREATION_SKIPPED> {
-  if (shouldDoSnapshot(newEvent)) return failure('SNAPSHOT_CREATION_SKIPPED');
+  if (!shouldDoSnapshot({ newEvent }))
+    return failure('SNAPSHOT_CREATION_SKIPPED');
 
   const currentState: CashRegister = getCashRegisterFrom([
     ...currentEvents,

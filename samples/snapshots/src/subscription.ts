@@ -4,8 +4,7 @@ import {
   storeCheckpoint,
 } from '#core/eventStore/subscribing';
 import { getEventStore } from '#core/eventStore';
-import {} from '#core/eventStore/subscribing';
-import { storeSnapshotOnSubscription } from './cashiers/processCashRegister/storeSnapshotOnSubscription';
+import { storeCashRegisterSnapshotOnSubscription } from './cashiers/processCashRegister/storeCashRegisterSnapshotOnSubscription';
 
 (async () => {
   return new Promise<void>(async (resolve, reject) => {
@@ -17,7 +16,10 @@ import { storeSnapshotOnSubscription } from './cashiers/processCashRegister/stor
         (subscriptionId) => loadCheckpoint(eventStore, subscriptionId),
         (subscriptionId, position) =>
           storeCheckpoint(eventStore, subscriptionId, position),
-        [(event, options) => storeSnapshotOnSubscription(event, options)],
+        [
+          (event, options) =>
+            storeCashRegisterSnapshotOnSubscription(event, options),
+        ],
         'cash_register_subscription'
       );
 
