@@ -9,7 +9,7 @@
     "build:ts:watch": "tsc  --watch",
     "prod:start": "ts-node src/index.ts",
     "dev:start": "nodemon src/index.ts",
-    "dev:start:subscription": "ts-node ./src/subscription.ts",
+    "dev:start:subscription": "ts-node -r tsconfig-paths/register ./src/subscription.ts",
     "test": "npm run test:unit && npm run test:int && npm run test:api",
     "test:unit": "jest unit",
     "test:int": "jest int",
@@ -73,9 +73,7 @@
     "testcontainers": "^7.11.1",
     "ts-jest": "^26.5.4",
     "ts-node": "^9.1.1",
+    "tsconfig-paths": "^3.9.0",
     "typescript": "^4.2.3"
-  },
-  "imports": {
-    "#core/*": "/dist/src/core/*"
   }
 }
