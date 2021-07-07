@@ -3,14 +3,12 @@ import { ReadFromStreamAndSnapshotsResult, SnapshotEvent } from '..';
 import { Event } from '../../../events';
 import { Result, success } from '../../../primitives';
 import { readFromStream, STREAM_NOT_FOUND } from '../../reading';
+import { getLastSnapshotVersionFromStreamMetadata } from './';
 
 export async function readEventsFromSnapshotInTheSameStream<
   StreamEvent extends Event,
   SnapshotStreamEvent extends SnapshotEvent
 >(
-  getLastSnapshotVersion: (
-    streamName: string
-  ) => Promise<Result<bigint | undefined, STREAM_NOT_FOUND>>,
   eventStore: EventStoreDBClient,
   streamName: string
 ): Promise<
@@ -19,7 +17,10 @@ export async function readEventsFromSnapshotInTheSameStream<
     STREAM_NOT_FOUND
   >
 > {
-  const lastSnapshotVersion = await getLastSnapshotVersion(streamName);
+  const lastSnapshotVersion = await getLastSnapshotVersionFromStreamMetadata(
+    eventStore,
+    streamName
+  );
 
   if (lastSnapshotVersion.isError === true) {
     return lastSnapshotVersion;

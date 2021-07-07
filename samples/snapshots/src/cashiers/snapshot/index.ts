@@ -43,6 +43,6 @@ export function buildSnapshot({
   return success({
     type: 'cash-register-snapshoted',
     data: currentState,
-    metadata: { streamVersion: currentStreamVersion.toString() },
+    metadata: { snapshottedStreamVersion: currentStreamVersion.toString() },
   });
 }
