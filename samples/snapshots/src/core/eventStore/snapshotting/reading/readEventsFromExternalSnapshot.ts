@@ -35,7 +35,9 @@ export async function readEventsFromExternalSnapshot<
 
   if (snapshot.isError === false) {
     snapshotEvent = snapshot.value;
-    lastSnapshotVersion = BigInt(snapshotEvent.metadata.streamVersion);
+    lastSnapshotVersion = BigInt(
+      snapshotEvent.metadata.snapshottedStreamVersion
+    );
   }
 
   const events = await readFromStream<StreamEvent>(eventStore, streamName, {
