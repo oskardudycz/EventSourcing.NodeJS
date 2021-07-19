@@ -73,7 +73,8 @@ export async function subscribeToAll<StreamEvent extends Event, TError = never>(
               resolvedEvent.event.position.commit
             );
           } catch (error) {
-            console.log(error ?? 'ERROR WHILE SUBSCRIBING');
+            console.error(error ?? 'ERROR WHILE SUBSCRIBING');
+            throw error;
           }
         })
     );
