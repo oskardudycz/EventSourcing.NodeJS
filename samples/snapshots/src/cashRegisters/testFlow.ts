@@ -489,7 +489,7 @@ function shouldDoSnapshot(newEvent: CashRegisterEvent): boolean {
   return newEvent.type === 'shift-finished';
 }
 
-function buildCashierSnapshot(
+function buildCashRegisterSnapshot(
   currentState: CashRegister,
   newStreamRevision: bigint
 ): CashRegisterSnapshoted {
@@ -500,17 +500,17 @@ function buildCashierSnapshot(
   };
 }
 
-function tryBuildCashierSnapshot(
+function tryBuildCashRegisterSnapshot(
   newEvent: CashRegisterEvent,
   currentState: CashRegister,
   newStreamRevision: bigint
 ): CashRegisterSnapshoted | undefined {
   if (shouldDoSnapshot(newEvent)) return undefined;
 
-  return buildCashierSnapshot(currentState, newStreamRevision);
+  return buildCashRegisterSnapshot(currentState, newStreamRevision);
 }
 
-function tryBuildCashierSnapshotNoMetadata(
+function tryBuildCashRegisterSnapshotNoMetadata(
   newEvent: CashRegisterEvent,
   currentState: CashRegister
 ): CashRegisterSnapshoted | undefined {
@@ -574,7 +574,7 @@ async function storeCashRegister(
   lastSnapshotRevision?: bigint
 ) {
   return appendEventAndExternalSnapshot(
-    tryBuildCashierSnapshot,
+    tryBuildCashRegisterSnapshot,
     (snapshot, streamName, lastSnapshotRevision) =>
       appendSnapshotToSeparateStream(
         eventStore,
@@ -637,7 +637,7 @@ async function storeCashRegisterSameSnapshotStream(
   newState: CashRegister
 ) {
   return appendEventAndSnapshotToTheSameStream<CashRegister, CashRegisterEvent>(
-    tryBuildCashierSnapshotNoMetadata,
+    tryBuildCashRegisterSnapshotNoMetadata,
     eventStore,
     streamName,
     newEvent,
@@ -804,7 +804,7 @@ export async function snapshotCashRegisterOnSubscription(
   const currentState = aggregateStream(events, when, isCashRegister);
 
   // 4. Create snapshot
-  const snapshot = buildCashierSnapshot(
+  const snapshot = buildCashRegisterSnapshot(
     currentState,
     resolvedEvent.event!.revision
   );

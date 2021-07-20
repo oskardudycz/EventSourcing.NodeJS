@@ -4,7 +4,7 @@ import {
   storeCheckpoint,
 } from '#core/eventStore/subscribing';
 import { getEventStore } from '#core/eventStore';
-import { storeCashRegisterSnapshotOnSubscription } from './cashiers/processCashRegister/storeCashRegisterSnapshotOnSubscription';
+import { storeCashRegisterSnapshotOnSubscription } from './cashRegisters/processCashRegister/storeCashRegisterSnapshotOnSubscription';
 import { sleep } from '#core/primitives';
 
 async function subscribe(): Promise<void> {

@@ -74,15 +74,24 @@ export function when(
   }
 }
 
+function isNotEmptyString(value: any): boolean {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function isPositiveNumber(value: any): boolean {
+  return typeof value === 'number' && value >= 0;
+}
+
 export function isCashRegister(
   cashRegister: any
 ): cashRegister is CashRegister {
   return (
-    typeof cashRegister.id === 'string' &&
-    typeof cashRegister.float === 'number' &&
-    typeof cashRegister.workstation === 'string' &&
-    (typeof cashRegister.currentCashierId === 'undefined' ||
-      typeof cashRegister.currentCashierId === 'string')
+    cashRegister !== undefined &&
+    isNotEmptyString(cashRegister.id) &&
+    isPositiveNumber(cashRegister.float) &&
+    isNotEmptyString(cashRegister.workstation) &&
+    (cashRegister.currentCashierId === undefined ||
+      isNotEmptyString(cashRegister.currentCashierId))
   );
 }
 

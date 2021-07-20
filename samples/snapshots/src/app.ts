@@ -1,5 +1,5 @@
 import express, { Application } from 'express';
-import { cashRegisterRouter } from './cashiers';
+import { cashRegisterRouter } from './cashRegisters';
 import { handleErrors } from '#core/http/middlewares';
 
 const app: Application = express();

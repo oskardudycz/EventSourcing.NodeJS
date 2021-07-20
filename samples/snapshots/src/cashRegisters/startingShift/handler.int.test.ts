@@ -13,7 +13,7 @@ import { v4 as uuid } from 'uuid';
 import { addCashRegister, updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
 import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
-import { handleStartShift, StartShift } from '../startingShift';
+import { handleStartShift, StartShift } from '.';
 import {
   handleRegisterTransaction,
   RegisterTransaction,
