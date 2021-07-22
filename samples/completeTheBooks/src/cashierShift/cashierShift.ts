@@ -20,7 +20,7 @@ export type CashierShift = Readonly<{
   /**
    * The area where a cashier works
    */
-  cashRegister: string;
+  cashRegisterId: string;
 
   /**
    * Cashier working on the cash register
@@ -82,29 +82,35 @@ export function isCashierShift(
     cashierShift !== undefined &&
     isNotEmptyString(cashierShift.id) &&
     isPositiveNumber(cashierShift.float) &&
-    isNotEmptyString(cashierShift.cashierId)
+    isNotEmptyString(cashierShift.cashierId) &&
+    isNotEmptyString(cashierShift.cashRegisterId) &&
+    isNotEmptyString(cashierShift.status) &&
+    ['Started', 'Finished'].includes(cashierShift.status!)
   );
 }
 
-export function isCashRegisterEvent(event: any): event is CashierShiftEvent {
+export function isCashierShiftEvent(event: any): event is CashierShiftEvent {
   switch (event.type) {
-    case 'placed-at-workstation':
     case 'shift-started':
     case 'transaction-registered':
     case 'shift-ended':
-    case 'cash-register-snapshoted':
       return true;
     default:
       return false;
   }
 }
 
-export function getCashierShiftStreamName(cashRegisterId: string) {
-  return `cashregister-${cashRegisterId}`;
+export function getCashierShiftStreamName(
+  cashRegisterId: string,
+  cashierShiftId: string
+) {
+  return `cashiershift-cr_${cashRegisterId}_cs_${cashierShiftId}`;
 }
 
-export function getCashierShiftRegisterFrom(
-  events: CashierShiftEvent[]
-): CashierShift {
+export function getActiveCashierShiftStreamName(cashRegisterId: string) {
+  return `cashiershift-cr_${cashRegisterId}_cs_active`;
+}
+
+export function getCashierShiftFrom(events: CashierShiftEvent[]): CashierShift {
   return aggregateStream(events, when, isCashierShift);
 }

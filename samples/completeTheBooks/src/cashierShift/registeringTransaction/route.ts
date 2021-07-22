@@ -3,10 +3,11 @@ import { isCommand } from '#core/commands';
 import { handleRegisterTransaction, RegisterTransaction } from './handler';
 import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
+import { isNotEmptyString, isPositiveNumber } from '#core/validation';
 
 export const route = (router: Router) =>
   router.post(
-    '/cash-registers/:id/transactions',
+    '/cash-registers/:cashRegisterId/shifts/:cashierShiftId/transactions',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -17,6 +18,7 @@ export const route = (router: Router) =>
         }
 
         const streamName = getCashierShiftStreamName(
+          command.data.cashRegisterId,
           command.data.cashierShiftId
         );
 
@@ -47,19 +49,28 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): RegisterTransaction | 'MISSING_CASH_REGISTER_ID' | 'MISSING_AMOUNT' {
-  if (typeof request.params.id !== 'string') {
+):
+  | RegisterTransaction
+  | 'MISSING_CASH_REGISTER_ID'
+  | 'MISSING_CASHIER_SHIFT_ID'
+  | 'MISSING_AMOUNT' {
+  if (!isNotEmptyString(request.params.cashRegisterId)) {
     return 'MISSING_CASH_REGISTER_ID';
   }
 
-  if (typeof request.body.amount !== 'number') {
+  if (!isNotEmptyString(request.params.cashierShiftId)) {
+    return 'MISSING_CASHIER_SHIFT_ID';
+  }
+
+  if (!isPositiveNumber(request.body.amount)) {
     return 'MISSING_AMOUNT';
   }
 
   return {
     type: 'register-transaction',
     data: {
-      cashierShiftId: request.params.id,
+      cashierShiftId: request.params.cashierShiftId,
+      cashRegisterId: request.params.cashRegisterId,
       amount: request.body.amount,
     },
   };

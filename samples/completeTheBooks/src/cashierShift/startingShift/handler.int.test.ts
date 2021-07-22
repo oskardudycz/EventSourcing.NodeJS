@@ -6,7 +6,7 @@ import {
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
 import { config } from '../../../config';
 import { v4 as uuid } from 'uuid';
-import { updateCashierShift } from '../processCashierShift';
+import { addCashierShift, updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
 import { handleStartShift, StartShift } from '.';
@@ -20,7 +20,8 @@ describe('EndShift command', () => {
   let esdbContainer: StartedEventStoreDBContainer;
   let eventStore: EventStoreDBClient;
   const cashierShiftId = uuid();
-  const streamName = getCashierShiftStreamName(cashierShiftId);
+  const cashRegisterId = uuid();
+  const streamName = getCashierShiftStreamName(cashRegisterId, cashierShiftId);
 
   beforeAll(async () => {
     esdbContainer = await new EventStoreDBContainer().startContainer();
@@ -31,18 +32,20 @@ describe('EndShift command', () => {
     const startShift: StartShift = {
       type: 'start-shift',
       data: {
+        cashRegisterId,
         cashierShiftId,
         cashierId: uuid(),
       },
     };
 
     expect(
-      await updateCashierShift(streamName, startShift, handleStartShift)
+      await addCashierShift(streamName, startShift, handleStartShift)
     ).toBeTruthy();
 
     const registerTransaction: RegisterTransaction = {
       type: 'register-transaction',
       data: {
+        cashRegisterId,
         cashierShiftId,
         amount: 123,
       },
@@ -59,6 +62,7 @@ describe('EndShift command', () => {
     const command: EndShift = {
       type: 'end-shift',
       data: {
+        cashRegisterId,
         cashierShiftId: uuid(),
       },
     };
@@ -76,16 +80,13 @@ describe('EndShift command', () => {
     const command: StartShift = {
       type: 'start-shift',
       data: {
-        cashierShiftId: cashierShiftId,
+        cashRegisterId,
+        cashierShiftId,
         cashierId: uuid(),
       },
     };
 
-    const result = await updateCashierShift(
-      streamName,
-      command,
-      handleStartShift
-    );
+    const result = await addCashierShift(streamName, command, handleStartShift);
 
     expect(result).toBeTruthy();
 
