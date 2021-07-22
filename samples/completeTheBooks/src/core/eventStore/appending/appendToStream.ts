@@ -47,7 +47,7 @@ export async function appendToStream<StreamEvent extends Event>(
 
     return success({ nextExpectedRevision, position });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return failure('FAILED_TO_APPEND_EVENT');
   }
 }

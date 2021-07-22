@@ -3,10 +3,11 @@ import { handleEndShift, EndShift } from './handler';
 import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { isCommand } from '#core/commands';
+import { isNotEmptyString } from '#core/validation';
 
 export const route = (router: Router) =>
   router.delete(
-    '/cash-registers/:id/shifts',
+    '/cash-registers/:cashRegisterId/shifts',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -17,6 +18,7 @@ export const route = (router: Router) =>
         }
 
         const streamName = getCashierShiftStreamName(
+          command.data.cashRegisterId,
           command.data.cashierShiftId
         );
 
@@ -31,7 +33,7 @@ export const route = (router: Router) =>
             case 'STREAM_NOT_FOUND':
               response.sendStatus(404);
               break;
-            case 'SHIFT_NOT_STARTED':
+            case 'SHIFT_ALREADY_ENDED':
             case 'FAILED_TO_APPEND_EVENT':
               response.sendStatus(409);
               break;
@@ -48,14 +50,15 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): EndShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
-  if (!request.params.id || !(typeof request.params.id === 'string')) {
+): EndShift | 'MISSING_CASH_REGISTER_ID' {
+  if (!isNotEmptyString(request.params.cashRegisterId)) {
     return 'MISSING_CASH_REGISTER_ID';
   }
 
   return {
     type: 'end-shift',
     data: {
+      cashRegisterId: request.route.cashRegisterId,
       cashierShiftId: request.params.id,
     },
   };
