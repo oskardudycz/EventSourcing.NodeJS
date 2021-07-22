@@ -1,12 +1,12 @@
 import { NextFunction, Request, Response, Router } from 'express';
+import { handleEndShift, EndShift } from './handler';
+import { updateCashierShift } from '../processCashierShift';
+import { getCashierShiftStreamName } from '../cashierShift';
 import { isCommand } from '#core/commands';
-import { handleRegisterTransaction, RegisterTransaction } from './handler';
-import { updateCashRegister } from '../processCashRegister';
-import { getCashRegisterStreamName } from '../cashRegister';
 
 export const route = (router: Router) =>
-  router.post(
-    '/cash-registers/:id/transactions',
+  router.delete(
+    '/cash-registers/:id/shifts',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -16,14 +16,14 @@ export const route = (router: Router) =>
           return;
         }
 
-        const streamName = getCashRegisterStreamName(
-          command.data.cashRegisterId
+        const streamName = getCashierShiftStreamName(
+          command.data.cashierShiftId
         );
 
-        const result = await updateCashRegister(
+        const result = await updateCashierShift(
           streamName,
           command,
-          handleRegisterTransaction
+          handleEndShift
         );
 
         if (result.isError) {
@@ -32,6 +32,7 @@ export const route = (router: Router) =>
               response.sendStatus(404);
               break;
             case 'SHIFT_NOT_STARTED':
+            case 'FAILED_TO_APPEND_EVENT':
               response.sendStatus(409);
               break;
             default:
@@ -47,20 +48,15 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): RegisterTransaction | 'MISSING_CASH_REGISTER_ID' | 'MISSING_AMOUNT' {
-  if (typeof request.params.id !== 'string') {
+): EndShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
+  if (!request.params.id || !(typeof request.params.id === 'string')) {
     return 'MISSING_CASH_REGISTER_ID';
   }
 
-  if (typeof request.body.amount !== 'number') {
-    return 'MISSING_AMOUNT';
-  }
-
   return {
-    type: 'register-transaction',
+    type: 'end-shift',
     data: {
-      cashRegisterId: request.params.id,
-      amount: request.body.amount,
+      cashierShiftId: request.params.id,
     },
   };
 }

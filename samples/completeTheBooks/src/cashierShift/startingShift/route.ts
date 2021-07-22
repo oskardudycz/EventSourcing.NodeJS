@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import { handleEndShift, EndShift } from './handler';
-import { updateCashRegister } from '../processCashRegister';
-import { getCashRegisterStreamName } from '../cashRegister';
 import { isCommand } from '#core/commands';
+import { StartShift, handleStartShift } from './handler';
+import { updateCashierShift } from '../processCashierShift';
+import { getCashierShiftStreamName } from '../cashierShift';
 
 export const route = (router: Router) =>
-  router.delete(
+  router.post(
     '/cash-registers/:id/shifts',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
@@ -16,14 +16,14 @@ export const route = (router: Router) =>
           return;
         }
 
-        const streamName = getCashRegisterStreamName(
-          command.data.cashRegisterId
+        const streamName = getCashierShiftStreamName(
+          command.data.cashierShiftId
         );
 
-        const result = await updateCashRegister(
+        const result = await updateCashierShift(
           streamName,
           command,
-          handleEndShift
+          handleStartShift
         );
 
         if (result.isError) {
@@ -31,14 +31,12 @@ export const route = (router: Router) =>
             case 'STREAM_NOT_FOUND':
               response.sendStatus(404);
               break;
-            case 'SHIFT_NOT_STARTED':
-            case 'FAILED_TO_APPEND_EVENT':
+            case 'SHIFT_ALREADY_STARTED':
               response.sendStatus(409);
-              break;
-            default:
               break;
           }
         }
+
         response.sendStatus(200);
       } catch (error) {
         next(error);
@@ -48,15 +46,20 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): EndShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
-  if (!request.params.id || !(typeof request.params.id === 'string')) {
+): StartShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
+  if (typeof request.params.id !== 'string') {
     return 'MISSING_CASH_REGISTER_ID';
   }
 
+  if (typeof request.body.cashierId !== 'string') {
+    return 'MISSING_CASHIER_ID';
+  }
+
   return {
-    type: 'end-shift',
+    type: 'start-shift',
     data: {
-      cashRegisterId: request.params.id,
+      cashierShiftId: request.params.id,
+      cashierId: request.body.cashierId,
     },
   };
 }

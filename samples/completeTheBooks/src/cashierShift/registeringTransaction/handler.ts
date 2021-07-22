@@ -2,20 +2,20 @@ import { v4 as uuid } from 'uuid';
 import { Command } from '#core/commands';
 import { Event } from '#core/events';
 import { aggregateStream } from '#core/streams';
-import { failure, Result, success, getCurrentTime } from '#core/primitives';
+import { Result, success, getCurrentTime } from '#core/primitives';
 import {
-  CashRegister,
-  CashRegisterEvent,
-  isCashRegister,
+  CashierShift,
+  CashierShiftEvent,
+  isCashierShift,
   when,
-} from '../cashRegister';
+} from '../cashierShift';
 
 export type SHIFT_NOT_STARTED = 'SHIFT_NOT_STARTED';
 
 export type RegisterTransaction = Command<
   'register-transaction',
   {
-    cashRegisterId: string;
+    cashierShiftId: string;
     amount: number;
   }
 >;
@@ -24,30 +24,26 @@ export type TransactionRegistered = Event<
   'transaction-registered',
   {
     transactionId: string;
-    cashRegisterId: string;
+    cashierShiftId: string;
     amount: number;
     registeredAt: Date;
   }
 >;
 
 export function handleRegisterTransaction(
-  events: CashRegisterEvent[],
+  events: CashierShiftEvent[],
   command: RegisterTransaction
 ): Result<TransactionRegistered, SHIFT_NOT_STARTED> {
-  const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
+  const cashRegister = aggregateStream<CashierShift, CashierShiftEvent>(
     events,
     when,
-    isCashRegister
+    isCashierShift
   );
-
-  if (cashRegister.currentCashierId === undefined) {
-    return failure('SHIFT_NOT_STARTED');
-  }
 
   return success({
     type: 'transaction-registered',
     data: {
-      cashRegisterId: cashRegister.id,
+      cashierShiftId: cashRegister.id,
       transactionId: uuid(),
       amount: command.data.amount,
       registeredAt: getCurrentTime(),
