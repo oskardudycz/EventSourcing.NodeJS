@@ -1,5 +1,6 @@
 import { PlacedAtWorkStation } from './placeAtWorkStation';
 import { aggregateStream } from '#core/streams';
+import { isNotEmptyString, isPositiveNumber } from '#core/validation';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -46,14 +47,6 @@ export function when(
   }
 }
 
-function isNotEmptyString(value: any): boolean {
-  return typeof value === 'string' && value.length > 0;
-}
-
-function isPositiveNumber(value: any): boolean {
-  return typeof value === 'number' && value >= 0;
-}
-
 export function isCashRegister(
   cashRegister: any
 ): cashRegister is CashRegister {
@@ -70,10 +63,6 @@ export function isCashRegister(
 export function isCashRegisterEvent(event: any): event is CashRegisterEvent {
   switch (event.type) {
     case 'placed-at-workstation':
-    case 'shift-started':
-    case 'transaction-registered':
-    case 'shift-ended':
-    case 'cash-register-snapshoted':
       return true;
     default:
       return false;

@@ -2,10 +2,11 @@ import { v4 as uuid } from 'uuid';
 import { Command } from '#core/commands';
 import { Event } from '#core/events';
 import { aggregateStream } from '#core/streams';
-import { Result, success, getCurrentTime } from '#core/primitives';
+import { Result, success, getCurrentTime, failure } from '#core/primitives';
 import {
   CashierShift,
   CashierShiftEvent,
+  CashierShiftStatus,
   isCashierShift,
   when,
 } from '../cashierShift';
@@ -16,6 +17,7 @@ export type RegisterTransaction = Command<
   'register-transaction',
   {
     cashierShiftId: string;
+    cashRegisterId: string;
     amount: number;
   }
 >;
@@ -39,6 +41,9 @@ export function handleRegisterTransaction(
     when,
     isCashierShift
   );
+
+  if (cashRegister.status !== CashierShiftStatus.Started)
+    return failure('SHIFT_NOT_STARTED');
 
   return success({
     type: 'transaction-registered',
