@@ -7,15 +7,15 @@ import {
   getAndUpdate,
 } from '#core/eventStore/appending';
 import { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
-import { CashRegisterEvent } from '../cashRegister';
+import { CashierShiftEvent } from '../cashierShift';
 
-export async function updateCashRegister<Command, TError = never>(
+export async function updateCashierShift<Command, TError = never>(
   streamName: string,
   command: Command,
   handle: (
-    currentEvents: CashRegisterEvent[],
+    currentEvents: CashierShiftEvent[],
     command: Command
-  ) => Result<CashRegisterEvent, TError>
+  ) => Result<CashierShiftEvent, TError>
 ): Promise<
   Result<
     boolean,
@@ -27,7 +27,7 @@ export async function updateCashRegister<Command, TError = never>(
 > {
   return getAndUpdate(
     async (eventStore, streamName) => {
-      const result = await readFromStream<CashRegisterEvent>(
+      const result = await readFromStream<CashierShiftEvent>(
         eventStore,
         streamName
       );

@@ -4,13 +4,9 @@ import {
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
 import { config } from '../../../config';
 import { EndShift, handleEndShift } from './handler';
-import {
-  handlePlaceAtWorkStation,
-  PlaceAtWorkStation,
-} from '../placeAtWorkStation/handler';
 import { v4 as uuid } from 'uuid';
-import { addCashRegister, updateCashRegister } from '../processCashRegister';
-import { getCashRegisterStreamName } from '../cashRegister';
+import { updateCashierShift } from '../processCashierShift';
+import { getCashierShiftStreamName } from '../cashierShift';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
 import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
@@ -23,8 +19,8 @@ import {
 describe('EndShift command', () => {
   let esdbContainer: StartedEventStoreDBContainer;
   let eventStore: EventStoreDBClient;
-  const cashRegisterId = uuid();
-  const streamName = getCashRegisterStreamName(cashRegisterId);
+  const cashierShiftId = uuid();
+  const streamName = getCashierShiftStreamName(cashierShiftId);
 
   beforeAll(async () => {
     esdbContainer = await new EventStoreDBContainer().startContainer();
@@ -32,44 +28,28 @@ describe('EndShift command', () => {
 
     eventStore = esdbContainer.getClient();
 
-    const placeAtWorkStation: PlaceAtWorkStation = {
-      type: 'place-at-workstation',
-      data: {
-        cashRegisterId,
-        workstation: 'WS#1',
-      },
-    };
-
-    expect(
-      await addCashRegister(
-        streamName,
-        placeAtWorkStation,
-        handlePlaceAtWorkStation
-      )
-    ).toBeTruthy();
-
     const startShift: StartShift = {
       type: 'start-shift',
       data: {
-        cashRegisterId,
+        cashierShiftId,
         cashierId: uuid(),
       },
     };
 
     expect(
-      await updateCashRegister(streamName, startShift, handleStartShift)
+      await updateCashierShift(streamName, startShift, handleStartShift)
     ).toBeTruthy();
 
     const registerTransaction: RegisterTransaction = {
       type: 'register-transaction',
       data: {
-        cashRegisterId,
+        cashierShiftId,
         amount: 123,
       },
     };
 
     expect(
-      await updateCashRegister(
+      await updateCashierShift(
         streamName,
         registerTransaction,
         handleRegisterTransaction
@@ -85,11 +65,11 @@ describe('EndShift command', () => {
     const command: EndShift = {
       type: 'end-shift',
       data: {
-        cashRegisterId: uuid(),
+        cashierShiftId: uuid(),
       },
     };
 
-    const result = await updateCashRegister(
+    const result = await updateCashierShift(
       streamName,
       command,
       handleEndShift

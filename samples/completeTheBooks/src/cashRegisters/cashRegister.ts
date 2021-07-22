@@ -1,8 +1,4 @@
 import { PlacedAtWorkStation } from './placeAtWorkStation';
-import { ShiftStarted } from './startingShift';
-import { TransactionRegistered } from './registeringTransaction';
-import { ShiftEnded } from './endingShift';
-import { CashRegisterSnapshoted } from './snapshot';
 import { aggregateStream } from '#core/streams';
 
 /**
@@ -29,12 +25,7 @@ export type CashRegister = Readonly<{
   currentCashierId?: string;
 }>;
 
-export type CashRegisterEvent =
-  | PlacedAtWorkStation
-  | ShiftStarted
-  | TransactionRegistered
-  | ShiftEnded
-  | CashRegisterSnapshoted;
+export type CashRegisterEvent = PlacedAtWorkStation;
 
 export function when(
   currentState: Partial<CashRegister>,
@@ -46,25 +37,6 @@ export function when(
         id: event.data.cashRegisterId,
         workstation: event.data.workstation,
         float: 0,
-      };
-    case 'shift-started':
-      return {
-        ...currentState,
-        currentCashierId: event.data.cashierId,
-      };
-    case 'transaction-registered':
-      return {
-        ...currentState,
-        float: (currentState.float ?? 0) + event.data.amount,
-      };
-    case 'shift-ended':
-      return {
-        ...currentState,
-        currentCashierId: undefined,
-      };
-    case 'cash-register-snapshoted':
-      return {
-        ...event.data,
       };
     default:
       // Unexpected event type
