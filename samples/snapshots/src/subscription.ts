@@ -15,10 +15,7 @@ async function subscribe(): Promise<void> {
     (subscriptionId) => loadCheckpoint(eventStore, subscriptionId),
     (subscriptionId, position) =>
       storeCheckpoint(eventStore, subscriptionId, position),
-    [
-      (event, options) =>
-        storeCashRegisterSnapshotOnSubscription(event, options),
-    ],
+    [storeCashRegisterSnapshotOnSubscription],
     'cash_register_subscription'
   );
 }
