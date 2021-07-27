@@ -1,5 +1,5 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { config } from '../../../config';
+import { config } from '#config';
 
 export function getEventStore(): EventStoreDBClient {
   if (!config.eventStoreDB.connectionString) {

@@ -4,7 +4,7 @@ import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
-import { config } from '../../../config';
+import { config } from '#config';
 import isUUID from 'validator/lib/isUUID';
 
 describe('POST /cash-register/', () => {

@@ -4,7 +4,7 @@ import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
-import { config } from '../../../config';
+import { config } from '#config';
 import { setupCashRegister } from '../../testing/builders/setupCashRegister';
 import { setupStartedShift } from '../../testing/builders/setupStartedShift';
 
