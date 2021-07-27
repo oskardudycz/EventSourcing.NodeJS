@@ -2,7 +2,7 @@ import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
-import { config } from '../../../config';
+import { config } from '#config';
 import { handlePlaceAtWorkStation, PlaceAtWorkStation } from './handler';
 import { v4 as uuid } from 'uuid';
 import { addCashRegister } from '../processCashRegister';
