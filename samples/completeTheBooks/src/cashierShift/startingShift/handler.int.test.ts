@@ -6,7 +6,7 @@ import {
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
 import { config } from '#config';
 import { v4 as uuid } from 'uuid';
-import { addCashierShift, updateCashierShift } from '../processCashierShift';
+import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
 import { handleStartShift, StartShift } from '.';
@@ -35,11 +35,12 @@ describe('EndShift command', () => {
         cashRegisterId,
         cashierShiftId,
         cashierId: uuid(),
+        float: 100,
       },
     };
 
     expect(
-      await addCashierShift(streamName, startShift, handleStartShift)
+      await updateCashierShift(streamName, startShift, handleStartShift)
     ).toBeTruthy();
 
     const registerTransaction: RegisterTransaction = {
@@ -64,6 +65,7 @@ describe('EndShift command', () => {
       data: {
         cashRegisterId,
         cashierShiftId: uuid(),
+        float: 100,
       },
     };
 
@@ -83,10 +85,15 @@ describe('EndShift command', () => {
         cashRegisterId,
         cashierShiftId,
         cashierId: uuid(),
+        float: 100,
       },
     };
 
-    const result = await addCashierShift(streamName, command, handleStartShift);
+    const result = await updateCashierShift(
+      streamName,
+      command,
+      handleStartShift
+    );
 
     expect(result).toBeTruthy();
 

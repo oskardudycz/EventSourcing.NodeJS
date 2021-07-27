@@ -8,10 +8,9 @@ import {
   CashierShiftEvent,
   CashierShiftStatus,
   isCashierShift,
+  SHIFT_NOT_STARTED,
   when,
 } from '../cashierShift';
-
-export type SHIFT_NOT_STARTED = 'SHIFT_NOT_STARTED';
 
 export type RegisterTransaction = Command<
   'register-transaction',

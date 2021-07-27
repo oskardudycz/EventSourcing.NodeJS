@@ -18,6 +18,7 @@ export type EndShift = Command<
   {
     cashRegisterId: string;
     cashierShiftId: string;
+    float: number;
   }
 >;
 
@@ -25,13 +26,14 @@ export type ShiftEnded = Event<
   'shift-ended',
   {
     cashierShiftId: string;
+    float: number;
     finishedAt: Date;
   }
 >;
 
 export function handleEndShift(
   events: CashierShiftEvent[],
-  _: EndShift
+  command: EndShift
 ): Result<ShiftEnded, ShiftAlreadyEnded> {
   const cashierShift = aggregateStream<CashierShift, CashierShiftEvent>(
     events,
@@ -48,6 +50,7 @@ export function handleEndShift(
     data: {
       cashierShiftId: cashierShift.id,
       finishedAt: getCurrentTime(),
+      float: command.data.float,
     },
   });
 }

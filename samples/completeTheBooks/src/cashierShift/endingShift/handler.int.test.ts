@@ -5,7 +5,7 @@ import {
 import { config } from '#config';
 import { EndShift, handleEndShift } from './handler';
 import { v4 as uuid } from 'uuid';
-import { addCashierShift, updateCashierShift } from '../processCashierShift';
+import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
@@ -35,11 +35,12 @@ describe('EndShift command', () => {
         cashRegisterId,
         cashierShiftId,
         cashierId: uuid(),
+        float: 100,
       },
     };
 
     expect(
-      await addCashierShift(streamName, startShift, handleStartShift)
+      await updateCashierShift(streamName, startShift, handleStartShift)
     ).toBeTruthy();
 
     const registerTransaction: RegisterTransaction = {
@@ -70,6 +71,7 @@ describe('EndShift command', () => {
       data: {
         cashRegisterId,
         cashierShiftId: uuid(),
+        float: 100,
       },
     };
 
