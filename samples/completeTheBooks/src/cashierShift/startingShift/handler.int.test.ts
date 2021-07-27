@@ -4,7 +4,7 @@ import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
-import { config } from '../../../config';
+import { config } from '#config';
 import { v4 as uuid } from 'uuid';
 import { addCashierShift, updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
