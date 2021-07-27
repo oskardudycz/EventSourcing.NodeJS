@@ -1,16 +1,14 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { isCommand } from '#core/commands';
 import { StartShift, handleStartShift } from './handler';
-import { getCashierShiftStreamName } from '../cashierShift';
+import { getActiveCashierShiftStreamName } from '../cashierShift';
 import { v4 as uuid } from 'uuid';
-import { isNotEmptyString } from '#core/validation';
-import { setActiveShift } from '../settingActiveShift/setActiveShift';
-import { appendToStream } from '#core/eventStore/appending';
-import { getEventStore } from '#core/eventStore';
+import { isNotEmptyString, isPositiveNumber } from '#core/validation';
+import { updateCashierShift } from '../processCashierShift';
 
 export const route = (router: Router) =>
   router.post(
-    '/cash-registers/:cashRegisterId/shifts',
+    '/cash-registers/:cashRegisterId/shifts/active',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -20,45 +18,24 @@ export const route = (router: Router) =>
           return;
         }
 
-        const event = handleStartShift(command);
-
-        if (event.isError) {
-          response.sendStatus(500);
-          return;
-        }
-
-        const settingActiveResult = await setActiveShift({
-          type: 'set-active-shift',
-          data: {
-            cashRegisterId: command.data.cashRegisterId,
-            cashierShiftId: command.data.cashierShiftId,
-          },
-        });
-
-        if (settingActiveResult.isError) {
-          switch (settingActiveResult.error) {
-            case 'SHIFT_ALREADY_STARTED':
-              response.sendStatus(409);
-              return;
-            default:
-              response.sendStatus(500);
-              return;
-          }
-        }
-
-        const streamName = getCashierShiftStreamName(
-          command.data.cashRegisterId,
+        const streamName = getActiveCashierShiftStreamName(
           command.data.cashierShiftId
         );
 
-        const result = await appendToStream(getEventStore(), streamName, [
-          event.value,
-        ]);
+        const result = await updateCashierShift(
+          streamName,
+          command,
+          handleStartShift
+        );
 
         if (result.isError) {
           switch (result.error) {
+            case 'SHIFT_ALREADY_STARTED':
             case 'FAILED_TO_APPEND_EVENT':
               response.sendStatus(409);
+              return;
+            case 'STREAM_NOT_FOUND':
+              response.sendStatus(404);
               return;
             default:
               response.sendStatus(500);
@@ -75,7 +52,11 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): StartShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
+):
+  | StartShift
+  | 'MISSING_CASH_REGISTER_ID'
+  | 'MISSING_CASHIER_ID'
+  | 'MISSING_FLOAT' {
   if (!isNotEmptyString(request.params.cashRegisterId)) {
     return 'MISSING_CASH_REGISTER_ID';
   }
@@ -84,12 +65,21 @@ function mapRequestToCommand(
     return 'MISSING_CASHIER_ID';
   }
 
+  if (!isNotEmptyString(request.body.cashierId)) {
+    return 'MISSING_CASHIER_ID';
+  }
+
+  if (!isPositiveNumber(request.body.float)) {
+    return 'MISSING_FLOAT';
+  }
+
   return {
     type: 'start-shift',
     data: {
       cashierShiftId: uuid(),
       cashRegisterId: request.params.cashRegisterId,
       cashierId: request.body.cashierId,
+      float: request.body.float,
     },
   };
 }

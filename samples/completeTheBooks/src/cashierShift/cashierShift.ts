@@ -38,6 +38,7 @@ export type CashierShift = Readonly<{
 }>;
 
 export enum CashierShiftStatus {
+  Initialized = 'Initialized',
   Started = 'Started',
   Finished = 'Finished',
 }
@@ -56,6 +57,8 @@ export function when(
       return {
         ...currentState,
         cashierId: event.data.cashierId,
+        status: CashierShiftStatus.Started,
+        float: event.data.float,
       };
     case 'transaction-registered':
       return {
@@ -66,6 +69,8 @@ export function when(
       return {
         ...currentState,
         startedAt: event.data.finishedAt,
+        status: CashierShiftStatus.Finished,
+        float: event.data.float,
       };
     default:
       // Unexpected event type
@@ -114,3 +119,7 @@ export function getActiveCashierShiftStreamName(cashRegisterId: string) {
 export function getCashierShiftFrom(events: CashierShiftEvent[]): CashierShift {
   return aggregateStream(events, when, isCashierShift);
 }
+
+export type SHIFT_ALREADY_INITIALIZED = 'SHIFT_ALREADY_INITIALIZED';
+export type SHIFT_ALREADY_STARTED = 'SHIFT_ALREADY_STARTED';
+export type SHIFT_NOT_STARTED = 'SHIFT_NOT_STARTED';
