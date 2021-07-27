@@ -5,3 +5,7 @@ export function isNotEmptyString(value: any): boolean {
 export function isPositiveNumber(value: any): boolean {
   return typeof value === 'number' && value >= 0;
 }
+
+export function isNotNegativeNumber(value: any): boolean {
+  return typeof value === 'number' && value > 0;
+}

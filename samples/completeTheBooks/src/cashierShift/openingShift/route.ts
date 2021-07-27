@@ -1,14 +1,13 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { isCommand } from '#core/commands';
-import { StartShift, handleStartShift } from './handler';
-import { getActiveCashierShiftStreamName } from '../cashierShift';
-import { v4 as uuid } from 'uuid';
+import { OpenShift, handleOpenShift } from './handler';
+import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
 import { updateCashierShift } from '../processCashierShift';
 
 export const route = (router: Router) =>
-  router.post(
-    '/cash-registers/:cashRegisterId/shifts/active',
+  router.put(
+    '/cash-registers/:cashRegisterId/shifts/current',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -18,19 +17,19 @@ export const route = (router: Router) =>
           return;
         }
 
-        const streamName = getActiveCashierShiftStreamName(
-          command.data.cashierShiftId
+        const streamName = getCurrentCashierShiftStreamName(
+          command.data.cashRegisterId
         );
 
         const result = await updateCashierShift(
           streamName,
           command,
-          handleStartShift
+          handleOpenShift
         );
 
         if (result.isError) {
           switch (result.error) {
-            case 'SHIFT_ALREADY_STARTED':
+            case 'SHIFT_ALREADY_OPENED':
             case 'FAILED_TO_APPEND_EVENT':
               response.sendStatus(409);
               return;
@@ -53,7 +52,7 @@ export const route = (router: Router) =>
 function mapRequestToCommand(
   request: Request
 ):
-  | StartShift
+  | OpenShift
   | 'MISSING_CASH_REGISTER_ID'
   | 'MISSING_CASHIER_ID'
   | 'MISSING_FLOAT' {
@@ -74,12 +73,11 @@ function mapRequestToCommand(
   }
 
   return {
-    type: 'start-shift',
+    type: 'open-shift',
     data: {
-      cashierShiftId: uuid(),
       cashRegisterId: request.params.cashRegisterId,
       cashierId: request.body.cashierId,
-      float: request.body.float,
+      declaredStartAmount: request.body.float,
     },
   };
 }

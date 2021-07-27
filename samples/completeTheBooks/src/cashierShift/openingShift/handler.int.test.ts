@@ -9,14 +9,14 @@ import { v4 as uuid } from 'uuid';
 import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
-import { handleStartShift, StartShift } from '.';
+import { handleOpenShift, OpenShift } from '.';
 import {
   handleRegisterTransaction,
   RegisterTransaction,
 } from '../registeringTransaction';
-import { EndShift, handleEndShift } from '../endingShift';
+import { ClosingShift, handleEndShift } from '../closingShift';
 
-describe('EndShift command', () => {
+describe('OpenShift command', () => {
   let esdbContainer: StartedEventStoreDBContainer;
   let eventStore: EventStoreDBClient;
   const cashierShiftId = uuid();
@@ -29,18 +29,17 @@ describe('EndShift command', () => {
 
     eventStore = esdbContainer.getClient();
 
-    const startShift: StartShift = {
-      type: 'start-shift',
+    const startShift: OpenShift = {
+      type: 'open-shift',
       data: {
         cashRegisterId,
-        cashierShiftId,
         cashierId: uuid(),
-        float: 100,
+        declaredStartAmount: 100,
       },
     };
 
     expect(
-      await updateCashierShift(streamName, startShift, handleStartShift)
+      await updateCashierShift(streamName, startShift, handleOpenShift)
     ).toBeTruthy();
 
     const registerTransaction: RegisterTransaction = {
@@ -60,12 +59,12 @@ describe('EndShift command', () => {
       )
     ).toBeTruthy();
 
-    const command: EndShift = {
-      type: 'end-shift',
+    const command: ClosingShift = {
+      type: 'close-shift',
       data: {
         cashRegisterId,
         cashierShiftId: uuid(),
-        float: 100,
+        declaredTender: 100,
       },
     };
 
@@ -79,20 +78,19 @@ describe('EndShift command', () => {
   });
 
   it('should start shift for existing, cash register with ended shift', async () => {
-    const command: StartShift = {
-      type: 'start-shift',
+    const command: OpenShift = {
+      type: 'open-shift',
       data: {
         cashRegisterId,
-        cashierShiftId,
         cashierId: uuid(),
-        float: 100,
+        declaredStartAmount: 100,
       },
     };
 
     const result = await updateCashierShift(
       streamName,
       command,
-      handleStartShift
+      handleOpenShift
     );
 
     expect(result).toBeTruthy();
