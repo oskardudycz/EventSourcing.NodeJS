@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { route as routeStartingShift } from './startingShift';
+import { route as routeStartingShift } from './openingShift';
 import { route as routeRegisteringTransaction } from './registeringTransaction';
-import { route as routeEndingShift } from './endingShift';
+import { route as routeEndingShift } from './closingShift';
 
 export const cashierShiftRouter = Router();
 routeStartingShift(cashierShiftRouter);

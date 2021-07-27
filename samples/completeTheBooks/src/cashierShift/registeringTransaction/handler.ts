@@ -8,7 +8,7 @@ import {
   CashierShiftEvent,
   CashierShiftStatus,
   isCashierShift,
-  SHIFT_NOT_STARTED,
+  SHIFT_NOT_OPENED,
   when,
 } from '../cashierShift';
 
@@ -25,7 +25,8 @@ export type TransactionRegistered = Event<
   'transaction-registered',
   {
     transactionId: string;
-    cashierShiftId: string;
+    cashRegisterId: string;
+    shiftNumber: number;
     amount: number;
     registeredAt: Date;
   }
@@ -34,20 +35,21 @@ export type TransactionRegistered = Event<
 export function handleRegisterTransaction(
   events: CashierShiftEvent[],
   command: RegisterTransaction
-): Result<TransactionRegistered, SHIFT_NOT_STARTED> {
-  const cashRegister = aggregateStream<CashierShift, CashierShiftEvent>(
+): Result<TransactionRegistered, SHIFT_NOT_OPENED> {
+  const cashierShift = aggregateStream<CashierShift, CashierShiftEvent>(
     events,
     when,
     isCashierShift
   );
 
-  if (cashRegister.status !== CashierShiftStatus.Started)
-    return failure('SHIFT_NOT_STARTED');
+  if (cashierShift.status !== CashierShiftStatus.Opened)
+    return failure('SHIFT_NOT_OPENED');
 
   return success({
     type: 'transaction-registered',
     data: {
-      cashierShiftId: cashRegister.id,
+      cashRegisterId: cashierShift.cashRegisterId,
+      shiftNumber: cashierShift.number,
       transactionId: uuid(),
       amount: command.data.amount,
       registeredAt: getCurrentTime(),

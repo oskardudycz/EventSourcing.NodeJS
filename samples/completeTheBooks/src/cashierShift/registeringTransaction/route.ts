@@ -33,7 +33,7 @@ export const route = (router: Router) =>
             case 'STREAM_NOT_FOUND':
               response.sendStatus(404);
               break;
-            case 'SHIFT_NOT_STARTED':
+            case 'SHIFT_NOT_OPENED':
               response.sendStatus(409);
               break;
             case 'FAILED_TO_APPEND_EVENT':

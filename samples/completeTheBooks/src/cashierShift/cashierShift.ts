@@ -1,6 +1,6 @@
-import { ShiftStarted } from './startingShift';
+import { ShiftOpened } from './openingShift';
 import { TransactionRegistered } from './registeringTransaction';
-import { ShiftEnded } from './endingShift';
+import { ShiftClosed } from './closingShift';
 import { aggregateStream } from '#core/streams';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
 
@@ -9,13 +9,28 @@ import { isNotEmptyString, isPositiveNumber } from '#core/validation';
  * See more: https://www.englishclub.com/english-for-work/cashier-vocabulary.htm
  */
 export type CashierShift = Readonly<{
-  id: string;
+  number: number;
+
+  /**
+   * Cash amount in the drawer declared during opening the shift
+   */
+  startAmount: number;
+
   /**
    *
    * The amount of money in a cash register or till before and after a person's shift
    * @type {number}
    */
   float: number;
+
+  /**
+   * Cash amount in the drawer declared during closing the shift
+   */
+  declaredTender?: number;
+
+  overageAmount?: number;
+
+  shortageAmount?: number;
 
   /**
    * The area where a cashier works
@@ -39,38 +54,41 @@ export type CashierShift = Readonly<{
 
 export enum CashierShiftStatus {
   Initialized = 'Initialized',
-  Started = 'Started',
-  Finished = 'Finished',
+  Opened = 'Opened',
+  Closed = 'Finished',
 }
 
 export type CashierShiftEvent =
-  | ShiftStarted
+  | ShiftOpened
   | TransactionRegistered
-  | ShiftEnded;
+  | ShiftClosed;
 
 export function when(
   currentState: Partial<CashierShift>,
   event: CashierShiftEvent
 ): Partial<CashierShift> {
   switch (event.type) {
-    case 'shift-started':
+    case 'shift-opened':
       return {
         ...currentState,
         cashierId: event.data.cashierId,
-        status: CashierShiftStatus.Started,
-        float: event.data.float,
+        status: CashierShiftStatus.Opened,
+        float: event.data.declaredStartAmount,
+        startAmount: event.data.declaredStartAmount,
       };
     case 'transaction-registered':
       return {
         ...currentState,
         float: (currentState.float ?? 0) + event.data.amount,
       };
-    case 'shift-ended':
+    case 'shift-closed':
       return {
         ...currentState,
-        startedAt: event.data.finishedAt,
-        status: CashierShiftStatus.Finished,
-        float: event.data.float,
+        finishedAt: event.data.finishedAt,
+        status: CashierShiftStatus.Closed,
+        float: event.data.declaredTender,
+        overageAmount: event.data.overageAmount,
+        shortageAmount: event.data.shortageAmount,
       };
     default:
       // Unexpected event type
@@ -85,7 +103,7 @@ export function isCashierShift(
 ): cashierShift is CashierShift {
   return (
     cashierShift !== undefined &&
-    isNotEmptyString(cashierShift.id) &&
+    isPositiveNumber(cashierShift.number) &&
     isPositiveNumber(cashierShift.float) &&
     isNotEmptyString(cashierShift.cashierId) &&
     isNotEmptyString(cashierShift.cashRegisterId) &&
@@ -112,8 +130,8 @@ export function getCashierShiftStreamName(
   return `cashiershift-cr_${cashRegisterId}_cs_${cashierShiftId}`;
 }
 
-export function getActiveCashierShiftStreamName(cashRegisterId: string) {
-  return `cashiershift-cr_${cashRegisterId}_cs_active`;
+export function getCurrentCashierShiftStreamName(cashRegisterId: string) {
+  return `cashiershift-cr_${cashRegisterId}_cs_current`;
 }
 
 export function getCashierShiftFrom(events: CashierShiftEvent[]): CashierShift {
@@ -121,5 +139,6 @@ export function getCashierShiftFrom(events: CashierShiftEvent[]): CashierShift {
 }
 
 export type SHIFT_ALREADY_INITIALIZED = 'SHIFT_ALREADY_INITIALIZED';
-export type SHIFT_ALREADY_STARTED = 'SHIFT_ALREADY_STARTED';
-export type SHIFT_NOT_STARTED = 'SHIFT_NOT_STARTED';
+export type SHIFT_NOT_OPENED = 'SHIFT_NOT_OPENED';
+export type SHIFT_ALREADY_OPENED = 'SHIFT_ALREADY_OPENED';
+export type SHIFT_ALREADY_CLOSED = 'SHIFT_ALREADY_CLOSED';
