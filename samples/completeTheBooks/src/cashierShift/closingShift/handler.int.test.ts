@@ -3,14 +3,14 @@ import {
   StartedEventStoreDBContainer,
 } from '../../testing/eventStoreDB/eventStoreDBContainer';
 import { config } from '#config';
-import { EndShift, handleEndShift } from './handler';
+import { ClosingShift, handleEndShift } from './handler';
 import { v4 as uuid } from 'uuid';
 import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
 import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
-import { handleStartShift, StartShift } from '../startingShift';
+import { handleOpenShift, OpenShift } from '../openingShift';
 import {
   handleRegisterTransaction,
   RegisterTransaction,
@@ -29,18 +29,17 @@ describe('EndShift command', () => {
 
     eventStore = esdbContainer.getClient();
 
-    const startShift: StartShift = {
-      type: 'start-shift',
+    const startShift: OpenShift = {
+      type: 'open-shift',
       data: {
         cashRegisterId,
-        cashierShiftId,
         cashierId: uuid(),
-        float: 100,
+        declaredStartAmount: 100,
       },
     };
 
     expect(
-      await updateCashierShift(streamName, startShift, handleStartShift)
+      await updateCashierShift(streamName, startShift, handleOpenShift)
     ).toBeTruthy();
 
     const registerTransaction: RegisterTransaction = {
@@ -66,12 +65,12 @@ describe('EndShift command', () => {
   });
 
   it('should end shift for existing, starting cash register shift', async () => {
-    const command: EndShift = {
-      type: 'end-shift',
+    const command: ClosingShift = {
+      type: 'close-shift',
       data: {
         cashRegisterId,
         cashierShiftId: uuid(),
-        float: 100,
+        declaredTender: 100,
       },
     };
 

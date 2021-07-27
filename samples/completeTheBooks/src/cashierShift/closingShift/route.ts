@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import { handleEndShift, EndShift } from './handler';
+import { handleEndShift, ClosingShift } from './handler';
 import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { isCommand } from '#core/commands';
@@ -33,7 +33,7 @@ export const route = (router: Router) =>
             case 'STREAM_NOT_FOUND':
               response.sendStatus(404);
               break;
-            case 'SHIFT_ALREADY_ENDED':
+            case 'SHIFT_ALREADY_CLOSED':
             case 'FAILED_TO_APPEND_EVENT':
               response.sendStatus(409);
               break;
@@ -50,17 +50,17 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): EndShift | 'MISSING_CASH_REGISTER_ID' {
+): ClosingShift | 'MISSING_CASH_REGISTER_ID' {
   if (!isNotEmptyString(request.params.cashRegisterId)) {
     return 'MISSING_CASH_REGISTER_ID';
   }
 
   return {
-    type: 'end-shift',
+    type: 'close-shift',
     data: {
       cashRegisterId: request.route.cashRegisterId,
       cashierShiftId: request.params.id,
-      float: 100,
+      declaredTender: 100,
     },
   };
 }

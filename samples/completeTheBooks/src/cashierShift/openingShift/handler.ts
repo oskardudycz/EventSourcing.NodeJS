@@ -5,47 +5,46 @@ import {
   CashierShiftEvent,
   CashierShiftStatus,
   getCashierShiftFrom,
-  SHIFT_ALREADY_STARTED,
+  SHIFT_ALREADY_OPENED,
 } from '../cashierShift';
 
-export type StartShift = Command<
-  'start-shift',
+export type OpenShift = Command<
+  'open-shift',
   {
-    cashierShiftId: string;
     cashRegisterId: string;
     cashierId: string;
-    float: number;
+    declaredStartAmount: number;
   }
 >;
 
-export type ShiftStarted = Event<
-  'shift-started',
+export type ShiftOpened = Event<
+  'shift-opened',
   {
-    cashierShiftId: string;
+    shiftNumber: number;
     cashRegisterId: string;
     cashierId: string;
-    float: number;
+    declaredStartAmount: number;
     startedAt: Date;
   }
 >;
 
-export function handleStartShift(
+export function handleOpenShift(
   events: CashierShiftEvent[],
-  command: StartShift
-): Result<ShiftStarted, SHIFT_ALREADY_STARTED> {
+  command: OpenShift
+): Result<ShiftOpened, SHIFT_ALREADY_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
 
-  if (cashierShift.status === CashierShiftStatus.Started) {
-    return failure('SHIFT_ALREADY_STARTED');
+  if (cashierShift.status === CashierShiftStatus.Opened) {
+    return failure('SHIFT_ALREADY_OPENED');
   }
 
   return success({
-    type: 'shift-started',
+    type: 'shift-opened',
     data: {
-      cashierShiftId: cashierShift.id,
+      shiftNumber: cashierShift.number,
       cashRegisterId: command.data.cashRegisterId,
       cashierId: command.data.cashierId,
-      float: command.data.float,
+      declaredStartAmount: command.data.declaredStartAmount,
       startedAt: getCurrentTime(),
     },
   });
