@@ -60,6 +60,7 @@ function mapRequestToCommand(
     data: {
       cashRegisterId: request.route.cashRegisterId,
       cashierShiftId: request.params.id,
+      float: 100,
     },
   };
 }
