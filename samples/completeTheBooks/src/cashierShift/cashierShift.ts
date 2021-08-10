@@ -52,8 +52,11 @@ export type CashierShift = Readonly<{
   finishedAt?: Date;
 }>;
 
+export type NotInitiatedCashierShift = Readonly<{
+  cashRegisterId: string;
+}>;
+
 export enum CashierShiftStatus {
-  Initialized = 'Initialized',
   Opened = 'Opened',
   Closed = 'Finished',
 }
@@ -64,22 +67,26 @@ export type CashierShiftEvent =
   | ShiftClosed;
 
 export function when(
-  currentState: Partial<CashierShift>,
+  currentState: Partial<NotInitiatedCashierShift | CashierShift>,
   event: CashierShiftEvent
-): Partial<CashierShift> {
+): Partial<NotInitiatedCashierShift | CashierShift> {
   switch (event.type) {
     case 'shift-opened':
       return {
         ...currentState,
+        number: event.data.shiftNumber,
         cashierId: event.data.cashierId,
         status: CashierShiftStatus.Opened,
         float: event.data.declaredStartAmount,
         startAmount: event.data.declaredStartAmount,
       };
     case 'transaction-registered':
+      const currentFloat = isCashierShift(currentState)
+        ? currentState.float
+        : 0;
       return {
         ...currentState,
-        float: (currentState.float ?? 0) + event.data.amount,
+        float: currentFloat + event.data.amount,
       };
     case 'shift-closed':
       return {
@@ -112,6 +119,16 @@ export function isCashierShift(
   );
 }
 
+export function isNotInitiatedCashierShift(
+  cashierShift: CashierShift | NotInitiatedCashierShift
+): cashierShift is NotInitiatedCashierShift {
+  return (
+    cashierShift !== undefined &&
+    !isCashierShift(cashierShift) &&
+    isNotEmptyString(cashierShift.cashRegisterId)
+  );
+}
+
 export function isCashierShiftEvent(event: any): event is CashierShiftEvent {
   switch (event.type) {
     case 'shift-started':
@@ -134,11 +151,14 @@ export function getCurrentCashierShiftStreamName(cashRegisterId: string) {
   return `cashiershift-cr_${cashRegisterId}_cs_current`;
 }
 
-export function getCashierShiftFrom(events: CashierShiftEvent[]): CashierShift {
+export function getCashierShiftFrom(
+  events: CashierShiftEvent[]
+): CashierShift | NotInitiatedCashierShift {
   return aggregateStream(events, when, isCashierShift);
 }
 
 export type SHIFT_ALREADY_INITIALIZED = 'SHIFT_ALREADY_INITIALIZED';
+export type SHIFT_NOT_INITIALIZED = 'SHIFT_NOT_INITIALIZED';
 export type SHIFT_NOT_OPENED = 'SHIFT_NOT_OPENED';
 export type SHIFT_ALREADY_OPENED = 'SHIFT_ALREADY_OPENED';
 export type SHIFT_ALREADY_CLOSED = 'SHIFT_ALREADY_CLOSED';

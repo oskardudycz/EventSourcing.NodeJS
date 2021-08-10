@@ -2,14 +2,13 @@ import { Command } from '#core/commands';
 import { Event } from '#core/events';
 import { failure, Result, success } from '#core/primitives';
 import { getCurrentTime } from '#core/primitives';
-import { aggregateStream } from '#core/streams';
 import {
-  CashierShift,
   CashierShiftEvent,
   CashierShiftStatus,
+  getCashierShiftFrom,
   isCashierShift,
   SHIFT_ALREADY_CLOSED,
-  when,
+  SHIFT_NOT_INITIALIZED,
 } from '../cashierShift';
 
 export type ClosingShift = Command<
@@ -37,16 +36,13 @@ export type ShiftClosed = Event<
 export function handleEndShift(
   events: CashierShiftEvent[],
   command: ClosingShift
-): Result<ShiftClosed, SHIFT_ALREADY_CLOSED> {
-  const cashierShift = aggregateStream<CashierShift, CashierShiftEvent>(
-    events,
-    when,
-    isCashierShift
-  );
+): Result<ShiftClosed, SHIFT_ALREADY_CLOSED | SHIFT_NOT_INITIALIZED> {
+  const cashierShift = getCashierShiftFrom(events);
 
-  if (cashierShift.status === CashierShiftStatus.Closed) {
+  if (!isCashierShift(cashierShift)) return failure('SHIFT_NOT_INITIALIZED');
+
+  if (cashierShift.status === CashierShiftStatus.Closed)
     return failure('SHIFT_ALREADY_CLOSED');
-  }
 
   const declaredTender = command.data.declaredTender;
   const overageAmount = declaredTender - cashierShift.float;
