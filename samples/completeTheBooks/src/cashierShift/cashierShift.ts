@@ -3,6 +3,7 @@ import { TransactionRegistered } from './registeringTransaction';
 import { ShiftClosed } from './closingShift';
 import { aggregateStream } from '#core/streams';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
+import { CashRegisterShiftInitialized } from './initalizeCashRegisterShift/handler';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -62,6 +63,7 @@ export enum CashierShiftStatus {
 }
 
 export type CashierShiftEvent =
+  | CashRegisterShiftInitialized
   | ShiftOpened
   | TransactionRegistered
   | ShiftClosed;
@@ -71,6 +73,10 @@ export function when(
   event: CashierShiftEvent
 ): Partial<NotInitiatedCashierShift | CashierShift> {
   switch (event.type) {
+    case 'cash-register-shift-initialized':
+      return {
+        cashRegisterId: event.data.cashRegisterId,
+      };
     case 'shift-opened':
       return {
         ...currentState,
