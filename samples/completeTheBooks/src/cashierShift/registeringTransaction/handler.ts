@@ -1,15 +1,14 @@
 import { v4 as uuid } from 'uuid';
 import { Command } from '#core/commands';
 import { Event } from '#core/events';
-import { aggregateStream } from '#core/streams';
 import { Result, success, getCurrentTime, failure } from '#core/primitives';
 import {
-  CashierShift,
   CashierShiftEvent,
   CashierShiftStatus,
+  getCashierShiftFrom,
   isCashierShift,
+  SHIFT_NOT_INITIALIZED,
   SHIFT_NOT_OPENED,
-  when,
 } from '../cashierShift';
 
 export type RegisterTransaction = Command<
@@ -35,12 +34,12 @@ export type TransactionRegistered = Event<
 export function handleRegisterTransaction(
   events: CashierShiftEvent[],
   command: RegisterTransaction
-): Result<TransactionRegistered, SHIFT_NOT_OPENED> {
-  const cashierShift = aggregateStream<CashierShift, CashierShiftEvent>(
-    events,
-    when,
-    isCashierShift
-  );
+): Result<TransactionRegistered, SHIFT_NOT_OPENED | SHIFT_NOT_INITIALIZED> {
+  const cashierShift = getCashierShiftFrom(events);
+
+  if (!isCashierShift(cashierShift)) {
+    return failure('SHIFT_NOT_INITIALIZED');
+  }
 
   if (cashierShift.status !== CashierShiftStatus.Opened)
     return failure('SHIFT_NOT_OPENED');
