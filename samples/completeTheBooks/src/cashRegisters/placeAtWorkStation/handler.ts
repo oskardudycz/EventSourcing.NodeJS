@@ -21,7 +21,7 @@ export type PlacedAtWorkStation = Event<
 
 export function isPlacedAtWorkStation(
   event: Event
-): event is PlaceAtWorkStation {
+): event is PlacedAtWorkStation {
   return event.type === 'placed-at-workstation';
 }
 
