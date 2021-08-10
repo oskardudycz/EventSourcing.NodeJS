@@ -39,10 +39,13 @@ export function handleEndShift(
 ): Result<ShiftClosed, SHIFT_ALREADY_CLOSED | SHIFT_NOT_INITIALIZED> {
   const cashierShift = getCashierShiftFrom(events);
 
-  if (!isCashierShift(cashierShift)) return failure('SHIFT_NOT_INITIALIZED');
+  if (!isCashierShift(cashierShift)) {
+    return failure('SHIFT_NOT_INITIALIZED');
+  }
 
-  if (cashierShift.status === CashierShiftStatus.Closed)
+  if (cashierShift.status === CashierShiftStatus.Closed) {
     return failure('SHIFT_ALREADY_CLOSED');
+  }
 
   const declaredTender = command.data.declaredTender;
   const overageAmount = declaredTender - cashierShift.float;

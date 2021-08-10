@@ -1,6 +1,5 @@
 import { getEventStore } from '#core/eventStore';
 import { CashierShiftEvent } from '../cashierShift';
-import { STREAM_NOT_FOUND } from '#core/eventStore/reading';
 import { Result, success } from '#core/primitives';
 import {
   add,
@@ -12,9 +11,7 @@ export async function addCashierShift<Command, TError = never>(
   streamName: string,
   command: Command,
   handle: (command: Command) => Result<CashierShiftEvent, TError>
-): Promise<
-  Result<boolean, STREAM_NOT_FOUND | FAILED_TO_APPEND_EVENT | TError>
-> {
+): Promise<Result<boolean, FAILED_TO_APPEND_EVENT | TError>> {
   return add(
     handle,
     async (

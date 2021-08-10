@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { handleEndShift, ClosingShift } from './handler';
 import { updateCashierShift } from '../processCashierShift';
-import { getCashierShiftStreamName } from '../cashierShift';
+import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isCommand } from '#core/commands';
 import { isNotEmptyString } from '#core/validation';
 
@@ -17,9 +17,8 @@ export const route = (router: Router) =>
           return;
         }
 
-        const streamName = getCashierShiftStreamName(
-          command.data.cashRegisterId,
-          command.data.cashierShiftId
+        const streamName = getCurrentCashierShiftStreamName(
+          command.data.cashRegisterId
         );
 
         const result = await updateCashierShift(
