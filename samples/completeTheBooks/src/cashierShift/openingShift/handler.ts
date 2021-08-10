@@ -5,6 +5,7 @@ import {
   CashierShiftEvent,
   CashierShiftStatus,
   getCashierShiftFrom,
+  isCashierShift,
   SHIFT_ALREADY_OPENED,
 } from '../cashierShift';
 
@@ -34,15 +35,22 @@ export function handleOpenShift(
 ): Result<ShiftOpened, SHIFT_ALREADY_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
 
-  if (cashierShift.status === CashierShiftStatus.Opened) {
+  if (
+    isCashierShift(cashierShift) &&
+    cashierShift.status !== CashierShiftStatus.Opened
+  ) {
     return failure('SHIFT_ALREADY_OPENED');
   }
+
+  const currentShiftNumber = isCashierShift(cashierShift)
+    ? cashierShift.number
+    : 0;
 
   return success({
     type: 'shift-opened',
     data: {
-      shiftNumber: cashierShift.number,
-      cashRegisterId: command.data.cashRegisterId,
+      shiftNumber: currentShiftNumber,
+      cashRegisterId: cashierShift.cashRegisterId,
       cashierId: command.data.cashierId,
       declaredStartAmount: command.data.declaredStartAmount,
       startedAt: getCurrentTime(),
