@@ -3,11 +3,12 @@ import { SubscribeToAllOptions } from '@eventstore/db-client/dist/streams';
 import { ReadableOptions } from 'node:stream';
 import { v4 as uuid } from 'uuid';
 import { Event } from '../../events';
-import { subscribeToAll } from '.';
+import { getSubscriptionToAll } from '.';
 import { Result } from '../../primitives';
 import { loadCheckpoint, storeCheckpoint } from './checkpoints';
+import { Subscription } from './subscription';
 
-export async function subscribeToAllWithESDBCheckpointing<
+export function getSubscriptionToAllWithESDBCheckpointing<
   StreamEvent extends Event,
   TError = never
 >(
@@ -19,8 +20,8 @@ export async function subscribeToAllWithESDBCheckpointing<
   subscriptionId: string = uuid(),
   options?: SubscribeToAllOptions,
   readableOptions?: ReadableOptions
-): Promise<Result<boolean>> {
-  return subscribeToAll(
+): Result<Subscription> {
+  return getSubscriptionToAll(
     eventStore,
     (subscriptionId) => loadCheckpoint(eventStore, subscriptionId),
     (subscriptionId, position) =>

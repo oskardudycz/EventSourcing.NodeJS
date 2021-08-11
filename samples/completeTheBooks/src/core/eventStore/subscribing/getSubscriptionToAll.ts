@@ -10,12 +10,11 @@ import { v4 as uuid } from 'uuid';
 import { ReadableOptions } from 'node:stream';
 
 import { Event } from '../../events';
-import { pipeResultAsync } from '../../primitives/pipe';
 import { Result, success } from '../../primitives';
 import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
-import { resubscribeOnError } from './resubscribeOnError';
+import { Subscription } from './subscription';
 
-export async function subscribeToAll<StreamEvent extends Event, TError = never>(
+export function getSubscriptionToAll<StreamEvent extends Event, TError = never>(
   eventStore: EventStoreDBClient,
   loadCheckpoint: (
     subscriptionId: string
@@ -31,53 +30,45 @@ export async function subscribeToAll<StreamEvent extends Event, TError = never>(
   subscriptionId: string = uuid(),
   options?: SubscribeToAllOptions,
   readableOptions?: ReadableOptions
-): Promise<Result<boolean>> {
-  return resubscribeOnError(
-    () =>
-      new Promise<Result<boolean>>(async (resolve, reject) => {
-        try {
-          await pipeResultAsync(loadCheckpoint, async (currentPosition) => {
-            return success(
-              eventStore
-                .subscribeToAll(
-                  {
-                    fromPosition: currentPosition || START,
-                    filter: excludeSystemEvents(),
-                    ...options,
-                  },
-                  readableOptions
-                )
-                .on(
-                  'data',
-                  handleEvent<StreamEvent, TError>(handlers, (position) =>
-                    storeCheckpoint(subscriptionId, position)
-                  )
-                )
-                .on('error', async (error) => {
-                  console.error(
-                    `Received error: ${error ?? 'UNEXPECTED ERROR'}.`
-                  );
-                  reject(error);
-                })
-                .on('close', async () => {
-                  console.error(`Subscription closed.`);
-                  reject();
-                })
-                .on('end', () => {
-                  console.info(`Received 'end' event. Stopping subscription.`);
-                  resolve(success(true));
-                })
-            );
-          })(subscriptionId);
-        } catch (error) {
-          console.error(
-            `Received error while subscribing: ${error ?? 'UNEXPECTED ERROR'}.`
-          );
-          reject(error);
+): Result<Subscription> {
+  return success(
+    new Subscription(async () => {
+      try {
+        const checkpointResult = await loadCheckpoint(subscriptionId);
+
+        if (checkpointResult.isError) {
+          return checkpointResult;
         }
-      })
+
+        const currentPosition = checkpointResult.value;
+
+        return success(
+          eventStore
+            .subscribeToAll(
+              {
+                fromPosition: currentPosition || START,
+                filter: excludeSystemEvents(),
+                ...options,
+              },
+              readableOptions
+            )
+            .on(
+              'data',
+              handleEvent<StreamEvent, TError>(handlers, (position) =>
+                storeCheckpoint(subscriptionId, position)
+              )
+            )
+        );
+      } catch (error) {
+        console.error(
+          `Received error while subscribing: ${error ?? 'UNEXPECTED ERROR'}.`
+        );
+        throw error;
+      }
+    })
   );
 }
+
 function handleEvent<StreamEvent extends Event, TError = never>(
   handlers: ((
     event: StreamEvent,
