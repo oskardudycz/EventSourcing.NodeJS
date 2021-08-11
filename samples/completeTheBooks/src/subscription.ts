@@ -1,9 +1,13 @@
-import { getEventStore } from '#core/eventStore';
-import { subscribeToAllWithESDBCheckpointing } from '#core/eventStore/subscribing';
-import { handleCashRegisterPlacedAtWorkStation } from './cashierShift/initalizeCashRegisterShift/eventHandler';
+import { getSubscription } from './getSubscription';
+
+const subscriptionResult = getSubscription();
+
+if (subscriptionResult.isError) {
+  process.exit(1);
+}
+
+const subscription = subscriptionResult.value;
 
 (async () => {
-  return subscribeToAllWithESDBCheckpointing(getEventStore(), [
-    handleCashRegisterPlacedAtWorkStation,
-  ]);
+  await subscription.subscribe();
 })();
