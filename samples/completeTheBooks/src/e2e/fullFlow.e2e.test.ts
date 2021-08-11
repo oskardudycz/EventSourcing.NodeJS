@@ -1,4 +1,3 @@
-import request from 'supertest';
 import app from '../app';
 import {
   EventStoreDBContainer,
@@ -6,18 +5,31 @@ import {
 } from '../testing/eventStoreDB/eventStoreDBContainer';
 import { setupCashRegister } from '../testing/builders/setupCashRegister';
 import { config } from '#config';
-import { v4 as uuid } from 'uuid';
+import { Subscription } from '#core/eventStore/subscribing';
+import { getSubscription } from '../getSubscription';
 
 describe('Full flow', () => {
   let esdbContainer: StartedEventStoreDBContainer;
+  let subscription: Subscription;
 
   beforeAll(async () => {
     esdbContainer = await new EventStoreDBContainer().startContainer();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
     console.log(config.eventStoreDB.connectionString);
+
+    const subscriptionResult = getSubscription();
+
+    if (subscriptionResult.isError) {
+      console.error(subscriptionResult.error);
+      return;
+    }
+
+    subscription = subscriptionResult.value;
+    subscription.subscribe();
   });
 
   afterAll(async () => {
+    await subscription.unsubscribe();
     await esdbContainer.stop();
   });
 
@@ -29,24 +41,7 @@ describe('Full flow', () => {
     });
 
     it('should start shift', () => {
-      return request(app)
-        .post(`/cash-registers/${existingCashRegisterId}/shifts`)
-        .send({ cashierId: uuid() })
-        .expect(200)
-        .expect('Content-Type', /plain/);
-    });
-
-    it('should fail to start shift if shift was already started', async () => {
-      await request(app)
-        .post(`/cash-registers/${existingCashRegisterId}/shifts`)
-        .send({ cashierId: uuid() })
-        .expect(200);
-
-      await request(app)
-        .post(`/cash-registers/${existingCashRegisterId}/shifts`)
-        .send({ cashierId: uuid() })
-        .expect(409)
-        .expect('Content-Type', /plain/);
+      console.log('test');
     });
   });
 });
