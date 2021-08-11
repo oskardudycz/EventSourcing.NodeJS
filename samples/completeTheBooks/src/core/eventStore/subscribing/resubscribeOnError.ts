@@ -11,7 +11,7 @@ export async function resubscribeOnError<T>(
 }
 
 async function resubscribe<T>(subscribe: () => Promise<T>): Promise<T> {
-  let result = undefined;
+  let result: T | undefined = undefined;
   do {
     try {
       console.info('Starting reconnection');
