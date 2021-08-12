@@ -6,7 +6,7 @@ import { isNotEmptyString, isPositiveNumber } from '#core/validation';
 import { updateCashierShift } from '../processCashierShift';
 
 export const route = (router: Router) =>
-  router.put(
+  router.post(
     '/cash-registers/:cashRegisterId/shifts/current',
     async function (request: Request, response: Response, next: NextFunction) {
       try {

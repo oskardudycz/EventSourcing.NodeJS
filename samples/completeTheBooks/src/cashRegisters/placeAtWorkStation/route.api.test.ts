@@ -1,11 +1,11 @@
 import request from 'supertest';
-import app from '../../app';
+import isUUID from 'validator/lib/isUUID';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
+} from '#testing/eventStoreDB/eventStoreDBContainer';
 import { config } from '#config';
-import isUUID from 'validator/lib/isUUID';
+import app from '../../app';
 
 describe('POST /cash-register/', () => {
   let esdbContainer: StartedEventStoreDBContainer;

@@ -53,7 +53,7 @@ export type CashierShift = Readonly<{
   finishedAt?: Date;
 }>;
 
-export type NotInitiatedCashierShift = Readonly<{
+export type InitiatedCashierShift = Readonly<{
   cashRegisterId: string;
 }>;
 
@@ -69,9 +69,9 @@ export type CashierShiftEvent =
   | ShiftClosed;
 
 export function when(
-  currentState: Partial<NotInitiatedCashierShift | CashierShift>,
+  currentState: Partial<InitiatedCashierShift | CashierShift>,
   event: CashierShiftEvent
-): Partial<NotInitiatedCashierShift | CashierShift> {
+): Partial<InitiatedCashierShift | CashierShift> {
   switch (event.type) {
     case 'cash-register-shift-initialized':
       return {
@@ -112,10 +112,11 @@ export function when(
 }
 
 export function isCashierShift(
-  cashierShift: Partial<CashierShift>
+  cashierShift: Partial<CashierShift | InitiatedCashierShift>
 ): cashierShift is CashierShift {
   return (
     cashierShift !== undefined &&
+    'number' in cashierShift &&
     isPositiveNumber(cashierShift.number) &&
     isPositiveNumber(cashierShift.float) &&
     isNotEmptyString(cashierShift.cashierId) &&
@@ -125,13 +126,14 @@ export function isCashierShift(
   );
 }
 
-export function isNotInitiatedCashierShift(
-  cashierShift: CashierShift | NotInitiatedCashierShift
-): cashierShift is NotInitiatedCashierShift {
+export function isInitiatedCashierShift(
+  cashierShift: Partial<CashierShift | InitiatedCashierShift>
+): cashierShift is InitiatedCashierShift {
   return (
     cashierShift !== undefined &&
     !isCashierShift(cashierShift) &&
-    isNotEmptyString(cashierShift.cashRegisterId)
+    isNotEmptyString(cashierShift.cashRegisterId) &&
+    !('number' in cashierShift)
   );
 }
 
@@ -159,8 +161,13 @@ export function getCurrentCashierShiftStreamName(cashRegisterId: string) {
 
 export function getCashierShiftFrom(
   events: CashierShiftEvent[]
-): CashierShift | NotInitiatedCashierShift {
-  return aggregateStream(events, when, isCashierShift);
+): CashierShift | InitiatedCashierShift {
+  return aggregateStream(
+    events,
+    when,
+    (state): state is CashierShift | InitiatedCashierShift =>
+      isInitiatedCashierShift(state) || isCashierShift(state)
+  );
 }
 
 export type SHIFT_ALREADY_INITIALIZED = 'SHIFT_ALREADY_INITIALIZED';
