@@ -1,12 +1,12 @@
 import request from 'supertest';
-import app from '../../app';
+import { v4 as uuid } from 'uuid';
+import { config } from '#config';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
-import { config } from '#config';
-import { v4 as uuid } from 'uuid';
-import { setupCashRegister } from '../../testing/builders/setupCashRegister';
+} from '#testing/eventStoreDB/eventStoreDBContainer';
+import { setupCashRegister } from '#testing/builders/setupCashRegister';
+import app from '../../app';
 
 describe('POST /cash-registers/:id/shifts', () => {
   let esdbContainer: StartedEventStoreDBContainer;

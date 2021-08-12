@@ -1,5 +1,6 @@
 import {
   AllStreamResolvedEvent,
+  AllStreamSubscription,
   EventStoreDBClient,
   excludeSystemEvents,
   Position,
@@ -42,23 +43,23 @@ export function getSubscriptionToAll<StreamEvent extends Event, TError = never>(
 
         const currentPosition = checkpointResult.value;
 
-        return success(
-          eventStore
-            .subscribeToAll(
-              {
-                fromPosition: currentPosition || START,
-                filter: excludeSystemEvents(),
-                ...options,
-              },
-              readableOptions
-            )
-            .on(
-              'data',
-              handleEvent<StreamEvent, TError>(handlers, (position) =>
-                storeCheckpoint(subscriptionId, position)
-              )
-            )
+        const subscription = eventStore.subscribeToAll(
+          {
+            fromPosition: currentPosition || START,
+            filter: excludeSystemEvents(),
+            ...options,
+          },
+          readableOptions
         );
+
+        subscription.on(
+          'data',
+          handleEvent<StreamEvent, TError>(subscription, handlers, (position) =>
+            storeCheckpoint(subscriptionId, position)
+          )
+        );
+
+        return success(subscription);
       } catch (error) {
         console.error(
           `Received error while subscribing: ${error ?? 'UNEXPECTED ERROR'}.`
@@ -70,6 +71,7 @@ export function getSubscriptionToAll<StreamEvent extends Event, TError = never>(
 }
 
 function handleEvent<StreamEvent extends Event, TError = never>(
+  subscription: AllStreamSubscription,
   handlers: ((
     event: StreamEvent,
     options: {
@@ -112,7 +114,7 @@ function handleEvent<StreamEvent extends Event, TError = never>(
       await storeCheckpoint(resolvedEvent.event.position.commit);
     } catch (error) {
       console.error(error ?? 'Error while processing subscription handler.');
-      throw error;
+      if (!subscription.destroyed) throw error;
     }
   };
 }

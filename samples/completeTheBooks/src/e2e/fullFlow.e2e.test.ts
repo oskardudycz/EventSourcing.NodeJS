@@ -1,11 +1,14 @@
-import app from '../app';
+import request from 'supertest';
+import { v4 as uuid } from 'uuid';
+import { config } from '#config';
+import { Subscription } from '#core/eventStore/subscribing';
+import { setupCashRegister } from '#testing/builders/setupCashRegister';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from '../testing/eventStoreDB/eventStoreDBContainer';
-import { setupCashRegister } from '../testing/builders/setupCashRegister';
-import { config } from '#config';
-import { Subscription } from '#core/eventStore/subscribing';
+} from '#testing/eventStoreDB/eventStoreDBContainer';
+import { retry } from '#testing/retries';
+import app from '../app';
 import { getSubscription } from '../getSubscription';
 
 describe('Full flow', () => {
@@ -40,8 +43,13 @@ describe('Full flow', () => {
       existingCashRegisterId = await setupCashRegister(app);
     });
 
-    it('should start shift', () => {
-      console.log('test');
+    it('should start shift for the first time', async () => {
+      await retry(() =>
+        request(app)
+          .post(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
+          .send({ cashierId: uuid(), float: 0 })
+          .expect(200)
+      );
     });
   });
 });
