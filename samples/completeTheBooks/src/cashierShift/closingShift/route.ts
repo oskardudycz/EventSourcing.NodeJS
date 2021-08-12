@@ -7,7 +7,7 @@ import { isNotEmptyString } from '#core/validation';
 
 export const route = (router: Router) =>
   router.delete(
-    '/cash-registers/:cashRegisterId/shifts',
+    '/cash-registers/:cashRegisterId/shifts/current',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
