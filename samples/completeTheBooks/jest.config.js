@@ -9,5 +9,6 @@ module.exports = {
   moduleNameMapper: {
     '#core/(.*)': '<rootDir>/src/core/$1',
     '#config': '<rootDir>/config.ts',
+    '#testing/(.*)': '<rootDir>/src/testing/$1',
   },
 };

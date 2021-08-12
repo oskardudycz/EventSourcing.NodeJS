@@ -25,8 +25,8 @@ export class Subscription {
             reject(error);
           })
           .on('close', async () => {
-            console.error(`Subscription closed.`);
-            reject();
+            console.info(`Subscription closed.`);
+            resolve(success(false));
           })
           .on('end', () => {
             console.info(`Received 'end' event. Stopping subscription.`);

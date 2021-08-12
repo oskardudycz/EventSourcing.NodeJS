@@ -1,12 +1,12 @@
 import request from 'supertest';
-import app from '../../app';
+import { config } from '#config';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
-import { config } from '#config';
-import { setupCashRegister } from '../../testing/builders/setupCashRegister';
-import { setupStartedShift } from '../../testing/builders/setupStartedShift';
+} from '#testing/eventStoreDB/eventStoreDBContainer';
+import { setupCashRegister } from '#testing/builders/setupCashRegister';
+import { setupStartedShift } from '#testing/builders/setupStartedShift';
+import app from '../../app';
 
 describe('DELETE /cash-registers/:id/shifts', () => {
   let esdbContainer: StartedEventStoreDBContainer;

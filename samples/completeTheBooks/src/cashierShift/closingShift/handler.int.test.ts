@@ -1,7 +1,8 @@
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
+} from '#testing/eventStoreDB/eventStoreDBContainer';
+import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { config } from '#config';
 import { ClosingShift, handleEndShift } from './handler';
 import { v4 as uuid } from 'uuid';
@@ -9,7 +10,6 @@ import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
-import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
 import { handleOpenShift, OpenShift } from '../openingShift';
 import {
   handleRegisterTransaction,

@@ -1,14 +1,14 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
+import { v4 as uuid } from 'uuid';
 import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
+import { config } from '#config';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
-import { config } from '#config';
-import { v4 as uuid } from 'uuid';
+} from '#testing/eventStoreDB/eventStoreDBContainer';
+import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
-import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
 import { handleOpenShift, OpenShift } from '.';
 import {
   handleRegisterTransaction,

@@ -1,18 +1,18 @@
+import { EventStoreDBClient } from '@eventstore/db-client';
+import { v4 as uuid } from 'uuid';
+import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
+import { config } from '#config';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
-import { config } from '#config';
-import { handlePlaceAtWorkStation, PlaceAtWorkStation } from './handler';
-import { v4 as uuid } from 'uuid';
-import { addCashRegister } from '../processCashRegister';
-import { getCashRegisterStreamName } from '../cashRegister';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
+} from '#testing/eventStoreDB/eventStoreDBContainer';
 import {
   expectStreamToHaveNumberOfEvents,
   expectStreamToNotExist,
-} from '../../testing/assertions/streams';
+} from '#testing/assertions/streams';
+import { handlePlaceAtWorkStation, PlaceAtWorkStation } from './handler';
+import { addCashRegister } from '../processCashRegister';
+import { getCashRegisterStreamName } from '../cashRegister';
 
 describe('PlaceAtWorkStation command', () => {
   let esdbContainer: StartedEventStoreDBContainer;
