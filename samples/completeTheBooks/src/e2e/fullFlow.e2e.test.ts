@@ -51,5 +51,14 @@ describe('Full flow', () => {
           .expect(200)
       );
     });
+
+    it('should not allow to close not started shift', async () => {
+      await retry(() =>
+        request(app)
+          .delete(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
+          .send({ cashierId: uuid(), float: 0 })
+          .expect(200)
+      );
+    });
   });
 });

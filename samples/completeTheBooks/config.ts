@@ -18,6 +18,20 @@ const convictConfig = convict({
       env: 'ESDB_CONNECTION_STRING',
     },
   },
+  mongoDB: {
+    connectionString: {
+      format: String,
+      default: 'mongodb://localhost:27017',
+      arg: 'MONGODB_CONNECTION_STRING',
+      env: 'MONGODB_CONNECTION_STRING',
+    },
+    databaseName: {
+      format: String,
+      default: 'mongodb://localhost:27017',
+      arg: 'MONGODB_DATABASE_NAME',
+      env: 'MONGODB_DATABASE_NAME',
+    },
+  },
 });
 
 const env = convictConfig.get('env');

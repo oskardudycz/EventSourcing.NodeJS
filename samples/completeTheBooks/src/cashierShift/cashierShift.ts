@@ -85,6 +85,7 @@ export function when(
         status: CashierShiftStatus.Opened,
         float: event.data.declaredStartAmount,
         startAmount: event.data.declaredStartAmount,
+        startedAt: event.data.startedAt,
       };
     case 'transaction-registered':
       const currentFloat = isCashierShift(currentState)
@@ -172,6 +173,7 @@ export function getCashierShiftFrom(
 
 export type SHIFT_ALREADY_INITIALIZED = 'SHIFT_ALREADY_INITIALIZED';
 export type SHIFT_NOT_INITIALIZED = 'SHIFT_NOT_INITIALIZED';
+export type SHIFT_DOES_NOT_EXIST = 'SHIFT_DOES_NOT_EXIST';
 export type SHIFT_NOT_OPENED = 'SHIFT_NOT_OPENED';
 export type SHIFT_ALREADY_OPENED = 'SHIFT_ALREADY_OPENED';
 export type SHIFT_ALREADY_CLOSED = 'SHIFT_ALREADY_CLOSED';
