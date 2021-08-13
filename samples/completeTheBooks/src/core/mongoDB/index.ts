@@ -1,7 +1,7 @@
 import { MongoClient, Collection } from 'mongodb';
 import { config } from '#config';
 
-export function getMongoDB(): MongoClient {
+export function getMongoDB(connectionString?: string): MongoClient {
   if (!config.mongoDB.connectionString) {
     throw 'MongoDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
   }

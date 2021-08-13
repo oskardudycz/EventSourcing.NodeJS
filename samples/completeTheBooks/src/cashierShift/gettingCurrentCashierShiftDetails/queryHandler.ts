@@ -2,7 +2,7 @@ import { Query } from '#core/queries';
 import { failure, Result, success } from '#core/primitives';
 import { executeOnMongoDB } from '#core/mongoDB';
 import { SHIFT_DOES_NOT_EXIST } from '../cashierShift';
-import { CurrentCashierShiftDetails } from './';
+import { CurrentCashierShiftDetails } from './currentCashierShiftDetails';
 
 export type GetCurrentCashierShiftDetails = Query<
   'get-cashier-shift-details',

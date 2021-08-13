@@ -7,18 +7,26 @@ import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '#testing/eventStoreDB/eventStoreDBContainer';
+import {
+  MongoDBContainer,
+  StartedMongoDBContainer,
+} from '#testing/mongoDB/mongoDBContainer';
 import { retry } from '#testing/retries';
 import app from '../app';
 import { getSubscription } from '../getSubscription';
 
 describe('Full flow', () => {
   let esdbContainer: StartedEventStoreDBContainer;
+  let mongodbContainer: StartedMongoDBContainer;
   let subscription: Subscription;
 
   beforeAll(async () => {
     esdbContainer = await new EventStoreDBContainer().startContainer();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
-    console.log(config.eventStoreDB.connectionString);
+
+    mongodbContainer = await new MongoDBContainer().startContainer();
+    config.mongoDB.connectionString = esdbContainer.getConnectionString();
+    console.log(config.mongoDB.connectionString);
 
     const subscriptionResult = getSubscription();
 
@@ -34,6 +42,7 @@ describe('Full flow', () => {
   afterAll(async () => {
     await subscription.unsubscribe();
     await esdbContainer.stop();
+    await mongodbContainer.stop();
   });
 
   describe('when cash register was placed at workstation', () => {
@@ -48,6 +57,12 @@ describe('Full flow', () => {
         request(app)
           .post(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
           .send({ cashierId: uuid(), float: 0 })
+          .expect(200)
+      );
+
+      await retry(() =>
+        request(app)
+          .get(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
           .expect(200)
       );
     });
