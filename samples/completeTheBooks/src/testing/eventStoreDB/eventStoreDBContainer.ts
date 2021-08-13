@@ -5,9 +5,11 @@ import {
   StoppedTestContainer,
 } from 'testcontainers';
 
-const EVENTSTOREDB_TCP_PORTS = [1113, 2113];
+const EVENTSTOREDB_PORT = 2113;
+const EVENTSTOREDB_TCP_PORT = 1113;
+const EVENTSTOREDB_TCP_PORTS = [EVENTSTOREDB_TCP_PORT, EVENTSTOREDB_PORT];
 const EVENTSTOREDB_IMAGE_NAME = 'eventstore/eventstore';
-const EVENTSTOREDB_IMAGE_TAG = '20.10.2-buster-slim';
+const EVENTSTOREDB_IMAGE_TAG = '20.10.4-buster-slim';
 
 export class EventStoreDBContainer extends GenericContainer {
   private readonly tcpPorts = EVENTSTOREDB_TCP_PORTS;
@@ -36,10 +38,9 @@ export class EventStoreDBContainer extends GenericContainer {
     }
 
     this.withEnv('EVENTSTORE_CLUSTER_SIZE', '1')
-      .withEnv('EVENTSTORE_RUN_PROJECTIONS', 'All')
       .withEnv('EVENTSTORE_START_STANDARD_PROJECTIONS', 'true')
-      .withEnv('EVENTSTORE_EXT_TCP_PORT', '1113')
-      .withEnv('EVENTSTORE_EXT_HTTP_PORT', '2113')
+      .withEnv('EVENTSTORE_EXT_TCP_PORT', `${EVENTSTOREDB_TCP_PORT}`)
+      .withEnv('EVENTSTORE_EXT_HTTP_PORT', `${EVENTSTOREDB_PORT}`)
       .withEnv('EVENTSTORE_ENABLE_EXTERNAL_TCP', 'true')
       .withEnv('EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP', 'true')
       .withExposedPorts(...this.tcpPorts);
