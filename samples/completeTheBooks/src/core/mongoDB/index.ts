@@ -14,25 +14,27 @@ export type ExecuteOnMongoDBOptions = {
   databaseName?: string;
 };
 
-export function executeOnMongoDB<Document, Result = void>(
+export async function executeOnMongoDB<Document, Result = void>(
   options: ExecuteOnMongoDBOptions,
   callback: (collection: Collection<Document>) => Promise<Result>
 ) {
   let mongo: MongoClient | undefined;
   try {
     mongo = getMongoDB();
+    await mongo.connect();
 
     const { databaseName, collectionName } = options;
+
     const db = mongo.db(databaseName);
     const collection = db.collection<Document>(collectionName);
 
-    return callback(collection);
+    return await callback(collection);
   } catch (error) {
     console.error(`Error while doing MongoDB call: ${error}`);
     throw error;
   } finally {
     if (mongo) {
-      mongo.close();
+      await mongo.close();
     }
   }
 }

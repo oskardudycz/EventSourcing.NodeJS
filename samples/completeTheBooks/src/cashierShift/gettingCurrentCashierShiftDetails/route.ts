@@ -46,7 +46,7 @@ function mapRequestToQuery(
   return {
     type: 'get-cashier-shift-details',
     data: {
-      cashRegisterId: request.route.cashRegisterId,
+      cashRegisterId: request.params.cashRegisterId,
     },
   };
 }

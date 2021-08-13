@@ -46,5 +46,5 @@ export type CurrentCashierShiftDetails = Readonly<{
 
   finishedAt?: Date;
 
-  revision: bigint;
+  revision: string;
 }>;
