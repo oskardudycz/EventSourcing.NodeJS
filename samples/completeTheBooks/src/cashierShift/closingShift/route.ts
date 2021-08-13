@@ -57,7 +57,7 @@ function mapRequestToCommand(
   return {
     type: 'close-shift',
     data: {
-      cashRegisterId: request.route.cashRegisterId,
+      cashRegisterId: request.params.cashRegisterId,
       cashierShiftId: request.params.id,
       declaredTender: 100,
     },
