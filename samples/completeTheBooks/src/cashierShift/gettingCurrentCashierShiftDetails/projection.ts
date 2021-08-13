@@ -20,7 +20,7 @@ export async function projectShiftOpened(
         status: CashierShiftStatus.Opened,
         float: event.data.declaredStartAmount,
         startAmount: event.data.declaredStartAmount,
-        revision: 1n,
+        revision: '1', // TODO: use the real stream revision
         startedAt: event.data.startedAt,
       });
     }
