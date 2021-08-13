@@ -5,7 +5,7 @@ import { CashierShiftStatus } from '../cashierShift';
 import { ShiftOpened } from '../openingShift';
 import { TransactionRegistered } from '../registeringTransaction';
 import { ShiftClosed } from '../closingShift';
-import { CurrentCashierShiftDetails } from './';
+import { CurrentCashierShiftDetails } from './currentCashierShiftDetails';
 
 export async function projectShiftOpened(
   event: ShiftOpened

@@ -2,7 +2,7 @@ import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from './eventStoreDBContainer';
-import { EventStoreDBClient, jsonEvent } from '@eventstore/db-client';
+import { jsonEvent } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
 
 describe('EventStoreDBContainer', () => {
@@ -15,8 +15,7 @@ describe('EventStoreDBContainer', () => {
   });
 
   it('should connect to EventStoreDB and append new event', async () => {
-    const connectionString = container.getConnectionString();
-    const client = EventStoreDBClient.connectionString(connectionString);
+    const client = container.getClient();
 
     const result = await client.appendToStream(
       `test-${uuid()}`,
