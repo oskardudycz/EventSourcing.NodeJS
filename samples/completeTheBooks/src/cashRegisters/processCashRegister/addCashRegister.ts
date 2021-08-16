@@ -7,6 +7,7 @@ import {
   appendToStream,
   FAILED_TO_APPEND_EVENT,
 } from '#core/eventStore/appending';
+import { NO_STREAM } from '@eventstore/db-client';
 
 export async function addCashRegister<Command, TError = never>(
   streamName: string,
@@ -24,9 +25,12 @@ export async function addCashRegister<Command, TError = never>(
       newEvent,
       _lastSnapshotVersion
     ) => {
-      const appendResult = await appendToStream(eventStore, streamName, [
-        newEvent,
-      ]);
+      const appendResult = await appendToStream(
+        eventStore,
+        streamName,
+        [newEvent],
+        { expectedRevision: NO_STREAM }
+      );
 
       if (appendResult.isError) {
         return appendResult;

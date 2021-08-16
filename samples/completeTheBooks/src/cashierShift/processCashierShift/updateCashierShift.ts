@@ -7,15 +7,19 @@ import {
   getAndUpdate,
 } from '#core/eventStore/appending';
 import { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
-import { CashierShiftEvent } from '../cashierShift';
 import { StreamEvent } from '#core/events';
+import { Command } from '#core/commands';
+import { CashierShiftEvent } from '../cashierShift';
 
-export async function updateCashierShift<Command, TError = never>(
+export async function updateCashierShift<
+  TCommand extends Command,
+  TError = never
+>(
   streamName: string,
-  command: Command,
+  command: TCommand,
   handle: (
     currentEvents: StreamEvent<CashierShiftEvent>[],
-    command: Command
+    command: TCommand
   ) => Result<CashierShiftEvent, TError>
 ): Promise<
   Result<
@@ -45,9 +49,16 @@ export async function updateCashierShift<Command, TError = never>(
       newEvent,
       _lastSnapshotVersion
     ) => {
-      const appendResult = await appendToStream(eventStore, streamName, [
-        newEvent,
-      ]);
+      const expectedRevision = command.metadata?.$expectedRevision
+        ? BigInt(command.metadata?.$expectedRevision)
+        : undefined;
+
+      const appendResult = await appendToStream(
+        eventStore,
+        streamName,
+        [newEvent],
+        { expectedRevision }
+      );
 
       if (appendResult.isError) {
         return appendResult;

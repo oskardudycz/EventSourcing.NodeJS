@@ -9,13 +9,17 @@ import {
 import { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
 import { CashRegisterEvent } from '../cashRegister';
 import { StreamEvent } from '#core/events';
+import { Command } from '#core/commands';
 
-export async function updateCashRegister<Command, TError = never>(
+export async function updateCashRegister<
+  TCommand extends Command,
+  TError = never
+>(
   streamName: string,
-  command: Command,
+  command: TCommand,
   handle: (
     currentEvents: StreamEvent<CashRegisterEvent>[],
-    command: Command
+    command: TCommand
   ) => Result<CashRegisterEvent, TError>
 ): Promise<
   Result<
@@ -45,9 +49,16 @@ export async function updateCashRegister<Command, TError = never>(
       newEvent,
       _lastSnapshotVersion
     ) => {
-      const appendResult = await appendToStream(eventStore, streamName, [
-        newEvent,
-      ]);
+      const expectedRevision = command.metadata?.$expectedRevision
+        ? BigInt(command.metadata?.$expectedRevision)
+        : undefined;
+
+      const appendResult = await appendToStream(
+        eventStore,
+        streamName,
+        [newEvent],
+        { expectedRevision }
+      );
 
       if (appendResult.isError) {
         return appendResult;
