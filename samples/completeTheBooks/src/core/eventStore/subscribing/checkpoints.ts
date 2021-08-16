@@ -79,7 +79,7 @@ export async function loadCheckpoint(
 
   if (result.isError === true) return success(undefined);
 
-  const { commit, prepare } = result.value.data;
+  const { commit, prepare } = result.value.event.data;
 
   return success({ commit: BigInt(commit), prepare: BigInt(prepare) });
 }

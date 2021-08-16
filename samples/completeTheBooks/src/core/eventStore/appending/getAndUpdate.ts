@@ -1,5 +1,5 @@
 import { ReadFromStreamAndSnapshotsResult } from '../snapshotting/reading/';
-import { Event } from '../../events';
+import { Event, StreamEvent } from '../../events';
 import { STREAM_NOT_FOUND } from '../reading';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { Result } from '../../primitives';
@@ -7,7 +7,7 @@ import { FAILED_TO_APPEND_EVENT } from '.';
 
 export async function getAndUpdate<
   Command,
-  StreamEvent extends Event,
+  StreamEventType extends Event,
   HANDLE_ERROR = never,
   STORE_ERROR = never
 >(
@@ -15,17 +15,17 @@ export async function getAndUpdate<
     eventStore: EventStoreDBClient,
     streamName: string
   ) => Promise<
-    Result<ReadFromStreamAndSnapshotsResult<StreamEvent>, STREAM_NOT_FOUND>
+    Result<ReadFromStreamAndSnapshotsResult<StreamEventType>, STREAM_NOT_FOUND>
   >,
   handle: (
-    currentEvents: StreamEvent[],
+    currentEvents: StreamEvent<StreamEventType>[],
     command: Command
-  ) => Result<StreamEvent, HANDLE_ERROR>,
+  ) => Result<StreamEventType, HANDLE_ERROR>,
   store: (
     eventStore: EventStoreDBClient,
     streamName: string,
-    currentEvents: StreamEvent[],
-    newEvent: StreamEvent,
+    currentEvents: StreamEvent<StreamEventType>[],
+    newEvent: StreamEventType,
     lastSnapshotVersion?: bigint | undefined
   ) => Promise<Result<boolean, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
   eventStore: EventStoreDBClient,

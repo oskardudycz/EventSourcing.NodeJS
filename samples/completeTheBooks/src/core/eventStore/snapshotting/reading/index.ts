@@ -4,11 +4,11 @@ export * from './readEventsFromSnapshotInTheSameStream';
 export * from './readSnapshotFromSeparateStream';
 export * from './getLastSnapshotVersionFromStreamMetadata';
 
-import { Event } from '../../../events';
+import { Event, StreamEvent } from '../../../events';
 
 export type ReadFromStreamAndSnapshotsResult<
-  StreamEvent extends Event = Event
+  StreamEventType extends Event = Event
 > = {
-  events: StreamEvent[];
+  events: StreamEvent<StreamEventType>[];
   lastSnapshotVersion?: bigint;
 };
