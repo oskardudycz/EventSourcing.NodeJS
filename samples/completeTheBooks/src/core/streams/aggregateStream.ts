@@ -1,6 +1,6 @@
-import { Event } from '../events';
+import { StreamEvent } from '../events';
 
-export function aggregateStream<Aggregate, StreamEvents extends Event>(
+export function aggregateStream<Aggregate, StreamEvents extends StreamEvent>(
   events: StreamEvents[],
   when: (
     currentState: Partial<Aggregate>,

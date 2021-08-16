@@ -4,7 +4,7 @@ import {
   ReadFromStreamAndSnapshotsResult,
   SnapshotEvent,
 } from '..';
-import { Event } from '../../../events';
+import { Event, StreamEvent } from '../../../events';
 import { Result, success } from '../../../primitives';
 import {
   readFromStream,
@@ -13,34 +13,34 @@ import {
 } from '../../reading';
 
 export async function readEventsFromExternalSnapshot<
-  StreamEvent extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  StreamEventType extends Event,
+  SnapshotStreamEvent extends SnapshotEvent = StreamEventType & SnapshotEvent
 >(
   getLastSnapshot: (
     streamName: string
-  ) => Promise<Result<SnapshotStreamEvent, NO_SHAPSHOT_FOUND>>,
+  ) => Promise<Result<StreamEvent<SnapshotStreamEvent>, NO_SHAPSHOT_FOUND>>,
   eventStore: EventStoreDBClient,
   streamName: string,
   readEventsOptions?: ReadFromStreamOptions
 ): Promise<
   Result<
-    ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
+    ReadFromStreamAndSnapshotsResult<StreamEventType | SnapshotStreamEvent>,
     STREAM_NOT_FOUND
   >
 > {
   const snapshot = await getLastSnapshot(streamName);
 
-  let snapshotEvent: SnapshotStreamEvent | undefined = undefined;
+  let snapshotEvent: StreamEvent<SnapshotStreamEvent> | undefined = undefined;
   let lastSnapshotVersion: bigint | undefined = undefined;
 
   if (snapshot.isError === false) {
     snapshotEvent = snapshot.value;
     lastSnapshotVersion = BigInt(
-      snapshotEvent.metadata.snapshottedStreamVersion
+      snapshotEvent.event.metadata.snapshottedStreamVersion
     );
   }
 
-  const events = await readFromStream<StreamEvent>(eventStore, streamName, {
+  const events = await readFromStream<StreamEventType>(eventStore, streamName, {
     fromRevision:
       lastSnapshotVersion !== undefined ? lastSnapshotVersion + 1n : undefined,
     ...readEventsOptions,

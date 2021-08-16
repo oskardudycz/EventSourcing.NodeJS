@@ -1,5 +1,5 @@
 import { getEventStore } from '../..';
-import { Event } from '../../../events';
+import { Event, StreamEvent } from '../../../events';
 import { STREAM_NOT_FOUND } from '../../reading';
 import { Result } from '../../../primitives';
 import {
@@ -12,30 +12,31 @@ import { snapshotOnSubscription } from './snapshotOnSubscription';
 import { appendSnapshotToStreamWithPrefix } from '../appending';
 
 export async function snapshotOnSubscriptionToStreamWithPrefix<
-  StreamEvent extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  StreamEventType extends Event,
+  SnapshotStreamEvent extends SnapshotEvent = StreamEventType & SnapshotEvent
 >(
   shouldDoSnapshot: (options: {
-    newEvent: StreamEvent;
+    newEvent: StreamEventType;
     currentStreamVersion: bigint;
     streamName: string;
   }) => boolean,
   buildSnapshot: (options: {
-    newEvent: StreamEvent;
-    currentEvents: (StreamEvent | SnapshotStreamEvent)[];
+    newEvent: StreamEventType;
+    currentEvents: StreamEvent<StreamEventType | SnapshotStreamEvent>[];
     currentStreamVersion: bigint;
     lastSnapshotVersion: bigint | undefined;
     streamName: string;
   }) => Result<SnapshotStreamEvent, SNAPSHOT_CREATION_SKIPPED>,
-  newEvent: StreamEvent,
+  newEvent: StreamEventType,
   options: { position: bigint; revision: bigint; streamName: string }
 ): Promise<Result<boolean, STREAM_NOT_FOUND | FAILED_TO_APPEND_SNAPSHOT>> {
   const eventStore = getEventStore();
-  return snapshotOnSubscription<StreamEvent, SnapshotStreamEvent>(
+  return snapshotOnSubscription<StreamEventType, SnapshotStreamEvent>(
     (...args) =>
-      readEventsFromSnapshotInSeparateStream<StreamEvent, SnapshotStreamEvent>(
-        ...args
-      ),
+      readEventsFromSnapshotInSeparateStream<
+        StreamEventType,
+        SnapshotStreamEvent
+      >(...args),
     (...args) => appendSnapshotToStreamWithPrefix(eventStore, ...args),
     shouldDoSnapshot,
     buildSnapshot,

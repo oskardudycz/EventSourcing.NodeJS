@@ -1,6 +1,6 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { ReadFromStreamAndSnapshotsResult } from '../../snapshotting/reading/';
-import { Event } from '../../../events';
+import { Event, StreamEvent } from '../../../events';
 import { ReadFromStreamOptions, STREAM_NOT_FOUND } from '../../reading';
 import { Result, success } from '../../../primitives';
 import { AppendResult } from '../../appending';
@@ -11,8 +11,8 @@ import {
 } from '..';
 
 export async function snapshotOnSubscription<
-  StreamEvent extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  StreamEventType extends Event,
+  SnapshotStreamEvent extends SnapshotEvent = StreamEventType & SnapshotEvent
 >(
   getEvents: (
     eventStore: EventStoreDBClient,
@@ -20,7 +20,7 @@ export async function snapshotOnSubscription<
     readEventsOptions?: ReadFromStreamOptions
   ) => Promise<
     Result<
-      ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
+      ReadFromStreamAndSnapshotsResult<StreamEventType | SnapshotStreamEvent>,
       STREAM_NOT_FOUND
     >
   >,
@@ -30,19 +30,19 @@ export async function snapshotOnSubscription<
     lastSnapshotVersion: bigint | undefined
   ) => Promise<Result<AppendResult, FAILED_TO_APPEND_SNAPSHOT>>,
   shouldDoSnapshot: (options: {
-    newEvent: StreamEvent;
+    newEvent: StreamEventType;
     currentStreamVersion: bigint;
     streamName: string;
   }) => boolean,
   buildSnapshot: (options: {
-    newEvent: StreamEvent;
-    currentEvents: (StreamEvent | SnapshotStreamEvent)[];
+    newEvent: StreamEventType;
+    currentEvents: StreamEvent<StreamEventType | SnapshotStreamEvent>[];
     currentStreamVersion: bigint;
     lastSnapshotVersion: bigint | undefined;
     streamName: string;
   }) => Result<SnapshotStreamEvent, SNAPSHOT_CREATION_SKIPPED>,
   eventStore: EventStoreDBClient,
-  newEvent: StreamEvent,
+  newEvent: StreamEventType,
   {
     position,
     revision,

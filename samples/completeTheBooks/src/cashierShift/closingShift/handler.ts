@@ -1,5 +1,5 @@
 import { Command } from '#core/commands';
-import { Event } from '#core/events';
+import { Event, StreamEvent } from '#core/events';
 import { failure, Result, success } from '#core/primitives';
 import { getCurrentTime } from '#core/primitives';
 import {
@@ -34,7 +34,7 @@ export type ShiftClosed = Event<
 >;
 
 export function handleEndShift(
-  events: CashierShiftEvent[],
+  events: StreamEvent<CashierShiftEvent>[],
   command: ClosingShift
 ): Result<ShiftClosed, SHIFT_ALREADY_CLOSED | SHIFT_NOT_INITIALIZED> {
   const cashierShift = getCashierShiftFrom(events);

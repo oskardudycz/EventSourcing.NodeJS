@@ -4,6 +4,7 @@ import { ShiftClosed } from './closingShift';
 import { aggregateStream } from '#core/streams';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
 import { CashRegisterShiftInitialized } from './initalizeCashRegisterShift/handler';
+import { StreamEvent } from '#core/events';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -51,6 +52,8 @@ export type CashierShift = Readonly<{
   startedAt: Date;
 
   finishedAt?: Date;
+
+  revision: bigint;
 }>;
 
 export type InitiatedCashierShift = Readonly<{
@@ -70,12 +73,14 @@ export type CashierShiftEvent =
 
 export function when(
   currentState: Partial<InitiatedCashierShift | CashierShift>,
-  event: CashierShiftEvent
+  streamEvent: StreamEvent<CashierShiftEvent>
 ): Partial<InitiatedCashierShift | CashierShift> {
+  const { event, streamRevision } = streamEvent;
   switch (event.type) {
     case 'cash-register-shift-initialized':
       return {
         cashRegisterId: event.data.cashRegisterId,
+        revision: streamRevision,
       };
     case 'shift-opened':
       return {
@@ -86,6 +91,7 @@ export function when(
         float: event.data.declaredStartAmount,
         startAmount: event.data.declaredStartAmount,
         startedAt: event.data.startedAt,
+        revision: streamRevision,
       };
     case 'transaction-registered':
       const currentFloat = isCashierShift(currentState)
@@ -94,6 +100,7 @@ export function when(
       return {
         ...currentState,
         float: currentFloat + event.data.amount,
+        revision: streamRevision,
       };
     case 'shift-closed':
       return {
@@ -103,6 +110,7 @@ export function when(
         float: event.data.declaredTender,
         overageAmount: event.data.overageAmount,
         shortageAmount: event.data.shortageAmount,
+        revision: streamRevision,
       };
     default:
       // Unexpected event type
@@ -161,7 +169,7 @@ export function getCurrentCashierShiftStreamName(cashRegisterId: string) {
 }
 
 export function getCashierShiftFrom(
-  events: CashierShiftEvent[]
+  events: StreamEvent<CashierShiftEvent>[]
 ): CashierShift | InitiatedCashierShift {
   return aggregateStream(
     events,

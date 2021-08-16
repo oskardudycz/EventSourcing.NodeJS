@@ -1,6 +1,7 @@
 import { PlacedAtWorkStation } from './placeAtWorkStation';
 import { aggregateStream } from '#core/streams';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
+import { StreamEvent } from '#core/events';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -24,20 +25,24 @@ export type CashRegister = Readonly<{
    * Current cashier working on the cash register
    */
   currentCashierId?: string;
+
+  revision: bigint;
 }>;
 
 export type CashRegisterEvent = PlacedAtWorkStation;
 
 export function when(
   currentState: Partial<CashRegister>,
-  event: CashRegisterEvent
+  streamEvent: StreamEvent<CashRegisterEvent>
 ): Partial<CashRegister> {
+  const { event, streamRevision } = streamEvent;
   switch (event.type) {
     case 'placed-at-workstation':
       return {
         id: event.data.cashRegisterId,
         workstation: event.data.workstation,
         float: 0,
+        revision: streamRevision,
       };
     default:
       // Unexpected event type
@@ -73,6 +78,8 @@ export function getCashRegisterStreamName(cashRegisterId: string) {
   return `cashregister-${cashRegisterId}`;
 }
 
-export function getCashRegisterFrom(events: CashRegisterEvent[]): CashRegister {
+export function getCashRegisterFrom(
+  events: StreamEvent<CashRegisterEvent>[]
+): CashRegister {
   return aggregateStream(events, when, isCashRegister);
 }
