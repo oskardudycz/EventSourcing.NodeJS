@@ -8,12 +8,13 @@ import {
 } from '#core/eventStore/appending';
 import { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
 import { CashRegisterEvent } from '../cashRegister';
+import { StreamEvent } from '#core/events';
 
 export async function updateCashRegister<Command, TError = never>(
   streamName: string,
   command: Command,
   handle: (
-    currentEvents: CashRegisterEvent[],
+    currentEvents: StreamEvent<CashRegisterEvent>[],
     command: Command
   ) => Result<CashRegisterEvent, TError>
 ): Promise<

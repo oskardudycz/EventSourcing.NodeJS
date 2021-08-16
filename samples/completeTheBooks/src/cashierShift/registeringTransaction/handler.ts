@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import { Command } from '#core/commands';
-import { Event } from '#core/events';
+import { Event, StreamEvent } from '#core/events';
 import { Result, success, getCurrentTime, failure } from '#core/primitives';
 import {
   CashierShiftEvent,
@@ -32,7 +32,7 @@ export type TransactionRegistered = Event<
 >;
 
 export function handleRegisterTransaction(
-  events: CashierShiftEvent[],
+  events: StreamEvent<CashierShiftEvent>[],
   command: RegisterTransaction
 ): Result<TransactionRegistered, SHIFT_NOT_OPENED | SHIFT_NOT_INITIALIZED> {
   const cashierShift = getCashierShiftFrom(events);

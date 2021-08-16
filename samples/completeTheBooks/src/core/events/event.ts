@@ -8,6 +8,11 @@ export type Event<
   metadata?: Readonly<EventMetadata>;
 }>;
 
+export type StreamEvent<EventType = Event> = Readonly<{
+  event: EventType;
+  streamRevision: bigint;
+}>;
+
 export function isEvent<
   EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>,

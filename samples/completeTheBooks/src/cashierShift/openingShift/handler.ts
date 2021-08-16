@@ -1,5 +1,5 @@
 import { Command } from '#core/commands';
-import { Event } from '#core/events';
+import { Event, StreamEvent } from '#core/events';
 import { Result, success, getCurrentTime, failure } from '#core/primitives';
 import {
   CashierShiftEvent,
@@ -30,7 +30,7 @@ export type ShiftOpened = Event<
 >;
 
 export function handleOpenShift(
-  events: CashierShiftEvent[],
+  events: StreamEvent<CashierShiftEvent>[],
   command: OpenShift
 ): Result<ShiftOpened, SHIFT_ALREADY_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
