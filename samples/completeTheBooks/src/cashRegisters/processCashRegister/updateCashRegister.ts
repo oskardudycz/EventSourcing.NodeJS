@@ -2,6 +2,7 @@ import { getEventStore } from '#core/eventStore';
 import { readFromStream, STREAM_NOT_FOUND } from '#core/eventStore/reading';
 import { Result, success } from '#core/primitives';
 import {
+  AppendResult,
   appendToStream,
   FAILED_TO_APPEND_EVENT,
   getAndUpdate,
@@ -23,7 +24,7 @@ export async function updateCashRegister<
   ) => Result<CashRegisterEvent, TError>
 ): Promise<
   Result<
-    boolean,
+    AppendResult,
     | STREAM_NOT_FOUND
     | FAILED_TO_APPEND_EVENT
     | FAILED_TO_APPEND_SNAPSHOT
@@ -53,17 +54,9 @@ export async function updateCashRegister<
         ? BigInt(command.metadata?.$expectedRevision)
         : undefined;
 
-      const appendResult = await appendToStream(
-        eventStore,
-        streamName,
-        [newEvent],
-        { expectedRevision }
-      );
-
-      if (appendResult.isError) {
-        return appendResult;
-      }
-      return success(true);
+      return appendToStream(eventStore, streamName, [newEvent], {
+        expectedRevision,
+      });
     },
     getEventStore(),
     streamName,

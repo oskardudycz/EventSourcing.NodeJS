@@ -3,7 +3,7 @@ import { Event, StreamEvent } from '../../events';
 import { STREAM_NOT_FOUND } from '../reading';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { Result } from '../../primitives';
-import { FAILED_TO_APPEND_EVENT } from '.';
+import { AppendResult, FAILED_TO_APPEND_EVENT } from '.';
 
 export async function getAndUpdate<
   Command,
@@ -27,13 +27,13 @@ export async function getAndUpdate<
     currentEvents: StreamEvent<StreamEventType>[],
     newEvent: StreamEventType,
     lastSnapshotVersion?: bigint | undefined
-  ) => Promise<Result<boolean, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
+  ) => Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
   eventStore: EventStoreDBClient,
   streamName: string,
   command: Command
 ): Promise<
   Result<
-    boolean,
+    AppendResult,
     STREAM_NOT_FOUND | FAILED_TO_APPEND_EVENT | HANDLE_ERROR | STORE_ERROR
   >
 > {
