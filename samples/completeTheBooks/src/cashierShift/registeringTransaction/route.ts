@@ -33,10 +33,10 @@ export const route = (router: Router) =>
               response.sendStatus(404);
               return;
             case 'SHIFT_NOT_OPENED':
-              response.sendStatus(409);
+              response.sendStatus(412);
               return;
             case 'FAILED_TO_APPEND_EVENT':
-              response.sendStatus(409);
+              response.sendStatus(412);
               return;
             default:
               response.sendStatus(500);

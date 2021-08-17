@@ -47,7 +47,7 @@ describe('DELETE /cash-registers/:id/shifts', () => {
 
         await request(app)
           .delete(`/cash-registers/${existingCashRegisterId}/shifts`)
-          .expect(409)
+          .expect(412)
           .expect('Content-Type', /plain/);
       });
     });
