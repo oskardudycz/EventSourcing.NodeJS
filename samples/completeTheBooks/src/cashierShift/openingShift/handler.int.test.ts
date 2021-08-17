@@ -1,6 +1,5 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
-import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
 import { config } from '#config';
 import {
   EventStoreDBContainer,
@@ -10,11 +9,8 @@ import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { updateCashierShift } from '../processCashierShift';
 import { getCashierShiftStreamName } from '../cashierShift';
 import { handleOpenShift, OpenShift } from '.';
-import {
-  handleRegisterTransaction,
-  RegisterTransaction,
-} from '../registeringTransaction';
-import { ClosingShift, handleEndShift } from '../closingShift';
+import { appendToStream } from '#core/eventStore/appending';
+import { getCurrentTime } from '#core/primitives';
 
 describe('OpenShift command', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -29,55 +25,23 @@ describe('OpenShift command', () => {
 
     eventStore = esdbContainer.getClient();
 
-    const startShift: OpenShift = {
-      type: 'open-shift',
-      data: {
-        cashRegisterId,
-        cashierId: uuid(),
-        declaredStartAmount: 100,
+    const result = await appendToStream(eventStore, streamName, [
+      {
+        type: 'cash-register-shift-initialized',
+        data: {
+          cashRegisterId,
+          initializedAt: getCurrentTime(),
+        },
       },
-    };
-
-    expect(
-      await updateCashierShift(streamName, startShift, handleOpenShift)
-    ).toBeTruthy();
-
-    const registerTransaction: RegisterTransaction = {
-      type: 'register-transaction',
-      data: {
-        cashRegisterId,
-        cashierShiftId,
-        amount: 123,
-      },
-    };
-
-    expect(
-      await updateCashierShift(
-        streamName,
-        registerTransaction,
-        handleRegisterTransaction
-      )
-    ).toBeTruthy();
-
-    const command: ClosingShift = {
-      type: 'close-shift',
-      data: {
-        cashRegisterId,
-        cashierShiftId: uuid(),
-        declaredTender: 100,
-      },
-    };
-
-    expect(
-      await updateCashierShift(streamName, command, handleEndShift)
-    ).toBeTruthy();
+    ]);
+    expect(result.isError).toBeFalsy();
   });
 
   afterAll(async () => {
     await esdbContainer.stop();
   });
 
-  it('should start shift for existing, cash register with ended shift', async () => {
+  it('should open current shift for initiating, cash register with ended shift', async () => {
     const command: OpenShift = {
       type: 'open-shift',
       data: {
@@ -93,13 +57,14 @@ describe('OpenShift command', () => {
       handleOpenShift
     );
 
-    expect(result).toBeTruthy();
+    expect(result.isError).toBeFalsy();
 
-    await expectStreamToHaveNumberOfEvents(eventStore, streamName, 5);
-    await expectStreamToHaveNumberOfEvents(
-      eventStore,
-      addSnapshotPrefix(streamName),
-      1
-    );
+    if (result.isError) {
+      expect(true).toBeFalsy();
+      return;
+    }
+
+    expect(result.value.nextExpectedRevision).toBe(1);
+    await expectStreamToHaveNumberOfEvents(eventStore, streamName, 2);
   });
 });

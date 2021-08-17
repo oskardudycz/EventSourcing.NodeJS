@@ -31,17 +31,20 @@ export const route = (router: Router) =>
           switch (result.error) {
             case 'STREAM_NOT_FOUND':
               response.sendStatus(404);
-              break;
+              return;
             case 'SHIFT_NOT_OPENED':
               response.sendStatus(409);
-              break;
+              return;
             case 'FAILED_TO_APPEND_EVENT':
               response.sendStatus(409);
-              break;
+              return;
             default:
-              break;
+              response.sendStatus(500);
+              return;
           }
         }
+
+        response.set('ETag', `W/"${result.value.nextExpectedRevision}"`);
         response.sendStatus(200);
       } catch (error) {
         next(error);
@@ -74,6 +77,9 @@ function mapRequestToCommand(
       cashierShiftId: request.params.cashierShiftId,
       cashRegisterId: request.params.cashRegisterId,
       amount: request.body.amount,
+    },
+    metadata: {
+      $expectedRevision: <string>request.headers['If-Match'],
     },
   };
 }

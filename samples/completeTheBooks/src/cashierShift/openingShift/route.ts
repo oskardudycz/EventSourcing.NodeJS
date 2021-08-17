@@ -42,6 +42,7 @@ export const route = (router: Router) =>
           }
         }
 
+        response.set('ETag', `W/"${result.value.nextExpectedRevision}"`);
         response.sendStatus(200);
       } catch (error) {
         next(error);
@@ -78,6 +79,9 @@ function mapRequestToCommand(
       cashRegisterId: request.params.cashRegisterId,
       cashierId: request.body.cashierId,
       declaredStartAmount: request.body.float,
+    },
+    metadata: {
+      $expectedRevision: <string>request.headers['If-Match'],
     },
   };
 }

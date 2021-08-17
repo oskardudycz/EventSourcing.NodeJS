@@ -2,6 +2,7 @@ import { Event } from '../../events';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { Result } from '../../primitives';
 import { FAILED_TO_APPEND_EVENT } from '.';
+import { AppendResult } from './appendToStream';
 
 export async function add<
   Command,
@@ -16,12 +17,12 @@ export async function add<
     currentEvents: StreamEvent[],
     newEvent: StreamEvent,
     lastSnapshotVersion?: bigint | undefined
-  ) => Promise<Result<boolean, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
+  ) => Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
   eventStore: EventStoreDBClient,
   streamName: string,
   command: Command
 ): Promise<
-  Result<boolean, FAILED_TO_APPEND_EVENT | HANDLE_ERROR | STORE_ERROR>
+  Result<AppendResult, FAILED_TO_APPEND_EVENT | HANDLE_ERROR | STORE_ERROR>
 > {
   const handleResult = handle(command);
 
