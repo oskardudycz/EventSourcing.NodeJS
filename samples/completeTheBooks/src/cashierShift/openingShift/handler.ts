@@ -37,7 +37,7 @@ export function handleOpenShift(
 
   if (
     isCashierShift(cashierShift) &&
-    cashierShift.status !== CashierShiftStatus.Opened
+    cashierShift.status === CashierShiftStatus.Opened
   ) {
     return failure('SHIFT_ALREADY_OPENED');
   }

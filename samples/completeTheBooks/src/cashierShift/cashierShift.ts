@@ -131,7 +131,7 @@ export function isCashierShift(
     isNotEmptyString(cashierShift.cashierId) &&
     isNotEmptyString(cashierShift.cashRegisterId) &&
     isNotEmptyString(cashierShift.status) &&
-    ['Started', 'Finished'].includes(cashierShift.status!)
+    Object.values(CashierShiftStatus).includes(cashierShift.status!)
   );
 }
 

@@ -60,7 +60,7 @@ describe('POST /cash-registers/:id/transactions', () => {
         await request(app)
           .post(`/cash-registers/${existingCashRegisterId}/transactions`)
           .send({ amount: 123 })
-          .expect(409)
+          .expect(412)
           .expect('Content-Type', /plain/);
       });
     });
