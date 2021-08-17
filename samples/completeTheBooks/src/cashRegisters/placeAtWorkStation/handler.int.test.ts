@@ -53,7 +53,7 @@ describe('PlaceAtWorkStation command', () => {
       return;
     }
 
-    expect(result.value.nextExpectedRevision).toBe(0);
+    expect(result.value.nextExpectedRevision).toBe(0n);
 
     await expectStreamToHaveNumberOfEvents(eventStore, streamName, 1);
 

@@ -3,6 +3,10 @@ import { isCommand } from '#core/commands';
 import { OpenShift, handleOpenShift } from './handler';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
+import {
+  getWeakETagFromIfMatch,
+  WRONG_WEAK_ETAG_FORMAT,
+} from '#core/http/requests';
 import { updateCashierShift } from '../processCashierShift';
 
 export const route = (router: Router) =>
@@ -31,7 +35,7 @@ export const route = (router: Router) =>
           switch (result.error) {
             case 'SHIFT_ALREADY_OPENED':
             case 'FAILED_TO_APPEND_EVENT':
-              response.sendStatus(409);
+              response.sendStatus(412);
               return;
             case 'STREAM_NOT_FOUND':
               response.sendStatus(404);
@@ -56,7 +60,8 @@ function mapRequestToCommand(
   | OpenShift
   | 'MISSING_CASH_REGISTER_ID'
   | 'MISSING_CASHIER_ID'
-  | 'MISSING_FLOAT' {
+  | 'MISSING_FLOAT'
+  | WRONG_WEAK_ETAG_FORMAT {
   if (!isNotEmptyString(request.params.cashRegisterId)) {
     return 'MISSING_CASH_REGISTER_ID';
   }
@@ -73,6 +78,12 @@ function mapRequestToCommand(
     return 'MISSING_FLOAT';
   }
 
+  const expectedRevision = getWeakETagFromIfMatch(request);
+
+  if (expectedRevision.isError) {
+    return expectedRevision.error;
+  }
+
   return {
     type: 'open-shift',
     data: {
@@ -81,7 +92,7 @@ function mapRequestToCommand(
       declaredStartAmount: request.body.float,
     },
     metadata: {
-      $expectedRevision: <string>request.headers['If-Match'],
+      $expectedRevision: expectedRevision.value,
     },
   };
 }
