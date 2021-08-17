@@ -23,8 +23,27 @@ export const route = (router: Router) =>
           command.data.cashRegisterId
         );
 
-        await addCashRegister(streamName, command, handlePlaceAtWorkStation);
+        const result = await addCashRegister(
+          streamName,
+          command,
+          handlePlaceAtWorkStation
+        );
 
+        if (result.isError) {
+          switch (result.error) {
+            case 'STREAM_NOT_FOUND':
+              response.sendStatus(404);
+              return;
+            case 'FAILED_TO_APPEND_EVENT':
+              response.sendStatus(409);
+              return;
+            default:
+              response.sendStatus(500);
+              return;
+          }
+        }
+
+        response.set('ETag', `W/"${result.value.nextExpectedRevision}"`);
         sendCreated(response, command.data.cashRegisterId);
       } catch (error) {
         next(error);
@@ -44,6 +63,9 @@ function mapRequestToCommand(
     data: {
       cashRegisterId: uuid(),
       workstation: request.body.workstation,
+    },
+    metadata: {
+      $expectedRevision: <string>request.headers['If-Match'],
     },
   };
 }

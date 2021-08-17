@@ -46,7 +46,14 @@ describe('PlaceAtWorkStation command', () => {
       handlePlaceAtWorkStation
     );
 
-    expect(result).toBeTruthy();
+    expect(result.isError).toBeFalsy();
+
+    if (result.isError) {
+      expect(true).toBeFalsy();
+      return;
+    }
+
+    expect(result.value.nextExpectedRevision).toBe(0);
 
     await expectStreamToHaveNumberOfEvents(eventStore, streamName, 1);
 

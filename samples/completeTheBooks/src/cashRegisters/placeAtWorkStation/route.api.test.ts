@@ -31,6 +31,9 @@ describe('POST /cash-register/', () => {
 
         expect(res.headers['location']).toBeDefined();
         expect(res.headers['location']).toBe(`/cash-registers/${res.body.id}`);
+
+        expect(res.headers['etag']).toBeDefined();
+        expect(res.headers['etag']).toMatch(/W\/\d+.*/);
       });
   });
 

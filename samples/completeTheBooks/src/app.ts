@@ -5,6 +5,7 @@ import { handleErrors } from '#core/http/middlewares';
 
 const app: Application = express();
 
+app.set('etag', false);
 app.use(express.json());
 app.use(
   express.urlencoded({

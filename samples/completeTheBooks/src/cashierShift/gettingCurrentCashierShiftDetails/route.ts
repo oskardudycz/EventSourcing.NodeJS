@@ -29,6 +29,9 @@ export const route = (router: Router) =>
           }
           return;
         }
+        const { revision } = result.value;
+
+        response.set('ETag', `W/"${revision}"`);
         response.send(result.value);
       } catch (error) {
         next(error);
