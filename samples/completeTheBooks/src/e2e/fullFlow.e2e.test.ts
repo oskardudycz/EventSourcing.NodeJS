@@ -14,6 +14,7 @@ import {
 import { retry } from '#testing/retries';
 import app from '../app';
 import { getSubscription } from '../getSubscription';
+import { toWeakETag } from '#core/http/requests';
 
 describe('Full flow', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -57,6 +58,7 @@ describe('Full flow', () => {
         request(app)
           .post(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
           .send({ cashierId: uuid(), float: 0 })
+          .set('If-Match', toWeakETag(0))
           .expect(200)
           .expect('Content-Type', /plain/)
       );
@@ -65,7 +67,7 @@ describe('Full flow', () => {
         request(app)
           .get(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
           .expect(200)
-          .expect('Content-Type', /plain/)
+          .expect('Content-Type', /json/)
       );
     });
 
