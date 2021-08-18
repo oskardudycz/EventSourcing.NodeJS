@@ -45,10 +45,11 @@
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/jest/bin/jest",
       "args": [
-        "${fileBasename}",
         "--verbose",
         "-i",
         "--no-cache",
+        "--runTestsByPath",
+        "${relativeFile}",
         "--watchAll"
       ],
       "console": "integratedTerminal",
