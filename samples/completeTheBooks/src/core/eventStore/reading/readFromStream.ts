@@ -15,29 +15,33 @@ export async function readFromStream<StreamEventType extends Event>(
   options?: ReadFromStreamOptions
 ): Promise<Result<StreamEvent<StreamEventType>[], STREAM_NOT_FOUND>> {
   try {
-    const events = await eventStore.readStream(streamName, options);
-
     const toPosition = options?.toPosition;
 
-    return success(
-      events
-        .filter(
-          (resolvedEvent) =>
-            !!resolvedEvent.event &&
-            (toPosition === undefined ||
-              (resolvedEvent.commitPosition ?? 0) < toPosition)
-        )
-        .map((resolvedEvent) => {
-          return {
-            streamRevision: resolvedEvent.event!.revision,
-            event: <StreamEventType>{
-              type: resolvedEvent.event!.type,
-              data: resolvedEvent.event!.data,
-              metadata: resolvedEvent.event?.metadata,
-            },
-          };
-        })
-    );
+    const events: StreamEvent<StreamEventType>[] = [];
+
+    for await (const resolvedEvent of eventStore.readStream(
+      streamName,
+      options
+    )) {
+      if (resolvedEvent.event === undefined) continue;
+
+      if (
+        toPosition !== undefined &&
+        (resolvedEvent.commitPosition ?? 0) === toPosition
+      )
+        break;
+
+      events.push({
+        streamRevision: resolvedEvent.event!.revision,
+        event: <StreamEventType>{
+          type: resolvedEvent.event!.type,
+          data: resolvedEvent.event!.data,
+          metadata: resolvedEvent.event?.metadata,
+        },
+      });
+    }
+
+    return success(events);
   } catch (error) {
     if (error.type == ErrorType.STREAM_NOT_FOUND) {
       return failure('STREAM_NOT_FOUND');

@@ -1,15 +1,11 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
-import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
 import { config } from '#config';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '#testing/eventStoreDB/eventStoreDBContainer';
-import {
-  expectStreamToHaveNumberOfEvents,
-  expectStreamToNotExist,
-} from '#testing/assertions/streams';
+import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { handlePlaceAtWorkStation, PlaceAtWorkStation } from './handler';
 import { addCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
@@ -56,7 +52,5 @@ describe('PlaceAtWorkStation command', () => {
     expect(result.value.nextExpectedRevision).toBe(0n);
 
     await expectStreamToHaveNumberOfEvents(eventStore, streamName, 1);
-
-    await expectStreamToNotExist(eventStore, addSnapshotPrefix(streamName));
   });
 });

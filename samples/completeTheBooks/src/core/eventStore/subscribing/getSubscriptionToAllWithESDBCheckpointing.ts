@@ -1,6 +1,6 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { SubscribeToAllOptions } from '@eventstore/db-client/dist/streams';
-import { ReadableOptions } from 'node:stream';
+import { ReadableOptions } from 'stream';
 import { v4 as uuid } from 'uuid';
 import { Event } from '../../events';
 import { getSubscriptionToAll } from '.';
