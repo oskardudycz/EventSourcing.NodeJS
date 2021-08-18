@@ -5,6 +5,7 @@ import {
   GetCurrentCashierShiftDetails,
   handleGetCashierShift,
 } from './queryHandler';
+import { toWeakETag } from '#core/http/requests';
 
 export const route = (router: Router) =>
   router.get(
@@ -23,15 +24,14 @@ export const route = (router: Router) =>
         if (result.isError) {
           switch (result.error) {
             case 'SHIFT_DOES_NOT_EXIST':
-              response.sendStatus(404);
+              next({ status: 404 });
             default:
-              break;
+              next({ status: 500 });
           }
           return;
         }
-        const { revision } = result.value;
 
-        response.set('ETag', `W/"${revision}"`);
+        response.set('ETag', toWeakETag(result.value.revision));
         response.send(result.value);
       } catch (error) {
         next(error);

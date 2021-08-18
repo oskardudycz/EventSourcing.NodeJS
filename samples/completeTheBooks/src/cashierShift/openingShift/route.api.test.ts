@@ -5,15 +5,10 @@ import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '#testing/eventStoreDB/eventStoreDBContainer';
-import { setupCashRegister } from '#testing/builders/setupCashRegister';
 import app from '../../app';
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { appendToStream } from '#core/eventStore/appending';
-import {
-  CashierShiftEvent,
-  getCurrentCashierShiftStreamName,
-} from '../cashierShift';
-import { getCurrentTime } from '#core/primitives';
+import { setupInitiatedCashierShift } from '#testing/builders/byEvents/setupInitiatedCashierShift';
+import { toWeakETag } from '#core/http/requests';
 
 describe('POST /cash-registers/:cashRegisterId/shifts/current', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -33,30 +28,23 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current', () => {
 
   describe('For existing cash register', () => {
     let existingCashRegisterId: string;
+    let currentRevision: string;
 
     beforeEach(async () => {
-      existingCashRegisterId = await setupCashRegister(app);
+      existingCashRegisterId = uuid();
 
-      const result = await appendToStream<CashierShiftEvent>(
+      const result = await setupInitiatedCashierShift(
         eventStore,
-        getCurrentCashierShiftStreamName(existingCashRegisterId),
-        [
-          {
-            type: 'cash-register-shift-initialized',
-            data: {
-              cashRegisterId: existingCashRegisterId,
-              initializedAt: getCurrentTime(),
-            },
-          },
-        ]
+        existingCashRegisterId
       );
-      expect(result.isError).toBeFalsy();
+      currentRevision = toWeakETag(result.nextExpectedRevision);
     });
 
     it('should open shift', () => {
       return request(app)
         .post(`/cash-registers/${existingCashRegisterId}/shifts/current`)
         .send({ cashierId: uuid(), float: 0 })
+        .set('If-Match', currentRevision)
         .expect(200)
         .expect('Content-Type', /plain/);
     });
@@ -65,21 +53,29 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current', () => {
       await request(app)
         .post(`/cash-registers/${existingCashRegisterId}/shifts/current`)
         .send({ cashierId: uuid(), float: 0 })
-        .expect(200);
+        .set('If-Match', currentRevision)
+        .expect(200)
+        .expect('Content-Type', /plain/)
+        .then((response) => {
+          currentRevision = response.headers['etag'];
+        });
 
       await request(app)
         .post(`/cash-registers/${existingCashRegisterId}/shifts/current`)
         .send({ cashierId: uuid(), float: 0 })
-        .expect(412)
-        .expect('Content-Type', /plain/);
+        .set('If-Match', currentRevision)
+        .expect(409)
+        .expect('Content-Type', /json/);
     });
   });
 
   it('should return 404 for non existing cash register', () => {
+    const notExistingId = 'NOT_EXISTING';
     return request(app)
-      .post('/cash-registers/NOT_EXISTING/shifts/current')
-      .send({ cashierId: uuid() })
+      .post(`/cash-registers/${notExistingId}/shifts/current`)
+      .send({ cashierId: uuid(), float: 0 })
+      .set('If-Match', toWeakETag(0))
       .expect(404)
-      .expect('Content-Type', /plain/);
+      .expect('Content-Type', /json/);
   });
 });

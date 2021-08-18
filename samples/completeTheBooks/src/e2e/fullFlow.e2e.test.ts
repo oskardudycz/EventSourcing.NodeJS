@@ -58,16 +58,18 @@ describe('Full flow', () => {
           .post(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
           .send({ cashierId: uuid(), float: 0 })
           .expect(200)
+          .expect('Content-Type', /plain/)
       );
 
       await retry(() =>
         request(app)
           .get(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
           .expect(200)
+          .expect('Content-Type', /plain/)
       );
     });
 
-    // it('should not allow to close not started shift', async () => {
+    // it('should not allow to close not opened shift', async () => {
     //   await retry(() =>
     //     request(app)
     //       .delete(`/cash-registers/${existingCashRegisterId}/shifts/current/`)

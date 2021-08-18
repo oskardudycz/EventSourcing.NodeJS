@@ -5,6 +5,8 @@ import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
 import {
   getWeakETagFromIfMatch,
+  MISSING_IF_MATCH_HEADER,
+  toWeakETag,
   WRONG_WEAK_ETAG_FORMAT,
 } from '#core/http/requests';
 import { updateCashierShift } from '../processCashierShift';
@@ -34,19 +36,17 @@ export const route = (router: Router) =>
         if (result.isError) {
           switch (result.error) {
             case 'SHIFT_ALREADY_OPENED':
+              return next({ status: 409 });
             case 'FAILED_TO_APPEND_EVENT':
-              response.sendStatus(412);
-              return;
+              return next({ status: 412 });
             case 'STREAM_NOT_FOUND':
-              response.sendStatus(404);
-              return;
+              return next({ status: 404 });
             default:
-              response.sendStatus(500);
-              return;
+              return next({ status: 500 });
           }
         }
 
-        response.set('ETag', `W/"${result.value.nextExpectedRevision}"`);
+        response.set('ETag', toWeakETag(result.value.nextExpectedRevision));
         response.sendStatus(200);
       } catch (error) {
         next(error);
@@ -61,7 +61,8 @@ function mapRequestToCommand(
   | 'MISSING_CASH_REGISTER_ID'
   | 'MISSING_CASHIER_ID'
   | 'MISSING_FLOAT'
-  | WRONG_WEAK_ETAG_FORMAT {
+  | WRONG_WEAK_ETAG_FORMAT
+  | MISSING_IF_MATCH_HEADER {
   if (!isNotEmptyString(request.params.cashRegisterId)) {
     return 'MISSING_CASH_REGISTER_ID';
   }

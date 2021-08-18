@@ -7,14 +7,12 @@ import {
   CashierShiftStatus,
   getCashierShiftFrom,
   isCashierShift,
-  SHIFT_NOT_INITIALIZED,
   SHIFT_NOT_OPENED,
 } from '../cashierShift';
 
 export type RegisterTransaction = Command<
   'register-transaction',
   {
-    cashierShiftId: string;
     cashRegisterId: string;
     amount: number;
   }
@@ -34,15 +32,15 @@ export type TransactionRegistered = Event<
 export function handleRegisterTransaction(
   events: StreamEvent<CashierShiftEvent>[],
   command: RegisterTransaction
-): Result<TransactionRegistered, SHIFT_NOT_OPENED | SHIFT_NOT_INITIALIZED> {
+): Result<TransactionRegistered, SHIFT_NOT_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
 
-  if (!isCashierShift(cashierShift)) {
-    return failure('SHIFT_NOT_INITIALIZED');
-  }
-
-  if (cashierShift.status !== CashierShiftStatus.Opened)
+  if (
+    !isCashierShift(cashierShift) ||
+    cashierShift.status !== CashierShiftStatus.Opened
+  ) {
     return failure('SHIFT_NOT_OPENED');
+  }
 
   return success({
     type: 'transaction-registered',

@@ -47,7 +47,7 @@ describe('OpenShift command', () => {
     await esdbContainer.stop();
   });
 
-  it('should open current shift for initiating, cash register with ended shift', async () => {
+  it('should open current shift for initiating, cash register with closed shift', async () => {
     const command: OpenShift = {
       type: 'open-shift',
       data: {

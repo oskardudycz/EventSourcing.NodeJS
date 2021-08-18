@@ -150,7 +150,7 @@ export function isCashierShiftEvent(event: any): event is CashierShiftEvent {
   switch (event.type) {
     case 'shift-started':
     case 'transaction-registered':
-    case 'shift-ended':
+    case 'shift-closed':
       return true;
     default:
       return false;
