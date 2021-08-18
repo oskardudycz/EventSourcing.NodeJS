@@ -68,17 +68,22 @@ async function readFromStream<StreamEvent extends Event>(
   options?: ReadStreamOptions
 ): Promise<StreamEvent[] | STREAM_NOT_FOUND> {
   try {
-    const events = await eventStore.readStream(streamName, options);
+    const events: StreamEvent[] = [];
 
-    return events
-      .filter((resolvedEvent) => !!resolvedEvent.event)
-      .map((resolvedEvent) => {
-        return <StreamEvent>{
-          type: resolvedEvent.event!.type,
-          data: resolvedEvent.event!.data,
-          metadata: resolvedEvent.event!.metadata,
-        };
+    for await (const resolvedEvent of eventStore.readStream(
+      streamName,
+      options
+    )) {
+      if (!resolvedEvent.event) continue;
+
+      events.push(<StreamEvent>{
+        type: resolvedEvent.event!.type,
+        data: resolvedEvent.event!.data,
+        metadata: resolvedEvent.event?.metadata,
       });
+    }
+
+    return events;
   } catch (error) {
     if (error.type == ErrorType.STREAM_NOT_FOUND) {
       return 'STREAM_NOT_FOUND';
@@ -317,7 +322,8 @@ async function appendEventAndSnapshotToTheSameStream<
     eventsToAppend
   );
 
-  const snapshottedStreamRevision = appendResult.nextExpectedRevision.toString();
+  const snapshottedStreamRevision =
+    appendResult.nextExpectedRevision.toString();
 
   await eventStore.setStreamMetadata<SnapshotMetadata>(streamName, {
     snapshottedStreamRevision,

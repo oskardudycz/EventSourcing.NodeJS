@@ -7,9 +7,8 @@ import {
   START,
 } from '@eventstore/db-client';
 import { SubscribeToAllOptions } from '@eventstore/db-client/dist/streams';
+import { ReadableOptions } from 'stream';
 import { v4 as uuid } from 'uuid';
-import { ReadableOptions } from 'node:stream';
-
 import { Event } from '../../events';
 import { Result, success } from '../../primitives';
 import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
