@@ -4,17 +4,22 @@ import { handleRegisterTransaction, RegisterTransaction } from './handler';
 import { updateCashierShift } from '../processCashierShift';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
+import {
+  getWeakETagFromIfMatch,
+  MISSING_IF_MATCH_HEADER,
+  toWeakETag,
+  WRONG_WEAK_ETAG_FORMAT,
+} from '#core/http/requests';
 
 export const route = (router: Router) =>
   router.post(
-    '/cash-registers/:cashRegisterId/shifts/:cashierShiftId/transactions',
+    '/cash-registers/:cashRegisterId/shifts/current/transactions',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
 
         if (!isCommand(command)) {
-          next({ status: 400, message: command });
-          return;
+          return next({ status: 400, message: command });
         }
 
         const streamName = getCurrentCashierShiftStreamName(
@@ -30,21 +35,17 @@ export const route = (router: Router) =>
         if (result.isError) {
           switch (result.error) {
             case 'STREAM_NOT_FOUND':
-              response.sendStatus(404);
-              return;
+              return next({ status: 404 });
             case 'SHIFT_NOT_OPENED':
-              response.sendStatus(412);
-              return;
+              return next({ status: 409 });
             case 'FAILED_TO_APPEND_EVENT':
-              response.sendStatus(412);
-              return;
+              return next({ status: 412 });
             default:
-              response.sendStatus(500);
-              return;
+              return next({ status: 500 });
           }
         }
 
-        response.set('ETag', `W/"${result.value.nextExpectedRevision}"`);
+        response.set('ETag', toWeakETag(result.value.nextExpectedRevision));
         response.sendStatus(200);
       } catch (error) {
         next(error);
@@ -58,28 +59,31 @@ function mapRequestToCommand(
   | RegisterTransaction
   | 'MISSING_CASH_REGISTER_ID'
   | 'MISSING_CASHIER_SHIFT_ID'
-  | 'MISSING_AMOUNT' {
+  | 'MISSING_AMOUNT'
+  | WRONG_WEAK_ETAG_FORMAT
+  | MISSING_IF_MATCH_HEADER {
   if (!isNotEmptyString(request.params.cashRegisterId)) {
     return 'MISSING_CASH_REGISTER_ID';
-  }
-
-  if (!isNotEmptyString(request.params.cashierShiftId)) {
-    return 'MISSING_CASHIER_SHIFT_ID';
   }
 
   if (!isPositiveNumber(request.body.amount)) {
     return 'MISSING_AMOUNT';
   }
 
+  const expectedRevision = getWeakETagFromIfMatch(request);
+
+  if (expectedRevision.isError) {
+    return expectedRevision.error;
+  }
+
   return {
     type: 'register-transaction',
     data: {
-      cashierShiftId: request.params.cashierShiftId,
       cashRegisterId: request.params.cashRegisterId,
       amount: request.body.amount,
     },
     metadata: {
-      $expectedRevision: <string>request.headers['If-Match'],
+      $expectedRevision: expectedRevision.value,
     },
   };
 }

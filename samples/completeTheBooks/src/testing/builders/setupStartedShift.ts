@@ -9,7 +9,8 @@ export async function setupStartedShift(
   await request(app)
     .post(`/cash-registers/${existingCashRegisterId}/shifts`)
     .send({ cashierId: uuid() })
-    .expect(200);
+    .expect(200)
+    .expect('Content-Type', /plain/);
 
   return cashRegisterId;
 }

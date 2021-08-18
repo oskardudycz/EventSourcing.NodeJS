@@ -6,7 +6,7 @@ import { handlePlaceAtWorkStation } from './handler';
 import { v4 as uuid } from 'uuid';
 import { isCommand } from '#core/commands';
 import { sendCreated } from '#core/http/responses';
-
+import { toWeakETag } from '#core/http/requests';
 export const route = (router: Router) =>
   router.post(
     '/cash-registers/',
@@ -32,18 +32,15 @@ export const route = (router: Router) =>
         if (result.isError) {
           switch (result.error) {
             case 'STREAM_NOT_FOUND':
-              response.sendStatus(404);
-              return;
+              return next({ status: 404 });
             case 'FAILED_TO_APPEND_EVENT':
-              response.sendStatus(412);
-              return;
+              return next({ status: 412 });
             default:
-              response.sendStatus(500);
-              return;
+              return next({ status: 500 });
           }
         }
 
-        response.set('ETag', `W/"${result.value.nextExpectedRevision}"`);
+        response.set('ETag', toWeakETag(result.value.nextExpectedRevision));
         sendCreated(response, command.data.cashRegisterId);
       } catch (error) {
         next(error);
@@ -65,7 +62,7 @@ function mapRequestToCommand(
       workstation: request.body.workstation,
     },
     metadata: {
-      $expectedRevision: <string>request.headers['If-Match'],
+      $expectedRevision: undefined,
     },
   };
 }

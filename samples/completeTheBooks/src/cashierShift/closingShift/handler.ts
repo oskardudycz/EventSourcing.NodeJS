@@ -8,7 +8,7 @@ import {
   getCashierShiftFrom,
   isCashierShift,
   SHIFT_ALREADY_CLOSED,
-  SHIFT_NOT_INITIALIZED,
+  SHIFT_NOT_OPENED,
 } from '../cashierShift';
 
 export type ClosingShift = Command<
@@ -36,11 +36,11 @@ export type ShiftClosed = Event<
 export function handleEndShift(
   events: StreamEvent<CashierShiftEvent>[],
   command: ClosingShift
-): Result<ShiftClosed, SHIFT_ALREADY_CLOSED | SHIFT_NOT_INITIALIZED> {
+): Result<ShiftClosed, SHIFT_ALREADY_CLOSED | SHIFT_NOT_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
 
   if (!isCashierShift(cashierShift)) {
-    return failure('SHIFT_NOT_INITIALIZED');
+    return failure('SHIFT_NOT_OPENED');
   }
 
   if (cashierShift.status === CashierShiftStatus.Closed) {
