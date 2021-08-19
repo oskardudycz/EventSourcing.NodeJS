@@ -4,7 +4,7 @@ import {
 } from '#testing/eventStoreDB/eventStoreDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { config } from '#config';
-import { ClosingShift, handleEndShift } from './handler';
+import { CloseShift, handleCloseShift } from './handler';
 import { v4 as uuid } from 'uuid';
 import { updateCashierShift } from '../processCashierShift';
 import {
@@ -59,7 +59,7 @@ describe('ClosingShift command', () => {
   });
 
   it('should close the shift for existing, opened cash register shift', async () => {
-    const command: ClosingShift = {
+    const command: CloseShift = {
       type: 'close-shift',
       data: {
         cashRegisterId,
@@ -71,7 +71,7 @@ describe('ClosingShift command', () => {
     const result = await updateCashierShift(
       streamName,
       command,
-      handleEndShift
+      handleCloseShift
     );
 
     expect(result.isError).toBeFalsy();

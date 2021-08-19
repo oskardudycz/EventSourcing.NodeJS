@@ -38,13 +38,13 @@ export type CurrentCashierShiftDetails = Readonly<{
   cashierId: string;
 
   /**
-   * Shift Status (Started or Finished)
+   * Shift Status (Started or Closed)
    */
   status: CashierShiftStatus;
 
   startedAt: Date;
 
-  finishedAt?: Date;
+  closedAt?: Date;
 
   revision: string;
 }>;

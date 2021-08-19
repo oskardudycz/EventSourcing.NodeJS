@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import { handleEndShift, ClosingShift } from './handler';
+import { handleCloseShift, CloseShift } from './handler';
 import { updateCashierShift } from '../processCashierShift';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isCommand } from '#core/commands';
@@ -29,7 +29,7 @@ export const route = (router: Router) =>
         const result = await updateCashierShift(
           streamName,
           command,
-          handleEndShift
+          handleCloseShift
         );
 
         if (result.isError) {
@@ -56,7 +56,7 @@ export const route = (router: Router) =>
 function mapRequestToCommand(
   request: Request
 ):
-  | ClosingShift
+  | CloseShift
   | 'MISSING_CASH_REGISTER_ID'
   | WRONG_WEAK_ETAG_FORMAT
   | MISSING_IF_MATCH_HEADER {

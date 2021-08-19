@@ -29,6 +29,10 @@ export type ShiftOpened = Event<
   }
 >;
 
+export function isShiftOpened(event: Event): event is ShiftOpened {
+  return event.type === 'shift-opened';
+}
+
 export function handleOpenShift(
   events: StreamEvent<CashierShiftEvent>[],
   command: OpenShift

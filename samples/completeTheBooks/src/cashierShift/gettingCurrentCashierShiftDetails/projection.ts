@@ -1,6 +1,6 @@
 import { executeOnMongoDB } from '#core/mongoDB';
 import { Result, success } from '#core/primitives';
-import { Event } from '#core/events';
+import { Event, StreamEvent } from '#core/events';
 import { CashierShiftStatus } from '../cashierShift';
 import { ShiftOpened } from '../openingShift';
 import { TransactionRegistered } from '../registeringTransaction';
@@ -59,7 +59,7 @@ export async function projectShiftClosed(
         },
         {
           $set: {
-            finishedAt: event.data.finishedAt,
+            closedAt: event.data.closedAt,
             status: CashierShiftStatus.Closed,
             float: event.data.declaredTender,
             overageAmount: event.data.overageAmount,
@@ -91,8 +91,10 @@ function isCashierShiftDetailsEvent(
 }
 
 export async function projectToCurrentCashierShiftDetails(
-  event: Event
+  streamEvent: StreamEvent
 ): Promise<Result<boolean>> {
+  const { event } = streamEvent;
+
   if (!isCashierShiftDetailsEvent(event)) {
     return success(false);
   }
