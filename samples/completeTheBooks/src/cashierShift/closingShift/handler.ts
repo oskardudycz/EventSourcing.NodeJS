@@ -11,7 +11,7 @@ import {
   SHIFT_NOT_OPENED,
 } from '../cashierShift';
 
-export type ClosingShift = Command<
+export type CloseShift = Command<
   'close-shift',
   {
     cashRegisterId: string;
@@ -29,13 +29,13 @@ export type ShiftClosed = Event<
     overageAmount: number;
     shortageAmount: number;
     float: number;
-    finishedAt: Date;
+    closedAt: Date;
   }
 >;
 
-export function handleEndShift(
+export function handleCloseShift(
   events: StreamEvent<CashierShiftEvent>[],
-  command: ClosingShift
+  command: CloseShift
 ): Result<ShiftClosed, SHIFT_ALREADY_CLOSED | SHIFT_NOT_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
 
@@ -56,7 +56,7 @@ export function handleEndShift(
     data: {
       shiftNumber: cashierShift.number,
       cashRegisterId: cashierShift.cashRegisterId,
-      finishedAt: getCurrentTime(),
+      closedAt: getCurrentTime(),
       declaredTender: command.data.declaredTender,
       float: cashierShift.float,
       overageAmount,
