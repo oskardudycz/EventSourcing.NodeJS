@@ -9,12 +9,12 @@ import {
 import { SubscribeToAllOptions } from '@eventstore/db-client/dist/streams';
 import { ReadableOptions } from 'stream';
 import { v4 as uuid } from 'uuid';
-import { Event } from '../../events';
+import { Event, StreamEvent } from '../../events';
 import { Result, success } from '../../primitives';
 import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 import { Subscription } from './subscription';
 
-export function getSubscriptionToAll<StreamEvent extends Event, TError = never>(
+export function getSubscriptionToAll<TError = never>(
   eventStore: EventStoreDBClient,
   loadCheckpoint: (
     subscriptionId: string
@@ -23,10 +23,7 @@ export function getSubscriptionToAll<StreamEvent extends Event, TError = never>(
     subscriptionId: string,
     position: bigint
   ) => Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>>,
-  handlers: ((
-    event: StreamEvent,
-    options: { position: bigint; revision: bigint; streamName: string }
-  ) => Promise<Result<boolean, TError>>)[],
+  handlers: ((event: StreamEvent) => Promise<Result<boolean, TError>>)[],
   subscriptionId: string = uuid(),
   options?: SubscribeToAllOptions,
   readableOptions?: ReadableOptions
@@ -53,7 +50,7 @@ export function getSubscriptionToAll<StreamEvent extends Event, TError = never>(
 
         subscription.on(
           'data',
-          handleEvent<StreamEvent, TError>(subscription, handlers, (position) =>
+          handleEvent<TError>(subscription, handlers, (position) =>
             storeCheckpoint(subscriptionId, position)
           )
         );
@@ -69,7 +66,7 @@ export function getSubscriptionToAll<StreamEvent extends Event, TError = never>(
   );
 }
 
-function handleEvent<StreamEvent extends Event, TError = never>(
+function handleEvent<TError = never>(
   subscription: AllStreamSubscription,
   handlers: ((
     event: StreamEvent,
@@ -95,10 +92,14 @@ function handleEvent<StreamEvent extends Event, TError = never>(
         return;
       }
 
-      const event = {
-        type: resolvedEvent.event.type,
-        data: resolvedEvent.event.data,
-      } as StreamEvent;
+      const event: StreamEvent = {
+        streamRevision: resolvedEvent.event!.revision,
+        event: <Event>{
+          type: resolvedEvent.event!.type,
+          data: resolvedEvent.event!.data,
+          metadata: resolvedEvent.event!.metadata,
+        },
+      };
 
       for (const handleEvent of handlers) {
         //TODO: add here some retry logic

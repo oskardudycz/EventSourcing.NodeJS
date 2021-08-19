@@ -1,5 +1,5 @@
 import { Result, success } from '#core/primitives';
-import { Event } from '#core/events';
+import { StreamEvent } from '#core/events';
 import {
   getCurrentCashierShiftStreamName,
   SHIFT_ALREADY_INITIALIZED,
@@ -13,10 +13,11 @@ import { addCashierShift } from '../processCashierShift';
 import { FAILED_TO_APPEND_EVENT } from '#core/eventStore/appending';
 
 export async function handleCashRegisterPlacedAtWorkStation(
-  event: Event
+  streamEvent: StreamEvent
 ): Promise<
   Result<boolean, SHIFT_ALREADY_INITIALIZED | FAILED_TO_APPEND_EVENT>
 > {
+  const { event } = streamEvent;
   if (!isPlacedAtWorkStation(event)) {
     return success(false);
   }

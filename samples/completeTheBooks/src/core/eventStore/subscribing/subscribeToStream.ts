@@ -5,12 +5,12 @@ import {
 } from '@eventstore/db-client';
 import { SubscribeToStreamOptions } from '@eventstore/db-client/dist/streams';
 
-import { Event } from '../../events';
+import { Event, StreamEvent } from '../../events';
 import { pipeResultAsync } from '../../primitives/pipe';
 import { Result, success } from '../../primitives';
 import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 
-export async function subscribeToStream<StreamEvent extends Event>(
+export async function subscribeToStream(
   loadCheckpoint: (
     subscriptionId: string
   ) => Promise<Result<Position | undefined>>,
@@ -21,10 +21,7 @@ export async function subscribeToStream<StreamEvent extends Event>(
   client: EventStoreDBClient,
   streamName: string,
   subscriptionId: string,
-  handleEvent: (
-    event: StreamEvent,
-    options: { revision: bigint; streamName: string }
-  ) => Promise<void>,
+  handleEvent: (event: StreamEvent) => Promise<void>,
   options?: SubscribeToStreamOptions
 ): Promise<Result<StreamSubscription>> {
   return pipeResultAsync(loadCheckpoint, async (currentPosition) => {
@@ -38,15 +35,16 @@ export async function subscribeToStream<StreamEvent extends Event>(
           }
 
           const event = {
-            type: resolvedEvent.event.type,
-            data: resolvedEvent.event.data,
-          } as StreamEvent;
+            streamRevision: resolvedEvent.event!.revision,
+            event: <Event>{
+              type: resolvedEvent.event!.type,
+              data: resolvedEvent.event!.data,
+              metadata: resolvedEvent.event!.metadata,
+            },
+          };
 
           //TODO: add here some retry logic
-          await handleEvent(event, {
-            revision: resolvedEvent.event.revision,
-            streamName,
-          });
+          await handleEvent(event);
 
           //TODO: add here some retry logic
           await storeCheckpoint(subscriptionId, resolvedEvent.event.revision);

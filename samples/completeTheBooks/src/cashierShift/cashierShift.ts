@@ -45,13 +45,13 @@ export type CashierShift = Readonly<{
   cashierId: string;
 
   /**
-   * Shift Status (Started or Finished)
+   * Shift Status (Started or Closed)
    */
   status: CashierShiftStatus;
 
   startedAt: Date;
 
-  finishedAt?: Date;
+  closedAt?: Date;
 
   revision: bigint;
 }>;
@@ -62,7 +62,7 @@ export type InitiatedCashierShift = Readonly<{
 
 export enum CashierShiftStatus {
   Opened = 'Opened',
-  Closed = 'Finished',
+  Closed = 'Closed',
 }
 
 export type CashierShiftEvent =
@@ -105,7 +105,7 @@ export function when(
     case 'shift-closed':
       return {
         ...currentState,
-        finishedAt: event.data.finishedAt,
+        closedAt: event.data.closedAt,
         status: CashierShiftStatus.Closed,
         float: event.data.declaredTender,
         overageAmount: event.data.overageAmount,

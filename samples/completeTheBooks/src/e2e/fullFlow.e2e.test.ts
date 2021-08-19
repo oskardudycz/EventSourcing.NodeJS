@@ -70,14 +70,5 @@ describe('Full flow', () => {
           .expect('Content-Type', /json/)
       );
     });
-
-    // it('should not allow to close not opened shift', async () => {
-    //   await retry(() =>
-    //     request(app)
-    //       .delete(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
-    //       .send({ cashierId: uuid(), float: 0 })
-    //       .expect(404)
-    //   );
-    // });
   });
 });

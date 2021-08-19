@@ -410,18 +410,18 @@ export type TransactionRegistered = Event<
   }
 >;
 
-export type EndShift = Command<
-  'end-shift',
+export type CloseShift = Command<
+  'close-shift',
   {
     cashRegisterId: string;
   }
 >;
 
 export type ShiftEnded = Event<
-  'shift-finished',
+  'shift-closed',
   {
     cashRegisterId: string;
-    finishedAt: Date;
+    closedAt: Date;
   }
 >;
 
@@ -453,7 +453,7 @@ function when(
         ...currentState,
         float: (currentState.float ?? 0) + event.data.amount,
       };
-    case 'shift-finished':
+    case 'shift-closed':
       return {
         ...currentState,
         currentCashierId: undefined,
@@ -492,7 +492,7 @@ export function isCashRegister(
 }
 
 function shouldDoSnapshot(newEvent: CashRegisterEvent): boolean {
-  return newEvent.type === 'shift-finished';
+  return newEvent.type === 'shift-closed';
 }
 
 function buildCashRegisterSnapshot(
@@ -521,7 +521,7 @@ function tryBuildCashRegisterSnapshotNoMetadata(
   currentState: CashRegister
 ): CashRegisterSnapshoted | undefined {
   // perform the check if snapshot should be made
-  if (newEvent.type !== 'shift-finished') return undefined;
+  if (newEvent.type !== 'shift-closed') return undefined;
 
   return {
     type: 'cash-register-snapshoted',
@@ -530,9 +530,9 @@ function tryBuildCashRegisterSnapshotNoMetadata(
   };
 }
 
-function endShift(
+function CloseShift(
   events: CashRegisterEvent[],
-  command: EndShift
+  command: CloseShift
 ): {
   newState: CashRegister;
   newEvent: ShiftEnded;
@@ -544,10 +544,10 @@ function endShift(
   }
 
   const newEvent: ShiftEnded = {
-    type: 'shift-finished',
+    type: 'shift-closed',
     data: {
       cashRegisterId: cashRegister.id,
-      finishedAt: new Date(),
+      closedAt: new Date(),
     },
   };
 
@@ -596,7 +596,7 @@ async function storeCashRegister(
   );
 }
 
-export async function handleEndShift(command: EndShift): Promise<void> {
+export async function handleCloseShift(command: CloseShift): Promise<void> {
   const eventStore = EventStoreDBClient.connectionString(
     `esdb://localhost:2113?tls=false`
   );
@@ -610,7 +610,7 @@ export async function handleEndShift(command: EndShift): Promise<void> {
   );
 
   // 2. Perform business logic handling the command
-  const { newState, newEvent } = endShift(events, command);
+  const { newState, newEvent } = CloseShift(events, command);
 
   // 3. Append the new event and snapshot
   await storeCashRegister(
@@ -651,8 +651,8 @@ async function storeCashRegisterSameSnapshotStream(
   );
 }
 
-export async function handleEndShiftSameSnapshotStream(
-  command: EndShift
+export async function handleCloseShiftSameSnapshotStream(
+  command: CloseShift
 ): Promise<void> {
   const eventStore = EventStoreDBClient.connectionString(
     `esdb://localhost:2113?tls=false`
@@ -667,7 +667,7 @@ export async function handleEndShiftSameSnapshotStream(
   );
 
   // 2. Perform business logic handling the command
-  const { newState, newEvent } = endShift(events, command);
+  const { newState, newEvent } = CloseShift(events, command);
 
   // 3. Append the new event and snapshot
   await storeCashRegisterSameSnapshotStream(
