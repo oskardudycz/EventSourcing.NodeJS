@@ -12,7 +12,7 @@ import {
 import { isShiftOpened } from '../openingShift';
 import { getArchivisationScheduleStreamName } from '../../archivisation/schedulingArchivisation/handler';
 
-export async function handleCashierShiftClosed(
+export async function handleCashierShiftOpened(
   streamEvent: StreamEvent
 ): Promise<Result<boolean, FAILED_TO_APPEND_EVENT>> {
   const { event, streamRevision } = streamEvent;
