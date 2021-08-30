@@ -10,7 +10,7 @@ import {
   handleArchiveClosedCashierShift,
 } from './handler';
 import { isShiftOpened } from '../openingShift';
-import { getArchivisationScheduleStreamName } from '../../archivisation/schedulingArchivisation/handler';
+import { getArchivisationScheduleStreamName } from '../../archivisation/';
 
 export async function handleCashierShiftOpened(
   streamEvent: StreamEvent
