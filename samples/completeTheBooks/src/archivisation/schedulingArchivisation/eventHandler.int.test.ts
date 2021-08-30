@@ -6,10 +6,13 @@ import {
   StartedEventStoreDBContainer,
 } from '#testing/eventStoreDB/eventStoreDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
-import { ShiftOpened } from '../openingShift';
-import { handleCashierShiftOpened } from './eventHandler';
 import { getCurrentTime } from '#core/primitives';
 import { getArchivisationScheduleStreamName } from '../../archivisation';
+import {
+  handleStreamArchivisationScheduled,
+  StreamArchivisationScheduled,
+} from './eventHandler';
+import { getCurrentCashierShiftStreamName } from '../../cashierShift/cashierShift';
 
 describe('ShiftOpened event', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -28,18 +31,16 @@ describe('ShiftOpened event', () => {
   });
 
   it('should trigger closed shift archivisation', async () => {
-    const event: ShiftOpened = {
-      type: 'shift-opened',
+    const event: StreamArchivisationScheduled = {
+      type: 'stream-archivisation-scheduled',
       data: {
-        cashRegisterId,
-        cashierId: uuid(),
-        declaredStartAmount: 100,
-        shiftNumber: 1,
-        startedAt: getCurrentTime(),
+        streamName: getCurrentCashierShiftStreamName(cashRegisterId),
+        archiveBeforeRevision: 4n.toString(),
+        scheduledAt: getCurrentTime(),
       },
     };
 
-    const result = await handleCashierShiftOpened({
+    const result = await handleStreamArchivisationScheduled({
       event,
       streamRevision: 2n,
     });
