@@ -1,6 +1,6 @@
 import { Command } from '#core/commands';
 import { Result, success, getCurrentTime } from '#core/primitives';
-import { StreamArchivisationScheduled } from 'src/archivisation/archivingStream/handler';
+import { StreamArchivisationScheduled } from 'src/archivisation/schedulingArchivisation/eventHandler';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
 
 export type ArchiveClosedCashierShift = Command<
