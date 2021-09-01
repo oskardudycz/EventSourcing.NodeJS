@@ -9,7 +9,7 @@ import { config } from '#config';
 import app from '../../app';
 import {
   setupInitiatedCashierShift,
-  setupStartedCashierShift,
+  setupOpenedCashierShift,
 } from '#testing/builders/byEvents';
 import { toWeakETag } from '#core/http/requests';
 
@@ -45,7 +45,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
 
     describe('For opened shift', () => {
       beforeEach(async () => {
-        const result = await setupStartedCashierShift(
+        const result = await setupOpenedCashierShift(
           eventStore,
           existingCashRegisterId
         );

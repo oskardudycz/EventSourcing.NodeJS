@@ -7,42 +7,53 @@ import {
 } from '#testing/eventStoreDB/eventStoreDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { getCurrentTime } from '#core/primitives';
-import { getArchivisationScheduleStreamName } from '../../archivisation';
+import { getArchivisationForStreamName } from '../../archivisation';
 import {
   handleStreamArchivisationScheduled,
   StreamArchivisationScheduled,
 } from './eventHandler';
 import { getCurrentCashierShiftStreamName } from '../../cashierShift/cashierShift';
+import { setupOpenedCashierShiftWithPreviousClosed } from '#testing/builders/byEvents';
 
-describe('ShiftOpened event', () => {
+describe('StreamArchivisationScheduled event', () => {
   let esdbContainer: StartedEventStoreDBContainer;
   let eventStore: EventStoreDBClient;
   const cashRegisterId = uuid();
+  const currentCashierShiftStreamName =
+    getCurrentCashierShiftStreamName(cashRegisterId);
+  let archiveBeforeRevision: string;
 
   beforeAll(async () => {
     esdbContainer = await new EventStoreDBContainer().startContainer();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
     eventStore = esdbContainer.getClient();
+
+    const result = await setupOpenedCashierShiftWithPreviousClosed(
+      eventStore,
+      cashRegisterId
+    );
+
+    archiveBeforeRevision = result.nextExpectedRevision.toString();
   });
 
   afterAll(async () => {
     await esdbContainer.stop();
   });
 
-  it('should trigger closed shift archivisation', async () => {
+  it('should trigger schedule stream copying', async () => {
     const event: StreamArchivisationScheduled = {
       type: 'stream-archivisation-scheduled',
       data: {
-        streamName: getCurrentCashierShiftStreamName(cashRegisterId),
-        archiveBeforeRevision: 4n.toString(),
+        streamName: currentCashierShiftStreamName,
+        archiveBeforeRevision,
         scheduledAt: getCurrentTime(),
       },
     };
 
     const result = await handleStreamArchivisationScheduled({
       event,
-      streamRevision: 2n,
+      streamRevision: 1n,
     });
 
     expect(result.isError).toBeFalsy();
@@ -52,12 +63,9 @@ describe('ShiftOpened event', () => {
       return;
     }
 
-    const archivisationScheduleStreamName =
-      getArchivisationScheduleStreamName();
-
     await expectStreamToHaveNumberOfEvents(
       eventStore,
-      archivisationScheduleStreamName,
+      getArchivisationForStreamName(currentCashierShiftStreamName),
       1
     );
   });

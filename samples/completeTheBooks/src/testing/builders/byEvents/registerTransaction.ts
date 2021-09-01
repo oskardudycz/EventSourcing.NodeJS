@@ -1,33 +1,32 @@
 import { appendToStream, AppendResult } from '#core/eventStore/appending';
-import { v4 as uuid } from 'uuid';
 import { EventStoreDBClient } from '@eventstore/db-client';
+import { v4 as uuid } from 'uuid';
 import { getCurrentTime } from '#core/primitives';
 import {
   CashierShiftEvent,
   getCurrentCashierShiftStreamName,
 } from '../../../cashierShift/cashierShift';
 
-export async function setupStartedCashierShift(
+export async function registerTransaction(
   eventStore: EventStoreDBClient,
   cashRegisterId: string,
-  options: { cashierId: string; declaredStartAmount: number } = {
-    cashierId: uuid(),
-    declaredStartAmount: 0,
-  }
+  shiftNumber: number,
+  options: { amount?: number; transactionId?: string } = {}
 ): Promise<AppendResult> {
-  const { cashierId, declaredStartAmount } = options;
+  const { amount, transactionId } = options;
+
   const result = await appendToStream<CashierShiftEvent>(
     eventStore,
     getCurrentCashierShiftStreamName(cashRegisterId),
     [
       {
-        type: 'shift-opened',
+        type: 'transaction-registered',
         data: {
-          shiftNumber: 1,
           cashRegisterId,
-          cashierId,
-          declaredStartAmount,
-          startedAt: getCurrentTime(),
+          amount: amount ?? 10,
+          shiftNumber,
+          transactionId: transactionId ?? uuid(),
+          registeredAt: getCurrentTime(),
         },
       },
     ]
