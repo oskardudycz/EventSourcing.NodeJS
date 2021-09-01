@@ -7,7 +7,7 @@ import {
   FAILED_TO_APPEND_EVENT,
 } from '#core/eventStore/appending';
 import {
-  getArchivisationScheduleStreamName,
+  getArchivisationForStreamName,
   getStreamRevisionOfTheFirstEventToArchive,
 } from '../';
 import { ArchiveStream, handleArchiveStream } from './handler';
@@ -63,7 +63,7 @@ export async function handleStreamArchivisationScheduled(
 
   const result = await appendToStream(
     eventStore,
-    getArchivisationScheduleStreamName(),
+    getArchivisationForStreamName(streamName),
     archivingScheduled.value
   );
 

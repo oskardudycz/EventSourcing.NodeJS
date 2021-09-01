@@ -7,7 +7,6 @@ import {
   getCurrentTime,
   getNumberRanges,
 } from '#core/primitives';
-import { getArchivisationForStreamName } from '..';
 
 export type ArchiveStream = Command<
   'archive-stream',
@@ -17,7 +16,7 @@ export type ArchiveStream = Command<
   }
 >;
 
-export type CopyingStreamFromStreamScheduled = Event<
+export type StreamBatchArchivisationScheduled = Event<
   'stream-batch-archivisation-scheduled',
   {
     streamName: string;
@@ -33,17 +32,18 @@ export async function handleArchiveStream(
   ) => Promise<Result<bigint, STREAM_NOT_FOUND | NO_EVENTS_FOUND>>,
   command: ArchiveStream
 ): Promise<
-  Result<CopyingStreamFromStreamScheduled[], STREAM_NOT_FOUND | NO_EVENTS_FOUND>
+  Result<
+    StreamBatchArchivisationScheduled[],
+    STREAM_NOT_FOUND | NO_EVENTS_FOUND
+  >
 > {
   const { streamName, archiveBeforeRevision } = command.data;
-
-  const toStreamName = getArchivisationForStreamName(streamName);
 
   const fromRevision = await getStreamRevisionOfTheFirstEvent(streamName);
 
   if (fromRevision.isError) return fromRevision;
 
-  const events: CopyingStreamFromStreamScheduled[] = getNumberRanges(
+  const events: StreamBatchArchivisationScheduled[] = getNumberRanges(
     fromRevision.value,
     archiveBeforeRevision
   ).map(({ from, to }) => {
@@ -51,7 +51,6 @@ export async function handleArchiveStream(
       type: 'stream-batch-archivisation-scheduled',
       data: {
         streamName,
-        toStreamName,
         fromRevision: from.toString(),
         beforeRevision: to.toString(),
         scheduledAt: getCurrentTime(),
