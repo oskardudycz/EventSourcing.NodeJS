@@ -20,22 +20,21 @@ export function getNumberRanges(
   if (chunkSize < 0) throw WRONG_CHUNK_SIZE;
 
   const chunkSizeBI = BigInt(chunkSize);
-  let numberOfChunks = difference / chunkSizeBI;
   let currentFrom = from;
 
   const ranges: Range[] = [];
 
   do {
-    const currentTo = currentFrom + chunkSizeBI;
+    const nextTo = currentFrom + chunkSizeBI;
+    const currenTo = nextTo < to ? nextTo : to;
 
     ranges.push({
-      from: currentTo,
-      to: currentTo < to ? currentTo : to,
+      from: currentFrom,
+      to: currenTo,
     });
 
-    currentFrom += chunkSizeBI;
-    numberOfChunks--;
-  } while (numberOfChunks > 0);
+    currentFrom = currenTo;
+  } while (currentFrom < to);
 
   return ranges;
 }

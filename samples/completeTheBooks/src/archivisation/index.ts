@@ -18,12 +18,7 @@ export async function getStreamRevisionOfTheFirstEventToArchive(
   eventStore: EventStoreDBClient,
   streamName: string
 ): Promise<Result<bigint, STREAM_NOT_FOUND | NO_EVENTS_FOUND>> {
-  const archivisationForStreamName = getArchivisationForStreamName(streamName);
-
-  const firstEvent = await readFirstEventFromStream(
-    eventStore,
-    archivisationForStreamName
-  );
+  const firstEvent = await readFirstEventFromStream(eventStore, streamName);
 
   if (firstEvent.isError) {
     return firstEvent;

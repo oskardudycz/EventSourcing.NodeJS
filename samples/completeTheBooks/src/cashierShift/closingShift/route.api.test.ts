@@ -10,7 +10,7 @@ import {
 import app from '../../app';
 import {
   setupInitiatedCashierShift,
-  setupStartedCashierShift,
+  setupOpenedCashierShift,
 } from '#testing/builders/byEvents';
 
 describe('DELETE /cash-registers/:cashRegisterId/shifts/current', () => {
@@ -53,7 +53,7 @@ describe('DELETE /cash-registers/:cashRegisterId/shifts/current', () => {
 
     describe('For opened shift', () => {
       beforeEach(async () => {
-        const result = await setupStartedCashierShift(
+        const result = await setupOpenedCashierShift(
           eventStore,
           existingCashRegisterId
         );
