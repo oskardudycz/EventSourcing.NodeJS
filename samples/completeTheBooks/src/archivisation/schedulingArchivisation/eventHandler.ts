@@ -6,8 +6,12 @@ import {
   appendToStream,
   FAILED_TO_APPEND_EVENT,
 } from '#core/eventStore/appending';
-import { getArchivisationScheduleStreamName } from '../../archivisation/';
+import {
+  getArchivisationScheduleStreamName,
+  getStreamRevisionOfTheFirstEventToArchive,
+} from '../';
 import { ArchiveStream, handleArchiveStream } from './handler';
+import { NO_EVENTS_FOUND, STREAM_NOT_FOUND } from '#core/eventStore/reading';
 
 export type StreamArchivisationScheduled = Event<
   'stream-archivisation-scheduled',
@@ -26,7 +30,9 @@ export function isStreamArchivisationScheduled(
 
 export async function handleStreamArchivisationScheduled(
   streamEvent: StreamEvent
-): Promise<Result<boolean, FAILED_TO_APPEND_EVENT>> {
+): Promise<
+  Result<boolean, FAILED_TO_APPEND_EVENT | STREAM_NOT_FOUND | NO_EVENTS_FOUND>
+> {
   const { event } = streamEvent;
 
   if (!isStreamArchivisationScheduled(event)) {
@@ -43,16 +49,22 @@ export async function handleStreamArchivisationScheduled(
     },
   };
 
-  const archivingScheduled = handleArchiveStream(command);
+  const eventStore = getEventStore();
+
+  const archivingScheduled = await handleArchiveStream(
+    (streamName) =>
+      getStreamRevisionOfTheFirstEventToArchive(eventStore, streamName),
+    command
+  );
 
   if (archivingScheduled.isError) {
     return archivingScheduled;
   }
 
   const result = await appendToStream(
-    getEventStore(),
+    eventStore,
     getArchivisationScheduleStreamName(),
-    [archivingScheduled.value]
+    archivingScheduled.value
   );
 
   if (result.isError) {
