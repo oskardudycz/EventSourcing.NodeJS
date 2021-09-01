@@ -1,32 +1,33 @@
+import {
+  STREAM_NOT_FOUND,
+  NO_EVENTS_FOUND,
+  readFirstEventFromStream,
+} from '#core/eventStore/reading';
+import { Result, success } from '#core/primitives';
+import { EventStoreDBClient } from '@eventstore/db-client';
+
 export function getArchivisationScheduleStreamName(): string {
-  return 'archivisation-schedule';
+  return 'archivisation-scheduled';
 }
 
 export function getArchivisationForStreamName(streamName: string): string {
   return `archivisation_for-${streamName}`;
 }
 
-// export async function getFirstEventToArchiveStreamRevision(
-//   eventStore: EventStoreDBClient,
-//   streamName: string
-// ): Promise<Result<bigint, STREAM_NOT_FOUND>> {
-//   const archivisationForStreamName = getArchivisationForStreamName(streamName);
+export async function getStreamRevisionOfTheFirstEventToArchive(
+  eventStore: EventStoreDBClient,
+  streamName: string
+): Promise<Result<bigint, STREAM_NOT_FOUND | NO_EVENTS_FOUND>> {
+  const archivisationForStreamName = getArchivisationForStreamName(streamName);
 
-//   let revision: bigint | undefined;
+  const firstEvent = await readFirstEventFromStream(
+    eventStore,
+    archivisationForStreamName
+  );
 
-//   const lastEvent = await readLastEventFromStream(
-//     eventStore,
-//     archivisationForStreamName
-//   );
+  if (firstEvent.isError) {
+    return firstEvent;
+  }
 
-//   if (lastEvent.isError && lastEvent.error === 'STREAM_NOT_FOUND') {
-//     return failure('STREAM_NOT_FOUND');
-//   }
-
-//   revision = !lastEvent.isError ? lastEvent.value.streamRevision : undefined;
-
-//   if (revision !== undefined) {
-//     return success(revision);
-//   }
-
-// }
+  return success(firstEvent.value.streamRevision);
+}
