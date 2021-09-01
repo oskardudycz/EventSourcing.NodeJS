@@ -1,10 +1,13 @@
-import { BACKWARDS, END, EventStoreDBClient } from '@eventstore/db-client';
+import { EventStoreDBClient, FORWARDS, START } from '@eventstore/db-client';
 import { ReadStreamOptions } from '@eventstore/db-client/dist/streams';
+
 import { Event, StreamEvent } from '../../events';
-import { NO_EVENTS_FOUND, readFromStream, STREAM_NOT_FOUND } from '.';
+import { readFromStream, STREAM_NOT_FOUND } from '.';
 import { failure, Result, success } from '../../primitives';
 
-export async function readLastEventFromStream<StreamEventType extends Event>(
+export type NO_EVENTS_FOUND = 'NO_EVENTS_FOUND';
+
+export async function readFirstEventFromStream<StreamEventType extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
   options?: ReadStreamOptions
@@ -13,8 +16,8 @@ export async function readLastEventFromStream<StreamEventType extends Event>(
 > {
   const events = await readFromStream<StreamEventType>(eventStore, streamName, {
     maxCount: 1,
-    direction: BACKWARDS,
-    fromRevision: END,
+    direction: FORWARDS,
+    fromRevision: START,
     ...options,
   });
 
