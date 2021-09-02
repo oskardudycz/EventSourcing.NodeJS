@@ -10,7 +10,10 @@ import {
   getArchivisationForStreamName,
   getStreamRevisionOfTheFirstEventToArchive,
 } from '../';
-import { ArchiveStream, handleArchiveStream } from './handler';
+import {
+  ScheduleStreamBatchArchivisation,
+  handleScheduleStreamBatchArchivisation,
+} from './handler';
 import { NO_EVENTS_FOUND, STREAM_NOT_FOUND } from '#core/eventStore/reading';
 
 export type StreamArchivisationScheduled = Event<
@@ -41,8 +44,8 @@ export async function handleStreamArchivisationScheduled(
 
   const { streamName, archiveBeforeRevision } = event.data;
 
-  const command: ArchiveStream = {
-    type: 'archive-stream',
+  const command: ScheduleStreamBatchArchivisation = {
+    type: 'schedule-batch-stream-archivisation',
     data: {
       streamName,
       archiveBeforeRevision: BigInt(archiveBeforeRevision),
@@ -51,7 +54,7 @@ export async function handleStreamArchivisationScheduled(
 
   const eventStore = getEventStore();
 
-  const archivingScheduled = await handleArchiveStream(
+  const archivingScheduled = await handleScheduleStreamBatchArchivisation(
     (streamName) =>
       getStreamRevisionOfTheFirstEventToArchive(eventStore, streamName),
     command

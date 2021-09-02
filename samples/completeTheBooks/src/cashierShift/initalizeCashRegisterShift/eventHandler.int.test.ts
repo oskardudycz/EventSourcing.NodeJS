@@ -8,8 +8,9 @@ import {
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { handleCashRegisterPlacedAtWorkStation } from './eventHandler';
 import { getCurrentTime } from '#core/primitives';
-import { PlacedAtWorkStation } from 'src/cashRegisters/placeAtWorkStation';
+import { PlacedAtWorkStation } from '../../cashRegisters/placeAtWorkStation';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
+import { getCashRegisterStreamName } from '../../cashRegisters/cashRegister';
 
 describe('PlacedAtWorkStation event', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -40,6 +41,7 @@ describe('PlacedAtWorkStation event', () => {
     const result = await handleCashRegisterPlacedAtWorkStation({
       event,
       streamRevision: 0n,
+      streamName: getCashRegisterStreamName(cashRegisterId),
     });
 
     expect(result.isError).toBeFalsy();
