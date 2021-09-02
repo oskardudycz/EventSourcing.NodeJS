@@ -1,0 +1,10 @@
+version: '3.5'
+services:
+  app:
+    build:
+      # use local image
+      dockerfile: Dockerfile
+      context: .
+    container_name: eventsourcing_js
+    ports:
+      - '5555:5000'
