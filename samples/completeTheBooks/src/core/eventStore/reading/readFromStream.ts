@@ -33,6 +33,7 @@ export async function readFromStream<StreamEventType extends Event>(
 
       events.push({
         streamRevision: resolvedEvent.event!.revision,
+        streamName: resolvedEvent.event!.streamId,
         event: <StreamEventType>{
           type: resolvedEvent.event!.type,
           data: resolvedEvent.event!.data,

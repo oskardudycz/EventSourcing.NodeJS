@@ -7,7 +7,10 @@ import {
 } from '#testing/eventStoreDB/eventStoreDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { getCurrentTime } from '#core/primitives';
-import { getArchivisationForStreamName } from '../../archivisation';
+import {
+  getArchivisationForStreamName,
+  getArchivisationScheduleStreamName,
+} from '../../archivisation';
 import {
   handleStreamArchivisationScheduled,
   StreamArchivisationScheduled,
@@ -54,6 +57,7 @@ describe('StreamArchivisationScheduled event', () => {
     const result = await handleStreamArchivisationScheduled({
       event,
       streamRevision: 1n,
+      streamName: getArchivisationScheduleStreamName(),
     });
 
     expect(result.isError).toBeFalsy();

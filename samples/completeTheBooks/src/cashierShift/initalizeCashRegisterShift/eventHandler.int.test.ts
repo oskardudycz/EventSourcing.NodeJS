@@ -10,6 +10,7 @@ import { handleCashRegisterPlacedAtWorkStation } from './eventHandler';
 import { getCurrentTime } from '#core/primitives';
 import { PlacedAtWorkStation } from 'src/cashRegisters/placeAtWorkStation';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
+import { getCashRegisterStreamName } from 'src/cashRegisters/cashRegister';
 
 describe('PlacedAtWorkStation event', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -40,6 +41,7 @@ describe('PlacedAtWorkStation event', () => {
     const result = await handleCashRegisterPlacedAtWorkStation({
       event,
       streamRevision: 0n,
+      streamName: getCashRegisterStreamName(cashRegisterId),
     });
 
     expect(result.isError).toBeFalsy();

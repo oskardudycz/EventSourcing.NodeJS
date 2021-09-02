@@ -94,6 +94,7 @@ function handleEvent<TError = never>(
 
       const event: StreamEvent = {
         streamRevision: resolvedEvent.event!.revision,
+        streamName: resolvedEvent.event!.streamId,
         event: <Event>{
           type: resolvedEvent.event!.type,
           data: resolvedEvent.event!.data,

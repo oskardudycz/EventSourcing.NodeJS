@@ -10,6 +10,7 @@ import { ShiftOpened } from '../openingShift';
 import { handleCashierShiftOpened } from './eventHandler';
 import { getCurrentTime } from '#core/primitives';
 import { getArchivisationScheduleStreamName } from '../../archivisation';
+import { getCurrentCashierShiftStreamName } from '../cashierShift';
 
 describe('ShiftOpened event', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -42,6 +43,7 @@ describe('ShiftOpened event', () => {
     const result = await handleCashierShiftOpened({
       event,
       streamRevision: 2n,
+      streamName: getCurrentCashierShiftStreamName(cashRegisterId),
     });
 
     expect(result.isError).toBeFalsy();
