@@ -11,6 +11,7 @@ export type Event<
 export type StreamEvent<EventType = Event> = Readonly<{
   event: EventType;
   streamRevision: bigint;
+  streamName: string;
 }>;
 
 export function isEvent<
