@@ -36,6 +36,7 @@ export async function subscribeToStream(
 
           const event = {
             streamRevision: resolvedEvent.event!.revision,
+            streamName: resolvedEvent.event!.streamId,
             event: <Event>{
               type: resolvedEvent.event!.type,
               data: resolvedEvent.event!.data,

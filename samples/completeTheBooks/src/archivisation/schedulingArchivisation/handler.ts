@@ -8,8 +8,8 @@ import {
   getNumberRanges,
 } from '#core/primitives';
 
-export type ArchiveStream = Command<
-  'archive-stream',
+export type ScheduleStreamBatchArchivisation = Command<
+  'schedule-batch-stream-archivisation',
   {
     streamName: string;
     archiveBeforeRevision: bigint;
@@ -26,11 +26,17 @@ export type StreamBatchArchivisationScheduled = Event<
   }
 >;
 
-export async function handleArchiveStream(
+export function isStreamBatchArchivisationScheduled(
+  event: Event
+): event is StreamBatchArchivisationScheduled {
+  return event.type === 'stream-batch-archivisation-scheduled';
+}
+
+export async function handleScheduleStreamBatchArchivisation(
   getStreamRevisionOfTheFirstEvent: (
     streamName: string
   ) => Promise<Result<bigint, STREAM_NOT_FOUND | NO_EVENTS_FOUND>>,
-  command: ArchiveStream
+  command: ScheduleStreamBatchArchivisation
 ): Promise<
   Result<
     StreamBatchArchivisationScheduled[],
