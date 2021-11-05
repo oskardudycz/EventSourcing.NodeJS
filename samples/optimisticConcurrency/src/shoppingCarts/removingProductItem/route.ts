@@ -1,14 +1,18 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { isCommand } from '#core/commands';
-import { handleConfirmShoppingCart } from './handler';
+import { handleRemovingProductItemFromShoppingCart } from './handler';
 import { getShoppingCartStreamName } from '../shoppingCart';
-import { isNotEmptyString, ValidationError } from '#core/validation';
+import {
+  isNotEmptyString,
+  isPositiveNumber,
+  ValidationError,
+} from '#core/validation';
 import {
   getWeakETagFromIfMatch,
   toWeakETag,
   WRONG_ETAG,
 } from '#core/http/requests';
-import { ConfirmShoppingCart } from '.';
+import { RemoveProductItemFromShoppingCart } from '.';
 import { getAndUpdate } from '#core/eventStore/appending';
 import { getEventStore } from '#core/eventStore';
 import { assertUnreachable } from '#core/primitives';
@@ -29,7 +33,7 @@ export const route = (router: Router) =>
         );
 
         const result = await getAndUpdate(
-          handleConfirmShoppingCart,
+          handleRemovingProductItemFromShoppingCart,
           getEventStore(),
           streamName,
           command
@@ -38,6 +42,7 @@ export const route = (router: Router) =>
         if (result.isError) {
           switch (result.error) {
             case 'SHOPPING_CARD_CLOSED':
+            case 'NOT_ENOUGH_PRODUCT_IN_SHOPPING_CART':
               return next({ status: 409 });
             case 'FAILED_TO_APPEND_EVENT':
               return next({ status: 412 });
@@ -58,9 +63,17 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): ConfirmShoppingCart | ValidationError | WRONG_ETAG {
+): RemoveProductItemFromShoppingCart | ValidationError | WRONG_ETAG {
   if (!isNotEmptyString(request.params.shoppingCartId)) {
     return 'MISSING_SHOPPING_CARD_ID';
+  }
+
+  if (!isNotEmptyString(request.params.productId)) {
+    return 'MISSING_PRODUCT_ID';
+  }
+
+  if (!isPositiveNumber(request.body.quantity)) {
+    return 'INVALID_PRODUCT_ITEM_QUANTITY';
   }
 
   const expectedRevision = getWeakETagFromIfMatch(request);
@@ -70,9 +83,13 @@ function mapRequestToCommand(
   }
 
   return {
-    type: 'confirm-shopping-cart',
+    type: 'remove-product-item-from-shopping-cart',
     data: {
       shoppingCartId: request.body.shoppingCartId,
+      productItem: {
+        productId: request.params.productId,
+        quantity: request.body.quantity,
+      },
     },
     metadata: {
       $expectedRevision: expectedRevision.value,

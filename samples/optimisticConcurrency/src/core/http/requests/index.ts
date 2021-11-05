@@ -8,6 +8,8 @@ export const WeakETagRegex = /W\/"(\d+.*)"/;
 export type WRONG_WEAK_ETAG_FORMAT = 'WRONG_WEAK_ETAG_FORMAT';
 export type MISSING_IF_MATCH_HEADER = 'MISSING_IF_MATCH_HEADER';
 
+export type WRONG_ETAG = WRONG_WEAK_ETAG_FORMAT | MISSING_IF_MATCH_HEADER;
+
 export function isWeakETag(etag: ETag): etag is WeakETag {
   return WeakETagRegex.test(etag);
 }
