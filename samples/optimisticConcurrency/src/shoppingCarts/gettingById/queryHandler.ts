@@ -2,39 +2,23 @@ import { Query } from '#core/queries';
 import { failure, Result, success } from '#core/primitives';
 import { getSingleFromMongoDB } from '#core/mongoDB';
 import { SHIFT_DOES_NOT_EXIST } from '../shoppingCart';
+import { CurrentShoppingCartDetails, CURRENT_SHOPPING_CART_DETAILS } from '.';
 
 export type GetCurrentShoppingCartDetails = Query<
   'get-current-shopping-cart-details',
   {
-    cashRegisterId: string;
+    shoppingCartId: string;
   }
 >;
-
-export type ProductItem = Readonly<{
-  productId: string;
-  quantity: number;
-}>;
-
-export type CurrentShoppingCartDetails = Readonly<{
-  id: string;
-  clientId: string;
-  status: string;
-  productItems: ProductItem[];
-  openedAt: Date;
-  confirmedAt?: Date;
-  revision: string;
-}>;
-
-const CurrentShoppingCartDetails = 'currentShoppingCartDetails';
 
 export async function handleGetCurrentShoppingCartDetails(
   query: GetCurrentShoppingCartDetails
 ): Promise<Result<CurrentShoppingCartDetails, SHIFT_DOES_NOT_EXIST>> {
   const result = await getSingleFromMongoDB<CurrentShoppingCartDetails>(
-    CurrentShoppingCartDetails,
+    CURRENT_SHOPPING_CART_DETAILS,
     (collection) =>
       collection.findOne({
-        cashRegisterId: query.data.cashRegisterId,
+        shoppingCartId: query.data.shoppingCartId,
       })
   );
 
