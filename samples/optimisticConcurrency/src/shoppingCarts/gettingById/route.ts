@@ -49,7 +49,7 @@ function mapRequestToQuery(
   return {
     type: 'get-current-shopping-cart-details',
     data: {
-      cashRegisterId: request.params.cashRegisterId,
+      shoppingCartId: request.params.shoppingCartId,
     },
   };
 }

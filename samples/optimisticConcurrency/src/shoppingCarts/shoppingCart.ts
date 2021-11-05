@@ -41,7 +41,7 @@ export type ShoppingCartEvent =
   | ShoppingCartConfirmed;
 
 export enum ShoppingCartStatus {
-  Pending = 1 << 0,
+  Opened = 1 << 0,
   Confirmed = 1 << 1,
   Cancelled = 1 << 2,
 
@@ -77,7 +77,7 @@ export function when(
         clientId: event.data.clientId,
         openedAt: event.data.openedAt,
         productItems: [],
-        status: ShoppingCartStatus.Pending,
+        status: ShoppingCartStatus.Opened,
       };
     case 'product-item-added-to-shopping-cart':
       return {
