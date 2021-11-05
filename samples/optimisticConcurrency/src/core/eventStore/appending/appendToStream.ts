@@ -5,7 +5,6 @@ import {
   Position,
 } from '@eventstore/db-client';
 import { AppendToStreamOptions } from '@eventstore/db-client/dist/streams';
-
 import { Event } from '../../events';
 import { failure, Result, success } from '../../primitives';
 

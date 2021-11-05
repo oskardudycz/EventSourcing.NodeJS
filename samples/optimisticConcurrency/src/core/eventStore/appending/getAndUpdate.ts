@@ -9,8 +9,7 @@ import { AppendResult, FAILED_TO_APPEND_EVENT } from '.';
 export async function getAndUpdate<
   CommandType extends Command,
   StreamEventType extends Event,
-  HANDLE_ERROR = never,
-  STORE_ERROR = never
+  HANDLE_ERROR = never
 >(
   handle: (
     currentEvents: StreamEvent<StreamEventType>[],
@@ -20,10 +19,7 @@ export async function getAndUpdate<
   streamName: string,
   command: CommandType
 ): Promise<
-  Result<
-    AppendResult,
-    STREAM_NOT_FOUND | FAILED_TO_APPEND_EVENT | HANDLE_ERROR | STORE_ERROR
-  >
+  Result<AppendResult, STREAM_NOT_FOUND | FAILED_TO_APPEND_EVENT | HANDLE_ERROR>
 > {
   const result = await readFromStream<StreamEventType>(eventStore, streamName);
 

@@ -14,6 +14,16 @@ export type ExecuteOnMongoDBOptions = {
   databaseName?: string;
 };
 
+export async function getSingleFromMongoDB<Document>(
+  collectionName: string,
+  callback: (collection: Collection<Document>) => Promise<Document | undefined>
+) {
+  return executeOnMongoDB<Document, Document | undefined>(
+    { collectionName },
+    callback
+  );
+}
+
 export async function executeOnMongoDB<Document, Result = void>(
   options: ExecuteOnMongoDBOptions,
   callback: (collection: Collection<Document>) => Promise<Result>

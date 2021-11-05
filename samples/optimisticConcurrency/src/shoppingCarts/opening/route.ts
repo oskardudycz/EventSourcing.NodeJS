@@ -2,10 +2,12 @@ import { NextFunction, Request, Response, Router } from 'express';
 import { isCommand } from '#core/commands';
 import { handleOpenShoppingCart, OpenShoppingCart } from './handler';
 import { getShoppingCartStreamName } from '../shoppingCart';
-import { isNotEmptyString } from '#core/validation';
+import { isNotEmptyString, ValidationError } from '#core/validation';
 import { toWeakETag } from '#core/http/requests';
 import { add } from '#core/eventStore/appending';
 import { getEventStore } from '#core/eventStore';
+import { assertUnreachable } from '#core/primitives';
+import { sendCreated } from '#core/http/responses';
 
 export const route = (router: Router) =>
   router.post(
@@ -15,8 +17,7 @@ export const route = (router: Router) =>
         const command = mapRequestToCommand(request);
 
         if (!isCommand(command)) {
-          next({ status: 400, message: command });
-          return;
+          return next({ status: 400, message: command });
         }
 
         const streamName = getShoppingCartStreamName(
@@ -35,12 +36,12 @@ export const route = (router: Router) =>
             case 'FAILED_TO_APPEND_EVENT':
               return next({ status: 412 });
             default:
-              return next({ status: 500 });
+              assertUnreachable(result.error);
           }
         }
 
         response.set('ETag', toWeakETag(result.value.nextExpectedRevision));
-        response.sendStatus(200);
+        sendCreated(response, command.data.shoppingCartId);
       } catch (error) {
         next(error);
       }
@@ -49,7 +50,7 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request
-): OpenShoppingCart | 'MISSING_CLIENT_ID' | 'MISSING_SHOPPING_CARD_ID' {
+): OpenShoppingCart | ValidationError {
   if (!isNotEmptyString(request.params.clientId)) {
     return 'MISSING_CLIENT_ID';
   }

@@ -1,9 +1,5 @@
 import { Event, StreamEvent } from '#core/events';
-
-export type ProductItem = Readonly<{
-  productId: string;
-  quantity: number;
-}>;
+import { ProductItem, addProductItem, removeProductItem } from './productItems';
 
 export type ShoppingCartOpened = Event<
   'shopping-cart-opened',
@@ -86,11 +82,18 @@ export function when(
     case 'product-item-added-to-shopping-cart':
       return {
         ...currentState,
-        productItems: [...currentState.productItems, event.data.productItem],
+        productItems: addProductItem(
+          currentState.productItems,
+          event.data.productItem
+        ),
       };
     case 'product-item-removed-from-shopping-cart':
       return {
         ...currentState,
+        productItems: removeProductItem(
+          currentState.productItems,
+          event.data.productItem
+        ),
       };
     case 'shopping-cart-confirmed':
       return {
@@ -107,3 +110,4 @@ export function when(
 }
 
 export type SHOPPING_CARD_CLOSED = 'SHOPPING_CARD_CLOSED';
+export type SHIFT_DOES_NOT_EXIST = 'SHIFT_DOES_NOT_EXIST';
