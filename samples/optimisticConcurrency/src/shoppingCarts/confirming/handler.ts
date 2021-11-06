@@ -18,7 +18,7 @@ export type ConfirmShoppingCart = Command<
   }
 >;
 
-export function handleConfirmShoppingCart(
+export function confirmShoppingCart(
   events: StreamEvent<ShoppingCartEvent>[],
   command: ConfirmShoppingCart
 ): Result<ShoppingCartConfirmed, SHOPPING_CARD_CLOSED> {

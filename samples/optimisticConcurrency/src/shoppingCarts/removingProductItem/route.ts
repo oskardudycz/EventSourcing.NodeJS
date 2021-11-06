@@ -8,18 +8,17 @@ import {
   ValidationError,
 } from '#core/validation';
 import {
-  getWeakETagFromIfMatch,
+  getWeakETagValueFromIfMatch,
   toWeakETag,
   WRONG_ETAG,
 } from '#core/http/requests';
 import { RemoveProductItemFromShoppingCart } from '.';
 import { getAndUpdate } from '#core/eventStore/appending';
-import { getEventStore } from '#core/eventStore';
 import { assertUnreachable } from '#core/primitives';
 
 export const route = (router: Router) =>
-  router.post(
-    '/clients/:clientId/shopping-carts/:shoppingCartId',
+  router.delete(
+    '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -34,7 +33,6 @@ export const route = (router: Router) =>
 
         const result = await getAndUpdate(
           handleRemovingProductItemFromShoppingCart,
-          getEventStore(),
           streamName,
           command
         );
@@ -76,7 +74,7 @@ function mapRequestToCommand(
     return 'INVALID_PRODUCT_ITEM_QUANTITY';
   }
 
-  const expectedRevision = getWeakETagFromIfMatch(request);
+  const expectedRevision = getWeakETagValueFromIfMatch(request);
 
   if (expectedRevision.isError) {
     return expectedRevision.error;

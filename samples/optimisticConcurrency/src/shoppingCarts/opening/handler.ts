@@ -10,7 +10,7 @@ export type OpenShoppingCart = Command<
   }
 >;
 
-export function handleOpenShoppingCart(
+export function openShoppingCart(
   command: OpenShoppingCart
 ): Result<ShoppingCartOpened> {
   return success({

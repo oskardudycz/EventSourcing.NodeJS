@@ -1,11 +1,10 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { isCommand } from '#core/commands';
-import { handleOpenShoppingCart, OpenShoppingCart } from './handler';
+import { openShoppingCart, OpenShoppingCart } from './handler';
 import { getShoppingCartStreamName } from '../shoppingCart';
 import { isNotEmptyString, ValidationError } from '#core/validation';
 import { toWeakETag } from '#core/http/requests';
 import { add } from '#core/eventStore/appending';
-import { getEventStore } from '#core/eventStore';
 import { assertUnreachable } from '#core/primitives';
 import { sendCreated } from '#core/http/responses';
 
@@ -24,12 +23,7 @@ export const route = (router: Router) =>
           command.data.shoppingCartId
         );
 
-        const result = await add(
-          handleOpenShoppingCart,
-          getEventStore(),
-          streamName,
-          command
-        );
+        const result = await add(openShoppingCart, streamName, command);
 
         if (result.isError) {
           switch (result.error) {

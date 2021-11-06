@@ -1,10 +1,10 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
 import { Event, StreamEvent } from '../../events';
 import { Command } from '../../commands';
 import { readFromStream, STREAM_NOT_FOUND } from '../reading';
 import { appendToStream } from '../appending';
 import { Result } from '../../primitives';
 import { AppendResult, FAILED_TO_APPEND_EVENT } from '.';
+import { getEventStore } from '..';
 
 export async function getAndUpdate<
   CommandType extends Command,
@@ -15,12 +15,13 @@ export async function getAndUpdate<
     currentEvents: StreamEvent<StreamEventType>[],
     command: CommandType
   ) => Result<StreamEventType, HANDLE_ERROR>,
-  eventStore: EventStoreDBClient,
   streamName: string,
   command: CommandType
 ): Promise<
   Result<AppendResult, STREAM_NOT_FOUND | FAILED_TO_APPEND_EVENT | HANDLE_ERROR>
 > {
+  const eventStore = getEventStore();
+
   const result = await readFromStream<StreamEventType>(eventStore, streamName);
 
   if (result.isError) return result;

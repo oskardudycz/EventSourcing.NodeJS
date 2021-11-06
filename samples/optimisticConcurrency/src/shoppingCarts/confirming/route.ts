@@ -1,20 +1,19 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { isCommand } from '#core/commands';
-import { handleConfirmShoppingCart } from './handler';
+import { confirmShoppingCart } from './handler';
 import { getShoppingCartStreamName } from '../shoppingCart';
 import { isNotEmptyString, ValidationError } from '#core/validation';
 import {
-  getWeakETagFromIfMatch,
+  getWeakETagValueFromIfMatch,
   toWeakETag,
   WRONG_ETAG,
 } from '#core/http/requests';
 import { ConfirmShoppingCart } from '.';
 import { getAndUpdate } from '#core/eventStore/appending';
-import { getEventStore } from '#core/eventStore';
 import { assertUnreachable } from '#core/primitives';
 
 export const route = (router: Router) =>
-  router.post(
+  router.put(
     '/clients/:clientId/shopping-carts/:shoppingCartId',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
@@ -29,8 +28,7 @@ export const route = (router: Router) =>
         );
 
         const result = await getAndUpdate(
-          handleConfirmShoppingCart,
-          getEventStore(),
+          confirmShoppingCart,
           streamName,
           command
         );
@@ -63,7 +61,7 @@ function mapRequestToCommand(
     return 'MISSING_SHOPPING_CARD_ID';
   }
 
-  const expectedRevision = getWeakETagFromIfMatch(request);
+  const expectedRevision = getWeakETagValueFromIfMatch(request);
 
   if (expectedRevision.isError) {
     return expectedRevision.error;
