@@ -1,10 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { isQuery } from '#core/queries';
 import { isNotEmptyString, ValidationError } from '#core/validation';
-import {
-  GetCurrentShoppingCartDetails,
-  handleGetCurrentShoppingCartDetails,
-} from './queryHandler';
+import { GetShoppingCartDetails, getShoppingCartDetails } from './queryHandler';
 import { toWeakETag } from '#core/http/requests';
 import { assertUnreachable } from '#core/primitives';
 
@@ -19,7 +16,7 @@ export const route = (router: Router) =>
           return next({ status: 400, message: query });
         }
 
-        const result = await handleGetCurrentShoppingCartDetails(query);
+        const result = await getShoppingCartDetails(query);
 
         if (result.isError) {
           switch (result.error) {
@@ -28,7 +25,6 @@ export const route = (router: Router) =>
             default:
               assertUnreachable(result.error);
           }
-          return;
         }
 
         response.set('ETag', toWeakETag(result.value.revision));
@@ -41,13 +37,13 @@ export const route = (router: Router) =>
 
 function mapRequestToQuery(
   request: Request
-): GetCurrentShoppingCartDetails | ValidationError {
-  if (!isNotEmptyString(request.params.cashRegisterId)) {
+): GetShoppingCartDetails | ValidationError {
+  if (!isNotEmptyString(request.params.shoppingCartId)) {
     return 'MISSING_SHOPPING_CARD_ID';
   }
 
   return {
-    type: 'get-current-shopping-cart-details',
+    type: 'get-shopping-cart-details',
     data: {
       shoppingCartId: request.params.shoppingCartId,
     },

@@ -8,15 +8,15 @@ import {
   ShoppingCartOpened,
   ShoppingCartStatus,
 } from '..';
-import { CurrentShoppingCartDetails, CURRENT_SHOPPING_CART_DETAILS } from '.';
+import { ShoppingCartDetails, SHOPPING_CART_DETAILS } from '.';
 import { addProductItem, removeProductItem } from '../productItems';
 
 export async function projectShoppingCartOpened(
   event: ShoppingCartOpened,
   streamRevision: bigint
 ): Promise<Result<true>> {
-  await executeOnMongoDB<CurrentShoppingCartDetails>(
-    { collectionName: CURRENT_SHOPPING_CART_DETAILS },
+  await executeOnMongoDB<ShoppingCartDetails>(
+    { collectionName: SHOPPING_CART_DETAILS },
     async (collection) => {
       await collection.insertOne({
         shoppingCartId: event.data.shoppingCartId,
@@ -36,8 +36,8 @@ export async function projectProductItemAddedToShoppingCart(
   event: ProductItemAddedToShoppingCart,
   streamRevision: bigint
 ): Promise<Result<true>> {
-  await executeOnMongoDB<CurrentShoppingCartDetails>(
-    { collectionName: CURRENT_SHOPPING_CART_DETAILS },
+  await executeOnMongoDB<ShoppingCartDetails>(
+    { collectionName: SHOPPING_CART_DETAILS },
     async (collection) => {
       const { productItems } = (await collection.findOne(
         {
@@ -67,8 +67,8 @@ export async function projectProductItemRemovedFromShoppingCart(
   event: ProductItemRemovedFromShoppingCart,
   streamRevision: bigint
 ): Promise<Result<true>> {
-  await executeOnMongoDB<CurrentShoppingCartDetails>(
-    { collectionName: CURRENT_SHOPPING_CART_DETAILS },
+  await executeOnMongoDB<ShoppingCartDetails>(
+    { collectionName: SHOPPING_CART_DETAILS },
     async (collection) => {
       const { productItems } = (await collection.findOne(
         {
@@ -101,8 +101,8 @@ export async function projectShoppingCartConfirmed(
   event: ShoppingCartConfirmed,
   streamRevision: bigint
 ): Promise<Result<true>> {
-  await executeOnMongoDB<CurrentShoppingCartDetails>(
-    { collectionName: CURRENT_SHOPPING_CART_DETAILS },
+  await executeOnMongoDB<ShoppingCartDetails>(
+    { collectionName: SHOPPING_CART_DETAILS },
     async (collection) => {
       await collection.updateOne(
         {
@@ -122,7 +122,7 @@ export async function projectShoppingCartConfirmed(
   return success(true);
 }
 
-type CurrentShoppingCartDetailsEvent =
+type ShoppingCartDetailsEvent =
   | ShoppingCartOpened
   | ProductItemAddedToShoppingCart
   | ProductItemRemovedFromShoppingCart
@@ -130,8 +130,8 @@ type CurrentShoppingCartDetailsEvent =
 
 function isCashierShoppingCartDetailsEvent(
   event: Event
-): event is CurrentShoppingCartDetailsEvent {
-  const eventType = (event as CurrentShoppingCartDetailsEvent).type;
+): event is ShoppingCartDetailsEvent {
+  const eventType = (event as ShoppingCartDetailsEvent).type;
 
   return (
     eventType === 'shopping-cart-opened' ||
@@ -141,7 +141,7 @@ function isCashierShoppingCartDetailsEvent(
   );
 }
 
-export async function projectToCurrentShoppingCartDetails(
+export async function projectToShoppingCartDetails(
   streamEvent: StreamEvent
 ): Promise<Result<boolean>> {
   const { event, streamRevision } = streamEvent;

@@ -2,20 +2,20 @@ import { Query } from '#core/queries';
 import { failure, Result, success } from '#core/primitives';
 import { getSingleFromMongoDB } from '#core/mongoDB';
 import { SHIFT_DOES_NOT_EXIST } from '../shoppingCart';
-import { CurrentShoppingCartDetails, CURRENT_SHOPPING_CART_DETAILS } from '.';
+import { ShoppingCartDetails, SHOPPING_CART_DETAILS } from '.';
 
-export type GetCurrentShoppingCartDetails = Query<
-  'get-current-shopping-cart-details',
+export type GetShoppingCartDetails = Query<
+  'get-shopping-cart-details',
   {
     shoppingCartId: string;
   }
 >;
 
-export async function handleGetCurrentShoppingCartDetails(
-  query: GetCurrentShoppingCartDetails
-): Promise<Result<CurrentShoppingCartDetails, SHIFT_DOES_NOT_EXIST>> {
-  const result = await getSingleFromMongoDB<CurrentShoppingCartDetails>(
-    CURRENT_SHOPPING_CART_DETAILS,
+export async function getShoppingCartDetails(
+  query: GetShoppingCartDetails
+): Promise<Result<ShoppingCartDetails, SHIFT_DOES_NOT_EXIST>> {
+  const result = await getSingleFromMongoDB<ShoppingCartDetails>(
+    SHOPPING_CART_DETAILS,
     (collection) =>
       collection.findOne({
         shoppingCartId: query.data.shoppingCartId,

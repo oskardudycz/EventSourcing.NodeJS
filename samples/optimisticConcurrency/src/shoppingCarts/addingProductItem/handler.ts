@@ -20,7 +20,7 @@ export type AddProductItemToShoppingCart = Command<
   }
 >;
 
-export function handleAddingProductItemToShoppingCart(
+export function addProductItemToShoppingCart(
   events: StreamEvent<ShoppingCartEvent>[],
   command: AddProductItemToShoppingCart
 ): Result<ProductItemAddedToShoppingCart, SHOPPING_CARD_CLOSED> {

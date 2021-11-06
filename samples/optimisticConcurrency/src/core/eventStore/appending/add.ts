@@ -1,8 +1,9 @@
 import { Event } from '../../events';
-import { EventStoreDBClient, NO_STREAM } from '@eventstore/db-client';
+import { NO_STREAM } from '@eventstore/db-client';
 import { Result } from '../../primitives';
 import { FAILED_TO_APPEND_EVENT } from '.';
 import { AppendResult, appendToStream } from './appendToStream';
+import { getEventStore } from '..';
 
 export async function add<
   Command,
@@ -11,7 +12,6 @@ export async function add<
   STORE_ERROR = never
 >(
   handle: (command: Command) => Result<StreamEvent, HANDLE_ERROR>,
-  eventStore: EventStoreDBClient,
   streamName: string,
   command: Command
 ): Promise<
@@ -23,7 +23,7 @@ export async function add<
 
   const newEvent = handleResult.value;
 
-  return appendToStream(eventStore, streamName, [newEvent], {
+  return appendToStream(getEventStore(), streamName, [newEvent], {
     expectedRevision: NO_STREAM,
   });
 }

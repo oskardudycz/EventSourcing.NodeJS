@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { isCommand } from '#core/commands';
-import { handleAddingProductItemToShoppingCart } from './handler';
+import { addProductItemToShoppingCart } from './handler';
 import { getShoppingCartStreamName } from '../shoppingCart';
 import {
   isNotEmptyString,
@@ -8,18 +8,17 @@ import {
   ValidationError,
 } from '#core/validation';
 import {
-  getWeakETagFromIfMatch,
+  getWeakETagValueFromIfMatch,
   toWeakETag,
   WRONG_ETAG,
 } from '#core/http/requests';
 import { AddProductItemToShoppingCart } from '.';
 import { getAndUpdate } from '#core/eventStore/appending';
-import { getEventStore } from '#core/eventStore';
 import { assertUnreachable } from '#core/primitives';
 
 export const route = (router: Router) =>
   router.post(
-    '/clients/:clientId/shopping-carts/:shoppingCartId',
+    '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -33,8 +32,7 @@ export const route = (router: Router) =>
         );
 
         const result = await getAndUpdate(
-          handleAddingProductItemToShoppingCart,
-          getEventStore(),
+          addProductItemToShoppingCart,
           streamName,
           command
         );
@@ -75,7 +73,7 @@ function mapRequestToCommand(
     return 'INVALID_PRODUCT_ITEM_QUANTITY';
   }
 
-  const expectedRevision = getWeakETagFromIfMatch(request);
+  const expectedRevision = getWeakETagValueFromIfMatch(request);
 
   if (expectedRevision.isError) {
     return expectedRevision.error;
@@ -84,9 +82,9 @@ function mapRequestToCommand(
   return {
     type: 'add-product-item-to-shopping-cart',
     data: {
-      shoppingCartId: request.body.shoppingCartId,
+      shoppingCartId: request.params.shoppingCartId,
       productItem: {
-        productId: request.params.productId,
+        productId: request.body.productId,
         quantity: request.body.quantity,
       },
     },

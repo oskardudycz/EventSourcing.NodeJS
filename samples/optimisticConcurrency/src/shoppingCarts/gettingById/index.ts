@@ -6,7 +6,7 @@ export type ProductItem = Readonly<{
   quantity: number;
 }>;
 
-export type CurrentShoppingCartDetails = Readonly<{
+export type ShoppingCartDetails = Readonly<{
   shoppingCartId: string;
   clientId: string;
   status: string;
@@ -16,4 +16,4 @@ export type CurrentShoppingCartDetails = Readonly<{
   revision: string;
 }>;
 
-export const CURRENT_SHOPPING_CART_DETAILS = 'currentShoppingCartDetails';
+export const SHOPPING_CART_DETAILS = 'shoppingCartDetails';
