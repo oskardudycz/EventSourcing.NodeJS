@@ -9,7 +9,7 @@ export async function expectStreamToNotExist(
     const isEmpty = await asyncIsEmpty(eventStore.readStream(streamName));
 
     expect(isEmpty).toBeFalsy();
-  } catch (error) {
+  } catch (error: any) {
     expect(error?.type).toBe(ErrorType.STREAM_NOT_FOUND);
   }
 }

@@ -43,7 +43,7 @@ export async function readFromStream<StreamEventType extends Event>(
     }
 
     return success(events);
-  } catch (error) {
+  } catch (error: any) {
     if (error.type == ErrorType.STREAM_NOT_FOUND) {
       return failure('STREAM_NOT_FOUND');
     }

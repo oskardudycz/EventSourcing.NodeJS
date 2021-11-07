@@ -19,7 +19,7 @@ export async function readStreamMetadata<
     if (!result.metadata) return failure('METADATA_NOT_FOUND');
 
     return success(result.metadata);
-  } catch (error) {
+  } catch (error: any) {
     if (error.type == ErrorType.STREAM_NOT_FOUND) {
       return failure('STREAM_NOT_FOUND');
     }
