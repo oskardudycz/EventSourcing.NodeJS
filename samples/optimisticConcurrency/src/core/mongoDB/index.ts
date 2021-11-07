@@ -16,9 +16,9 @@ export type ExecuteOnMongoDBOptions = {
 
 export async function getSingleFromMongoDB<Document>(
   collectionName: string,
-  callback: (collection: Collection<Document>) => Promise<Document | undefined>
-) {
-  return executeOnMongoDB<Document, Document | undefined>(
+  callback: (collection: Collection<Document>) => Promise<Document | null>
+): Promise<Document | null> {
+  return executeOnMongoDB<Document, Document | null>(
     { collectionName },
     callback
   );
@@ -27,7 +27,7 @@ export async function getSingleFromMongoDB<Document>(
 export async function executeOnMongoDB<Document, Result = void>(
   options: ExecuteOnMongoDBOptions,
   callback: (collection: Collection<Document>) => Promise<Result>
-) {
+): Promise<Result> {
   let mongo: MongoClient | undefined;
   try {
     mongo = getMongoDB();

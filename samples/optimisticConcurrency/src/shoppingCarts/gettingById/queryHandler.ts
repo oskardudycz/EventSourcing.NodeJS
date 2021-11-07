@@ -22,7 +22,7 @@ export async function getShoppingCartDetails(
       })
   );
 
-  if (result === undefined) {
+  if (result === null) {
     return failure('SHIFT_DOES_NOT_EXIST');
   }
 
