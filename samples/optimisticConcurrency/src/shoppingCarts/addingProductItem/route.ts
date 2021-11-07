@@ -65,7 +65,7 @@ function mapRequestToCommand(
     return 'MISSING_SHOPPING_CARD_ID';
   }
 
-  if (!isNotEmptyString(request.params.productId)) {
+  if (!isNotEmptyString(request.body.productId)) {
     return 'MISSING_PRODUCT_ID';
   }
 

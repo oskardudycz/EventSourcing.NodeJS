@@ -32,13 +32,18 @@ export class MongoDBContainer extends GenericContainer {
 export class StartedMongoDBContainer {
   constructor(private container: StartedTestContainer) {}
 
-  stop(
+  async stop(
     options?: Partial<{
       timeout: number;
       removeVolumes: boolean;
     }>
-  ): Promise<StoppedTestContainer> {
-    return this.container.stop(options);
+  ): Promise<StoppedTestContainer | undefined> {
+    try {
+      return await this.container.stop(options);
+    } catch (err) {
+      console.warn(`Failed to stop MongoDB container: ${err}`);
+      return undefined;
+    }
   }
 
   getConnectionString(): string {

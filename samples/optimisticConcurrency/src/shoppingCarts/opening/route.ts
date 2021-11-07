@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response, Router } from 'express';
+import { v4 as uuid } from 'uuid';
 import { isCommand } from '#core/commands';
 import { openShoppingCart, OpenShoppingCart } from './handler';
 import { getShoppingCartStreamName } from '../shoppingCart';
@@ -10,7 +11,7 @@ import { sendCreated } from '#core/http/responses';
 
 export const route = (router: Router) =>
   router.post(
-    '/clients/:clientId/shopping-carts/:shoppingCartId',
+    '/clients/:clientId/shopping-carts/',
     async function (request: Request, response: Response, next: NextFunction) {
       try {
         const command = mapRequestToCommand(request);
@@ -48,15 +49,12 @@ function mapRequestToCommand(
   if (!isNotEmptyString(request.params.clientId)) {
     return 'MISSING_CLIENT_ID';
   }
-  if (!isNotEmptyString(request.params.shoppingCartId)) {
-    return 'MISSING_SHOPPING_CARD_ID';
-  }
 
   return {
     type: 'open-shopping-cart',
     data: {
       clientId: request.body.clientId,
-      shoppingCartId: request.body.shoppingCartId,
+      shoppingCartId: uuid(),
     },
   };
 }

@@ -54,13 +54,18 @@ export class EventStoreDBContainer extends GenericContainer {
 export class StartedEventStoreDBContainer {
   constructor(private container: StartedTestContainer) {}
 
-  stop(
+  async stop(
     options?: Partial<{
       timeout: number;
       removeVolumes: boolean;
     }>
-  ): Promise<StoppedTestContainer> {
-    return this.container.stop(options);
+  ): Promise<StoppedTestContainer | undefined> {
+    try {
+      return await this.container.stop(options);
+    } catch (err) {
+      console.warn(`Failed to stop EventStoreDB container: ${err}`);
+      return undefined;
+    }
   }
 
   getConnectionString(): string {

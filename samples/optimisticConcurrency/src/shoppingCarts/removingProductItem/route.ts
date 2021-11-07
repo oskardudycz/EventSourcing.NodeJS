@@ -66,7 +66,7 @@ function mapRequestToCommand(
     return 'MISSING_SHOPPING_CARD_ID';
   }
 
-  if (!isNotEmptyString(request.params.productId)) {
+  if (!isNotEmptyString(request.body.productId)) {
     return 'MISSING_PRODUCT_ID';
   }
 
@@ -83,9 +83,9 @@ function mapRequestToCommand(
   return {
     type: 'remove-product-item-from-shopping-cart',
     data: {
-      shoppingCartId: request.body.shoppingCartId,
+      shoppingCartId: request.params.shoppingCartId,
       productItem: {
-        productId: request.params.productId,
+        productId: request.body.productId,
         quantity: request.body.quantity,
       },
     },
