@@ -1,5 +1,10 @@
-import { MongoClient, Collection } from 'mongodb';
+import { MongoClient, Collection, UpdateResult } from 'mongodb';
 import { config } from '#config';
+import {
+  DEFAULT_RETRY_OPTIONS,
+  RetryOptions,
+  retryPromise,
+} from '#core/http/requests';
 
 let mongoClient: MongoClient;
 let isOpened = false;
@@ -29,37 +34,63 @@ export async function disconnectFromMongoDB(): Promise<void> {
   return mongoClient.close();
 }
 
-export type ExecuteOnMongoDBOptions = {
-  collectionName: string;
-  databaseName?: string;
-};
+export type ExecuteOnMongoDBOptions =
+  | {
+      collectionName: string;
+      databaseName?: string;
+    }
+  | string;
 
-export async function getSingleFromMongoDB<Document>(
-  collectionName: string,
-  callback: (collection: Collection<Document>) => Promise<Document | null>
-): Promise<Document | null> {
-  return executeOnMongoDB<Document, Document | null>(
-    { collectionName },
-    callback
-  );
+export async function getMongoCollection<Document>(
+  options: ExecuteOnMongoDBOptions
+): Promise<Collection<Document>> {
+  const mongo = await getMongoDB();
+
+  const { databaseName, collectionName } =
+    typeof options !== 'string'
+      ? options
+      : { databaseName: undefined, collectionName: options };
+
+  const db = mongo.db(databaseName);
+  return db.collection<Document>(collectionName);
 }
 
-export async function executeOnMongoDB<Document, Result = void>(
-  options: ExecuteOnMongoDBOptions,
-  callback: (collection: Collection<Document>) => Promise<Result>
-): Promise<Result> {
-  let mongo: MongoClient | undefined;
-  try {
-    mongo = await getMongoDB();
+export type FAILED_TO_UPDATE_DOCUMENT = 'FAILED_TO_UPDATE_DOCUMENT';
 
-    const { databaseName, collectionName } = options;
+export async function assertUpdated(
+  update: Promise<UpdateResult>
+): Promise<UpdateResult> {
+  const result = await update;
 
-    const db = mongo.db(databaseName);
-    const collection = db.collection<Document>(collectionName);
-
-    return await callback(collection);
-  } catch (error) {
-    console.error(`Error while doing MongoDB call: ${error}`);
-    throw error;
+  if (result.modifiedCount === 0) {
+    throw 'FAILED_TO_UPDATE_DOCUMENT';
   }
+
+  return result;
+}
+
+export function retryIfNotUpdated(
+  update: Promise<UpdateResult>,
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+): Promise<UpdateResult> {
+  return retryPromise(() => assertUpdated(update), options);
+}
+
+export type DOCUMENT_NOT_FOUND = 'DOCUMENT_NOT_FOUND';
+
+export async function assertFound<T>(find: Promise<T | null>): Promise<T> {
+  const result = await find;
+
+  if (result === null) {
+    throw 'DOCUMENT_NOT_FOUND';
+  }
+
+  return result;
+}
+
+export function retryIfNotFound<T>(
+  find: Promise<T | null>,
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+): Promise<T> {
+  return retryPromise(() => assertFound(find), options);
 }
