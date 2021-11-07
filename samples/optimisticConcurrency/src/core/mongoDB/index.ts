@@ -1,12 +1,32 @@
 import { MongoClient, Collection } from 'mongodb';
 import { config } from '#config';
 
-export function getMongoDB(connectionString?: string): MongoClient {
-  if (!config.mongoDB.connectionString) {
+let mongoClient: MongoClient;
+let isOpened = false;
+
+export async function getMongoDB(
+  connectionString?: string
+): Promise<MongoClient> {
+  if (connectionString ?? !config.mongoDB.connectionString) {
     throw 'MongoDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
   }
 
-  return new MongoClient(config.mongoDB.connectionString);
+  if (!mongoClient) {
+    mongoClient = new MongoClient(
+      connectionString ?? config.mongoDB.connectionString
+    );
+    await mongoClient.connect();
+    isOpened = true;
+  }
+
+  return mongoClient;
+}
+
+export async function disconnectFromMongoDB(): Promise<void> {
+  if (!isOpened) return;
+
+  isOpened = false;
+  return mongoClient.close();
 }
 
 export type ExecuteOnMongoDBOptions = {
@@ -30,8 +50,7 @@ export async function executeOnMongoDB<Document, Result = void>(
 ): Promise<Result> {
   let mongo: MongoClient | undefined;
   try {
-    mongo = getMongoDB();
-    await mongo.connect();
+    mongo = await getMongoDB();
 
     const { databaseName, collectionName } = options;
 
@@ -42,9 +61,5 @@ export async function executeOnMongoDB<Document, Result = void>(
   } catch (error) {
     console.error(`Error while doing MongoDB call: ${error}`);
     throw error;
-  } finally {
-    if (mongo) {
-      await mongo.close();
-    }
   }
 }

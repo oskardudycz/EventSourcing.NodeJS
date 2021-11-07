@@ -47,3 +47,5 @@ export function getWeakETagValueFromIfMatch(
 
   return success(eTagValue);
 }
+
+export * from './retries';

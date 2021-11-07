@@ -10,9 +10,10 @@ import {
   MongoDBContainer,
   StartedMongoDBContainer,
 } from '#testing/mongoDB/mongoDBContainer';
-import { retry } from '#testing/retries';
+import { retryTest } from '#testing/retries';
 import app from '../../app';
 import { getSubscription } from '../../getSubscription';
+import { disconnectFromMongoDB } from '#core/mongoDB';
 
 describe('Full flow', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -45,6 +46,7 @@ describe('Full flow', () => {
     } catch (err) {
       console.warn(`Failed to unsubscribe: ${err}`);
     }
+    await disconnectFromMongoDB();
     await esdbContainer.stop();
     await mongodbContainer.stop();
   });
@@ -103,7 +105,7 @@ describe('Full flow', () => {
           currentRevision = response.headers['etag'];
         });
 
-      await retry(() =>
+      await retryTest(() =>
         request(app)
           .get(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
           .expect(200)

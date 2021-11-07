@@ -10,6 +10,7 @@ import {
 } from '..';
 import { ShoppingCartDetails, SHOPPING_CART_DETAILS } from '.';
 import { addProductItem, removeProductItem } from '../productItems';
+import { retryPromise } from '#core/http/requests';
 
 export async function projectShoppingCartOpened(
   event: ShoppingCartOpened,
@@ -38,26 +39,44 @@ export async function projectProductItemAddedToShoppingCart(
 ): Promise<Result<true>> {
   await executeOnMongoDB<ShoppingCartDetails>(
     { collectionName: SHOPPING_CART_DETAILS },
-    async (collection) => {
-      const { productItems } = (await collection.findOne(
-        {
-          shoppingCartId: event.data.shoppingCartId,
-        },
-        { projection: { productItems: 1 } }
-      ))!;
-
-      await collection.findOneAndUpdate(
-        {
-          shoppingCartId: event.data.shoppingCartId,
-        },
-        {
-          $set: {
-            productItems: addProductItem(productItems, event.data.productItem),
-            revision: streamRevision.toString(),
+    async (collection) =>
+      retryPromise(async () => {
+        const lastRevision = BigInt(streamRevision) - 1n;
+        const shoppingCart = await collection.findOne(
+          {
+            shoppingCartId: event.data.shoppingCartId,
+            revision: lastRevision.toString(),
           },
+          { projection: { productItems: 1 } }
+        );
+
+        if (shoppingCart === null) {
+          throw 'Shopping cart was not found or not up to date';
         }
-      );
-    }
+
+        const { productItems } = shoppingCart;
+
+        const result = await collection.updateOne(
+          {
+            shoppingCartId: event.data.shoppingCartId,
+            revision: lastRevision.toString(),
+          },
+          {
+            $set: {
+              productItems: addProductItem(
+                productItems,
+                event.data.productItem
+              ),
+              revision: streamRevision.toString(),
+            },
+          },
+          { upsert: false }
+        );
+
+        if (result.modifiedCount == 0) {
+          throw 'Failed to remove product item';
+        }
+      })
   );
 
   return success(true);
@@ -69,29 +88,44 @@ export async function projectProductItemRemovedFromShoppingCart(
 ): Promise<Result<true>> {
   await executeOnMongoDB<ShoppingCartDetails>(
     { collectionName: SHOPPING_CART_DETAILS },
-    async (collection) => {
-      const { productItems } = (await collection.findOne(
-        {
-          shoppingCartId: event.data.shoppingCartId,
-        },
-        { projection: { productItems: 1 } }
-      ))!;
-
-      await collection.findOneAndUpdate(
-        {
-          shoppingCartId: event.data.shoppingCartId,
-        },
-        {
-          $set: {
-            productItems: removeProductItem(
-              productItems,
-              event.data.productItem
-            ),
-            revision: streamRevision.toString(),
+    async (collection) =>
+      retryPromise(async () => {
+        const lastRevision = BigInt(streamRevision) - 1n;
+        const shoppingCart = await collection.findOne(
+          {
+            shoppingCartId: event.data.shoppingCartId,
+            revision: lastRevision.toString(),
           },
+          { projection: { productItems: 1 } }
+        );
+
+        if (shoppingCart === null) {
+          throw 'Shopping cart was not found or not up to date';
         }
-      );
-    }
+
+        const { productItems } = shoppingCart;
+
+        const result = await collection.updateOne(
+          {
+            shoppingCartId: event.data.shoppingCartId,
+            revision: lastRevision.toString(),
+          },
+          {
+            $set: {
+              productItems: removeProductItem(
+                productItems,
+                event.data.productItem
+              ),
+              revision: streamRevision.toString(),
+            },
+          },
+          { upsert: false }
+        );
+
+        if (result.modifiedCount == 0) {
+          throw 'Failed to remove product item';
+        }
+      })
   );
 
   return success(true);
@@ -103,20 +137,28 @@ export async function projectShoppingCartConfirmed(
 ): Promise<Result<true>> {
   await executeOnMongoDB<ShoppingCartDetails>(
     { collectionName: SHOPPING_CART_DETAILS },
-    async (collection) => {
-      await collection.updateOne(
-        {
-          shoppingCartId: event.data.shoppingCartId,
-        },
-        {
-          $set: {
-            confirmedAt: event.data.confirmedAt,
-            status: ShoppingCartStatus.Confirmed.toString(),
-            revision: streamRevision.toString(),
+    async (collection) =>
+      retryPromise(async () => {
+        const lastRevision = BigInt(streamRevision) - 1n;
+        const result = await collection.updateOne(
+          {
+            shoppingCartId: event.data.shoppingCartId,
+            revision: lastRevision.toString(),
           },
+          {
+            $set: {
+              confirmedAt: event.data.confirmedAt,
+              status: ShoppingCartStatus.Confirmed.toString(),
+              revision: streamRevision.toString(),
+            },
+          },
+          { upsert: false }
+        );
+
+        if (result.modifiedCount == 0) {
+          throw 'Failed to confirm shopping cart';
         }
-      );
-    }
+      })
   );
 
   return success(true);
