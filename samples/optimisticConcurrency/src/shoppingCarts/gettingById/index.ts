@@ -13,7 +13,7 @@ export type ShoppingCartDetails = Readonly<{
   productItems: ProductItem[];
   openedAt: Date;
   confirmedAt?: Date;
-  revision: string;
+  revision: number;
 }>;
 
 export const SHOPPING_CART_DETAILS = 'shoppingCartDetails';

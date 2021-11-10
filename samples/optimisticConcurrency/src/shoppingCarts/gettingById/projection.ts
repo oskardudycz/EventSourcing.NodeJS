@@ -19,7 +19,8 @@ import { addProductItem, removeProductItem } from '../productItems';
 export async function projectToShoppingCartDetails(
   streamEvent: StreamEvent
 ): Promise<Result<boolean>> {
-  const { event, streamRevision } = streamEvent;
+  const { event } = streamEvent;
+  const streamRevision = Number(streamEvent.streamRevision);
 
   if (!isCashierShoppingCartDetailsEvent(event)) {
     return success(false);
@@ -41,8 +42,8 @@ export async function projectToShoppingCartDetails(
 
 export async function projectShoppingCartOpened(
   event: ShoppingCartOpened,
-  streamRevision: bigint
-): Promise<Result<true>> {
+  streamRevision: number
+): Promise<Result<boolean>> {
   const shoppingCarts = await shoppingCartsCollection();
 
   await shoppingCarts.insertOne({
@@ -51,7 +52,7 @@ export async function projectShoppingCartOpened(
     status: ShoppingCartStatus.Opened.toString(),
     productItems: [],
     openedAt: event.data.openedAt,
-    revision: streamRevision.toString(),
+    revision: streamRevision,
   });
 
   return success(true);
@@ -59,31 +60,35 @@ export async function projectShoppingCartOpened(
 
 export async function projectProductItemAddedToShoppingCart(
   event: ProductItemAddedToShoppingCart,
-  streamRevision: bigint
-): Promise<Result<true>> {
+  streamRevision: number
+): Promise<Result<boolean>> {
   const shoppingCarts = await shoppingCartsCollection();
-  const lastRevision = streamRevision - 1n;
+  const lastRevision = streamRevision - 1;
 
-  const { productItems } = await retryIfNotFound(
+  const { productItems, revision } = await retryIfNotFound(
     shoppingCarts.findOne(
       {
         shoppingCartId: event.data.shoppingCartId,
-        revision: lastRevision.toString(),
+        revision: { $gte: lastRevision },
       },
-      { projection: { productItems: 1 } }
+      { projection: { productItems: 1, revision: 1 } }
     )
   );
+
+  if (revision > lastRevision) {
+    return success(false);
+  }
 
   await assertUpdated(
     shoppingCarts.updateOne(
       {
         shoppingCartId: event.data.shoppingCartId,
-        revision: lastRevision.toString(),
+        revision: lastRevision,
       },
       {
         $set: {
           productItems: addProductItem(productItems, event.data.productItem),
-          revision: streamRevision.toString(),
+          revision: streamRevision,
         },
       },
       { upsert: false }
@@ -95,31 +100,35 @@ export async function projectProductItemAddedToShoppingCart(
 
 export async function projectProductItemRemovedFromShoppingCart(
   event: ProductItemRemovedFromShoppingCart,
-  streamRevision: bigint
-): Promise<Result<true>> {
+  streamRevision: number
+): Promise<Result<boolean>> {
   const shoppingCarts = await shoppingCartsCollection();
-  const lastRevision = streamRevision - 1n;
+  const lastRevision = streamRevision - 1;
 
-  const { productItems } = await retryIfNotFound(
+  const { productItems, revision } = await retryIfNotFound(
     shoppingCarts.findOne(
       {
         shoppingCartId: event.data.shoppingCartId,
-        revision: lastRevision.toString(),
+        revision: { $gte: lastRevision },
       },
-      { projection: { productItems: 1 } }
+      { projection: { productItems: 1, revision: 1 } }
     )
   );
+
+  if (revision > lastRevision) {
+    return success(false);
+  }
 
   await assertUpdated(
     shoppingCarts.updateOne(
       {
         shoppingCartId: event.data.shoppingCartId,
-        revision: lastRevision.toString(),
+        revision: lastRevision,
       },
       {
         $set: {
           productItems: removeProductItem(productItems, event.data.productItem),
-          revision: streamRevision.toString(),
+          revision: streamRevision,
         },
       },
       { upsert: false }
@@ -131,23 +140,37 @@ export async function projectProductItemRemovedFromShoppingCart(
 
 export async function projectShoppingCartConfirmed(
   event: ShoppingCartConfirmed,
-  streamRevision: bigint
-): Promise<Result<true>> {
+  streamRevision: number
+): Promise<Result<boolean>> {
   const shoppingCarts = await shoppingCartsCollection();
 
-  const lastRevision = streamRevision - 1n;
+  const lastRevision = streamRevision - 1;
+
+  const { revision } = await retryIfNotFound(
+    shoppingCarts.findOne(
+      {
+        shoppingCartId: event.data.shoppingCartId,
+        revision: { $gte: lastRevision },
+      },
+      { projection: { revision: 1 } }
+    )
+  );
+
+  if (revision > lastRevision) {
+    return success(false);
+  }
 
   await retryIfNotUpdated(
     shoppingCarts.updateOne(
       {
         shoppingCartId: event.data.shoppingCartId,
-        revision: lastRevision.toString(),
+        revision: lastRevision,
       },
       {
         $set: {
           confirmedAt: event.data.confirmedAt,
           status: ShoppingCartStatus.Confirmed.toString(),
-          revision: streamRevision.toString(),
+          revision: streamRevision,
         },
       },
       { upsert: false }
