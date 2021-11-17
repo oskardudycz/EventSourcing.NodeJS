@@ -22,7 +22,7 @@ export async function getShoppingCartDetails(
     collection.findOne({
       shoppingCartId: query.data.shoppingCartId,
     })
-  );
+  ).withTimeout(1000);
 
   if (result === null) {
     return failure('SHIFT_DOES_NOT_EXIST');

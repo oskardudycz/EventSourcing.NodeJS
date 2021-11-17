@@ -47,24 +47,19 @@ export async function retryPromise<T = never>(
 
 declare global {
   interface Promise<T> {
-    /** Adds a timeout (in milliseconds) that will reject the promise when expired. */
-    withTimeout(milliseconds: number): Promise<T>;
+    withTimeout(timeout: number): Promise<T>;
   }
 }
 
-/** Adds a timeout (in milliseconds) that will reject the promise when expired. */
-Promise.prototype.withTimeout = function (milliseconds) {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(
-      () => reject(new Error('Timeout')),
-      milliseconds
-    );
-    return this.then((value) => {
-      clearTimeout(timeout);
-      resolve(value);
-    }).catch((exception) => {
-      clearTimeout(timeout);
-      reject(exception);
-    });
-  });
+export type TIMEOUT_ERROR = 'TIMEOUT_ERROR';
+
+Promise.prototype.withTimeout = function <T>(timeout: number) {
+  return Promise.race<T>([
+    this,
+    new Promise(function (_resolve, reject) {
+      setTimeout(function () {
+        reject('TIMEOUT_ERROR');
+      }, timeout);
+    }),
+  ]);
 };
