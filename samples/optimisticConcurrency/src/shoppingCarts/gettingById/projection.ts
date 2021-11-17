@@ -65,7 +65,7 @@ export async function projectProductItemAddedToShoppingCart(
   const shoppingCarts = await shoppingCartsCollection();
   const lastRevision = streamRevision - 1;
 
-  const { productItems, revision } = await retryIfNotFound(
+  const { productItems, revision } = await retryIfNotFound(() =>
     shoppingCarts.findOne(
       {
         shoppingCartId: event.data.shoppingCartId,
@@ -79,7 +79,7 @@ export async function projectProductItemAddedToShoppingCart(
     return success(false);
   }
 
-  await assertUpdated(
+  await assertUpdated(() =>
     shoppingCarts.updateOne(
       {
         shoppingCartId: event.data.shoppingCartId,
@@ -105,7 +105,7 @@ export async function projectProductItemRemovedFromShoppingCart(
   const shoppingCarts = await shoppingCartsCollection();
   const lastRevision = streamRevision - 1;
 
-  const { productItems, revision } = await retryIfNotFound(
+  const { productItems, revision } = await retryIfNotFound(() =>
     shoppingCarts.findOne(
       {
         shoppingCartId: event.data.shoppingCartId,
@@ -119,7 +119,7 @@ export async function projectProductItemRemovedFromShoppingCart(
     return success(false);
   }
 
-  await assertUpdated(
+  await assertUpdated(() =>
     shoppingCarts.updateOne(
       {
         shoppingCartId: event.data.shoppingCartId,
@@ -146,7 +146,7 @@ export async function projectShoppingCartConfirmed(
 
   const lastRevision = streamRevision - 1;
 
-  const { revision } = await retryIfNotFound(
+  const { revision } = await retryIfNotFound(() =>
     shoppingCarts.findOne(
       {
         shoppingCartId: event.data.shoppingCartId,
@@ -160,7 +160,7 @@ export async function projectShoppingCartConfirmed(
     return success(false);
   }
 
-  await retryIfNotUpdated(
+  await retryIfNotUpdated(() =>
     shoppingCarts.updateOne(
       {
         shoppingCartId: event.data.shoppingCartId,

@@ -10,7 +10,6 @@ import {
   MongoDBContainer,
   StartedMongoDBContainer,
 } from '#testing/mongoDB/mongoDBContainer';
-import { retryTest } from '#testing/retries';
 import app from '../../app';
 import { getSubscription } from '../../getSubscription';
 import { disconnectFromMongoDB } from '#core/mongoDB';
@@ -76,6 +75,11 @@ describe('Full flow', () => {
         });
 
       await request(app)
+        .get(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
+        .expect(200)
+        .expect('Content-Type', /json/);
+
+      await request(app)
         .post(
           `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`
         )
@@ -105,12 +109,10 @@ describe('Full flow', () => {
           currentRevision = response.headers['etag'];
         });
 
-      await retryTest(() =>
-        request(app)
-          .get(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
-          .expect(200)
-          .expect('Content-Type', /json/)
-      );
+      await request(app)
+        .get(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
+        .expect(200)
+        .expect('Content-Type', /json/);
     });
   });
 });

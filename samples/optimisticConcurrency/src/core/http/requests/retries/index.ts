@@ -3,13 +3,13 @@ import { sleep } from '#core/primitives';
 export type RetryOptions = Readonly<{
   maxRetries?: number;
   delay?: number;
-  isRetryAble?: (error: any) => boolean;
+  shouldRetry?: (error: any) => boolean;
 }>;
 
 export const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
   maxRetries: 5,
   delay: 100,
-  isRetryAble: () => true,
+  shouldRetry: () => true,
 };
 
 export async function retryPromise<T = never>(
@@ -17,7 +17,7 @@ export async function retryPromise<T = never>(
   options: RetryOptions = DEFAULT_RETRY_OPTIONS
 ): Promise<T> {
   let retryCount = 0;
-  const { maxRetries, delay, isRetryAble } = {
+  const { maxRetries, delay, shouldRetry } = {
     ...DEFAULT_RETRY_OPTIONS,
     ...options,
   };
@@ -26,7 +26,7 @@ export async function retryPromise<T = never>(
     try {
       return await callback();
     } catch (error) {
-      if (!isRetryAble(error) || retryCount == maxRetries) {
+      if (!shouldRetry(error) || retryCount == maxRetries) {
         console.error(`[retry] Exceeded max retry count, throwing: ${error}`);
         throw error;
       }
@@ -44,3 +44,27 @@ export async function retryPromise<T = never>(
     }
   } while (true);
 }
+
+declare global {
+  interface Promise<T> {
+    /** Adds a timeout (in milliseconds) that will reject the promise when expired. */
+    withTimeout(milliseconds: number): Promise<T>;
+  }
+}
+
+/** Adds a timeout (in milliseconds) that will reject the promise when expired. */
+Promise.prototype.withTimeout = function (milliseconds) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error('Timeout')),
+      milliseconds
+    );
+    return this.then((value) => {
+      clearTimeout(timeout);
+      resolve(value);
+    }).catch((exception) => {
+      clearTimeout(timeout);
+      reject(exception);
+    });
+  });
+};
