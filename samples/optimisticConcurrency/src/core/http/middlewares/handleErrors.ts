@@ -6,8 +6,14 @@ export function handleErrors(
   res: Response,
   _next: NextFunction
 ) {
-  return res.status(err?.status ?? 500).json({
+  return res.status(mapStatus(err)).json({
     status: 'error',
     message: err?.message,
   });
+}
+
+function mapStatus(error: any): number {
+  if (error === 'TIMEOUT_ERROR') return 504;
+
+  return error?.status ?? 500;
 }
