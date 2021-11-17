@@ -58,9 +58,9 @@ export async function getMongoCollection<Document>(
 export type FAILED_TO_UPDATE_DOCUMENT = 'FAILED_TO_UPDATE_DOCUMENT';
 
 export async function assertUpdated(
-  update: Promise<UpdateResult>
+  update: () => Promise<UpdateResult>
 ): Promise<UpdateResult> {
-  const result = await update;
+  const result = await update();
 
   if (result.modifiedCount === 0) {
     throw 'FAILED_TO_UPDATE_DOCUMENT';
@@ -70,7 +70,7 @@ export async function assertUpdated(
 }
 
 export function retryIfNotUpdated(
-  update: Promise<UpdateResult>,
+  update: () => Promise<UpdateResult>,
   options: RetryOptions = DEFAULT_RETRY_OPTIONS
 ): Promise<UpdateResult> {
   return retryPromise(() => assertUpdated(update), options);
@@ -78,8 +78,10 @@ export function retryIfNotUpdated(
 
 export type DOCUMENT_NOT_FOUND = 'DOCUMENT_NOT_FOUND';
 
-export async function assertFound<T>(find: Promise<T | null>): Promise<T> {
-  const result = await find;
+export async function assertFound<T>(
+  find: () => Promise<T | null>
+): Promise<T> {
+  const result = await find();
 
   if (result === null) {
     throw 'DOCUMENT_NOT_FOUND';
@@ -89,7 +91,7 @@ export async function assertFound<T>(find: Promise<T | null>): Promise<T> {
 }
 
 export function retryIfNotFound<T>(
-  find: Promise<T | null>,
+  find: () => Promise<T | null>,
   options: RetryOptions = DEFAULT_RETRY_OPTIONS
 ): Promise<T> {
   return retryPromise(() => assertFound(find), options);
