@@ -33,3 +33,24 @@ export type ShoppingCartEvent =
   | ProductItemAddedToShoppingCart
   | ProductItemRemovedFromShoppingCart
   | ShoppingCartConfirmed;
+
+//////////////////////////////////////
+/// Entity/State
+//////////////////////////////////////
+
+export type ShoppingCart = Readonly<{
+  id: string;
+  clientId: string;
+  status: ShoppingCartStatus;
+  productItems: ProductItem[];
+  openedAt: Date;
+  confirmedAt?: Date;
+}>;
+
+export enum ShoppingCartStatus {
+  Opened = 1,
+  Confirmed = 2,
+  Cancelled = 4,
+
+  Closed = Confirmed | Cancelled,
+}
