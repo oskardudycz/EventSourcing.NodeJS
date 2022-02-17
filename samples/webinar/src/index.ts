@@ -54,3 +54,29 @@ export enum ShoppingCartStatus {
 
   Closed = Confirmed | Cancelled,
 }
+
+//////////////////////////////////////
+/// Getting the state from events
+//////////////////////////////////////
+
+export function when(
+  _currentState: ShoppingCart,
+  _event: ShoppingCartEvent
+): ShoppingCart {
+  // currrent state + event = new state
+
+  throw 'Not implemented yet!';
+}
+
+export function aggregateStream<Entity, StreamEvents>(
+  events: StreamEvents[],
+  when: (currentState: Entity, event: StreamEvents) => Entity
+): Entity {
+  let currentState = <Entity>{};
+
+  for (const event of events) {
+    currentState = when(currentState, event);
+  }
+
+  return currentState;
+}
