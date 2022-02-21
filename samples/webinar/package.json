@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
   "dependencies": {
-    "@eventstore/db-client": "3.1.0",
+    "@eventstore/db-client": "file:libs/eventstore-db-client-3.2.0-alpha.1.tgz",
     "convict": "6.2.1",
     "dotenv": "16.0.0",
     "express": "4.17.3",
