@@ -45,7 +45,7 @@
     "dotenv": "16.0.0",
     "express": "4.17.3",
     "iter-tools-es": "^7.2.1",
-    "mongodb": "4.3.1",
+    "mongodb": "4.4.0",
     "validator": "13.7.0"
   },
   "devDependencies": {
