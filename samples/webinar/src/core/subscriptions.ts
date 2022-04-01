@@ -4,6 +4,7 @@ import {
   excludeSystemEvents,
   START,
 } from '@eventstore/db-client';
+import { finished, Readable } from 'stream';
 
 export type SubscriptionResolvedEvent = AllStreamResolvedEvent & {
   subscriptionId: string;
@@ -29,20 +30,19 @@ export const SubscriptionToAll =
       filter: excludeSystemEvents(),
     });
 
-    subscription
-      .on('data', async (resolvedEvent: AllStreamResolvedEvent) => {
+    finished(
+      subscription.on('data', async (resolvedEvent: AllStreamResolvedEvent) => {
         for (const handler of handlers) {
           await handler({ ...resolvedEvent, subscriptionId });
         }
-      })
-      .on('error', async (error) => {
+      }) as Readable,
+      (error) => {
+        if (!error) {
+          console.info(`Stopping subscription.`);
+          return;
+        }
         console.error(`Received error: ${error ?? 'UNEXPECTED ERROR'}.`);
-      })
-      .on('close', async () => {
-        console.info(`Subscription closed.`);
-      })
-      .on('end', () => {
-        console.info(`Received 'end' event. Stopping subscription.`);
-      });
+      }
+    );
     return subscription;
   };
