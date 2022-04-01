@@ -3,12 +3,8 @@
 //////////////////////////////////////
 
 import {
-  AppendResult,
   EventStoreDBClient,
   EventType,
-  jsonEvent,
-  JSONEventType,
-  NO_STREAM,
   RecordedEvent,
   ResolvedEvent,
   StreamingRead,
