@@ -1,0 +1,33 @@
+name: Samples - From CRUD to Event Sourcing
+
+on:
+  # run it on push to the default repository branch
+  push:
+    branches: [main]
+  # run it during pull request
+  pull_request:
+
+defaults:
+  run:
+    # relative path to the place where source code (with package.json) is located
+    working-directory: samples/from_crud_to_eventsourcing
+
+jobs:
+  build-and-test-code:
+    name: Build application code
+    # use system defined below in the tests matrix
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js Latest
+        uses: actions/setup-node@v3
+        with:
+          # use the node version defined in matrix above
+          node-version: 16.x
+      # install dependencies
+      - run: npm ci
+      # run linting (ESlint and Prettier)
+      - run: npm run lint
+      # run build
+      - run: npm run build:ts
