@@ -1,0 +1,55 @@
+{
+  "name": "eventsourcing.nodejs",
+  "version": "6.0.0",
+  "description": "Samples of Event Sourcing in JavaScript and TypeScript",
+  "scripts": {
+    "build": "run-s lint build:ts",
+    "build:ts": "tsc",
+    "build:ts:watch": "tsc  --watch",
+    "start": "ts-node -r tsconfig-paths/register ./src/index.ts",
+    "lint": "npm run lint:eslint && npm run lint:prettier",
+    "lint:prettier": "prettier --check \"**/**/!(*.d).{ts,json,md}\"",
+    "lint:eslint": "eslint **/*.ts",
+    "fix": "npm run fix:eslint && npm run fix:prettier",
+    "fix:prettier": "prettier --write \"**/**/!(*.d).{ts,json,md}\"",
+    "fix:eslint": "eslint **/*.ts --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oskardudycz/EventSourcing.NodeJS.git"
+  },
+  "keywords": [
+    "Event Sourcing"
+  ],
+  "author": "Oskar Dudycz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/oskardudycz/EventSourcing.NodeJS/issues"
+  },
+  "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
+  "dependencies": {
+    "@eventstore/db-client": "3.2.0",
+    "express": "4.17.3",
+    "mongodb": "4.4.0"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.13",
+    "@types/node": "16.11.6",
+    "@types/uuid": "8.3.1",
+    "@typescript-eslint/eslint-plugin": "5.12.0",
+    "@typescript-eslint/parser": "5.12.0",
+    "eslint": "7.32.0",
+    "eslint-config-prettier": "8.3.0",
+    "eslint-config-standard": "16.0.3",
+    "eslint-import-resolver-typescript": "2.5.0",
+    "eslint-plugin-import": "2.25.4",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "4.0.0",
+    "eslint-plugin-promise": "6.0.0",
+    "npm-run-all": "4.1.5",
+    "prettier": "2.5.1",
+    "ts-node": "10.5.0",
+    "tsconfig-paths": "3.12.0",
+    "typescript": "4.5.5"
+  }
+}
