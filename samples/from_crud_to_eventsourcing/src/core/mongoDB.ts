@@ -4,13 +4,6 @@
 
 import { MongoClient, Collection, ObjectId, UpdateResult } from 'mongodb';
 import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
-import { getEventStore } from './streams';
-import {
-  Checkpoint,
-  EventHandler,
-  SubscriptionResolvedEvent,
-  SubscriptionToAll,
-} from './subscriptions';
 
 let mongoClient: MongoClient;
 
@@ -96,45 +89,3 @@ export const retryIfNotUpdated = (
 ): Promise<UpdateResult> => {
   return retryPromise(() => assertUpdated(update), options);
 };
-
-//////////////////////////////////////
-/// MongoDB Checkpointing
-//////////////////////////////////////
-
-export const getCheckpointsCollection = () =>
-  getMongoCollection<Checkpoint>('checkpoints');
-
-export const loadCheckPointFromCollection = async (subscriptionId: string) => {
-  const checkpoints = await getCheckpointsCollection();
-
-  const checkpoint = await checkpoints.findOne({
-    _id: toObjectId(subscriptionId),
-  });
-
-  return checkpoint != null ? BigInt(checkpoint.position) : undefined;
-};
-
-export const storeCheckpointInCollection =
-  (handle: EventHandler) => async (event: SubscriptionResolvedEvent) => {
-    await handle(event);
-    const checkpoints = await getCheckpointsCollection();
-
-    await checkpoints.updateOne(
-      {
-        _id: toObjectId(event.subscriptionId),
-      },
-      {
-        $set: {
-          position: event.commitPosition!.toString(),
-        },
-      },
-      {
-        upsert: true,
-      }
-    );
-  };
-
-export const SubscriptionToAllWithMongoCheckpoints = SubscriptionToAll(
-  getEventStore(),
-  loadCheckPointFromCollection
-);

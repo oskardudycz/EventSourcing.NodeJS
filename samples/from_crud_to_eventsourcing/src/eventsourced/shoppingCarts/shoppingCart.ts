@@ -7,7 +7,7 @@ import {
   ResolvedEvent,
   StreamingRead,
 } from '@eventstore/db-client';
-import { StreamAggregator } from '#core/streams';
+import { StreamAggregator } from '#eventsourced/core/streams';
 import {
   addProductItem,
   assertProductItemExists,
