@@ -2,7 +2,7 @@ import { startAPI } from '#core/api';
 import {
   SubscriptionToAllWithMongoCheckpoints,
   storeCheckpointInCollection,
-} from '#core/mongoDB';
+} from '#eventsourced/core/subscriptions';
 import { router } from './shoppingCarts/routes';
 import { projectToShoppingCartItem } from './shoppingCarts/shoppingCartDetails';
 

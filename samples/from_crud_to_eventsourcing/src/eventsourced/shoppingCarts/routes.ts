@@ -1,12 +1,12 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { v4 as uuid } from 'uuid';
-import { create, update } from '#core/commandHandling';
+import { create, update } from '#eventsourced/core/commandHandling';
 import {
   toWeakETag,
   sendCreated,
   getExpectedRevisionFromETag,
 } from '#core/http';
-import { getEventStore } from '#core/streams';
+import { getEventStore } from '#eventsourced/core/streams';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
 import {
   toShoppingCartStreamName,

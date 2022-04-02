@@ -6,7 +6,7 @@
     "build": "run-s lint build:ts",
     "build:ts": "tsc",
     "build:ts:watch": "tsc  --watch",
-    "start": "ts-node -r tsconfig-paths/register ./src/index.ts",
+    "start:eventsourced": "ts-node -r tsconfig-paths/register ./src/eventsourced/index.ts",
     "lint": "npm run lint:eslint && npm run lint:prettier",
     "lint:prettier": "prettier --check \"**/**/!(*.d).{ts,json,md}\"",
     "lint:eslint": "eslint **/*.ts",

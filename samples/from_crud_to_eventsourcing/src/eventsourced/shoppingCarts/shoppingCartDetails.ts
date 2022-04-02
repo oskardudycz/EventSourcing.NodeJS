@@ -7,7 +7,7 @@ import {
   retryIfNotFound,
   retryIfNotUpdated,
   toObjectId,
-} from '../core/mongoDB';
+} from '../../core/mongoDB';
 import { SubscriptionResolvedEvent } from '../core/subscriptions';
 import { ProductItem, addProductItem, removeProductItem } from './productItem';
 import {

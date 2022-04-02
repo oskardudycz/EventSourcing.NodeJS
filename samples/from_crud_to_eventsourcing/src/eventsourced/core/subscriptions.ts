@@ -1,3 +1,4 @@
+import { getMongoCollection, toObjectId } from '#core/mongoDB';
 import {
   AllStreamResolvedEvent,
   EventStoreDBClient,
@@ -5,6 +6,7 @@ import {
   START,
 } from '@eventstore/db-client';
 import { finished, Readable } from 'stream';
+import { getEventStore } from './streams';
 
 export type SubscriptionResolvedEvent = AllStreamResolvedEvent & {
   subscriptionId: string;
@@ -46,3 +48,45 @@ export const SubscriptionToAll =
     );
     return subscription;
   };
+
+//////////////////////////////////////
+/// MongoDB Checkpointing
+//////////////////////////////////////
+
+export const getCheckpointsCollection = () =>
+  getMongoCollection<Checkpoint>('checkpoints');
+
+export const loadCheckPointFromCollection = async (subscriptionId: string) => {
+  const checkpoints = await getCheckpointsCollection();
+
+  const checkpoint = await checkpoints.findOne({
+    _id: toObjectId(subscriptionId),
+  });
+
+  return checkpoint != null ? BigInt(checkpoint.position) : undefined;
+};
+
+export const storeCheckpointInCollection =
+  (handle: EventHandler) => async (event: SubscriptionResolvedEvent) => {
+    await handle(event);
+    const checkpoints = await getCheckpointsCollection();
+
+    await checkpoints.updateOne(
+      {
+        _id: toObjectId(event.subscriptionId),
+      },
+      {
+        $set: {
+          position: event.commitPosition!.toString(),
+        },
+      },
+      {
+        upsert: true,
+      }
+    );
+  };
+
+export const SubscriptionToAllWithMongoCheckpoints = SubscriptionToAll(
+  getEventStore(),
+  loadCheckPointFromCollection
+);
