@@ -3,6 +3,8 @@
 
 # EventSourcing.NodeJS
 
+Tutorial, practical samples and other resources about Event Sourcing in NodeJS. See also my similar repositories for [.NET](https://github.com/oskardudycz/EventSourcing.NetCore) and [JVM](https://github.com/oskardudycz/EventSourcing.JVM).
+
 - [EventSourcing.NodeJS](#eventsourcingnodejs)
   - [Event Sourcing](#event-sourcing)
     - [What is Event Sourcing?](#what-is-event-sourcing)
@@ -11,6 +13,11 @@
     - [Event representation](#event-representation)
     - [Retrieving the current state from events](#retrieving-the-current-state-from-events)
     - [Event Store](#event-store)
+  - [Videos](#videos)
+    - [Introduction to Event Sourcing in TypeScript and NodeJS with EventStoreDB](#introduction-to-event-sourcing-in-typescript-and-nodejs-with-eventstoredb)
+    - [Let's build the worst Event Sourcing system!](#lets-build-the-worst-event-sourcing-system)
+    - [The Light and The Dark Side of the Event-Driven Design](#the-light-and-the-dark-side-of-the-event-driven-design)
+    - [Conversation with Yves Lorphelin about CQRS](#conversation-with-yves-lorphelin-about-cqrs)
   - [Articles](#articles)
   - [Samples](#samples)
   - [Node.js project configuration](#nodejs-project-configuration)
@@ -475,19 +482,47 @@ In the further samples, I'll use [EventStoreDB](https://developers.eventstore.co
 Read more in my article:
 -   📝 [What if I told you that Relational Databases are in fact Event Stores?](https://event-driven.io/en/relational_databases_are_event_stores/=event_sourcing_nodejs)
 
+## Videos
+
+### Introduction to Event Sourcing in TypeScript and NodeJS with EventStoreDB
+
+<a href="https://www.youtube.com/watch?v=5pc7abhle_Q" target="_blank"><img src="https://img.youtube.com/vi/5pc7abhle_Q/0.jpg" alt="Introduction to Event Sourcing in TypeScript and NodeJS with EventStoreDB" width="320" height="240" border="10" /></a>
+
+### Let's build the worst Event Sourcing system!
+
+<a href="https://www.youtube.com/watch?v=Lu-skMQ-vAw" target="_blank"><img src="https://img.youtube.com/vi/Lu-skMQ-vAw/0.jpg" alt="Let's build the worst Event Sourcing system!" width="320" height="240" border="10" /></a>
+
+### The Light and The Dark Side of the Event-Driven Design
+
+<a href="https://www.youtube.com/watch?v=0pYmuk0-N_4" target="_blank"><img src="https://img.youtube.com/vi/0pYmuk0-N_4/0.jpg" alt="The Light and The Dark Side of the Event-Driven Design" width="320" height="240" border="10" /></a>
+
+### Conversation with [Yves Lorphelin](https://github.com/ylorph/) about CQRS
+
+<a href="https://www.youtube.com/watch?v=D-3N2vQ7ADE" target="_blank"><img src="https://img.youtube.com/vi/D-3N2vQ7ADE/0.jpg" alt="Event Store Conversations: Yves Lorphelin talks to Oskar Dudycz about CQRS (EN)" width="320" height="240" border="10" /></a>
+
 ## Articles
 
 Read also more on the **Event Sourcing** and **CQRS** topics in my [blog](https://event-driven.io/?utm_source=event_sourcing_nodejs) posts:
 -   📝 [What's the difference between a command and an event?](https://event-driven.io/en/whats_the_difference_between_event_and_command/?utm_source=event_sourcing_nodejs)
 -   📝 [Events should be as small as possible, right?](https://event-driven.io/en/events_should_be_as_small_as_possible/?utm_source=event_sourcing_nodejs)
 -   📝 [How to get the current entity state from events?](https://event-driven.io/en/how_to_get_the_current_entity_state_in_event_sourcing/?utm_source=event_sourcing_nodejs)
+-   📝 [How to ensure uniqueness in Event Sourcing](https://event-driven.io/en/uniqueness-in-event-sourcing/?utm_source=event_sourcing_nodejs)
 -   📝 [Why a bank account is not the best example of Event Sourcing?](https://event-driven.io/en/bank_account_event_sourcing/?utm_source=event_sourcing_nodejs)
 -   📝 [How using events helps in a teams' autonomy](https://event-driven.io/en/how_using_events_help_in_teams_autonomy/?utm_source=event_sourcing_nodejs)
 -   📝 [How to (not) do the events versioning?](https://event-driven.io/en/how_to_do_event_versioning/?utm_source=event_sourcing_nodejs)
 -   📝 [CQRS facts and myths explained](https://event-driven.io/en/cqrs_facts_and_myths_explained/?utm_source=event_sourcing_nodejs)
 -   📝 [Can command return a value?](https://event-driven.io/en/can_command_return_a_value/?utm_source=event_sourcing_nodejs)
+-   📝 [How to slice the codebase effectively?](https://event-driven.io/en/how_to_slice_the_codebase_effectively/?utm_source=event_sourcing_nodejs)
+-   📝 [Generic does not mean Simple](https://event-driven.io/en/generic_does_not_mean_simple/?utm_source=event_sourcing_nodejs)-   📝 [How to use ETag header for optimistic concurrency](https://event-driven.io/en/how_to_use_etag_header_for_optimistic_concurrency/?utm_source=event_sourcing_nodejs)
+-   📝 [Dealing with Eventual Consistency and Idempotency in MongoDB projections](https://event-driven.io/en/dealing_with_eventual_consistency_and_idempotency_in_mongodb_projections/?utm_source=event_sourcing_nodejs)
+-   📝 [Long-polling, how to make our async API synchronous](https://event-driven.io/en/long_polling_and_eventual_consistency/?utm_source=event_sourcing_nodejs)
+-   📝 [A simple trick for idempotency handling in the Elastic Search read model](https://event-driven.io/en/simple_trick_for_idempotency_handling_in_elastic_search_readm_model/?utm_source=event_sourcing_nodejs)
+-   📝 [How to (not) do the events versioning?](https://event-driven.io/en/how_to_do_event_versioning/?utm_source=event_sourcing_nodejs)
+-   📝 [Simple patterns for events schema versioning](https://event-driven.io/en/simple_events_versioning_patterns/?utm_source=event_sourcing_nodejs)
 -   📝 [How to create projections of events for nested object structures?](https://event-driven.io/en/how_to_create_projections_of_events_for_nested_object_structures/?utm_source=event_sourcing_nodejs)
 -   📝 [How to scale projections in the event-driven systems?](https://event-driven.io/en/how_to_scale_projections_in_the_event_driven_systems/?utm_source=event_sourcing_nodejs)
+-   📝 [Immutable Value Objects are simpler and more useful than you think!](https://event-driven.io/en/immutable_value_objects/?utm_source=event_sourcing_nodejs)
+-   📝 [How using events helps in a teams' autonomy](https://event-driven.io/en/how_using_events_help_in_teams_autonomy/?utm_source=event_sourcing_nodejs)
 -   📝 [What texting your Ex has to do with Event-Driven Design?](https://event-driven.io/en/what_texting_ex_has_to_do_with_event_driven_design/?utm_source=event_sourcing_nodejs)
 -   📝 [What if I told you that Relational Databases are in fact Event Stores?](https://event-driven.io/en/relational_databases_are_event_stores/?utm_source=event_sourcing_nodejs)
 -   📝 [Optimistic concurrency for pessimistic times](https://event-driven.io/en/optimistic_concurrency_for_pessimistic_times/?utm_source=event_sourcing_nodejs)
@@ -497,6 +532,7 @@ Read also more on the **Event Sourcing** and **CQRS** topics in my [blog](https:
 ## Samples
 
 1. Simple Event Sourcing sample: [samples/simple](./samples/simple).
+2. Basic CQRS with Event Sourcing and projections building read models: [samples/webinar](./samples/webinar).
 ## Node.js project configuration
 
 ### General configuration
