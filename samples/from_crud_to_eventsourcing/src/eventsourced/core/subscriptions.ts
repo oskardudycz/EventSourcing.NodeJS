@@ -1,4 +1,4 @@
-import { getMongoCollection, toObjectId } from '#core/mongoDB';
+import { getMongoCollection, toObjectId } from '#core/postgres';
 import {
   AllStreamResolvedEvent,
   EventStoreDBClient,

@@ -9,6 +9,7 @@ import {
   ResolvedEvent,
   StreamingRead,
 } from '@eventstore/db-client';
+import { config } from '#config';
 
 export type ApplyEvent<Entity, E extends EventType> = (
   currentState: Entity | undefined,
@@ -37,12 +38,16 @@ export const StreamAggregator =
 
 let eventStore: EventStoreDBClient;
 
-export const getEventStore = (connectionString?: string) => {
+export function getEventStore(): EventStoreDBClient {
+  if (!config.eventStoreDB.connectionString) {
+    throw 'EventStoreDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
+  }
+
   if (!eventStore) {
     eventStore = EventStoreDBClient.connectionString(
-      connectionString ?? 'esdb://localhost:2113?tls=false'
+      config.eventStoreDB.connectionString
     );
   }
 
   return eventStore;
-};
+}

@@ -12,7 +12,9 @@
     "lint:eslint": "eslint **/*.ts",
     "fix": "npm run fix:eslint && npm run fix:prettier",
     "fix:prettier": "prettier --write \"**/**/!(*.d).{ts,json,md}\"",
-    "fix:eslint": "eslint **/*.ts --fix"
+    "fix:eslint": "eslint **/*.ts --fix",
+    "crud:migrate": "pg-migrations apply --database postgres://postgres:Password12!@localhost:5432/postgres --directory ./src/crud/migrations/",
+    "eventsourced:migrate": "pg-migrations apply --database postgres://postgres:Password12!@localhost:5432/postgres --directory ./src/eventsourced/migrations/ --ignore-error migration_file_edited"
   },
   "repository": {
     "type": "git",
@@ -28,11 +30,18 @@
   },
   "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
   "dependencies": {
+    "@databases/pg": "5.4.1",
+    "@databases/pg-schema-cli": "4.3.0",
+    "@databases/pg-typed": "4.3.0",
     "@eventstore/db-client": "3.2.0",
+    "convict": "6.2.2",
+    "dotenv": "16.0.0",
+    "dotenv-cli": "5.1.0",
     "express": "4.17.3",
     "mongodb": "4.4.0"
   },
   "devDependencies": {
+    "@databases/pg-migrations": "^5.0.1",
     "@types/express": "4.17.13",
     "@types/node": "16.11.6",
     "@types/uuid": "8.3.1",
