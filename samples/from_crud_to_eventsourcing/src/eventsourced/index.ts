@@ -1,8 +1,8 @@
 import { startAPI } from '#core/api';
 import { getPostgres } from '#core/postgres';
 import {
-  SubscriptionToAllWithPostgresCheckpoints,
   storeCheckpointInPostgres,
+  SubscriptionToAllWithPostgresCheckpoints,
 } from '#eventsourced/core/subscriptions';
 import { router } from './shoppingCarts/routes';
 import { projectToShoppingCartItem } from './shoppingCarts/shoppingCartDetails';
@@ -31,6 +31,6 @@ startAPI(router);
 
 (async () => {
   await SubscriptionToAllWithPostgresCheckpoints('sub_shopping_carts', [
-    storeCheckpointInPostgres(projectToShoppingCartItem),
+    storeCheckpointInPostgres([projectToShoppingCartItem]),
   ]);
 })();

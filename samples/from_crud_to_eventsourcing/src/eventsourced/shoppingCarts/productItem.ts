@@ -5,7 +5,7 @@
 import { ShoppingCartErrors } from './shoppingCart';
 
 export interface ProductItem {
-  productId: string;
+  productId: number;
   quantity: number;
 }
 
@@ -52,7 +52,7 @@ export const removeProductItem = (
 
 export const findProductItem = (
   productItems: ProductItem[],
-  productId: string
+  productId: number
 ): ProductItem | undefined => {
   return productItems.find((pi) => pi.productId === productId);
 };

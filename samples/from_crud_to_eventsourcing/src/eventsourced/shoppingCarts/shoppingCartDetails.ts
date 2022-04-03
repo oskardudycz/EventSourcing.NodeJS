@@ -4,9 +4,11 @@
 
 import { getPostgres } from '#core/postgres';
 import { SubscriptionResolvedEvent } from '#eventsourced/core/subscriptions';
-import { carts, cartItems } from '../db';
+import { sql, Transaction } from '@databases/pg';
+import { cartItems, carts } from '../db';
 import {
   isCashierShoppingCartEvent,
+  ProductItemAddedToShoppingCart,
   ShoppingCartErrors,
   ShoppingCartOpened,
   ShoppingCartStatus,
@@ -16,6 +18,7 @@ export const getShoppingCarts = () => carts(getPostgres());
 export const getShoppingCartItemss = () => cartItems(getPostgres());
 
 export const projectToShoppingCartItem = (
+  db: Transaction,
   resolvedEvent: SubscriptionResolvedEvent
 ): Promise<void> => {
   if (
@@ -29,9 +32,9 @@ export const projectToShoppingCartItem = (
 
   switch (event.type) {
     case 'shopping-cart-opened':
-      return projectShoppingCartOpened(event, streamRevision);
+      return projectShoppingCartOpened(db, event, streamRevision);
     case 'product-item-added-to-shopping-cart':
-      return Promise.resolve(); // projectProductItemAddedToShoppingCart(event, streamRevision);
+      return projectProductItemAddedToShoppingCart(db, event, streamRevision);
     case 'product-item-removed-from-shopping-cart':
       return Promise.resolve(); // projectProductItemRemovedFromShoppingCart(event, streamRevision);
     case 'shopping-cart-confirmed':
@@ -44,10 +47,11 @@ export const projectToShoppingCartItem = (
 };
 
 export const projectShoppingCartOpened = async (
+  db: Transaction,
   event: ShoppingCartOpened,
   streamRevision: number
 ): Promise<void> => {
-  const shoppingCarts = getShoppingCarts();
+  const shoppingCarts = carts(db);
 
   await shoppingCarts.insertOrIgnore({
     sessionId: event.data.shoppingCartId,
@@ -74,51 +78,61 @@ export const projectShoppingCartOpened = async (
   });
 };
 
-// export const projectProductItemAddedToShoppingCart = async (
-//   event: ProductItemAddedToShoppingCart,
-//   streamRevision: number
-// ): Promise<void> => {
-//   // const shoppingCarts = getShoppingCarts();
-//   // const lastRevision = streamRevision - 1;
+export const projectProductItemAddedToShoppingCart = async (
+  db: Transaction,
+  event: ProductItemAddedToShoppingCart,
+  streamRevision: number
+): Promise<void> => {
+  const {
+    shoppingCartId,
+    productItem: { productId, quantity },
+    addedAt,
+  } = event.data;
 
-//   // const { revision } = await retryIfNotFound(() =>
-//   //   shoppingCarts.findOne({
-//   //     id: event.data.shoppingCartId,
-//   //     revision: { $gte: lastRevision },
-//   //   })
-//   // );
+  const { wasApplied, cartId } = await wasAlreadyApplied(
+    db,
+    shoppingCartId,
+    streamRevision
+  );
 
-//   // if (revision > lastRevision) {
-//   //   return;
-//   // }
+  if (wasApplied) {
+    return;
+  }
 
-//   const result = await getPostgres().task(async (db) => {
-//     var shoppingCarts = carts(db);
+  const shoppingCartsItems = cartItems(db);
 
-//     const revision =
+  // TODO: extend with SKU
+  const sku = 'NOT_REAL_SKU';
+  const price = 123;
+  const discount = 0;
 
-//     const resultA = await db.query(sql`SELECT 1 + 1 AS a`);
-//     const resultB = await db.query(sql`SELECT 1 + 1 AS b`);
+  await db.query(
+    sql`
+    INSERT INTO ${shoppingCartsItems.tableId} as ci ("cartId", "productId", "sku", "price", "discount", "quantity", "createdAt")
+    VALUES (${cartId}, ${productId}, ${sku}, ${price}, ${discount}, ${quantity}, ${addedAt})
+    ON CONFLICT ("cartId", "productId") DO UPDATE SET "quantity" = EXCLUDED."quantity" + ci."quantity";
+    `
+  );
+};
 
-//     return resultA[0].a + resultB[0].b;
-//   });
+const wasAlreadyApplied = async (
+  db: Transaction,
+  shoppingCartId: string,
+  streamRevision: number
+) => {
+  const shoppingCarts = carts(db);
+  const result = await shoppingCarts.update(
+    { sessionId: shoppingCartId, revision: streamRevision - 1 },
+    {
+      revision: streamRevision,
+    }
+  );
 
-//   retryIfNotUpdated(() =>
-//     shoppingCarts.updateOne(
-//       {
-//         _id: toObjectId(event.data.shoppingCartId),
-//         revision: lastRevision,
-//       },
-//       {
-//         $set: {
-//           productItems: addProductItem(productItems, event.data.productItem),
-//           revision: streamRevision,
-//         },
-//       },
-//       { upsert: false }
-//     )
-//   );
-// };
+  return {
+    wasApplied: result.length === 0,
+    cartId: result.length > 0 ? result[0].id : undefined,
+  };
+};
 
 // export const projectProductItemRemovedFromShoppingCart = async (
 //   event: ProductItemRemovedFromShoppingCart,
