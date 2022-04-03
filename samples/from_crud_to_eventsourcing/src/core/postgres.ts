@@ -9,12 +9,19 @@ import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
 let db: ConnectionPool;
 
 export const getPostgres = (): ConnectionPool => {
-  if (!config.postgres.connectionString) {
-    throw 'Postgres connection string not set. Please define "DATABASE_URL" environment variable';
-  }
-
   if (!db) {
-    db = createConnectionPool(config.postgres.connectionString);
+    if (!config.postgres.connectionString) {
+      throw 'Postgres connection string not set. Please define "DATABASE_URL" environment variable';
+    }
+
+    if (!config.postgres.schemaName) {
+      throw 'Postgres schema name string not set. Please define "DATABASE_SCHEMA" environment variable';
+    }
+
+    db = createConnectionPool({
+      connectionString: config.postgres.connectionString,
+      schema: config.postgres.schemaName,
+    });
   }
 
   return db;

@@ -25,6 +25,12 @@ const convictConfig = convict({
       arg: 'DATABASE_URL',
       env: 'DATABASE_URL',
     },
+    schemaName: {
+      format: String,
+      default: 'postgres',
+      arg: 'DATABASE_SCHEMA',
+      env: 'DATABASE_SCHEMA',
+    },
   },
 });
 

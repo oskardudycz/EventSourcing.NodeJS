@@ -47,6 +47,8 @@ export const SubscriptionToAll =
         console.error(`Received error: ${error ?? 'UNEXPECTED ERROR'}.`);
       }
     );
+    console.info('Subscription is running');
+
     return subscription;
   };
 
