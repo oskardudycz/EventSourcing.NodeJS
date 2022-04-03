@@ -11,9 +11,11 @@ import {
 import {
   addProductItem,
   assertProductItemExists,
+  PricedProductItem,
   ProductItem,
   removeProductItem,
 } from './productItem';
+import { User } from './user';
 
 //////////////////////////////////////
 /// Events
@@ -23,7 +25,6 @@ export type ShoppingCartOpened = JSONEventType<
   'shopping-cart-opened',
   {
     shoppingCartId: string;
-    clientId: string;
     openedAt: string;
   }
 >;
@@ -32,7 +33,7 @@ export type ProductItemAddedToShoppingCart = JSONEventType<
   'product-item-added-to-shopping-cart',
   {
     shoppingCartId: string;
-    productItem: ProductItem;
+    productItem: PricedProductItem;
     addedAt: string;
   }
 >;
@@ -41,7 +42,7 @@ export type ProductItemRemovedFromShoppingCart = JSONEventType<
   'product-item-removed-from-shopping-cart',
   {
     shoppingCartId: string;
-    productItem: ProductItem;
+    productItem: PricedProductItem;
     removedAt: string;
   }
 >;
@@ -50,6 +51,13 @@ export type ShoppingCartConfirmed = JSONEventType<
   'shopping-cart-confirmed',
   {
     shoppingCartId: string;
+    user: User;
+
+    additionalInfo: {
+      content?: string;
+      line1?: string;
+      line2?: string;
+    };
     confirmedAt: string;
   }
 >;
@@ -73,9 +81,9 @@ export const enum ShoppingCartStatus {
 
 export interface ShoppingCart {
   id: string;
-  clientId: string;
+  userId?: string;
   status: ShoppingCartStatus;
-  productItems: ProductItem[];
+  productItems: PricedProductItem[];
   openedAt: Date;
   confirmedAt?: Date;
 }
@@ -96,6 +104,7 @@ export const enum ShoppingCartErrors {
   OPENED_EXISTING_CART = 'OPENED_EXISTING_CART',
   CART_IS_ALREADY_CLOSED = 'CART_IS_ALREADY_CLOSED',
   CART_NOT_FOUND = 'CART_NOT_FOUND',
+  USER_DOES_NOT_EXISTS = 'USER_DOES_NOT_EXISTS',
   PRODUCT_ITEM_NOT_FOUND = 'PRODUCT_ITEM_NOT_FOUND',
   UNKNOWN_EVENT_TYPE = 'UNKNOWN_EVENT_TYPE',
 }
@@ -124,7 +133,6 @@ export const getShoppingCart = StreamAggregator<
     if (currentState != null) throw ShoppingCartErrors.OPENED_EXISTING_CART;
     return {
       id: event.data.shoppingCartId,
-      clientId: event.data.clientId,
       openedAt: new Date(event.data.openedAt),
       productItems: [],
       status: ShoppingCartStatus.Opened,
@@ -169,18 +177,15 @@ export const getShoppingCart = StreamAggregator<
 
 export type OpenShoppingCart = {
   shoppingCartId: string;
-  clientId: string;
 };
 
 export const openShoppingCart = ({
   shoppingCartId,
-  clientId,
 }: OpenShoppingCart): ShoppingCartOpened => {
   return {
     type: 'shopping-cart-opened',
     data: {
       shoppingCartId,
-      clientId,
       openedAt: new Date().toJSON(),
     },
   };
@@ -196,6 +201,7 @@ export type AddProductItemToShoppingCart = {
 };
 
 export const addProductItemToShoppingCart = async (
+  getPricedProduct: (productItem: ProductItem) => Promise<PricedProductItem>,
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId, productItem }: AddProductItemToShoppingCart
 ): Promise<ProductItemAddedToShoppingCart> => {
@@ -203,11 +209,13 @@ export const addProductItemToShoppingCart = async (
 
   assertShoppingCartIsNotClosed(shoppingCart);
 
+  const pricedProductItem = await getPricedProduct(productItem);
+
   return {
     type: 'product-item-added-to-shopping-cart',
     data: {
       shoppingCartId,
-      productItem,
+      productItem: pricedProductItem,
       addedAt: new Date().toJSON(),
     },
   };
@@ -230,13 +238,16 @@ export const removeProductItemFromShoppingCart = async (
 
   assertShoppingCartIsNotClosed(shoppingCart);
 
-  assertProductItemExists(shoppingCart.productItems, productItem);
+  const current = assertProductItemExists(
+    shoppingCart.productItems,
+    productItem
+  );
 
   return {
     type: 'product-item-removed-from-shopping-cart',
     data: {
       shoppingCartId,
-      productItem,
+      productItem: { ...current, quantity: productItem.quantity },
       removedAt: new Date().toJSON(),
     },
   };
@@ -248,20 +259,35 @@ export const removeProductItemFromShoppingCart = async (
 
 export type ConfirmShoppingCart = {
   shoppingCartId: string;
+  userId: number;
+  additionalInfo: {
+    content?: string;
+    line1?: string;
+    line2?: string;
+  };
 };
 
 export const confirmShoppingCart = async (
+  getUserData: (userId: number) => Promise<User | undefined>,
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId }: ConfirmShoppingCart
+  { shoppingCartId, additionalInfo, userId }: ConfirmShoppingCart
 ): Promise<ShoppingCartConfirmed> => {
   const shoppingCart = await getShoppingCart(events);
 
   assertShoppingCartIsNotClosed(shoppingCart);
 
+  const user = await getUserData(userId);
+
+  if (!user) {
+    throw ShoppingCartErrors.USER_DOES_NOT_EXISTS;
+  }
+
   return {
     type: 'shopping-cart-confirmed',
     data: {
       shoppingCartId,
+      user,
+      additionalInfo,
       confirmedAt: new Date().toJSON(),
     },
   };
