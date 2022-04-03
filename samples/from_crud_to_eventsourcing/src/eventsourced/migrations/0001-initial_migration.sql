@@ -2,10 +2,9 @@ CREATE SCHEMA "ecommerce";
 
 CREATE TABLE "ecommerce"."cart"
 (
-    "id"         BIGSERIAL,
+    "id"         BIGSERIAL    PRIMARY KEY,
     "userId"     BIGINT       NULL     DEFAULT NULL,
     "sessionId"  VARCHAR(100) NOT NULL,
-    "token"      VARCHAR(100) NOT NULL,
     "status"     SMALLINT     NOT NULL DEFAULT 0,
     "firstName"  VARCHAR(50)  NULL     DEFAULT NULL,
     "middleName" VARCHAR(50)  NULL     DEFAULT NULL,
@@ -19,24 +18,21 @@ CREATE TABLE "ecommerce"."cart"
     "country"    VARCHAR(50)  NULL     DEFAULT NULL,
     "createdAt"  DATE         NOT NULL,
     "updatedAt"  DATE         NULL     DEFAULT NULL,
-    "content"    TEXT         NULL     DEFAULT NULL,
-    PRIMARY KEY ("id")
+    "content"    TEXT         NULL     DEFAULT NULL
 );
 
 CREATE TABLE "ecommerce"."cart_item"
 (
-    "id"        BIGSERIAL,
+    "id"        BIGSERIAL    PRIMARY KEY,
     "productId" BIGINT       NOT NULL,
     "cartId"    BIGINT       NOT NULL,
     "sku"       VARCHAR(100) NOT NULL,
     "price"     FLOAT        NOT NULL DEFAULT 0,
     "discount"  FLOAT        NOT NULL DEFAULT 0,
     "quantity"  SMALLINT     NOT NULL DEFAULT 0,
-    "active"    BOOLEAN      NOT NULL DEFAULT FALSE,
     "createdAt" DATE         NOT NULL,
     "updatedAt" DATE         NULL     DEFAULT NULL,
     "content"   TEXT         NULL     DEFAULT NULL,
-    PRIMARY KEY ("id"),
     CONSTRAINT "fk_cart_item_cart"
         FOREIGN KEY("cartId")
         REFERENCES "ecommerce"."cart" ("id")

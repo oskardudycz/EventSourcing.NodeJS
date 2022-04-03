@@ -14,6 +14,8 @@
     "fix:prettier": "prettier --write \"**/**/!(*.d).{ts,json,md}\"",
     "fix:eslint": "eslint **/*.ts --fix",
     "crud:migrate": "pg-migrations apply --database postgres://postgres:Password12!@localhost:5432/postgres --directory ./src/crud/migrations/",
+    "crud:generate": "npx @databases/pg-schema-cli --database postgres://postgres:Password12!@localhost:5432/postgres --schemaName ecommerce --directory src/crud/db/__generated__",
+    "eventsourced:generate": "npx @databases/pg-schema-cli --database postgres://postgres:Password12!@localhost:5432/postgres --schemaName ecommerce --directory src/eventsourced/db/__generated__",
     "eventsourced:migrate": "pg-migrations apply --database postgres://postgres:Password12!@localhost:5432/postgres --directory ./src/eventsourced/migrations/ --ignore-error migration_file_edited"
   },
   "repository": {
@@ -33,7 +35,7 @@
     "@databases/pg": "5.4.1",
     "@databases/pg-schema-cli": "4.3.0",
     "@databases/pg-typed": "4.3.0",
-    "@eventstore/db-client": "3.2.0",
+    "@eventstore/db-client": "3.3.0",
     "convict": "6.2.2",
     "dotenv": "16.0.0",
     "dotenv-cli": "5.1.0",
@@ -41,7 +43,8 @@
     "mongodb": "4.4.0"
   },
   "devDependencies": {
-    "@databases/pg-migrations": "^5.0.1",
+    "@databases/pg-migrations": "5.0.1",
+    "@types/convict": "6.1.1",
     "@types/express": "4.17.13",
     "@types/node": "16.11.6",
     "@types/uuid": "8.3.1",

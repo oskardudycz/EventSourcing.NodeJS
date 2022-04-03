@@ -4,7 +4,7 @@
 
 import createConnectionPool, { ConnectionPool } from '@databases/pg';
 import { config } from '#config';
-// import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
+import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
 
 let db: ConnectionPool;
 
@@ -27,65 +27,49 @@ export type ExecuteOnMongoDBOptions =
     }
   | string;
 
-// export const getMongoCollection = async <Document>(
-//   options: ExecuteOnMongoDBOptions
-// ): Promise<Collection<Document>> => {
-//   const mongo = await getMongoDB();
+export const enum PostgresErrors {
+  FAILED_TO_UPDATE_ROW = 'FAILED_TO_UPDATE_ROW',
+  ROW_NOT_FOUND = 'ROW_NOT_FOUND',
+}
 
-//   const { databaseName, collectionName } =
-//     typeof options !== 'string'
-//       ? options
-//       : { databaseName: undefined, collectionName: options };
+export const assertUpdated = async <T>(
+  update: () => Promise<T[]>
+): Promise<T[]> => {
+  const result = await update();
 
-//   const db = mongo.db(databaseName);
-//   return db.collection<Document>(collectionName);
-// };
+  if (result.length === 0) {
+    throw PostgresErrors.FAILED_TO_UPDATE_ROW;
+  }
 
-// export const toObjectId = (id: string) => id as unknown as ObjectId;
+  return result;
+};
 
-// export const enum MongoDBErrors {
-//   FAILED_TO_UPDATE_DOCUMENT = 'FAILED_TO_UPDATE_DOCUMENT',
-//   DOCUMENT_NOT_FOUND = 'DOCUMENT_NOT_FOUND',
-// }
+export const assertFound = async <T>(
+  find: () => Promise<T | null>
+): Promise<T> => {
+  const result = await find();
 
-// export const assertUpdated = async (
-//   update: () => Promise<UpdateResult>
-// ): Promise<UpdateResult> => {
-//   const result = await update();
+  if (result === null) {
+    throw PostgresErrors.ROW_NOT_FOUND;
+  }
 
-//   if (result.modifiedCount === 0) {
-//     throw MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT;
-//   }
+  return result;
+};
 
-//   return result;
-// };
+//////////////////////////////////////
+/// Retries
+//////////////////////////////////////
 
-// export const assertFound = async <T>(
-//   find: () => Promise<T | null>
-// ): Promise<T> => {
-//   const result = await find();
+export const retryIfNotFound = <T>(
+  find: () => Promise<T | null>,
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+): Promise<T> => {
+  return retryPromise(() => assertFound(find), options);
+};
 
-//   if (result === null) {
-//     throw MongoDBErrors.DOCUMENT_NOT_FOUND;
-//   }
-
-//   return result;
-// };
-
-// //////////////////////////////////////
-// /// Retries
-// //////////////////////////////////////
-
-// export const retryIfNotFound = <T>(
-//   find: () => Promise<T | null>,
-//   options: RetryOptions = DEFAULT_RETRY_OPTIONS
-// ): Promise<T> => {
-//   return retryPromise(() => assertFound(find), options);
-// };
-
-// export const retryIfNotUpdated = (
-//   update: () => Promise<UpdateResult>,
-//   options: RetryOptions = DEFAULT_RETRY_OPTIONS
-// ): Promise<UpdateResult> => {
-//   return retryPromise(() => assertUpdated(update), options);
-// };
+export const retryIfNotUpdated = <T>(
+  update: () => Promise<T[]>,
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+): Promise<T[]> => {
+  return retryPromise(() => assertUpdated(update), options);
+};

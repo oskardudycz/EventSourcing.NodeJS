@@ -1,8 +1,8 @@
 import { startAPI } from '#core/api';
 import { getPostgres } from '#core/postgres';
 import {
-  SubscriptionToAllWithMongoCheckpoints,
-  storeCheckpointInCollection,
+  SubscriptionToAllWithPostgresCheckpoints,
+  storeCheckpointInPostgres,
 } from '#eventsourced/core/subscriptions';
 import { router } from './shoppingCarts/routes';
 import { projectToShoppingCartItem } from './shoppingCarts/shoppingCartDetails';
@@ -30,7 +30,7 @@ startAPI(router);
 //////////////////////////////////////////////////////////
 
 (async () => {
-  await SubscriptionToAllWithMongoCheckpoints('sub_shopping_carts', [
-    storeCheckpointInCollection(projectToShoppingCartItem),
+  await SubscriptionToAllWithPostgresCheckpoints('sub_shopping_carts', [
+    storeCheckpointInPostgres(projectToShoppingCartItem),
   ]);
 })();
