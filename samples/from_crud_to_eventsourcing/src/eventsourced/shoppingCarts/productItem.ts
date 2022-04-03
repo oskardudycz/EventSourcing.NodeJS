@@ -9,10 +9,18 @@ export interface ProductItem {
   quantity: number;
 }
 
+export interface PricedProductItem {
+  productId: number;
+  quantity: number;
+  sku: string;
+  price: number;
+  discount: number;
+}
+
 export const addProductItem = (
-  productItems: ProductItem[],
-  newProductItem: ProductItem
-): ProductItem[] => {
+  productItems: PricedProductItem[],
+  newProductItem: PricedProductItem
+): PricedProductItem[] => {
   const { productId, quantity } = newProductItem;
 
   const currentProductItem = findProductItem(productItems, productId);
@@ -20,7 +28,7 @@ export const addProductItem = (
   if (!currentProductItem) return [...productItems, newProductItem];
 
   const newQuantity = currentProductItem.quantity + quantity;
-  const mergedProductItem = { productId, quantity: newQuantity };
+  const mergedProductItem = { ...currentProductItem, quantity: newQuantity };
 
   return productItems.map((pi) =>
     pi.productId === productId ? mergedProductItem : pi
@@ -28,9 +36,9 @@ export const addProductItem = (
 };
 
 export const removeProductItem = (
-  productItems: ProductItem[],
-  newProductItem: ProductItem
-): ProductItem[] => {
+  productItems: PricedProductItem[],
+  newProductItem: PricedProductItem
+): PricedProductItem[] => {
   const { productId, quantity } = newProductItem;
 
   const currentProductItem = assertProductItemExists(
@@ -43,7 +51,7 @@ export const removeProductItem = (
   if (newQuantity === 0)
     return productItems.filter((pi) => pi.productId !== productId);
 
-  const mergedProductItem = { productId, quantity: newQuantity };
+  const mergedProductItem = { ...currentProductItem, quantity: newQuantity };
 
   return productItems.map((pi) =>
     pi.productId === productId ? mergedProductItem : pi
@@ -51,16 +59,16 @@ export const removeProductItem = (
 };
 
 export const findProductItem = (
-  productItems: ProductItem[],
+  productItems: PricedProductItem[],
   productId: number
-): ProductItem | undefined => {
+): PricedProductItem | undefined => {
   return productItems.find((pi) => pi.productId === productId);
 };
 
 export const assertProductItemExists = (
-  productItems: ProductItem[],
+  productItems: PricedProductItem[],
   { productId, quantity }: ProductItem
-): ProductItem => {
+): PricedProductItem => {
   const current = findProductItem(productItems, productId);
 
   if (!current || current.quantity < quantity) {
@@ -68,4 +76,15 @@ export const assertProductItemExists = (
   }
 
   return current;
+};
+
+export const getPricedProductItem = (productItem: ProductItem) => {
+  const pricedItem: PricedProductItem = {
+    ...productItem,
+    discount: 0,
+    price: 100,
+    sku: 'SKU',
+  };
+
+  return Promise.resolve(pricedItem);
 };

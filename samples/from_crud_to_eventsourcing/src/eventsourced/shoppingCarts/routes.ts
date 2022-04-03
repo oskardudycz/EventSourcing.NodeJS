@@ -3,18 +3,29 @@ import {
   sendCreated,
   toWeakETag,
 } from '#core/http';
-import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
+import { getPostgres } from '#core/postgres';
+import {
+  assertNotEmptyString,
+  assertPositiveNumber,
+  assertStringOrUndefined,
+} from '#core/validation';
 import { create, update } from '#eventsourced/core/commandHandling';
 import { getEventStore } from '#eventsourced/core/streams';
 import { NextFunction, Request, Response, Router } from 'express';
 import { v4 as uuid } from 'uuid';
+import { carts } from '../db';
+import { getPricedProductItem } from './productItem';
 import {
+  AddProductItemToShoppingCart,
   addProductItemToShoppingCart,
+  ConfirmShoppingCart,
   confirmShoppingCart,
   openShoppingCart,
   removeProductItemFromShoppingCart,
+  ShoppingCartEvent,
   toShoppingCartStreamName,
 } from './shoppingCart';
+import { getUserData } from './user';
 
 //////////////////////////////////////
 /// Routes
@@ -24,17 +35,17 @@ export const router = Router();
 
 // Open Shopping cart
 router.post(
-  '/clients/:clientId/shopping-carts/',
+  '/v2/shopping-carts/:shoppingCartId?',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
-      const shoppingCartId = request.body.sessionId ?? uuid();
+      const shoppingCartId =
+        assertStringOrUndefined(request.params.shoppingCartId) ?? uuid();
       const streamName = toShoppingCartStreamName(shoppingCartId);
 
       const result = await create(getEventStore(), openShoppingCart)(
         streamName,
         {
           shoppingCartId,
-          clientId: assertNotEmptyString(request.params.clientId),
         }
       );
 
@@ -46,11 +57,9 @@ router.post(
   }
 );
 
-// TODO: Add Pattern matching here
-
 // Add Product Item
 router.post(
-  '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
+  '/v2/shopping-carts/:shoppingCartId/product-items',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCartId = assertNotEmptyString(
@@ -59,9 +68,11 @@ router.post(
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromETag(request);
 
-      const result = await update(
-        getEventStore(),
-        addProductItemToShoppingCart
+      const result = await update<
+        AddProductItemToShoppingCart,
+        ShoppingCartEvent
+      >(getEventStore(), (events, command) =>
+        addProductItemToShoppingCart(getPricedProductItem, events, command)
       )(
         streamName,
         {
@@ -84,7 +95,7 @@ router.post(
 
 // Remove Product Item
 router.delete(
-  '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
+  '/v2/shopping-carts/:shoppingCartId/product-items',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCartId = assertNotEmptyString(
@@ -118,7 +129,7 @@ router.delete(
 
 // Confirm Shopping Cart
 router.put(
-  '/clients/:clientId/shopping-carts/:shoppingCartId',
+  '/v2/users/:userId/shopping-carts/:shoppingCartId',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCartId = assertNotEmptyString(
@@ -127,10 +138,19 @@ router.put(
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromETag(request);
 
-      const result = await update(getEventStore(), confirmShoppingCart)(
+      const result = await update<ConfirmShoppingCart, ShoppingCartEvent>(
+        getEventStore(),
+        (events, command) => confirmShoppingCart(getUserData, events, command)
+      )(
         streamName,
         {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+          userId: assertPositiveNumber(request.params.userId),
+          additionalInfo: {
+            content: assertStringOrUndefined(request.body.content),
+            line1: assertStringOrUndefined(request.body.line1),
+            line2: assertStringOrUndefined(request.body.line2),
+          },
         },
         expectedRevision
       );
@@ -143,25 +163,25 @@ router.put(
   }
 );
 
-// router.get(
-//   '/clients/:clientId/shopping-carts/:shoppingCartId',
-//   async (request: Request, response: Response, next: NextFunction) => {
-//     try {
-//       const collection = await getShoppingCarts();
+router.get(
+  '/v2/shopping-carts/:shoppingCartId',
+  async (request: Request, response: Response, next: NextFunction) => {
+    try {
+      const shoppingCarts = carts(getPostgres());
 
-//       const result = await collection.findOne({
-//         shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
-//       });
+      const result = await shoppingCarts.findOne({
+        sessionId: assertNotEmptyString(request.params.shoppingCartId),
+      });
 
-//       if (result === null) {
-//         response.sendStatus(404);
-//         return;
-//       }
+      if (result === null) {
+        response.sendStatus(404);
+        return;
+      }
 
-//       response.set('ETag', toWeakETag(result.revision));
-//       response.send(result);
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
-// );
+      response.set('ETag', toWeakETag(result.revision));
+      response.send(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+);
