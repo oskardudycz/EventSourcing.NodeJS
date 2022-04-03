@@ -13,7 +13,7 @@ import { create, update } from '#eventsourced/core/commandHandling';
 import { getEventStore } from '#eventsourced/core/streams';
 import { NextFunction, Request, Response, Router } from 'express';
 import { v4 as uuid } from 'uuid';
-import { carts } from '../db';
+import { cartItems, carts } from '../db';
 import { getPricedProductItem } from './productItem';
 import {
   AddProductItemToShoppingCart,
@@ -168,6 +168,7 @@ router.get(
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCarts = carts(getPostgres());
+      const shoppingCartItems = cartItems(getPostgres());
 
       const result = await shoppingCarts.findOne({
         sessionId: assertNotEmptyString(request.params.shoppingCartId),
@@ -178,8 +179,17 @@ router.get(
         return;
       }
 
+      const items = await shoppingCartItems
+        .find({
+          cartId: result.id,
+        })
+        .all();
+
       response.set('ETag', toWeakETag(result.revision));
-      response.send(result);
+      response.send({
+        ...result,
+        items,
+      });
     } catch (error) {
       next(error);
     }
