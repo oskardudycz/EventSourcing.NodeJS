@@ -42,6 +42,7 @@ export type ProductItemRemovedFromShoppingCart = JSONEventType<
   {
     shoppingCartId: string;
     productItem: ProductItem;
+    removedAt: string;
   }
 >;
 
@@ -236,6 +237,7 @@ export const removeProductItemFromShoppingCart = async (
     data: {
       shoppingCartId,
       productItem,
+      removedAt: new Date().toJSON(),
     },
   };
 };

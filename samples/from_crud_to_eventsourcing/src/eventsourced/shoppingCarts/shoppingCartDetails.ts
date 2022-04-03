@@ -9,6 +9,7 @@ import { cartItems, carts } from '../db';
 import {
   isCashierShoppingCartEvent,
   ProductItemAddedToShoppingCart,
+  ProductItemRemovedFromShoppingCart,
   ShoppingCartErrors,
   ShoppingCartOpened,
   ShoppingCartStatus,
@@ -36,7 +37,11 @@ export const projectToShoppingCartItem = (
     case 'product-item-added-to-shopping-cart':
       return projectProductItemAddedToShoppingCart(db, event, streamRevision);
     case 'product-item-removed-from-shopping-cart':
-      return Promise.resolve(); // projectProductItemRemovedFromShoppingCart(event, streamRevision);
+      return projectProductItemRemovedFromShoppingCart(
+        db,
+        event,
+        streamRevision
+      );
     case 'shopping-cart-confirmed':
       return Promise.resolve(); // projectShoppingCartConfirmed(event, streamRevision);
     default: {
@@ -62,7 +67,6 @@ export const projectShoppingCartOpened = async (
     // city?: (string) | null
     // content?: (string) | null
     // country?: (string) | null
-    // createdAt: Date
     // email?: (string) | null
     // firstName?: (string) | null
     // lastName?: (string) | null
@@ -72,7 +76,6 @@ export const projectShoppingCartOpened = async (
     // mobile?: (string) | null
     // province?: (string) | null
     // status?: number
-    // token: string
     // updatedAt?: (Date) | null
     // userId: number | null,
   });
@@ -92,12 +95,11 @@ export const projectProductItemAddedToShoppingCart = async (
   const { wasApplied, cartId } = await wasAlreadyApplied(
     db,
     shoppingCartId,
+    new Date(addedAt),
     streamRevision
   );
 
-  if (wasApplied) {
-    return;
-  }
+  if (wasApplied) return;
 
   const shoppingCartsItems = cartItems(db);
 
@@ -110,7 +112,41 @@ export const projectProductItemAddedToShoppingCart = async (
     sql`
     INSERT INTO ${shoppingCartsItems.tableId} as ci ("cartId", "productId", "sku", "price", "discount", "quantity", "createdAt")
     VALUES (${cartId}, ${productId}, ${sku}, ${price}, ${discount}, ${quantity}, ${addedAt})
-    ON CONFLICT ("cartId", "productId") DO UPDATE SET "quantity" = EXCLUDED."quantity" + ci."quantity";
+    ON CONFLICT ("cartId", "productId") DO UPDATE SET "quantity" = EXCLUDED."quantity" + ci."quantity", "updatedAt" = ${addedAt};
+    `
+  );
+};
+
+export const projectProductItemRemovedFromShoppingCart = async (
+  db: Transaction,
+  event: ProductItemRemovedFromShoppingCart,
+  streamRevision: number
+): Promise<void> => {
+  const {
+    shoppingCartId,
+    productItem: { productId, quantity },
+    removedAt,
+  } = event.data;
+
+  const { wasApplied, cartId } = await wasAlreadyApplied(
+    db,
+    shoppingCartId,
+    new Date(removedAt),
+    streamRevision
+  );
+
+  if (wasApplied) return;
+
+  const shoppingCartsItems = cartItems(db);
+
+  await db.query(
+    sql`
+    UPDATE ${shoppingCartsItems.tableId}
+    SET "quantity" = "quantity" - ${quantity}, "updatedAt" = ${removedAt}
+    WHERE "cartId" = ${cartId} AND "productId" = ${productId};
+    
+    DELETE FROM ${shoppingCartsItems.tableId}
+    WHERE "cartId" = ${cartId} AND "productId" = ${productId} AND "quantity" = 0;
     `
   );
 };
@@ -118,6 +154,7 @@ export const projectProductItemAddedToShoppingCart = async (
 const wasAlreadyApplied = async (
   db: Transaction,
   shoppingCartId: string,
+  updatedAt: Date,
   streamRevision: number
 ) => {
   const shoppingCarts = carts(db);
@@ -125,6 +162,7 @@ const wasAlreadyApplied = async (
     { sessionId: shoppingCartId, revision: streamRevision - 1 },
     {
       revision: streamRevision,
+      updatedAt,
     }
   );
 
@@ -133,45 +171,6 @@ const wasAlreadyApplied = async (
     cartId: result.length > 0 ? result[0].id : undefined,
   };
 };
-
-// export const projectProductItemRemovedFromShoppingCart = async (
-//   event: ProductItemRemovedFromShoppingCart,
-//   streamRevision: number
-// ): Promise<void> => {
-//   const shoppingCarts = await getShoppingCarts();
-//   const lastRevision = streamRevision - 1;
-
-//   const { productItems, revision } = await retryIfNotFound(() =>
-//     shoppingCarts.findOne(
-//       {
-//         _id: toObjectId(event.data.shoppingCartId),
-//         revision: { $gte: lastRevision },
-//       },
-//       {
-//         projection: { productItems: 1, revision: 1 },
-//       }
-//     )
-//   );
-//   if (revision > lastRevision) {
-//     return;
-//   }
-
-//   await retryIfNotUpdated(() =>
-//     shoppingCarts.updateOne(
-//       {
-//         _id: toObjectId(event.data.shoppingCartId),
-//         revision: lastRevision,
-//       },
-//       {
-//         $set: {
-//           productItems: removeProductItem(productItems, event.data.productItem),
-//           revision: streamRevision,
-//         },
-//       },
-//       { upsert: false }
-//     )
-//   );
-// };
 
 // export const projectShoppingCartConfirmed = async (
 //   event: ShoppingCartConfirmed,
