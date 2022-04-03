@@ -7,6 +7,7 @@ export const enum ValidationErrors {
   NOT_A_STRING_OR_UNDEFINED = 'NOT_A_STRING_OR_UNDEFINED',
   NOT_A_POSITIVE_NUMBER = 'NOT_A_POSITIVE_NUMBER',
   NOT_AN_UNSIGNED_BIGINT = 'NOT_AN_UNSIGNED_BIGINT',
+  NOT_AN_ARRAY = 'NOT_AN_ARRAY',
 }
 
 export const assertNotEmptyString = (value: any): string => {
@@ -36,4 +37,11 @@ export const assertUnsignedBigInt = (value: string): bigint => {
     throw ValidationErrors.NOT_AN_UNSIGNED_BIGINT;
   }
   return number;
+};
+
+export const assertArray = (value: any): [] => {
+  if (!Array.isArray(value)) {
+    throw ValidationErrors.NOT_AN_ARRAY;
+  }
+  return value as [];
 };

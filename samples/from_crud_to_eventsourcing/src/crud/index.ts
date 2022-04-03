@@ -1,0 +1,21 @@
+import { startAPI } from '#core/api';
+import { getPostgres } from '#core/postgres';
+import { router } from './shoppingCarts/routes';
+
+//////////////////////////////////////////////////////////
+/// Make sure that we dispose Postgres connection pool
+//////////////////////////////////////////////////////////
+
+process.once('SIGTERM', () => {
+  const db = getPostgres();
+
+  db.dispose().catch((ex) => {
+    console.error(ex);
+  });
+});
+
+//////////////////////////////////////////////////////////
+/// API
+//////////////////////////////////////////////////////////
+
+startAPI(router);
