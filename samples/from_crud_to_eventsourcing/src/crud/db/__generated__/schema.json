@@ -1,0 +1,201 @@
+[
+  {
+    "name": "cart",
+    "columns": [
+      {
+        "name": "city",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "content",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 25,
+        "typeName": "TEXT"
+      },
+      {
+        "name": "country",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "createdAt",
+        "isNullable": false,
+        "hasDefault": false,
+        "typeId": 1082,
+        "typeName": "DATE"
+      },
+      {
+        "name": "email",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "firstName",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "id",
+        "isNullable": false,
+        "hasDefault": true,
+        "typeId": 20,
+        "typeName": "BIGINT"
+      },
+      {
+        "name": "lastName",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "line1",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "line2",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "middleName",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "mobile",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "province",
+        "isNullable": true,
+        "hasDefault": true,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "sessionId",
+        "isNullable": false,
+        "hasDefault": false,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "status",
+        "isNullable": false,
+        "hasDefault": true,
+        "typeId": 21,
+        "typeName": "SMALLINT"
+      },
+      {
+        "name": "updatedAt",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 1082,
+        "typeName": "DATE"
+      },
+      {
+        "name": "userId",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 20,
+        "typeName": "BIGINT"
+      }
+    ]
+  },
+  {
+    "name": "cart_item",
+    "columns": [
+      {
+        "name": "cartId",
+        "isNullable": false,
+        "hasDefault": false,
+        "typeId": 20,
+        "typeName": "BIGINT"
+      },
+      {
+        "name": "content",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 25,
+        "typeName": "TEXT"
+      },
+      {
+        "name": "createdAt",
+        "isNullable": false,
+        "hasDefault": false,
+        "typeId": 1082,
+        "typeName": "DATE"
+      },
+      {
+        "name": "discount",
+        "isNullable": false,
+        "hasDefault": true,
+        "typeId": 701,
+        "typeName": "FLOAT8"
+      },
+      {
+        "name": "id",
+        "isNullable": false,
+        "hasDefault": true,
+        "typeId": 20,
+        "typeName": "BIGINT"
+      },
+      {
+        "name": "price",
+        "isNullable": false,
+        "hasDefault": true,
+        "typeId": 701,
+        "typeName": "FLOAT8"
+      },
+      {
+        "name": "productId",
+        "isNullable": false,
+        "hasDefault": false,
+        "typeId": 20,
+        "typeName": "BIGINT"
+      },
+      {
+        "name": "quantity",
+        "isNullable": false,
+        "hasDefault": true,
+        "typeId": 21,
+        "typeName": "SMALLINT"
+      },
+      {
+        "name": "sku",
+        "isNullable": false,
+        "hasDefault": false,
+        "typeId": 1043,
+        "typeName": "VARCHAR"
+      },
+      {
+        "name": "updatedAt",
+        "isNullable": true,
+        "hasDefault": false,
+        "typeId": 1082,
+        "typeName": "DATE"
+      }
+    ]
+  }
+]

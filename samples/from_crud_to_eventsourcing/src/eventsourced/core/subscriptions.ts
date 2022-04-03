@@ -1,4 +1,4 @@
-import { getMongoCollection, toObjectId } from '#core/postgres';
+import { getPostgres } from '#core/postgres';
 import {
   AllStreamResolvedEvent,
   EventStoreDBClient,
@@ -6,6 +6,7 @@ import {
   START,
 } from '@eventstore/db-client';
 import { finished, Readable } from 'stream';
+import { subscriptionCheckpoints } from '../db';
 import { getEventStore } from './streams';
 
 export type SubscriptionResolvedEvent = AllStreamResolvedEvent & {
@@ -50,43 +51,33 @@ export const SubscriptionToAll =
   };
 
 //////////////////////////////////////
-/// MongoDB Checkpointing
+/// PostgreSQL Checkpointing
 //////////////////////////////////////
 
-export const getCheckpointsCollection = () =>
-  getMongoCollection<Checkpoint>('checkpoints');
+export const getCheckpoints = () => subscriptionCheckpoints(getPostgres());
 
-export const loadCheckPointFromCollection = async (subscriptionId: string) => {
-  const checkpoints = await getCheckpointsCollection();
+export const loadCheckPointFromPostgres = async (subscriptionId: string) => {
+  const checkpoints = getCheckpoints();
 
   const checkpoint = await checkpoints.findOne({
-    _id: toObjectId(subscriptionId),
+    id: subscriptionId,
   });
 
   return checkpoint != null ? BigInt(checkpoint.position) : undefined;
 };
 
-export const storeCheckpointInCollection =
+export const storeCheckpointInPostgres =
   (handle: EventHandler) => async (event: SubscriptionResolvedEvent) => {
     await handle(event);
-    const checkpoints = await getCheckpointsCollection();
+    const checkpoints = getCheckpoints();
 
-    await checkpoints.updateOne(
-      {
-        _id: toObjectId(event.subscriptionId),
-      },
-      {
-        $set: {
-          position: event.commitPosition!.toString(),
-        },
-      },
-      {
-        upsert: true,
-      }
-    );
+    await checkpoints.insertOrUpdate(['id'], {
+      id: event.subscriptionId,
+      position: Number(event.commitPosition!),
+    });
   };
 
-export const SubscriptionToAllWithMongoCheckpoints = SubscriptionToAll(
+export const SubscriptionToAllWithPostgresCheckpoints = SubscriptionToAll(
   getEventStore(),
-  loadCheckPointFromCollection
+  loadCheckPointFromPostgres
 );

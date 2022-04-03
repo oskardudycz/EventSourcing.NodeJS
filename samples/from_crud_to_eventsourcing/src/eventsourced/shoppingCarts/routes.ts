@@ -15,7 +15,7 @@ import {
   removeProductItemFromShoppingCart,
   confirmShoppingCart,
 } from './shoppingCart';
-import { getShoppingCartsCollection } from './shoppingCartDetails';
+import { getShoppingCarts } from './shoppingCartDetails';
 
 //////////////////////////////////////
 /// Routes
@@ -36,6 +36,7 @@ router.post(
         {
           shoppingCartId,
           clientId: assertNotEmptyString(request.params.clientId),
+          sessionId: assertNotEmptyString(request.params.sessionId),
         }
       );
 
@@ -144,25 +145,25 @@ router.put(
   }
 );
 
-router.get(
-  '/clients/:clientId/shopping-carts/:shoppingCartId',
-  async (request: Request, response: Response, next: NextFunction) => {
-    try {
-      const collection = await getShoppingCartsCollection();
+// router.get(
+//   '/clients/:clientId/shopping-carts/:shoppingCartId',
+//   async (request: Request, response: Response, next: NextFunction) => {
+//     try {
+//       const collection = await getShoppingCarts();
 
-      const result = await collection.findOne({
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
-      });
+//       const result = await collection.findOne({
+//         shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+//       });
 
-      if (result === null) {
-        response.sendStatus(404);
-        return;
-      }
+//       if (result === null) {
+//         response.sendStatus(404);
+//         return;
+//       }
 
-      response.set('ETag', toWeakETag(result.revision));
-      response.send(result);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
+//       response.set('ETag', toWeakETag(result.revision));
+//       response.send(result);
+//     } catch (error) {
+//       next(error);
+//     }
+//   }
+// );
