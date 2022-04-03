@@ -2,6 +2,7 @@
 /// Getting the state from events
 //////////////////////////////////////
 
+import { config } from '#config';
 import {
   EventStoreDBClient,
   EventType,
@@ -9,7 +10,6 @@ import {
   ResolvedEvent,
   StreamingRead,
 } from '@eventstore/db-client';
-import { config } from '#config';
 
 export type ApplyEvent<Entity, E extends EventType> = (
   currentState: Entity | undefined,

@@ -1,4 +1,5 @@
 import { getPostgres } from '#core/postgres';
+import { Transaction } from '@databases/pg';
 import {
   AllStreamResolvedEvent,
   EventStoreDBClient,
@@ -68,14 +69,27 @@ export const loadCheckPointFromPostgres = async (subscriptionId: string) => {
   return checkpoint != null ? BigInt(checkpoint.position) : undefined;
 };
 
-export const storeCheckpointInPostgres =
-  (handle: EventHandler) => async (event: SubscriptionResolvedEvent) => {
-    await handle(event);
-    const checkpoints = getCheckpoints();
+export type PostgresEventHandler = (
+  db: Transaction,
+  event: SubscriptionResolvedEvent
+) => Promise<void>;
 
-    await checkpoints.insertOrUpdate(['id'], {
-      id: event.subscriptionId,
-      position: Number(event.commitPosition!),
+export const storeCheckpointInPostgres =
+  (handlers: PostgresEventHandler[]) =>
+  async (event: SubscriptionResolvedEvent) => {
+    await getPostgres().tx(async (transaction) => {
+      await transaction.task(async (db) => {
+        const checkpoints = getCheckpoints();
+
+        for (const handle of handlers) {
+          await handle(db, event);
+        }
+
+        await checkpoints.insertOrUpdate(['id'], {
+          id: event.subscriptionId,
+          position: Number(event.commitPosition!),
+        });
+      });
     });
   };
 

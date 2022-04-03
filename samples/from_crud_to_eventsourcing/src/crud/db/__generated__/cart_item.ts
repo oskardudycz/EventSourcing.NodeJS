@@ -8,56 +8,56 @@
 /* eslint-disable */
 // tslint:disable
 
-import Cart from './cart'
+import Cart from './cart';
 
 interface CartItem {
-  cartId: Cart['id']
-  content: (string) | null
-  createdAt: Date
+  cartId: Cart['id'];
+  content: string | null;
+  createdAt: Date;
   /**
    * @default 0
    */
-  discount: number
+  discount: number;
   /**
    * @default nextval('ecommerce.cart_item_id_seq'::regclass)
    */
-  id: number & {readonly __brand?: 'cart_item_id'}
+  id: number & { readonly __brand?: 'cart_item_id' };
   /**
    * @default 0
    */
-  price: number
-  productId: number
+  price: number;
+  productId: number;
   /**
    * @default 0
    */
-  quantity: number
-  sku: string
-  updatedAt: (Date) | null
+  quantity: number;
+  sku: string;
+  updatedAt: Date | null;
 }
 export default CartItem;
 
 interface CartItem_InsertParameters {
-  cartId: Cart['id']
-  content?: (string) | null
-  createdAt: Date
+  cartId: Cart['id'];
+  content?: string | null;
+  createdAt: Date;
   /**
    * @default 0
    */
-  discount?: number
+  discount?: number;
   /**
    * @default nextval('ecommerce.cart_item_id_seq'::regclass)
    */
-  id?: number & {readonly __brand?: 'cart_item_id'}
+  id?: number & { readonly __brand?: 'cart_item_id' };
   /**
    * @default 0
    */
-  price?: number
-  productId: number
+  price?: number;
+  productId: number;
   /**
    * @default 0
    */
-  quantity?: number
-  sku: string
-  updatedAt?: (Date) | null
+  quantity?: number;
+  sku: string;
+  updatedAt?: Date | null;
 }
-export type {CartItem_InsertParameters}
+export type { CartItem_InsertParameters };

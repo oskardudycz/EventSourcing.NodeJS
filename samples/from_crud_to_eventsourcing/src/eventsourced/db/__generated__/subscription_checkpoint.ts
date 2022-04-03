@@ -9,13 +9,13 @@
 // tslint:disable
 
 interface SubscriptionCheckpoint {
-  id: string & {readonly __brand?: 'subscription_checkpoint_id'}
-  position: number
+  id: string & { readonly __brand?: 'subscription_checkpoint_id' };
+  position: number;
 }
 export default SubscriptionCheckpoint;
 
 interface SubscriptionCheckpoint_InsertParameters {
-  id: string & {readonly __brand?: 'subscription_checkpoint_id'}
-  position: number
+  id: string & { readonly __brand?: 'subscription_checkpoint_id' };
+  position: number;
 }
-export type {SubscriptionCheckpoint_InsertParameters}
+export type { SubscriptionCheckpoint_InsertParameters };

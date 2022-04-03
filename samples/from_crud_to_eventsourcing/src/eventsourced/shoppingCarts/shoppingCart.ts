@@ -2,13 +2,12 @@
 /// Shopping Carts
 //////////////////////////////////////
 
+import { StreamAggregator } from '#eventsourced/core/streams';
 import {
   JSONEventType,
   ResolvedEvent,
   StreamingRead,
 } from '@eventstore/db-client';
-import { v4 as uuid } from 'uuid';
-import { StreamAggregator } from '#eventsourced/core/streams';
 import {
   addProductItem,
   assertProductItemExists,
@@ -34,6 +33,7 @@ export type ProductItemAddedToShoppingCart = JSONEventType<
   {
     shoppingCartId: string;
     productItem: ProductItem;
+    addedAt: string;
   }
 >;
 
@@ -207,6 +207,7 @@ export const addProductItemToShoppingCart = async (
     data: {
       shoppingCartId,
       productItem,
+      addedAt: new Date().toJSON(),
     },
   };
 };
