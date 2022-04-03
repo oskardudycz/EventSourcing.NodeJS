@@ -7,6 +7,7 @@ import {
   ResolvedEvent,
   StreamingRead,
 } from '@eventstore/db-client';
+import { v4 as uuid } from 'uuid';
 import { StreamAggregator } from '#eventsourced/core/streams';
 import {
   addProductItem,
@@ -25,7 +26,6 @@ export type ShoppingCartOpened = JSONEventType<
     shoppingCartId: string;
     clientId: string;
     openedAt: string;
-    sessionId: string;
   }
 >;
 
@@ -168,21 +168,18 @@ export const getShoppingCart = StreamAggregator<
 
 export type OpenShoppingCart = {
   shoppingCartId: string;
-  sessionId: string;
   clientId: string;
 };
 
 export const openShoppingCart = ({
   shoppingCartId,
   clientId,
-  sessionId,
 }: OpenShoppingCart): ShoppingCartOpened => {
   return {
     type: 'shopping-cart-opened',
     data: {
       shoppingCartId,
       clientId,
-      sessionId,
       openedAt: new Date().toJSON(),
     },
   };

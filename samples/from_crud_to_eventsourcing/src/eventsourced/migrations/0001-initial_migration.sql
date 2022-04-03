@@ -21,6 +21,9 @@ CREATE TABLE "ecommerce"."cart"
     "content"    TEXT         NULL     DEFAULT NULL
 );
 
+CREATE UNIQUE INDEX "idx_cart_sessionId"
+ON "ecommerce"."cart" ("sessionId");
+
 CREATE TABLE "ecommerce"."cart_item"
 (
     "id"        BIGSERIAL    PRIMARY KEY,

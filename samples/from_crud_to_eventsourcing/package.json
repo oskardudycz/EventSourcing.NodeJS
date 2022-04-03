@@ -13,8 +13,10 @@
     "fix": "npm run fix:eslint && npm run fix:prettier",
     "fix:prettier": "prettier --write \"**/**/!(*.d).{ts,json,md}\"",
     "fix:eslint": "eslint **/*.ts --fix",
+    "crud:setup": "run-s crud:migrate crud:generate",
     "crud:migrate": "pg-migrations apply --database postgres://postgres:Password12!@localhost:5432/postgres --directory ./src/crud/migrations/",
     "crud:generate": "npx @databases/pg-schema-cli --database postgres://postgres:Password12!@localhost:5432/postgres --schemaName ecommerce --directory src/crud/db/__generated__",
+    "eventsourced:setup": "run-s eventsourced:migrate eventsourced:generate",
     "eventsourced:generate": "npx @databases/pg-schema-cli --database postgres://postgres:Password12!@localhost:5432/postgres --schemaName ecommerce --directory src/eventsourced/db/__generated__",
     "eventsourced:migrate": "pg-migrations apply --database postgres://postgres:Password12!@localhost:5432/postgres --directory ./src/eventsourced/migrations/ --ignore-error migration_file_edited"
   },

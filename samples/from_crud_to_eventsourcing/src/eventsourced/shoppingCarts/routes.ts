@@ -15,7 +15,6 @@ import {
   removeProductItemFromShoppingCart,
   confirmShoppingCart,
 } from './shoppingCart';
-import { getShoppingCarts } from './shoppingCartDetails';
 
 //////////////////////////////////////
 /// Routes
@@ -28,7 +27,7 @@ router.post(
   '/clients/:clientId/shopping-carts/',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
-      const shoppingCartId = uuid();
+      const shoppingCartId = request.body.sessionId ?? uuid();
       const streamName = toShoppingCartStreamName(shoppingCartId);
 
       const result = await create(getEventStore(), openShoppingCart)(
@@ -36,7 +35,6 @@ router.post(
         {
           shoppingCartId,
           clientId: assertNotEmptyString(request.params.clientId),
-          sessionId: assertNotEmptyString(request.params.sessionId),
         }
       );
 

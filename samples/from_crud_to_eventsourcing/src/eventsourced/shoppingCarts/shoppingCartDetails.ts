@@ -49,9 +49,8 @@ export const projectShoppingCartOpened = async (
 ): Promise<void> => {
   const shoppingCarts = getShoppingCarts();
 
-  await shoppingCarts.insert({
-    id: 123,
-    sessionId: event.data.sessionId,
+  await shoppingCarts.insertOrIgnore({
+    sessionId: event.data.shoppingCartId,
     createdAt: new Date(event.data.openedAt),
     status: ShoppingCartStatus.Opened,
     revision: streamRevision,

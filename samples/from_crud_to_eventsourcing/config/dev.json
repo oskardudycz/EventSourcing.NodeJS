@@ -1,1 +1,5 @@
-{}
+{
+  "postgres": {
+    "schemaName": "ecommerce"
+  }
+}

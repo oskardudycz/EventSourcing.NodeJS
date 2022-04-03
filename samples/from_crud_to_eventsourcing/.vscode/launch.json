@@ -2,19 +2,24 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug",
+      "name": "Debug CRUD",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "start", "--", "--inspect-brk=9229"],
+      "runtimeArgs": ["run-script", "start:crud", "--", "--inspect-brk=9229"],
       "port": 9229
     },
     {
-      "name": "Debug Server",
+      "name": "Debug Event-Sourced",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "start:server", "--", "--inspect-brk=9229"],
+      "runtimeArgs": [
+        "run-script",
+        "start:eventsourced",
+        "--",
+        "--inspect-brk=9229"
+      ],
       "port": 9229
     }
   ]
