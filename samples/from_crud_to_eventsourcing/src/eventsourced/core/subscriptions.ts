@@ -74,21 +74,25 @@ export type PostgresEventHandler = (
   event: SubscriptionResolvedEvent
 ) => Promise<void>;
 
-export const storeCheckpointInPostgres =
+const storeCheckpointInPostgres = async (event: SubscriptionResolvedEvent) => {
+  const checkpoints = getCheckpoints();
+
+  await checkpoints.insertOrUpdate(['id'], {
+    id: event.subscriptionId,
+    position: Number(event.commitPosition!),
+  });
+};
+
+export const handleEventInPostgresTransactionScope =
   (handlers: PostgresEventHandler[]) =>
   async (event: SubscriptionResolvedEvent) => {
     await getPostgres().tx(async (transaction) => {
       await transaction.task(async (db) => {
-        const checkpoints = getCheckpoints();
-
         for (const handle of handlers) {
           await handle(db, event);
         }
 
-        await checkpoints.insertOrUpdate(['id'], {
-          id: event.subscriptionId,
-          position: Number(event.commitPosition!),
-        });
+        storeCheckpointInPostgres(event);
       });
     });
   };

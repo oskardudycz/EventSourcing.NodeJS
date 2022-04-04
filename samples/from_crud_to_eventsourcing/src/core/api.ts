@@ -1,7 +1,7 @@
 import express, { Application, Router } from 'express';
 import http from 'http';
 
-export const startAPI = (router: Router) => {
+export const startAPI = (router: Router, port = 5000) => {
   const app: Application = express();
 
   app.set('etag', false);
@@ -15,7 +15,7 @@ export const startAPI = (router: Router) => {
 
   const server = http.createServer(app);
 
-  server.listen(5000);
+  server.listen(port);
 
   server.on('listening', () => {
     console.info('server up listening');
