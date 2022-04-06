@@ -10,21 +10,21 @@ export const enum ValidationErrors {
   NOT_AN_ARRAY = 'NOT_AN_ARRAY',
 }
 
-export const assertNotEmptyString = (value: any): string => {
+export const assertNotEmptyString = (value: unknown): string => {
   if (typeof value !== 'string' || value.length === 0) {
     throw ValidationErrors.NOT_A_NONEMPTY_STRING;
   }
   return value;
 };
 
-export const assertStringOrUndefined = (value: any): string | undefined => {
+export const assertStringOrUndefined = (value: unknown): string | undefined => {
   if (value !== undefined && typeof value !== 'string') {
     throw ValidationErrors.NOT_A_STRING_OR_UNDEFINED;
   }
   return value;
 };
 
-export const assertPositiveNumber = (value: any): number => {
+export const assertPositiveNumber = (value: unknown): number => {
   if (typeof value !== 'number' || value <= 0) {
     throw ValidationErrors.NOT_A_POSITIVE_NUMBER;
   }
@@ -39,7 +39,7 @@ export const assertUnsignedBigInt = (value: string): bigint => {
   return number;
 };
 
-export const assertArray = (value: any): [] => {
+export const assertArray = (value: unknown): [] => {
   if (!Array.isArray(value)) {
     throw ValidationErrors.NOT_AN_ARRAY;
   }

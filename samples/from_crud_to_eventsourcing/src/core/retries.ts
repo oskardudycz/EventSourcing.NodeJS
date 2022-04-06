@@ -5,7 +5,7 @@
 export type RetryOptions = Readonly<{
   maxRetries?: number;
   delay?: number;
-  shouldRetry?: (error: any) => boolean;
+  shouldRetry?: (error: unknown) => boolean;
 }>;
 
 export const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {

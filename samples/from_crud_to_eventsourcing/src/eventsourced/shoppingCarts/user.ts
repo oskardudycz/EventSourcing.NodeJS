@@ -32,5 +32,5 @@ export const getUserData = (userId: number) => {
       },
     });
   }
-  return Promise.resolve(fakeUsers.get(userId)!);
+  return Promise.resolve(fakeUsers.get(userId));
 };

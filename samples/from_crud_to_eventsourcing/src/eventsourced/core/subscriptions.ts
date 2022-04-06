@@ -79,7 +79,7 @@ const storeCheckpointInPostgres = async (event: SubscriptionResolvedEvent) => {
 
   await checkpoints.insertOrUpdate(['id'], {
     id: event.subscriptionId,
-    position: Number(event.commitPosition!),
+    position: Number(event.commitPosition),
   });
 };
 

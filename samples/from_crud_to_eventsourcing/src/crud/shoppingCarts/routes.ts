@@ -26,7 +26,7 @@ router.post(
 
       const { items, ...cart } = getShoppingCartFromRequest(request);
 
-      let resultCarts = await shoppingCarts.insertOrIgnore({
+      const resultCarts = await shoppingCarts.insertOrIgnore({
         ...cart,
         sessionId,
         createdAt: new Date(),
@@ -91,16 +91,25 @@ const getShoppingCartFromRequest = (request: Request) => {
     province: assertStringOrUndefined(request.body.province) ?? null,
     status: assertPositiveNumber(request.body.status),
     userId: assertPositiveNumber(request.body.userId),
-    items: assertArray(request.body.items).map((item: any) => {
-      return {
-        content: assertStringOrUndefined(item.content) ?? null,
-        discount: assertPositiveNumber(item.discount),
-        productId: assertPositiveNumber(item.productId),
-        price: assertPositiveNumber(item.price),
-        quantity: assertPositiveNumber(item.quantity),
-        sku: assertNotEmptyString(item.sku),
-      };
-    }),
+    items: assertArray(request.body.items).map(
+      (item: {
+        content: unknown;
+        discount: unknown;
+        productId: unknown;
+        price: unknown;
+        quantity: unknown;
+        sku: unknown;
+      }) => {
+        return {
+          content: assertStringOrUndefined(item.content) ?? null,
+          discount: assertPositiveNumber(item.discount),
+          productId: assertPositiveNumber(item.productId),
+          price: assertPositiveNumber(item.price),
+          quantity: assertPositiveNumber(item.quantity),
+          sku: assertNotEmptyString(item.sku),
+        };
+      }
+    ),
   };
 };
 
