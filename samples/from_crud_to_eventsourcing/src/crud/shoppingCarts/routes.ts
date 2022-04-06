@@ -24,7 +24,7 @@ router.post(
       const shoppingCarts = carts(getPostgres());
       const shoppingCartItems = cartItems(getPostgres());
 
-      const { items, ...cart } = getShoppingCart(request);
+      const { items, ...cart } = getShoppingCartFromRequest(request);
 
       let resultCarts = await shoppingCarts.insertOrIgnore({
         ...cart,
@@ -76,7 +76,7 @@ router.post(
   }
 );
 
-const getShoppingCart = (request: Request) => {
+const getShoppingCartFromRequest = (request: Request) => {
   return {
     city: assertStringOrUndefined(request.body.city),
     country: assertStringOrUndefined(request.body.country) ?? null,

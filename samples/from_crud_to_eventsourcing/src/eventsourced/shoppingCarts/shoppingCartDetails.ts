@@ -64,19 +64,6 @@ export const projectShoppingCartOpened = async (
     createdAt: new Date(event.data.openedAt),
     status: ShoppingCartStatus.Opened,
     revision: streamRevision,
-    // city?: (string) | null
-    // content?: (string) | null
-    // country?: (string) | null
-    // email?: (string) | null
-    // firstName?: (string) | null
-    // lastName?: (string) | null
-    // line1?: (string) | null
-    // line2?: (string) | null
-    // middleName?: (string) | null
-    // mobile?: (string) | null
-    // province?: (string) | null
-    // status?: number
-    // userId: number | null,
   });
 };
 
