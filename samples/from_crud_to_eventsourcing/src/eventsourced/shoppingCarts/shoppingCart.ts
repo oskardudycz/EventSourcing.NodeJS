@@ -68,6 +68,18 @@ export type ShoppingCartEvent =
   | ProductItemRemovedFromShoppingCart
   | ShoppingCartConfirmed;
 
+export const isCashierShoppingCartEvent = (
+  event: any
+): event is ShoppingCartEvent => {
+  return (
+    event != null &&
+    (event.type === 'shopping-cart-opened' ||
+      event.type === 'product-item-added-to-shopping-cart' ||
+      event.type === 'product-item-removed-from-shopping-cart' ||
+      event.type === 'shopping-cart-confirmed')
+  );
+};
+
 //////////////////////////////////////
 /// Entity/State
 //////////////////////////////////////
@@ -81,24 +93,9 @@ export const enum ShoppingCartStatus {
 
 export interface ShoppingCart {
   id: string;
-  userId?: string;
   status: ShoppingCartStatus;
   productItems: PricedProductItem[];
-  openedAt: Date;
-  confirmedAt?: Date;
 }
-
-export const isCashierShoppingCartEvent = (
-  event: any
-): event is ShoppingCartEvent => {
-  return (
-    event != null &&
-    (event.type === 'shopping-cart-opened' ||
-      event.type === 'product-item-added-to-shopping-cart' ||
-      event.type === 'product-item-removed-from-shopping-cart' ||
-      event.type === 'shopping-cart-confirmed')
-  );
-};
 
 export const enum ShoppingCartErrors {
   OPENED_EXISTING_CART = 'OPENED_EXISTING_CART',
@@ -162,7 +159,6 @@ export const getShoppingCart = StreamAggregator<
       return {
         ...currentState,
         status: ShoppingCartStatus.Confirmed,
-        confirmedAt: new Date(event.data.confirmedAt),
       };
     default: {
       const _: never = event;
