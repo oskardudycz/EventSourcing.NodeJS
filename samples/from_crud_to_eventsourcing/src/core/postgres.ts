@@ -2,8 +2,9 @@
 /// MongoDB
 //////////////////////////////////////
 
-import createConnectionPool, { ConnectionPool } from '@databases/pg';
 import { config } from '#config';
+import createConnectionPool, { ConnectionPool } from '@databases/pg';
+import { execSync } from 'child_process';
 import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
 
 let db: ConnectionPool;
@@ -25,6 +26,28 @@ export const getPostgres = (): ConnectionPool => {
   }
 
   return db;
+};
+
+export const disconnectFromPostgres = async () => {
+  const db = getPostgres();
+
+  try {
+    return await db.dispose();
+  } catch (ex) {
+    console.error(ex);
+  }
+};
+
+export const runPostgresMigration = ({
+  connectionString,
+  migrationsPath,
+}: {
+  connectionString: string;
+  migrationsPath: string;
+}) => {
+  execSync(
+    `npx node_modules/@databases/pg-migrations apply --database ${connectionString} --directory ${migrationsPath}`
+  );
 };
 
 export type ExecuteOnMongoDBOptions =
