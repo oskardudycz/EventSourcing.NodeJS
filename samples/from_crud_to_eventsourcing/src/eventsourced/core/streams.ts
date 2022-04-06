@@ -51,3 +51,13 @@ export function getEventStore(): EventStoreDBClient {
 
   return eventStore;
 }
+
+export const disconnectFromEventStore = async () => {
+  const eventStore = getEventStore();
+
+  try {
+    return await eventStore.dispose();
+  } catch (ex) {
+    console.error(ex);
+  }
+};

@@ -6,6 +6,7 @@ export const enum ValidationErrors {
   NOT_A_NONEMPTY_STRING = 'NOT_A_NONEMPTY_STRING',
   NOT_A_STRING_OR_UNDEFINED = 'NOT_A_STRING_OR_UNDEFINED',
   NOT_A_POSITIVE_NUMBER = 'NOT_A_POSITIVE_NUMBER',
+  NOT_A_POSITIVE_NUMBER_OR_UNDEFINED = 'NOT_A_POSITIVE_NUMBER_OR_UNDEFINED',
   NOT_AN_UNSIGNED_BIGINT = 'NOT_AN_UNSIGNED_BIGINT',
   NOT_AN_ARRAY = 'NOT_AN_ARRAY',
 }
@@ -31,6 +32,12 @@ export const assertPositiveNumber = (value: unknown): number => {
   return value;
 };
 
+export const assertPositiveNumberOrUndefined = (
+  value: unknown
+): number | undefined => {
+  return value !== undefined ? assertPositiveNumber(value) : undefined;
+};
+
 export const assertUnsignedBigInt = (value: string): bigint => {
   const number = BigInt(value);
   if (number < 0) {
@@ -44,4 +51,8 @@ export const assertArray = (value: unknown): [] => {
     throw ValidationErrors.NOT_AN_ARRAY;
   }
   return value as [];
+};
+
+export const assertArrayOrUndefined = (value: unknown): [] | undefined => {
+  return value !== undefined ? assertArray(value) : undefined;
 };

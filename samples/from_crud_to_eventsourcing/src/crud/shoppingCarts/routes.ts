@@ -1,8 +1,9 @@
 import { getPostgres } from '#core/postgres';
 import {
-  assertArray,
+  assertArrayOrUndefined,
   assertNotEmptyString,
   assertPositiveNumber,
+  assertPositiveNumberOrUndefined,
   assertStringOrUndefined,
 } from '#core/validation';
 import { NextFunction, Request, Response, Router } from 'express';
@@ -16,15 +17,15 @@ export const router = Router();
 
 // Open Shopping cart
 router.post(
-  '/v1/shopping-carts/:sessionId',
+  '/shopping-carts/:sessionId',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const sessionId = assertNotEmptyString(request.params.sessionId);
 
+      const { items, ...cart } = getShoppingCartFromRequest(request);
+
       const shoppingCarts = carts(getPostgres());
       const shoppingCartItems = cartItems(getPostgres());
-
-      const { items, ...cart } = getShoppingCartFromRequest(request);
 
       const resultCarts = await shoppingCarts.insertOrIgnore({
         ...cart,
@@ -69,7 +70,7 @@ router.post(
         }),
       });
 
-      response.status(200);
+      response.sendStatus(200);
     } catch (error) {
       next(error);
     }
@@ -90,8 +91,8 @@ const getShoppingCartFromRequest = (request: Request) => {
     mobile: assertStringOrUndefined(request.body.mobile) ?? null,
     province: assertStringOrUndefined(request.body.province) ?? null,
     status: assertPositiveNumber(request.body.status),
-    userId: assertPositiveNumber(request.body.userId),
-    items: assertArray(request.body.items).map(
+    userId: assertPositiveNumberOrUndefined(request.body.userId),
+    items: (assertArrayOrUndefined(request.body.items) ?? []).map(
       (item: {
         content: unknown;
         discount: unknown;
@@ -114,7 +115,7 @@ const getShoppingCartFromRequest = (request: Request) => {
 };
 
 router.get(
-  '/v1/shopping-carts/:shoppingCartId',
+  '/shopping-carts/:shoppingCartId',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCarts = carts(getPostgres());
