@@ -5,6 +5,8 @@
 import { StreamAggregator } from '#eventsourced/core/streams';
 import {
   JSONEventType,
+  JSONRecordedEvent,
+  RecordedEvent,
   ResolvedEvent,
   StreamingRead,
 } from '@eventstore/db-client';
@@ -69,8 +71,8 @@ export type ShoppingCartEvent =
   | ShoppingCartConfirmed;
 
 export const isCashierShoppingCartEvent = (
-  event: any
-): event is ShoppingCartEvent => {
+  event: RecordedEvent | null
+): event is ShoppingCartEvent & JSONRecordedEvent => {
   return (
     event != null &&
     (event.type === 'shopping-cart-opened' ||
