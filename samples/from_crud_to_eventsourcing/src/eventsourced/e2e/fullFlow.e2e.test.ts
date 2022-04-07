@@ -85,8 +85,7 @@ describe('Full flow', () => {
         .get(`/v2/shopping-carts/${shoppingCartId}`)
         .expect(200);
 
-      expect(response.headers['etag']).toBeDefined();
-      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+      expect(response.headers['etag']).toBe(currentRevision);
 
       expect(response.body).toMatchObject({
         sessionId: shoppingCartId,
@@ -129,12 +128,7 @@ describe('Full flow', () => {
         .get(`/shopping-carts/${shoppingCartId}`)
         .expect(200);
 
-      response = await request(app)
-        .get(`/v2/shopping-carts/${shoppingCartId}`)
-        .expect(200);
-
-      expect(response.headers['etag']).toBeDefined();
-      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+      expect(response.headers['etag']).toBe(currentRevision);
 
       expect(response.body).toMatchObject({
         id: current.id,

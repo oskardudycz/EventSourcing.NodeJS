@@ -48,7 +48,7 @@ export const retryPromise = async <T = never>(
       await sleep(sleepTime);
       retryCount++;
     }
-  } while (retryCount == maxRetries);
+  } while (retryCount < maxRetries);
 
   throw '[retry] Exceeded max retry count';
 };
