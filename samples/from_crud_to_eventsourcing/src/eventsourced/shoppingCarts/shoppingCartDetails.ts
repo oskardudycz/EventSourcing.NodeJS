@@ -166,6 +166,7 @@ export const projectShoppingCartConfirmed = async (
       email,
       ...additionalInfo,
       ...address,
+      status: ShoppingCartStatus.Confirmed,
       updatedAt: new Date(confirmedAt),
     }
   );

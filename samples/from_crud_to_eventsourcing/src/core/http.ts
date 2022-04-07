@@ -40,11 +40,11 @@ export const getETagFromHeader = (
 ): ETag | undefined => {
   const etag = request.headers[headerName];
 
-  if (etag === undefined || etag.length > 0) {
+  if (etag === undefined) {
     return undefined;
   }
 
-  return etag[0];
+  return Array.isArray(etag) ? etag[0] : etag;
 };
 
 export const getWeakETagValueFromHeader = (

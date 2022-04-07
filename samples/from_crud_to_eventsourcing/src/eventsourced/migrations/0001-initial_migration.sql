@@ -8,7 +8,7 @@ CREATE TABLE "ecommerce"."cart" (
   "firstName" VARCHAR(50) NULL DEFAULT NULL,
   "middleName" VARCHAR(50) NULL DEFAULT NULL,
   "lastName" VARCHAR(50) NULL DEFAULT NULL,
-  "mobile" VARCHAR(15) NULL,
+  "mobile" VARCHAR(50) NULL,
   "email" VARCHAR(50) NULL,
   "line1" VARCHAR(50) NULL DEFAULT NULL,
   "line2" VARCHAR(50) NULL DEFAULT NULL,

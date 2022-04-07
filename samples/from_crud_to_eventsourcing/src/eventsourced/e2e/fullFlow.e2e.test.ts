@@ -49,15 +49,17 @@ describe('Full flow', () => {
 
   afterAll(async () => {
     await subscription.unsubscribe();
-    await disconnectFromPostgres();
     await disconnectFromEventStore();
-    await postgresContainer.stop();
     await esdbContainer.stop();
+
+    await disconnectFromPostgres();
+    await postgresContainer.stop();
   });
 
   describe('Shopping Cart', () => {
     let shoppingCartId: string;
     let currentRevision: string;
+    let lastRevision: string;
     // const firstProductId: string = uuid();
 
     it('should go through whole flow successfuly', async () => {
@@ -83,9 +85,11 @@ describe('Full flow', () => {
 
       response = await request(app)
         .get(`/v2/shopping-carts/${shoppingCartId}`)
+        //.set('If-Not-Match', lastRevision)
         .expect(200);
 
       expect(response.headers['etag']).toBe(currentRevision);
+      lastRevision = response.headers['etag'];
 
       expect(response.body).toMatchObject({
         sessionId: shoppingCartId,
@@ -111,10 +115,10 @@ describe('Full flow', () => {
 
       // 2. Add product item
       const twoPairsOfShoes = {
-        price: 200,
         quantity: 2,
+        productId: 123,
       };
-      await request(app)
+      response = await request(app)
         .post(`/v2/shopping-carts/${shoppingCartId}/product-items`)
         .set('If-Match', currentRevision)
         .send(twoPairsOfShoes)
@@ -125,10 +129,12 @@ describe('Full flow', () => {
       currentRevision = response.headers['etag'];
 
       response = await request(app)
-        .get(`/shopping-carts/${shoppingCartId}`)
+        .get(`/v2/shopping-carts/${shoppingCartId}`)
+        .set('If-Not-Match', lastRevision)
         .expect(200);
 
       expect(response.headers['etag']).toBe(currentRevision);
+      lastRevision = response.headers['etag'];
 
       expect(response.body).toMatchObject({
         id: current.id,
@@ -152,114 +158,133 @@ describe('Full flow', () => {
       expect(response.body.updatedAt).not.toBeNull();
       current = response.body;
 
-      // // 3. Add another item
-      // const tShirt = {
-      //   content: 'tshirt',
-      //   discount: 20,
-      //   productId: 456,
-      //   price: 100,
-      //   quantity: 1,
-      //   sku: 'tshirt-123',
-      // };
-      // await request(app)
-      //   .post(`/shopping-carts/${shoppingCartId}`)
-      //   .send({
-      //     ...current,
-      //     items: [...current.items, tShirt],
-      //   })
-      //   .expect(200);
+      // 3. Add another item
+      const tShirt = {
+        productId: 456,
+        quantity: 1,
+      };
+      response = await request(app)
+        .post(`/v2/shopping-carts/${shoppingCartId}/product-items`)
+        .set('If-Match', currentRevision)
+        .send(tShirt)
+        .expect(200);
 
-      // response = await request(app)
-      //   .get(`/shopping-carts/${shoppingCartId}`)
-      //   .expect(200);
+      expect(response.headers['etag']).toBeDefined();
+      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+      currentRevision = response.headers['etag'];
 
-      // expect(response.body).toMatchObject({
-      //   id: current.id,
-      //   createdAt: current.createdAt,
-      //   sessionId: shoppingCartId,
-      //   city: null,
-      //   content: null,
-      //   country: null,
-      //   email: null,
-      //   firstName: null,
-      //   items: [twoPairsOfShoes, tShirt],
-      //   lastName: null,
-      //   line1: null,
-      //   line2: null,
-      //   middleName: null,
-      //   mobile: null,
-      //   province: null,
-      //   userId: null,
-      //   status: ShoppingCartStatus.Opened,
-      // });
-      // expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
+      response = await request(app)
+        .get(`/v2/shopping-carts/${shoppingCartId}`)
+        .set('If-Not-Match', lastRevision)
+        .expect(200);
 
-      // current = response.body;
+      expect(response.headers['etag']).toBe(currentRevision);
+      lastRevision = response.headers['etag'];
 
-      // // 3. Remove one item
-      // const pairOfShoes = {
-      //   content: 'shoes',
-      //   discount: 10,
-      //   productId: 123,
-      //   price: 200,
-      //   quantity: 2,
-      //   sku: 'shoes-123',
-      // };
-      // await request(app)
-      //   .post(`/shopping-carts/${shoppingCartId}`)
-      //   .send({
-      //     ...current,
-      //     items: [pairOfShoes, tShirt],
-      //   })
-      //   .expect(200);
+      expect(response.body).toMatchObject({
+        id: current.id,
+        createdAt: current.createdAt,
+        sessionId: shoppingCartId,
+        city: null,
+        content: null,
+        country: null,
+        email: null,
+        firstName: null,
+        items: [twoPairsOfShoes, tShirt],
+        lastName: null,
+        line1: null,
+        line2: null,
+        middleName: null,
+        mobile: null,
+        province: null,
+        userId: null,
+        status: ShoppingCartStatus.Opened,
+      });
+      expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
+      current = response.body;
 
-      // response = await request(app)
-      //   .get(`/shopping-carts/${shoppingCartId}`)
-      //   .expect(200);
+      // 3. Remove one item
+      const pairOfShoes = {
+        productId: 123,
+        quantity: 1,
+      };
+      response = await request(app)
+        .delete(
+          `/v2/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`
+        )
+        .set('If-Match', currentRevision)
+        .expect(200);
 
-      // expect(response.body).toMatchObject({
-      //   id: current.id,
-      //   createdAt: current.createdAt,
-      //   sessionId: shoppingCartId,
-      //   city: null,
-      //   content: null,
-      //   country: null,
-      //   email: null,
-      //   firstName: null,
-      //   items: [pairOfShoes, tShirt],
-      //   lastName: null,
-      //   line1: null,
-      //   line2: null,
-      //   middleName: null,
-      //   mobile: null,
-      //   province: null,
-      //   userId: null,
-      //   status: ShoppingCartStatus.Opened,
-      // });
-      // expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
+      expect(response.headers['etag']).toBeDefined();
+      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+      currentRevision = response.headers['etag'];
 
-      // // 3. Confirm cart
-      // const confirmedData = {
-      //   city: 'Legnica',
-      //   content: 'Some content',
-      //   country: 'Poland',
-      //   email: 'oskar@someemail.pl',
-      //   firstName: 'Oskar',
-      //   middleName: 'the',
-      //   lastName: 'Grouch',
-      //   line1: 'line 1',
-      //   line2: 'line 2',
-      //   mobile: '123456789',
-      //   province: 'Sesame street',
-      //   status: ShoppingCartStatus.Confirmed,
-      // };
-      // await request(app)
-      //   .post(`/shopping-carts/${shoppingCartId}`)
-      //   .send({
-      //     ...current,
-      //     ...confirmedData,
-      //   })
-      //   .expect(200);
+      response = await request(app)
+        .get(`/v2/shopping-carts/${shoppingCartId}`)
+        .set('If-Not-Match', lastRevision)
+        .expect(200);
+
+      expect(response.headers['etag']).toBe(currentRevision);
+      lastRevision = response.headers['etag'];
+
+      expect(response.body).toMatchObject({
+        id: current.id,
+        createdAt: current.createdAt,
+        sessionId: shoppingCartId,
+        city: null,
+        content: null,
+        country: null,
+        email: null,
+        firstName: null,
+        items: [pairOfShoes, tShirt],
+        lastName: null,
+        line1: null,
+        line2: null,
+        middleName: null,
+        mobile: null,
+        province: null,
+        userId: null,
+        status: ShoppingCartStatus.Opened,
+      });
+      expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
+      current = response.body;
+
+      // 3. Confirm cart
+      const userId = 1694;
+      const confirmedData = {
+        content: 'Some content',
+        line1: 'line 1',
+        line2: 'line 2',
+      };
+
+      response = await request(app)
+        .put(`/v2/users/${userId}/shopping-carts/${shoppingCartId}`)
+        .set('If-Match', currentRevision)
+        .send(confirmedData)
+        .expect(200);
+
+      expect(response.headers['etag']).toBeDefined();
+      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+      currentRevision = response.headers['etag'];
+
+      response = await request(app)
+        .get(`/v2/shopping-carts/${shoppingCartId}`)
+        .set('If-Not-Match', lastRevision)
+        .expect(200);
+
+      expect(response.headers['etag']).toBe(currentRevision);
+      lastRevision = response.headers['etag'];
+
+      expect(response.body).toMatchObject({
+        id: current.id,
+        createdAt: current.createdAt,
+        sessionId: shoppingCartId,
+        items: [pairOfShoes, tShirt],
+        status: ShoppingCartStatus.Confirmed,
+        ...confirmedData,
+      });
+      expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
+      current = response.body;
 
       // response = await request(app)
       //   .get(`/shopping-carts/${shoppingCartId}`)
