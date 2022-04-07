@@ -158,6 +158,7 @@ router.put(
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
       response.sendStatus(200);
     } catch (error) {
+      console.error(error);
       next(error);
     }
   }

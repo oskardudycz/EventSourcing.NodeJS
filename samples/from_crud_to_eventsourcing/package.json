@@ -1,7 +1,7 @@
 {
-  "name": "eventsourcing.nodejs",
-  "version": "6.0.0",
-  "description": "Samples of Event Sourcing in JavaScript and TypeScript",
+  "name": "from-crud-to-event-sourcing",
+  "version": "1.0.0",
+  "description": "Samples of migrating from CRUD to Event Sourcing",
   "scripts": {
     "build": "run-s lint build:ts",
     "build:ts": "tsc",

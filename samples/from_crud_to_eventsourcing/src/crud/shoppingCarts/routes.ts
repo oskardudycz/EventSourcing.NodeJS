@@ -6,8 +6,10 @@ import {
   assertPositiveNumberOrUndefined,
   assertStringOrUndefined,
 } from '#core/validation';
+import { anyOf, not } from '@databases/pg-typed';
 import { NextFunction, Request, Response, Router } from 'express';
 import { cartItems, carts } from '../db';
+import { ShoppingCartStatus } from './shoppingCart';
 
 //////////////////////////////////////
 /// Routes
@@ -22,20 +24,28 @@ router.post(
     try {
       const sessionId = assertNotEmptyString(request.params.sessionId);
 
-      const { items, ...cart } = getShoppingCartFromRequest(request);
+      const { items, id, ...cart } = getShoppingCartFromRequest(request);
 
       const shoppingCarts = carts(getPostgres());
       const shoppingCartItems = cartItems(getPostgres());
 
-      const resultCarts = await shoppingCarts.insertOrIgnore({
+      let resultCarts = await shoppingCarts.insertOrIgnore({
         ...cart,
         sessionId,
         createdAt: new Date(),
       });
 
       if (resultCarts.length === 0) {
-        await shoppingCarts.update(
-          { sessionId },
+        resultCarts = await shoppingCarts.update(
+          {
+            sessionId,
+            status: not(
+              anyOf([
+                ShoppingCartStatus.Confirmed,
+                ShoppingCartStatus.Cancelled,
+              ])
+            ),
+          },
           {
             ...cart,
             updatedAt: new Date(),
@@ -43,10 +53,15 @@ router.post(
         );
       }
 
-      const cartId = resultCarts[0].id;
+      if (resultCarts.length === 0) {
+        response.sendStatus(412);
+        return;
+      }
+
+      const cartId = id ?? resultCarts[0].id;
 
       // delete and recreate all cart items
-      shoppingCartItems.delete({ cartId: resultCarts[0].id });
+      shoppingCartItems.delete({ cartId });
 
       await shoppingCartItems.bulkInsert({
         columnsToInsert: [
@@ -79,12 +94,13 @@ router.post(
 
 const getShoppingCartFromRequest = (request: Request) => {
   return {
+    id: assertPositiveNumberOrUndefined(request.body.id),
     city: assertStringOrUndefined(request.body.city),
     country: assertStringOrUndefined(request.body.country) ?? null,
     content: assertStringOrUndefined(request.body.content) ?? null,
     email: assertStringOrUndefined(request.body.email) ?? null,
-    firstName: assertStringOrUndefined(request.body.lastName) ?? null,
-    lastName: assertStringOrUndefined(request.body.firstName) ?? null,
+    firstName: assertStringOrUndefined(request.body.firstName) ?? null,
+    lastName: assertStringOrUndefined(request.body.lastName) ?? null,
     middleName: assertStringOrUndefined(request.body.middleName) ?? null,
     line1: assertStringOrUndefined(request.body.line1) ?? null,
     line2: assertStringOrUndefined(request.body.line2) ?? null,
@@ -115,14 +131,14 @@ const getShoppingCartFromRequest = (request: Request) => {
 };
 
 router.get(
-  '/shopping-carts/:shoppingCartId',
+  '/shopping-carts/:sessionId',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCarts = carts(getPostgres());
       const shoppingCartItems = cartItems(getPostgres());
 
       const result = await shoppingCarts.findOne({
-        sessionId: assertNotEmptyString(request.params.shoppingCartId),
+        sessionId: assertNotEmptyString(request.params.sessionId),
       });
 
       if (result === null) {
