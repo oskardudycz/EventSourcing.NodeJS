@@ -10,7 +10,7 @@ import {
   assertPositiveNumber,
   assertStringOrUndefined,
 } from '#core/validation';
-import { WhereCondition } from '@databases/pg-typed';
+import { not, WhereCondition } from '@databases/pg-typed';
 import { NextFunction, Request, Response, Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { create, update } from '../core/commandHandling';
@@ -117,8 +117,8 @@ router.delete(
         {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
           productItem: {
-            productId: assertPositiveNumber(request.body.productId),
-            quantity: assertPositiveNumber(request.body.quantity),
+            productId: assertPositiveNumber(Number(request.query.productId)),
+            quantity: assertPositiveNumber(Number(request.query.quantity)),
           },
         },
         expectedRevision
@@ -151,7 +151,7 @@ router.put(
         streamName,
         {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
-          userId: assertPositiveNumber(request.params.userId),
+          userId: assertPositiveNumber(Number(request.params.userId)),
           additionalInfo: {
             content: assertStringOrUndefined(request.body.content),
             line1: assertStringOrUndefined(request.body.line1),
@@ -185,7 +185,7 @@ router.get(
       if (expectedRevision != undefined) {
         query = {
           ...query,
-          revision: Number(expectedRevision),
+          revision: not(Number(expectedRevision)),
         };
       }
 
@@ -205,7 +205,9 @@ router.get(
       response.set('ETag', toWeakETag(result.revision));
       response.send({
         ...result,
-        items,
+        items: items.sort(
+          (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+        ),
       });
     } catch (error) {
       console.error(error);

@@ -18,7 +18,7 @@ export interface User {
 const fakeUsers = new Map<number, User>();
 
 export const getUserData = (userId: number) => {
-  if (fakeUsers.has(userId)) {
+  if (!fakeUsers.has(userId)) {
     fakeUsers.set(userId, {
       id: userId,
       firstName: faker.name.firstName(),
