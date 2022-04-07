@@ -1,6 +1,5 @@
 import { startAPI } from '#core/api';
 import { disconnectFromPostgres } from '#core/postgres';
-import { disconnectFromEventStore } from '#eventsourced/core/streams';
 import { router } from './shoppingCarts/routes';
 
 //////////////////////////////////////////////////////////
@@ -8,7 +7,6 @@ import { router } from './shoppingCarts/routes';
 //////////////////////////////////////////////////////////
 
 process.once('SIGTERM', disconnectFromPostgres);
-process.once('SIGTERM', disconnectFromEventStore);
 
 //////////////////////////////////////////////////////////
 /// API

@@ -1,19 +1,22 @@
 import {
-  getExpectedRevisionFromETag,
+  getExpectedRevisionFromIfMatch,
+  getExpectedRevisionFromIfNotMatch,
   sendCreated,
   toWeakETag,
 } from '#core/http';
-import { getPostgres } from '#core/postgres';
+import { getPostgres, retryIfNotFound } from '#core/postgres';
 import {
   assertNotEmptyString,
   assertPositiveNumber,
   assertStringOrUndefined,
 } from '#core/validation';
-import { create, update } from '#eventsourced/core/commandHandling';
-import { getEventStore } from '#eventsourced/core/streams';
+import { WhereCondition } from '@databases/pg-typed';
 import { NextFunction, Request, Response, Router } from 'express';
 import { v4 as uuid } from 'uuid';
+import { create, update } from '../core/commandHandling';
+import { getEventStore } from '../core/streams';
 import { cartItems, carts } from '../db';
+import { Cart } from '../db/__generated__';
 import { getPricedProductItem } from './productItem';
 import {
   AddProductItemToShoppingCart,
@@ -52,6 +55,7 @@ router.post(
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
       sendCreated(response, shoppingCartId);
     } catch (error) {
+      console.error(error);
       next(error);
     }
   }
@@ -66,7 +70,7 @@ router.post(
         request.params.shoppingCartId
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
-      const expectedRevision = getExpectedRevisionFromETag(request);
+      const expectedRevision = getExpectedRevisionFromIfMatch(request);
 
       const result = await update<
         AddProductItemToShoppingCart,
@@ -88,6 +92,7 @@ router.post(
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
       response.sendStatus(200);
     } catch (error) {
+      console.error(error);
       next(error);
     }
   }
@@ -102,7 +107,7 @@ router.delete(
         request.params.shoppingCartId
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
-      const expectedRevision = getExpectedRevisionFromETag(request);
+      const expectedRevision = getExpectedRevisionFromIfMatch(request);
 
       const result = await update(
         getEventStore(),
@@ -122,6 +127,7 @@ router.delete(
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
       response.sendStatus(200);
     } catch (error) {
+      console.error(error);
       next(error);
     }
   }
@@ -136,7 +142,7 @@ router.put(
         request.params.shoppingCartId
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
-      const expectedRevision = getExpectedRevisionFromETag(request);
+      const expectedRevision = getExpectedRevisionFromIfMatch(request);
 
       const result = await update<ConfirmShoppingCart, ShoppingCartEvent>(
         getEventStore(),
@@ -170,10 +176,20 @@ router.get(
     try {
       const shoppingCarts = carts(getPostgres());
       const shoppingCartItems = cartItems(getPostgres());
+      const expectedRevision = getExpectedRevisionFromIfNotMatch(request);
 
-      const result = await shoppingCarts.findOne({
+      let query: WhereCondition<Cart> = {
         sessionId: assertNotEmptyString(request.params.shoppingCartId),
-      });
+      };
+
+      if (expectedRevision != undefined) {
+        query = {
+          ...query,
+          revision: Number(expectedRevision),
+        };
+      }
+
+      const result = await retryIfNotFound(() => shoppingCarts.findOne(query));
 
       if (result === null) {
         response.sendStatus(404);
@@ -192,6 +208,7 @@ router.get(
         items,
       });
     } catch (error) {
+      console.error(error);
       next(error);
     }
   }
