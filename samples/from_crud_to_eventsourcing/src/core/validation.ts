@@ -19,10 +19,10 @@ export const assertNotEmptyString = (value: unknown): string => {
 };
 
 export const assertStringOrUndefined = (value: unknown): string | undefined => {
-  if (value !== undefined && typeof value !== 'string') {
+  if (value != null && typeof value !== 'string') {
     throw ValidationErrors.NOT_A_STRING_OR_UNDEFINED;
   }
-  return value;
+  return value ?? undefined;
 };
 
 export const assertPositiveNumber = (value: unknown): number => {
@@ -35,7 +35,7 @@ export const assertPositiveNumber = (value: unknown): number => {
 export const assertPositiveNumberOrUndefined = (
   value: unknown
 ): number | undefined => {
-  return value !== undefined ? assertPositiveNumber(value) : undefined;
+  return value != null ? assertPositiveNumber(value) : value ?? undefined;
 };
 
 export const assertUnsignedBigInt = (value: string): bigint => {
@@ -54,5 +54,5 @@ export const assertArray = (value: unknown): [] => {
 };
 
 export const assertArrayOrUndefined = (value: unknown): [] | undefined => {
-  return value !== undefined ? assertArray(value) : undefined;
+  return value != null ? assertArray(value) : value ?? undefined;
 };

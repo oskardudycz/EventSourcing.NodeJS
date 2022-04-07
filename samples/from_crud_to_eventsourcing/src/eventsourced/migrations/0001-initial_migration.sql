@@ -15,8 +15,8 @@ CREATE TABLE "ecommerce"."cart" (
   "city" VARCHAR(50) NULL DEFAULT NULL,
   "province" VARCHAR(50) NULL DEFAULT NULL,
   "country" VARCHAR(50) NULL DEFAULT NULL,
-  "createdAt" DATE NOT NULL,
-  "updatedAt" DATE NULL DEFAULT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  "updatedAt" TIMESTAMPTZ NULL DEFAULT NULL,
   "content" TEXT NULL DEFAULT NULL
 );
 
@@ -30,8 +30,8 @@ CREATE TABLE "ecommerce"."cart_item" (
   "price" FLOAT NOT NULL DEFAULT 0,
   "discount" FLOAT NOT NULL DEFAULT 0,
   "quantity" SMALLINT NOT NULL DEFAULT 0,
-  "createdAt" DATE NOT NULL,
-  "updatedAt" DATE NULL DEFAULT NULL,
+  "createdAt" TIMESTAMPTZ NOT NULL,
+  "updatedAt" TIMESTAMPTZ NULL DEFAULT NULL,
   "content" TEXT NULL DEFAULT NULL,
   CONSTRAINT "fk_cart_item_cart" FOREIGN KEY("cartId") REFERENCES "ecommerce"."cart" ("id") ON DELETE CASCADE ON
   UPDATE
