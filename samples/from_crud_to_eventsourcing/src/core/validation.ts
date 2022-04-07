@@ -39,6 +39,10 @@ export const assertPositiveNumberOrUndefined = (
 };
 
 export const assertUnsignedBigInt = (value: string): bigint => {
+  if (value === undefined) {
+    throw ValidationErrors.NOT_AN_UNSIGNED_BIGINT;
+  }
+
   const number = BigInt(value);
   if (number < 0) {
     throw ValidationErrors.NOT_AN_UNSIGNED_BIGINT;

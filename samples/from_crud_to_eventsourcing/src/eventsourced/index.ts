@@ -1,23 +1,15 @@
 import { startAPI } from '#core/api';
-import { getPostgres } from '#core/postgres';
-import {
-  handleEventInPostgresTransactionScope,
-  SubscriptionToAllWithPostgresCheckpoints,
-} from '#eventsourced/core/subscriptions';
+import { disconnectFromPostgres } from '#core/postgres';
+import { disconnectFromEventStore } from './core/streams';
 import { router } from './shoppingCarts/routes';
-import { projectToShoppingCartItem } from './shoppingCarts/shoppingCartDetails';
+import { runSubscription } from './subscriptions';
 
 //////////////////////////////////////////////////////////
 /// Make sure that we dispose Postgres connection pool
 //////////////////////////////////////////////////////////
 
-process.once('SIGTERM', () => {
-  const db = getPostgres();
-
-  db.dispose().catch((ex) => {
-    console.error(ex);
-  });
-});
+process.once('SIGTERM', disconnectFromPostgres);
+process.once('SIGTERM', disconnectFromEventStore);
 
 //////////////////////////////////////////////////////////
 /// API
@@ -30,7 +22,5 @@ startAPI(router);
 //////////////////////////////////////////////////////////
 
 (async () => {
-  await SubscriptionToAllWithPostgresCheckpoints('sub_shopping_carts', [
-    handleEventInPostgresTransactionScope([projectToShoppingCartItem]),
-  ]);
+  await runSubscription();
 })();

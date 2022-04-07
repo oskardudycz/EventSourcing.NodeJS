@@ -20,7 +20,7 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 
 export const SubscriptionToAll =
   (
-    eventStore: EventStoreDBClient,
+    getEventStore: () => EventStoreDBClient,
     loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
@@ -29,7 +29,7 @@ export const SubscriptionToAll =
       ? START
       : { prepare: currentPosition, commit: currentPosition };
 
-    const subscription = eventStore.subscribeToAll({
+    const subscription = getEventStore().subscribeToAll({
       fromPosition,
       filter: excludeSystemEvents(),
     });
@@ -98,6 +98,6 @@ export const handleEventInPostgresTransactionScope =
   };
 
 export const SubscriptionToAllWithPostgresCheckpoints = SubscriptionToAll(
-  getEventStore(),
+  getEventStore,
   loadCheckPointFromPostgres
 );

@@ -3,8 +3,8 @@
 //////////////////////////////////////
 
 import { getPostgres } from '#core/postgres';
-import { SubscriptionResolvedEvent } from '#eventsourced/core/subscriptions';
 import { sql, Transaction } from '@databases/pg';
+import { SubscriptionResolvedEvent } from '../core/subscriptions';
 import { cartItems, carts } from '../db';
 import {
   isCashierShoppingCartEvent,

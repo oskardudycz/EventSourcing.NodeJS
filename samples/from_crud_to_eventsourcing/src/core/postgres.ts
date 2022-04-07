@@ -41,12 +41,16 @@ export const disconnectFromPostgres = async () => {
 export const runPostgresMigration = ({
   connectionString,
   migrationsPath,
+  ignoreEdditedMigrationFile = false,
 }: {
   connectionString: string;
   migrationsPath: string;
+  ignoreEdditedMigrationFile?: boolean;
 }) => {
   execSync(
-    `npx node_modules/@databases/pg-migrations apply --database ${connectionString} --directory ${migrationsPath}`
+    `npx node_modules/@databases/pg-migrations apply --database ${connectionString} --directory ${migrationsPath} ${
+      ignoreEdditedMigrationFile ? '--ignore-error migration_file_edited' : ''
+    }`
   );
 };
 

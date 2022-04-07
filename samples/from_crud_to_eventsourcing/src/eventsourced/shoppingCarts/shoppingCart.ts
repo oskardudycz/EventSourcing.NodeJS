@@ -2,7 +2,6 @@
 /// Shopping Carts
 //////////////////////////////////////
 
-import { StreamAggregator } from '#eventsourced/core/streams';
 import {
   JSONEventType,
   JSONRecordedEvent,
@@ -10,6 +9,7 @@ import {
   ResolvedEvent,
   StreamingRead,
 } from '@eventstore/db-client';
+import { StreamAggregator } from '../core/streams';
 import {
   addProductItem,
   assertProductItemExists,

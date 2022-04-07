@@ -49,7 +49,6 @@
     "baseUrl": "./" /* Base directory to resolve non-absolute module names. */,
     "paths": {
       "#core/*": ["./src/core/*"],
-      "#eventsourced/core/*": ["./src/eventsourced/core/*"],
       "#config": ["./config.ts"],
       "#testing/*": ["./src/testing/*"]
     } /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */,
