@@ -1,4 +1,5 @@
 import { getPostgres } from '#core/postgres';
+import { retryPromise } from '#core/retries';
 import { Transaction } from '@databases/pg';
 import {
   AllStreamResolvedEvent,
@@ -24,33 +25,41 @@ export const SubscriptionToAll =
     loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
-    const currentPosition = await loadCheckpoint(subscriptionId);
-    const fromPosition = !currentPosition
-      ? START
-      : { prepare: currentPosition, commit: currentPosition };
+    return retryPromise(async () => {
+      const currentPosition = await loadCheckpoint(subscriptionId);
+      const fromPosition = !currentPosition
+        ? START
+        : { prepare: currentPosition, commit: currentPosition };
 
-    const subscription = getEventStore().subscribeToAll({
-      fromPosition,
-      filter: excludeSystemEvents(),
+      const subscription = getEventStore().subscribeToAll({
+        fromPosition,
+        filter: excludeSystemEvents(),
+      });
+
+      finished(
+        subscription.on(
+          'data',
+          async (resolvedEvent: AllStreamResolvedEvent) => {
+            for (const handler of handlers) {
+              await handler({ ...resolvedEvent, subscriptionId });
+            }
+          }
+        ) as Readable,
+        (error) => {
+          if (!error) {
+            console.info(`Stopping subscription.`);
+            return;
+          }
+          console.error(
+            `Received error: ${error ?? 'UNEXPECTED ERROR'}. Retrying.`
+          );
+          throw error;
+        }
+      );
+      console.info('Subscription is running');
+
+      return subscription;
     });
-
-    finished(
-      subscription.on('data', async (resolvedEvent: AllStreamResolvedEvent) => {
-        for (const handler of handlers) {
-          await handler({ ...resolvedEvent, subscriptionId });
-        }
-      }) as Readable,
-      (error) => {
-        if (!error) {
-          console.info(`Stopping subscription.`);
-          return;
-        }
-        console.error(`Received error: ${error ?? 'UNEXPECTED ERROR'}.`);
-      }
-    );
-    console.info('Subscription is running');
-
-    return subscription;
   };
 
 //////////////////////////////////////
