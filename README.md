@@ -494,7 +494,7 @@ Read more in my article:
 
 ### The Light and The Dark Side of the Event-Driven Design
 
-<a href="https://www.youtube.com/watch?v=0pYmuk0-N_4" target="_blank"><img src="https://img.youtube.com/vi/0pYmuk0-N_4/0.jpg" alt="The Light and The Dark Side of the Event-Driven Design" width="320" height="240" border="10" /></a>
+<a href="https://www.youtube.com/watch?v=ZGugOiYcq8k" target="_blank"><img src="https://img.youtube.com/vi/ZGugOiYcq8k/0.jpg" alt="The Light and The Dark Side of the Event-Driven Design" width="320" height="240" border="10" /></a>
 
 ### Conversation with [Yves Lorphelin](https://github.com/ylorph/) about CQRS
 
