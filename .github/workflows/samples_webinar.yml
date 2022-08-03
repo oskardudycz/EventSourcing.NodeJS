@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           # use the node version defined in matrix above
-          node-version: 16.x
+          node-version: 18.x
       # install dependencies
       - run: npm ci
       # run linting (ESlint and Prettier)
