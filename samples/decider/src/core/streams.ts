@@ -4,37 +4,12 @@
 
 import {
   EventStoreDBClient,
-  EventType,
   jsonEvent,
   NO_STREAM,
-  RecordedEvent,
-  ResolvedEvent,
-  StreamingRead,
   WrongExpectedVersionError,
 } from '@eventstore/db-client';
-import { Event } from './event';
-import { ETag, toWeakETag } from './http';
-
-export type ApplyEvent<Entity, E extends EventType> = (
-  currentState: Entity | undefined,
-  event: RecordedEvent<E>
-) => Entity;
-
-export const StreamAggregator =
-  <Entity, StreamEvents extends EventType>(
-    when: ApplyEvent<Entity, StreamEvents>
-  ) =>
-  async (
-    eventStream: StreamingRead<ResolvedEvent<StreamEvents>>
-  ): Promise<Entity> => {
-    let currentState: Entity | undefined = undefined;
-    for await (const { event } of eventStream) {
-      if (!event) continue;
-      currentState = when(currentState, event);
-    }
-    if (currentState == null) throw 'oh no';
-    return currentState;
-  };
+import { Event } from './decider';
+import { ETag, getExpectedRevisionFromETag, toWeakETag } from './eTag';
 
 //////////////////////////////////////
 /// ESDB
@@ -86,7 +61,7 @@ export const appendToStream = async (
       streamId,
       events.map(jsonEvent),
       {
-        expectedRevision: eTag ? BigInt(eTag) : NO_STREAM,
+        expectedRevision: eTag ? getExpectedRevisionFromETag(eTag) : NO_STREAM,
       }
     );
 

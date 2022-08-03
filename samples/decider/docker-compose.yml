@@ -5,7 +5,7 @@ services:
   #  EventStoreDB
   #######################################################
   eventstoredb:
-    image: eventstore/eventstore:21.10.5-buster-slim
+    image: eventstore/eventstore:21.10.7-buster-slim
     # use this image if you're running ARM-based proc like Apple M1
     # image: ghcr.io/eventstore/eventstore:21.10.0-alpha-arm64v8
     environment:
