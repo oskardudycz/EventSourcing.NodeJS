@@ -1,31 +1,10 @@
-import { Request, Response } from 'express';
-import { assertUnsignedBigInt } from './validation';
+import { NextFunction, Request, Response } from 'express';
+import { ETag, ETagErrors, toWeakETag } from './eTag';
+import { AppendResult } from './streams';
 
 //////////////////////////////////////
 /// ETAG
 //////////////////////////////////////
-
-export type WeakETag = `W/${string}`;
-export type ETag = WeakETag | string;
-
-export const WeakETagRegex = /W\/"(\d+.*)"/;
-
-export const enum ETagErrors {
-  WRONG_WEAK_ETAG_FORMAT = 'WRONG_WEAK_ETAG_FORMAT',
-  MISSING_IF_MATCH_HEADER = 'MISSING_IF_MATCH_HEADER',
-}
-
-export const isWeakETag = (etag: ETag): etag is WeakETag => {
-  return WeakETagRegex.test(etag);
-};
-
-export const getWeakETagValue = (etag: ETag): WeakETag => {
-  return WeakETagRegex.exec(etag)![1] as WeakETag;
-};
-
-export const toWeakETag = (value: any): WeakETag => {
-  return `W/"${value}"`;
-};
 
 export const getETagFromIfMatch = (request: Request): ETag => {
   const etag = request.headers['if-match'];
@@ -37,22 +16,39 @@ export const getETagFromIfMatch = (request: Request): ETag => {
   return etag;
 };
 
-export const getWeakETagValueFromIfMatch = (request: Request): WeakETag => {
-  const etag = getETagFromIfMatch(request);
-
-  if (!isWeakETag(etag)) {
-    throw ETagErrors.WRONG_WEAK_ETAG_FORMAT;
-  }
-
-  return getWeakETagValue(etag);
-};
-
-export const getExpectedRevisionFromETag = (request: Request): bigint =>
-  assertUnsignedBigInt(getWeakETagValueFromIfMatch(request));
-
 //////////////////////////////////////
 /// HTTP Helpers
 //////////////////////////////////////
+
+export const HTTPHandler =
+  <Command, RequestType extends Request = Request>(
+    handleCommand: (
+      recordId: string,
+      command: Command,
+      eTag?: ETag
+    ) => Promise<AppendResult>
+  ) =>
+  (
+    mapRequest: (
+      request: RequestType,
+      handler: (recordId: string, command: Command) => Promise<void>
+    ) => Promise<void>
+  ) =>
+  async (request: RequestType, response: Response, next: NextFunction) => {
+    try {
+      await mapRequest(request, async (recordId, command) => {
+        const result = await handleCommand(
+          recordId,
+          command,
+          getETagFromIfMatch(request)
+        );
+
+        return mapToResponse(response, recordId, result);
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 
 export const sendCreated = (
   response: Response,
@@ -64,4 +60,25 @@ export const sendCreated = (
     `${urlPrefix ?? response.req.url}/${createdId}`
   );
   response.status(201).json({ id: createdId });
+};
+
+export const mapToResponse = (
+  response: Response,
+  recordId: string,
+  result: AppendResult,
+  urlPrefix?: string
+): void => {
+  if (!result.successful) {
+    response.sendStatus(412);
+    return;
+  }
+
+  response.set('ETag', toWeakETag(result.nextExpectedRevision));
+
+  if (result.nextExpectedRevision == toWeakETag(0)) {
+    sendCreated(response, recordId, urlPrefix);
+    return;
+  }
+
+  response.status(200);
 };

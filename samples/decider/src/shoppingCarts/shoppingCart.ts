@@ -8,112 +8,78 @@ import {
   ProductItem,
   removeProductItem,
 } from './productItem';
-import { Event } from '#core/event';
 import { Decider } from '#core/decider';
 
 //////////////////////////////////////
 /// Events
 //////////////////////////////////////
 
-export enum ShoppingCartEventType {
-  Opened = 'shopping-cart-opened',
-  ProductItemAdded = 'product-item-added-to-shopping-cart',
-  ProductItemRemoved = 'product-item-removed-from-shopping-cart',
-  Confirmed = 'shopping-cart-confirmed',
-  Canceled = 'shopping-cart-canceled',
-}
-
-export type ShoppingCartOpened = Event<
-  ShoppingCartEventType.Opened,
-  {
-    shoppingCartId: string;
-    clientId: string;
-    openedAt: string;
-  }
->;
-
-export type ProductItemAddedToShoppingCart = Event<
-  ShoppingCartEventType.ProductItemAdded,
-  {
-    shoppingCartId: string;
-    productItem: ProductItem;
-  }
->;
-
-export type ProductItemRemovedFromShoppingCart = Event<
-  ShoppingCartEventType.ProductItemRemoved,
-  {
-    shoppingCartId: string;
-    productItem: ProductItem;
-  }
->;
-
-export type ShoppingCartConfirmed = Event<
-  ShoppingCartEventType.Confirmed,
-  {
-    shoppingCartId: string;
-    confirmedAt: string;
-  }
->;
-
-export type ShoppingCartCanceled = Event<
-  ShoppingCartEventType.Canceled,
-  {
-    shoppingCartId: string;
-    canceledAt: string;
-  }
->;
-
 export type ShoppingCartEvent =
-  | ShoppingCartOpened
-  | ProductItemAddedToShoppingCart
-  | ProductItemRemovedFromShoppingCart
-  | ShoppingCartConfirmed
-  | ShoppingCartCanceled;
+  | {
+      type: 'ShoppingCartOpened';
+      data: {
+        shoppingCartId: string;
+        clientId: string;
+        openedAt: string;
+      };
+    }
+  | {
+      type: 'ProductItemAddedToShoppingCart';
+      data: {
+        shoppingCartId: string;
+        productItem: ProductItem;
+      };
+    }
+  | {
+      type: 'ProductItemRemovedFromShoppingCart';
+      data: {
+        shoppingCartId: string;
+        productItem: ProductItem;
+      };
+    }
+  | {
+      type: 'ShoppingCartConfirmed';
+      data: {
+        shoppingCartId: string;
+        confirmedAt: string;
+      };
+    }
+  | {
+      type: 'ShoppingCartCanceled';
+      data: {
+        shoppingCartId: string;
+        canceledAt: string;
+      };
+    };
 
 //////////////////////////////////////
 /// Entity/State
 //////////////////////////////////////
 
-export enum ShoppingCartStatus {
-  Empty = 'Empty',
-  Pending = 'Pending',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
-
-export type EmptyShoppingCart = {
-  status: ShoppingCartStatus.Empty;
-};
-
-export interface PendingShoppingCart {
-  id: string;
-  clientId: string;
-  productItems: ProductItem[];
-  status: ShoppingCartStatus.Pending;
-}
-
-export interface ConfirmedShoppingCart {
-  id: string;
-  clientId: string;
-  productItems: ProductItem[];
-  confirmedAt: Date;
-  status: ShoppingCartStatus.Confirmed;
-}
-
-export interface CancelledShoppingCart {
-  id: string;
-  clientId: string;
-  productItems: ProductItem[];
-  canceledAt: Date;
-  status: ShoppingCartStatus.Canceled;
-}
-
 export type ShoppingCart =
-  | EmptyShoppingCart
-  | PendingShoppingCart
-  | ConfirmedShoppingCart
-  | CancelledShoppingCart;
+  | {
+      status: 'Empty';
+    }
+  | {
+      status: 'Pending';
+      id: string;
+      clientId: string;
+      productItems: ProductItem[];
+    }
+  | {
+      status: 'Confirmed';
+      id: string;
+      clientId: string;
+      productItems: ProductItem[];
+      confirmedAt: Date;
+    }
+  | {
+      status: 'Canceled';
+      id: string;
+      clientId: string;
+      productItems: ProductItem[];
+      canceledAt: Date;
+    };
 
 //////////////////////////////////////
 /// Getting the state from events
@@ -124,18 +90,17 @@ export const evolve = (
   event: ShoppingCartEvent
 ): ShoppingCart => {
   switch (event.type) {
-    case ShoppingCartEventType.Opened:
-      if (currentState.status != ShoppingCartStatus.Empty) return currentState;
+    case 'ShoppingCartOpened':
+      if (currentState.status != 'Empty') return currentState;
 
       return {
         id: event.data.shoppingCartId,
         clientId: event.data.clientId,
         productItems: [],
-        status: ShoppingCartStatus.Pending,
+        status: 'Pending',
       };
-    case ShoppingCartEventType.ProductItemAdded:
-      if (currentState.status != ShoppingCartStatus.Pending)
-        return currentState;
+    case 'ProductItemAddedToShoppingCart':
+      if (currentState.status != 'Pending') return currentState;
 
       return {
         ...currentState,
@@ -144,9 +109,8 @@ export const evolve = (
           event.data.productItem
         ),
       };
-    case ShoppingCartEventType.ProductItemRemoved:
-      if (currentState.status != ShoppingCartStatus.Pending)
-        return currentState;
+    case 'ProductItemRemovedFromShoppingCart':
+      if (currentState.status != 'Pending') return currentState;
 
       return {
         ...currentState,
@@ -155,27 +119,25 @@ export const evolve = (
           event.data.productItem
         ),
       };
-    case ShoppingCartEventType.Confirmed:
-      if (currentState.status != ShoppingCartStatus.Pending)
-        return currentState;
+    case 'ShoppingCartConfirmed':
+      if (currentState.status != 'Pending') return currentState;
 
       return {
         ...currentState,
-        status: ShoppingCartStatus.Confirmed,
+        status: 'Confirmed',
         confirmedAt: new Date(event.data.confirmedAt),
       };
-    case ShoppingCartEventType.Canceled:
-      if (currentState.status != ShoppingCartStatus.Pending)
-        return currentState;
+    case 'ShoppingCartCanceled':
+      if (currentState.status != 'Pending') return currentState;
 
       return {
         ...currentState,
-        status: ShoppingCartStatus.Canceled,
+        status: 'Canceled',
         canceledAt: new Date(event.data.canceledAt),
       };
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      return currentState;
     }
   }
 };
@@ -184,142 +146,124 @@ export const evolve = (
 /// Commands
 //////////////////////////////////////
 
-export type OpenShoppingCart = {
-  shoppingCartId: string;
-  clientId: string;
-};
-
-export type AddProductItemToShoppingCart = {
-  shoppingCartId: string;
-  productItem: ProductItem;
-};
-
-export type RemoveProductItemFromShoppingCart = {
-  shoppingCartId: string;
-  productItem: ProductItem;
-};
-
-export type ConfirmShoppingCart = {
-  shoppingCartId: string;
-};
-
-export type CancelShoppingCart = {
-  shoppingCartId: string;
-};
-
 export type ShoppingCartCommand =
-  | OpenShoppingCart
-  | AddProductItemToShoppingCart
-  | RemoveProductItemFromShoppingCart
-  | ConfirmShoppingCart
-  | CancelShoppingCart;
+  | {
+      type: 'OpenShoppingCart';
+      data: {
+        shoppingCartId: string;
+        clientId: string;
+      };
+    }
+  | {
+      type: 'AddProductItemToShoppingCart';
+      data: {
+        shoppingCartId: string;
+        productItem: ProductItem;
+      };
+    }
+  | {
+      type: 'RemoveProductItemFromShoppingCart';
+      data: {
+        shoppingCartId: string;
+        productItem: ProductItem;
+      };
+    }
+  | {
+      type: 'ConfirmShoppingCart';
+      data: {
+        shoppingCartId: string;
+      };
+    }
+  | {
+      type: 'CancelShoppingCart';
+      data: {
+        shoppingCartId: string;
+      };
+    };
 
 //////////////////////////////////////
-/// Open shopping cart
+/// Decide
 //////////////////////////////////////
 
-export const openShoppingCart = ({
-  shoppingCartId,
-  clientId,
-}: OpenShoppingCart): ShoppingCartOpened => {
-  return {
-    type: ShoppingCartEventType.Opened,
-    data: {
-      shoppingCartId,
-      clientId,
-      openedAt: new Date().toJSON(),
-    },
-  };
-};
+const decide = (
+  { type, data: command }: ShoppingCartCommand,
+  shoppingCart: ShoppingCart
+): ShoppingCartEvent | ShoppingCartEvent[] => {
+  switch (type) {
+    case 'OpenShoppingCart': {
+      if (shoppingCart.status != 'Empty') {
+        throw ShoppingCartErrors.CART_ALREADY_EXISTS;
+      }
+      return {
+        type: 'ShoppingCartOpened',
+        data: {
+          shoppingCartId: command.shoppingCartId,
+          clientId: command.clientId,
+          openedAt: new Date().toJSON(),
+        },
+      };
+    }
 
-//////////////////////////////////////
-/// Add product item to shopping cart
-//////////////////////////////////////
+    case 'AddProductItemToShoppingCart': {
+      if (shoppingCart.status !== 'Pending') {
+        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+      }
+      return {
+        type: 'ProductItemAddedToShoppingCart',
+        data: {
+          shoppingCartId: command.shoppingCartId,
+          productItem: command.productItem,
+        },
+      };
+    }
 
-export const addProductItemToShoppingCart = (
-  shoppingCart: ShoppingCart,
-  { shoppingCartId, productItem }: AddProductItemToShoppingCart
-): ProductItemAddedToShoppingCart => {
-  if (!isPending(shoppingCart)) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
-  }
+    case 'RemoveProductItemFromShoppingCart': {
+      if (shoppingCart.status !== 'Pending') {
+        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+      }
 
-  return {
-    type: ShoppingCartEventType.ProductItemAdded,
-    data: {
-      shoppingCartId,
-      productItem,
-    },
-  };
-};
+      assertProductItemExists(shoppingCart.productItems, command.productItem);
 
-//////////////////////////////////////
-/// Remove product item to shopping cart
-//////////////////////////////////////
+      return {
+        type: 'ProductItemRemovedFromShoppingCart',
+        data: {
+          shoppingCartId: command.shoppingCartId,
+          productItem: command.productItem,
+        },
+      };
+    }
 
-export const removeProductItemFromShoppingCart = (
-  shoppingCart: ShoppingCart,
-  { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart
-): ProductItemRemovedFromShoppingCart => {
-  if (!isPending(shoppingCart)) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
-  }
+    case 'ConfirmShoppingCart': {
+      if (shoppingCart.status !== 'Pending') {
+        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+      }
 
-  assertProductItemExists(shoppingCart.productItems, productItem);
+      return {
+        type: 'ShoppingCartConfirmed',
+        data: {
+          shoppingCartId: command.shoppingCartId,
+          confirmedAt: new Date().toJSON(),
+        },
+      };
+    }
 
-  return {
-    type: ShoppingCartEventType.ProductItemRemoved,
-    data: {
-      shoppingCartId,
-      productItem,
-    },
-  };
-};
+    case 'CancelShoppingCart': {
+      if (shoppingCart.status !== 'Pending') {
+        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+      }
 
-//////////////////////////////////////
-/// Confirm shopping cart
-//////////////////////////////////////
-
-export const confirmShoppingCart = (
-  shoppingCart: ShoppingCart,
-  { shoppingCartId }: ConfirmShoppingCart
-): ShoppingCartConfirmed => {
-  if (!isPending(shoppingCart)) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
-  }
-
-  return {
-    type: ShoppingCartEventType.Confirmed,
-    data: {
-      shoppingCartId,
-      confirmedAt: new Date().toJSON(),
-    },
-  };
-};
-
-//////////////////////////////////////
-/// Cancel shopping cart
-//////////////////////////////////////
-
-export const cancelShoppingCart = (
-  shoppingCart: ShoppingCart,
-  { shoppingCartId }: CancelShoppingCart
-): ShoppingCartCanceled => {
-  if (!isPending(shoppingCart)) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
-  }
-
-  return {
-    type: ShoppingCartEventType.Canceled,
-    data: {
-      shoppingCartId,
-      canceledAt: new Date().toJSON(),
-    },
-  };
-};
-
-const decide = (command: ShoppingCartCommand, state: ShoppingCart) => {
-  switch (command) {
+      return {
+        type: 'ShoppingCartCanceled',
+        data: {
+          shoppingCartId: command.shoppingCartId,
+          canceledAt: new Date().toJSON(),
+        },
+      };
+    }
+    default: {
+      const _: never = command;
+      throw ShoppingCartErrors.UNKNOWN_COMMAND_TYPE;
+    }
   }
 };
 
@@ -328,7 +272,13 @@ export const decider: Decider<
   ShoppingCartCommand,
   ShoppingCartEvent
 > = {
-  decide = evolve,
+  decide,
+  evolve,
+  getInitialState: () => {
+    return {
+      status: 'Empty',
+    };
+  },
 };
 
 //////////////////////////////////////
@@ -348,21 +298,12 @@ export const isCashierShoppingCartEvent = (
 };
 
 export const enum ShoppingCartErrors {
-  OPENED_EXISTING_CART = 'OPENED_EXISTING_CART',
+  CART_ALREADY_EXISTS = 'CART_ALREADY_EXISTS',
   CART_IS_ALREADY_CLOSED = 'CART_IS_ALREADY_CLOSED',
-  CART_NOT_FOUND = 'CART_NOT_FOUND',
   PRODUCT_ITEM_NOT_FOUND = 'PRODUCT_ITEM_NOT_FOUND',
   UNKNOWN_EVENT_TYPE = 'UNKNOWN_EVENT_TYPE',
+  UNKNOWN_COMMAND_TYPE = 'UNKNOWN_COMMAND_TYPE',
 }
 
-export const toShoppingCartStreamName = (shoppingCartId: string) =>
+export const toShoppingCartStreamId = (shoppingCartId: string) =>
   `shopping_cart-${shoppingCartId}`;
-
-export const isPending = (
-  shoppingCart: ShoppingCart
-): shoppingCart is PendingShoppingCart => {
-  return (
-    shoppingCart.status !== ShoppingCartStatus.Confirmed &&
-    shoppingCart.status !== ShoppingCartStatus.Canceled
-  );
-};
