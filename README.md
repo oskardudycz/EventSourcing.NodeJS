@@ -268,7 +268,7 @@ In Event Sourcing, the state is stored in events. Events are logically grouped i
 
         "data":
         {
-            "issuedTo": "Cookie Monster",
+            "issuedBy": "Cookie Monster",
             "issuedAt": "2021-11-01T00:11:32.000Z"
         }
     },        
