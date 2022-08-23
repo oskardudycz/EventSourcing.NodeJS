@@ -1,11 +1,10 @@
-version: "3"
+version: '3'
 services:
-
   #######################################################
   #  EventStoreDB - Event Store
   #######################################################
   eventstore.db:
-    image: eventstore/eventstore:21.10.2-buster-slim
+    image: eventstore/eventstore:21.10.7-buster-slim
     # use this image if you're running ARM-based proc like Apple M1
     # image: ghcr.io/eventstore/eventstore:21.10.0-alpha-arm64v8
     environment:
@@ -29,33 +28,33 @@ services:
         target: /var/log/eventstore
     networks:
       - eventstore.db
-        
+
   #######################################################
   #  Postgres
   #######################################################
   postgres:
-      image: clkao/postgres-plv8
-      container_name: postgres
-      environment:
-          POSTGRES_PASSWORD: Password12!
-      ports:
-          - "5432:5432"
-      networks:
-          - postgres
+    image: clkao/postgres-plv8
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: Password12!
+    ports:
+      - '5432:5432'
+    networks:
+      - postgres
 
   pgadmin:
-      image: dpage/pgadmin4
-      container_name: pgadmin_container
-      environment:
-          PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
-          PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-          PGADMIN_CONFIG_SERVER_MODE: 'False'
-      volumes:
-          - pgadmin:/var/lib/pgadmin
-      ports:
-          - "${PGADMIN_PORT:-5050}:80"
-      networks:
-          - postgres
+    image: dpage/pgadmin4
+    container_name: pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - '${PGADMIN_PORT:-5050}:80'
+    networks:
+      - postgres
 
 networks:
   eventstore.db:
