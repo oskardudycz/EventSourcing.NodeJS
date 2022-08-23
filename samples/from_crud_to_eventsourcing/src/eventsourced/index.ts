@@ -23,4 +23,4 @@ startAPI(router);
 
 (async () => {
   await runSubscription();
-})();
+})().catch(console.error);
