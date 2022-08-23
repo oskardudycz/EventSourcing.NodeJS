@@ -101,9 +101,9 @@ export interface ShoppingCart {
 
 export const enum ShoppingCartErrors {
   OPENED_EXISTING_CART = 'OPENED_EXISTING_CART',
-  CART_IS_ALREADY_CLOSED = 'CART_IS_ALREADY_CLOSED',
-  CART_NOT_FOUND = 'CART_NOT_FOUND',
+  CART_IS_NOT_OPENED = 'CART_IS_NOT_OPENED',
   USER_DOES_NOT_EXISTS = 'USER_DOES_NOT_EXISTS',
+  NO_PRODUCTS_ITEMS = 'NO_PRODUCTS_ITEMS',
   PRODUCT_ITEM_NOT_FOUND = 'PRODUCT_ITEM_NOT_FOUND',
   UNKNOWN_EVENT_TYPE = 'UNKNOWN_EVENT_TYPE',
 }
@@ -111,12 +111,15 @@ export const enum ShoppingCartErrors {
 export const toShoppingCartStreamName = (shoppingCartId: string) =>
   `shopping_cart-${shoppingCartId}`;
 
-export const assertShoppingCartIsNotClosed = (shoppingCart: ShoppingCart) => {
-  if (
-    (shoppingCart.status & ShoppingCartStatus.Closed) ===
-    ShoppingCartStatus.Closed
-  ) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+export const assertShoppingCartIsOpened = (shoppingCart: ShoppingCart) => {
+  if (shoppingCart.status !== ShoppingCartStatus.Opened) {
+    throw new Error(ShoppingCartErrors.CART_IS_NOT_OPENED);
+  }
+};
+
+export const assertHasProductItems = (shoppingCart: ShoppingCart) => {
+  if (shoppingCart.productItems.length === 0) {
+    throw new Error(ShoppingCartErrors.NO_PRODUCTS_ITEMS);
   }
 };
 
@@ -128,19 +131,14 @@ export const getShoppingCart = StreamAggregator<
   ShoppingCart,
   ShoppingCartEvent
 >((currentState, event) => {
-  if (event.type === 'shopping-cart-opened') {
-    if (currentState != null) throw ShoppingCartErrors.OPENED_EXISTING_CART;
-    return {
-      id: event.data.shoppingCartId,
-      openedAt: new Date(event.data.openedAt),
-      productItems: [],
-      status: ShoppingCartStatus.Opened,
-    };
-  }
-
-  if (currentState == null) throw ShoppingCartErrors.CART_NOT_FOUND;
-
   switch (event.type) {
+    case 'shopping-cart-opened':
+      return {
+        id: event.data.shoppingCartId,
+        openedAt: new Date(event.data.openedAt),
+        productItems: [],
+        status: ShoppingCartStatus.Opened,
+      };
     case 'product-item-added-to-shopping-cart':
       return {
         ...currentState,
@@ -164,7 +162,8 @@ export const getShoppingCart = StreamAggregator<
       };
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      console.error(`Unknown event type %s`, event);
+      return currentState;
     }
   }
 });
@@ -205,7 +204,7 @@ export const addProductItemToShoppingCart = async (
 ): Promise<ProductItemAddedToShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
 
-  assertShoppingCartIsNotClosed(shoppingCart);
+  assertShoppingCartIsOpened(shoppingCart);
 
   const pricedProductItem = await getPricedProduct(productItem);
 
@@ -234,7 +233,7 @@ export const removeProductItemFromShoppingCart = async (
 ): Promise<ProductItemRemovedFromShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
 
-  assertShoppingCartIsNotClosed(shoppingCart);
+  assertShoppingCartIsOpened(shoppingCart);
 
   const current = assertProductItemExists(
     shoppingCart.productItems,
@@ -272,7 +271,8 @@ export const confirmShoppingCart = async (
 ): Promise<ShoppingCartConfirmed> => {
   const shoppingCart = await getShoppingCart(events);
 
-  assertShoppingCartIsNotClosed(shoppingCart);
+  assertShoppingCartIsOpened(shoppingCart);
+  assertHasProductItems(shoppingCart);
 
   const user = await getUserData(userId);
 

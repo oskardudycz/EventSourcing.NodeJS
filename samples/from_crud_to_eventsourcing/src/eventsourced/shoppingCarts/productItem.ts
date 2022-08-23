@@ -72,7 +72,7 @@ export const assertProductItemExists = (
   const current = findProductItem(productItems, productId);
 
   if (!current || current.quantity < quantity) {
-    throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+    throw new Error(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
   }
 
   return current;

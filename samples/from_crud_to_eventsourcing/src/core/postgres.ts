@@ -12,11 +12,15 @@ let db: ConnectionPool;
 export const getPostgres = (): ConnectionPool => {
   if (!db) {
     if (!config.postgres.connectionString) {
-      throw 'Postgres connection string not set. Please define "DATABASE_URL" environment variable';
+      throw new Error(
+        'Postgres connection string not set. Please define "DATABASE_URL" environment variable'
+      );
     }
 
     if (!config.postgres.schemaName) {
-      throw 'Postgres schema name string not set. Please define "DATABASE_SCHEMA" environment variable';
+      throw new Error(
+        'Postgres schema name string not set. Please define "DATABASE_SCHEMA" environment variable'
+      );
     }
 
     db = createConnectionPool({
@@ -65,7 +69,7 @@ export const assertUpdated = async <T>(
   const result = await update();
 
   if (result.length === 0) {
-    throw PostgresErrors.FAILED_TO_UPDATE_ROW;
+    throw new Error(PostgresErrors.FAILED_TO_UPDATE_ROW);
   }
 
   return result;
@@ -77,7 +81,7 @@ export const assertFound = async <T>(
   const result = await find();
 
   if (result === null) {
-    throw PostgresErrors.ROW_NOT_FOUND;
+    throw new Error(PostgresErrors.ROW_NOT_FOUND);
   }
 
   return result;

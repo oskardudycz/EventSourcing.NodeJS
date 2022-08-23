@@ -47,7 +47,7 @@ export const projectToShoppingCartItem = (
       return projectShoppingCartConfirmed(db, event, streamRevision);
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
     }
   }
 };
