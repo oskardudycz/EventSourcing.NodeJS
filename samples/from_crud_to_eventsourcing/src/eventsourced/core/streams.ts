@@ -11,24 +11,18 @@ import {
   StreamingRead,
 } from '@eventstore/db-client';
 
-export type ApplyEvent<Entity, E extends EventType> = (
-  currentState: Entity | undefined,
-  event: RecordedEvent<E>
-) => Entity;
-
 export const StreamAggregator =
   <Entity, StreamEvents extends EventType>(
-    when: ApplyEvent<Entity, StreamEvents>
+    when: (currentState: Entity, event: RecordedEvent<StreamEvents>) => Entity
   ) =>
   async (
     eventStream: StreamingRead<ResolvedEvent<StreamEvents>>
   ): Promise<Entity> => {
-    let currentState: Entity | undefined = undefined;
+    let currentState = {} as Entity;
     for await (const { event } of eventStream) {
       if (!event) continue;
       currentState = when(currentState, event);
     }
-    if (currentState == null) throw 'oh no';
     return currentState;
   };
 
@@ -40,7 +34,9 @@ let eventStore: EventStoreDBClient;
 
 export function getEventStore(): EventStoreDBClient {
   if (!config.eventStoreDB.connectionString) {
-    throw 'EventStoreDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
+    throw new Error(
+      'EventStoreDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable'
+    );
   }
 
   if (!eventStore) {

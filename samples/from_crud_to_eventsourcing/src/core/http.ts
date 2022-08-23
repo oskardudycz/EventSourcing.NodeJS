@@ -34,7 +34,8 @@ export const isWeakETag = (etag: ETag): etag is WeakETag => {
 
 export const getWeakETagValue = (etag: ETag): WeakETag => {
   const weak = WeakETagRegex.exec(etag);
-  if (weak == null || weak.length == 0) throw ETagErrors.WRONG_WEAK_ETAG_FORMAT;
+  if (weak == null || weak.length == 0)
+    throw new Error(ETagErrors.WRONG_WEAK_ETAG_FORMAT);
   return weak[1] as WeakETag;
 };
 
@@ -66,7 +67,7 @@ export const getWeakETagValueFromHeader = (
   }
 
   if (!isWeakETag(etag)) {
-    throw ETagErrors.WRONG_WEAK_ETAG_FORMAT;
+    throw new Error(ETagErrors.WRONG_WEAK_ETAG_FORMAT);
   }
 
   return getWeakETagValue(etag);
@@ -89,7 +90,7 @@ export const getExpectedRevisionFromIfMatch = (request: ApiRequest): bigint => {
   const revision = getExpectedRevision(request, HeaderNames.IF_MATCH);
 
   if (revision === undefined) {
-    throw ETagErrors.MISSING_HEADER;
+    throw new Error(ETagErrors.MISSING_HEADER);
   }
 
   return revision;
