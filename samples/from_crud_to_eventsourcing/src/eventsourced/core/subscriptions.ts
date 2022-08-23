@@ -51,7 +51,8 @@ export const SubscriptionToAll =
             return;
           }
           console.error(
-            `Received error: ${error ?? 'UNEXPECTED ERROR'}. Retrying.`
+            `Received error: %s. Retrying.`,
+            error ?? 'UNEXPECTED ERROR'
           );
           throw error;
         }
@@ -100,8 +101,7 @@ export const handleEventInPostgresTransactionScope =
         for (const handle of handlers) {
           await handle(db, event);
         }
-
-        storeCheckpointInPostgres(event);
+        await storeCheckpointInPostgres(event);
       });
     });
   };

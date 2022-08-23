@@ -1,6 +1,7 @@
 import { getPostgres } from '#core/postgres';
 import {
   assertArrayOrUndefined,
+  assertDateOrUndefined,
   assertNotEmptyString,
   assertPositiveNumber,
   assertPositiveNumberOrUndefined,
@@ -9,7 +10,8 @@ import {
 import { anyOf, not } from '@databases/pg-typed';
 import { NextFunction, Request, Response, Router } from 'express';
 import { cartItems, carts } from '../db';
-import { ShoppingCartStatus } from './shoppingCart';
+import { Cart_InsertParameters } from '../db/__generated__';
+import { CartDetails, ShoppingCartStatus } from './shoppingCart';
 
 //////////////////////////////////////
 /// Routes
@@ -17,14 +19,39 @@ import { ShoppingCartStatus } from './shoppingCart';
 
 export const router = Router();
 
-// Open Shopping cart
+///////////////////////////////
+// Open or update Shopping cart
+///////////////////////////////
+
+export type CartItemUpsert = {
+  content: string | null;
+  discount: number;
+  productId: number;
+  price: number;
+  quantity: number;
+  sku: string;
+};
+
+export type CartUpsert = Cart_InsertParameters & {
+  items: CartItemUpsert[];
+};
+
+export type CartUpsertRequest = Request<
+  Partial<{ sessionId: string }>,
+  null,
+  Partial<CartUpsert>
+>;
+
 router.post(
   '/shopping-carts/:sessionId',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (
+    request: CartUpsertRequest,
+    response: Response,
+    next: NextFunction
+  ) => {
     try {
-      const sessionId = assertNotEmptyString(request.params.sessionId);
-
-      const { items, id, ...cart } = getShoppingCartFromRequest(request);
+      const { items, id, sessionId, ...cart } =
+        getShoppingCartFromRequest(request);
 
       const shoppingCarts = carts(getPostgres());
       const shoppingCartItems = cartItems(getPostgres());
@@ -61,7 +88,7 @@ router.post(
       const cartId = id ?? resultCarts[0].id;
 
       // delete and recreate all cart items
-      shoppingCartItems.delete({ cartId });
+      await shoppingCartItems.delete({ cartId });
 
       await shoppingCartItems.bulkInsert({
         columnsToInsert: [
@@ -92,10 +119,16 @@ router.post(
   }
 );
 
-const getShoppingCartFromRequest = (request: Request) => {
+const getShoppingCartFromRequest = (request: CartUpsertRequest): CartUpsert => {
+  const id =
+    'id' in request.body
+      ? assertPositiveNumberOrUndefined(request.body.id) ?? {}
+      : {};
+
   return {
-    id: assertPositiveNumberOrUndefined(request.body.id),
-    city: assertStringOrUndefined(request.body.city),
+    ...id,
+    sessionId: assertNotEmptyString(request.params.sessionId),
+    city: assertStringOrUndefined(request.body.city) ?? null,
     country: assertStringOrUndefined(request.body.country) ?? null,
     content: assertStringOrUndefined(request.body.content) ?? null,
     email: assertStringOrUndefined(request.body.email) ?? null,
@@ -107,7 +140,7 @@ const getShoppingCartFromRequest = (request: Request) => {
     mobile: assertStringOrUndefined(request.body.mobile) ?? null,
     province: assertStringOrUndefined(request.body.province) ?? null,
     status: assertPositiveNumber(request.body.status),
-    userId: assertPositiveNumberOrUndefined(request.body.userId),
+    userId: assertPositiveNumberOrUndefined(request.body.userId) ?? null,
     items: (assertArrayOrUndefined(request.body.items) ?? []).map(
       (item: {
         content: unknown;
@@ -127,12 +160,21 @@ const getShoppingCartFromRequest = (request: Request) => {
         };
       }
     ),
+    createdAt: assertDateOrUndefined(request.body.createdAt) ?? new Date(),
   };
 };
 
+///////////////////////////////
+// Get Shopping cart details
+///////////////////////////////
+
 router.get(
   '/shopping-carts/:sessionId',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (
+    request: Request,
+    response: Response<CartDetails>,
+    next: NextFunction
+  ) => {
     try {
       const shoppingCarts = carts(getPostgres());
       const shoppingCartItems = cartItems(getPostgres());

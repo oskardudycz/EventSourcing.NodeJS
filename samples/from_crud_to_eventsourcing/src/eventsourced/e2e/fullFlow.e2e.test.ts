@@ -1,12 +1,15 @@
 import { config } from '#config';
 import { getApplication } from '#core/api';
 import { disconnectFromPostgres, runPostgresMigration } from '#core/postgres';
+import { greaterOrEqual } from '#core/validation';
+import { TestResponse } from '#testing/api/testResponse';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '#testing/eventStoreDB/eventStoreDBContainer';
 import { AllStreamSubscription } from '@eventstore/db-client';
 import { Application } from 'express';
+import { CartDetails } from 'src/crud/shoppingCarts/shoppingCart';
 import request from 'supertest';
 import {
   PostgreSqlContainer,
@@ -57,27 +60,35 @@ describe('Full flow', () => {
   });
 
   describe('Shopping Cart', () => {
-    let shoppingCartId: string;
+    let shoppingCartId: number;
     let currentRevision: string;
     let lastRevision: string;
     // const firstProductId: string = uuid();
 
     it('should go through whole flow successfuly', async () => {
+      ///////////////////////////////////////////////////
       // 1. Open Shopping Cart
-      let response = await request(app)
+      ///////////////////////////////////////////////////
+      let response = (await request(app)
         .post(`/v2/shopping-carts`)
         .send({
           status: ShoppingCartStatus.Opened,
         })
-        .expect(201);
+        .expect(201)) as TestResponse<CartDetails>;
 
+      let current = response.body as CartDetails;
+
+      if (!response.body.id) {
+        expect(false).toBeTruthy();
+        return;
+      }
       expect(response.body.id).toBeDefined();
       expect(response.headers['etag']).toBeDefined();
       expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
 
       expect(response.headers['location']).toBeDefined();
       expect(response.headers['location']).toBe(
-        `/v2/shopping-carts/${response.body.id}`
+        `/v2/shopping-carts/${current.id}`
       );
 
       currentRevision = response.headers['etag'];
@@ -111,9 +122,11 @@ describe('Full flow', () => {
       });
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('createdAt');
-      let current = response.body;
+      current = response.body as CartDetails;
 
+      ///////////////////////////////////////////////////
       // 2. Add product item
+      ///////////////////////////////////////////////////
       const twoPairsOfShoes = {
         quantity: 2,
         productId: 123,
@@ -156,9 +169,11 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
       });
       expect(response.body.updatedAt).not.toBeNull();
-      current = response.body;
+      current = response.body as CartDetails;
 
+      ///////////////////////////////////////////////////
       // 3. Add another item
+      ///////////////////////////////////////////////////
       const tShirt = {
         productId: 456,
         quantity: 1,
@@ -200,10 +215,14 @@ describe('Full flow', () => {
         userId: null,
         status: ShoppingCartStatus.Opened,
       });
-      expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
-      current = response.body;
+      expect(
+        greaterOrEqual(response.body.updatedAt, current.updatedAt)
+      ).toBeTruthy();
+      current = response.body as CartDetails;
 
-      // 3. Remove one item
+      ///////////////////////////////////////////////////
+      // 4. Remove one item
+      ///////////////////////////////////////////////////
       const pairOfShoes = {
         productId: 123,
         quantity: 1,
@@ -246,10 +265,14 @@ describe('Full flow', () => {
         userId: null,
         status: ShoppingCartStatus.Opened,
       });
-      expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
-      current = response.body;
+      expect(
+        greaterOrEqual(response.body.updatedAt, current.updatedAt)
+      ).toBeTruthy();
+      current = response.body as CartDetails;
 
-      // 3. Confirm cart
+      ///////////////////////////////////////////////////
+      // 5. Confirm cart
+      ///////////////////////////////////////////////////
       const userId = 1694;
       const confirmedData = {
         content: 'Some content',
@@ -283,8 +306,10 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Confirmed,
         ...confirmedData,
       });
-      expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
-      current = response.body;
+      expect(
+        greaterOrEqual(response.body.updatedAt, current.updatedAt)
+      ).toBeTruthy();
+      current = response.body as CartDetails;
 
       // response = await request(app)
       //   .get(`/shopping-carts/${shoppingCartId}`)

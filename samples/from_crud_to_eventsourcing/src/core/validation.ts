@@ -5,6 +5,7 @@
 export const enum ValidationErrors {
   NOT_A_NONEMPTY_STRING = 'NOT_A_NONEMPTY_STRING',
   NOT_A_STRING_OR_UNDEFINED = 'NOT_A_STRING_OR_UNDEFINED',
+  NOT_A_DATE_OR_UNDEFINED = 'NOT_A_DATE_OR_UNDEFINED',
   NOT_A_POSITIVE_NUMBER = 'NOT_A_POSITIVE_NUMBER',
   NOT_A_POSITIVE_NUMBER_OR_UNDEFINED = 'NOT_A_POSITIVE_NUMBER_OR_UNDEFINED',
   NOT_AN_UNSIGNED_BIGINT = 'NOT_AN_UNSIGNED_BIGINT',
@@ -50,6 +51,13 @@ export const assertUnsignedBigInt = (value: string): bigint => {
   return number;
 };
 
+export const assertDateOrUndefined = (value: unknown): Date | undefined => {
+  if (value != null && typeof value !== 'string') {
+    throw ValidationErrors.NOT_A_DATE_OR_UNDEFINED;
+  }
+  return value ? new Date(value) : undefined;
+};
+
 export const assertArray = (value: unknown): [] => {
   if (!Array.isArray(value)) {
     throw ValidationErrors.NOT_AN_ARRAY;
@@ -59,4 +67,15 @@ export const assertArray = (value: unknown): [] => {
 
 export const assertArrayOrUndefined = (value: unknown): [] | undefined => {
   return value != null ? assertArray(value) : value ?? undefined;
+};
+
+export const greaterOrEqual = (
+  first: Date | null | undefined,
+  second: Date | null | undefined
+): boolean => {
+  if (!first) return false;
+
+  if (!second) return true;
+
+  return first > second;
 };
