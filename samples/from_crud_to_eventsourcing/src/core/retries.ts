@@ -33,16 +33,15 @@ export const retryPromise = async <T = never>(
       return await callback();
     } catch (error) {
       if (!shouldRetry(error) || retryCount == maxRetries) {
-        console.error(`[retry] Exceeded max retry count, throwing: ${error}`);
+        console.error(`[retry] Exceeded max retry count, throwing: %s`, error);
         throw error;
       }
 
       const sleepTime = Math.pow(2, retryCount) * delay + Math.random() * delay;
 
       console.warn(
-        `[retry] Retrying (number: ${
-          retryCount + 1
-        }, delay: ${sleepTime}): ${error}`
+        `[retry] Retrying (number: ${retryCount + 1}, delay: ${sleepTime}): %s`,
+        error
       );
 
       await sleep(sleepTime);

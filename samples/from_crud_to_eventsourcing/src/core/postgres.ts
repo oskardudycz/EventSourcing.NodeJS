@@ -1,5 +1,5 @@
 //////////////////////////////////////
-/// MongoDB
+/// Postgres
 //////////////////////////////////////
 
 import { config } from '#config';
@@ -53,13 +53,6 @@ export const runPostgresMigration = ({
     }`
   );
 };
-
-export type ExecuteOnMongoDBOptions =
-  | {
-      collectionName: string;
-      databaseName?: string;
-    }
-  | string;
 
 export const enum PostgresErrors {
   FAILED_TO_UPDATE_ROW = 'FAILED_TO_UPDATE_ROW',
