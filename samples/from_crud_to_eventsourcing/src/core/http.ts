@@ -1,5 +1,13 @@
 import { Request, Response } from 'express';
+import { ParamsDictionary } from 'express-serve-static-core';
 import { assertUnsignedBigInt } from './validation';
+
+export type ApiRequest = Request<
+  Record<string, unknown> | ParamsDictionary,
+  unknown,
+  unknown,
+  Record<string, unknown> | qs.ParsedQs
+>;
 
 //////////////////////////////////////
 /// ETAG
@@ -30,12 +38,12 @@ export const getWeakETagValue = (etag: ETag): WeakETag => {
   return weak[1] as WeakETag;
 };
 
-export const toWeakETag = (value: bigint): WeakETag => {
+export const toWeakETag = (value: number | bigint): WeakETag => {
   return `W/"${value}"`;
 };
 
 export const getETagFromHeader = (
-  request: Request,
+  request: ApiRequest,
   headerName: HeaderNames
 ): ETag | undefined => {
   const etag = request.headers[headerName];
@@ -48,7 +56,7 @@ export const getETagFromHeader = (
 };
 
 export const getWeakETagValueFromHeader = (
-  request: Request,
+  request: ApiRequest,
   headerName: HeaderNames
 ): WeakETag | undefined => {
   const etag = getETagFromHeader(request, headerName);
@@ -65,7 +73,7 @@ export const getWeakETagValueFromHeader = (
 };
 
 export const getExpectedRevision = (
-  request: Request,
+  request: ApiRequest,
   headerName: HeaderNames
 ): bigint | undefined => {
   const eTag = getWeakETagValueFromHeader(request, headerName);
@@ -77,7 +85,7 @@ export const getExpectedRevision = (
   return assertUnsignedBigInt(eTag);
 };
 
-export const getExpectedRevisionFromIfMatch = (request: Request): bigint => {
+export const getExpectedRevisionFromIfMatch = (request: ApiRequest): bigint => {
   const revision = getExpectedRevision(request, HeaderNames.IF_MATCH);
 
   if (revision === undefined) {
@@ -88,7 +96,7 @@ export const getExpectedRevisionFromIfMatch = (request: Request): bigint => {
 };
 
 export const getExpectedRevisionFromIfNotMatch = (
-  request: Request
+  request: ApiRequest
 ): bigint | undefined => getExpectedRevision(request, HeaderNames.IF_NOT_MATCH);
 
 //////////////////////////////////////

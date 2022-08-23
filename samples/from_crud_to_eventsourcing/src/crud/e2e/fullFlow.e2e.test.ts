@@ -1,6 +1,7 @@
 import { config } from '#config';
 import { getApplication } from '#core/api';
 import { disconnectFromPostgres, runPostgresMigration } from '#core/postgres';
+import { greaterOrEqual } from '#core/validation';
 import { Application } from 'express';
 import request from 'supertest';
 import {
@@ -9,7 +10,7 @@ import {
 } from 'testcontainers';
 import { v4 as uuid } from 'uuid';
 import { router } from '../shoppingCarts/routes';
-import { ShoppingCartStatus } from '../shoppingCarts/shoppingCart';
+import { CartDetails, ShoppingCartStatus } from '../shoppingCarts/shoppingCart';
 
 describe('Full flow', () => {
   // let esdbContainer: StartedEventStoreDBContainer;
@@ -41,7 +42,9 @@ describe('Full flow', () => {
 
   describe('Shopping Cart', () => {
     it('should go through whole flow successfuly', async () => {
+      ///////////////////////////////////////////////////
       // 1. Open Shopping Cart
+      ///////////////////////////////////////////////////
       await request(app)
         .post(`/shopping-carts/${sessionId}`)
         .send({
@@ -73,9 +76,11 @@ describe('Full flow', () => {
       });
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('createdAt');
-      let current = response.body;
+      let current = response.body as CartDetails;
 
+      ///////////////////////////////////////////////////
       // 2. Add product item
+      ///////////////////////////////////////////////////
       const twoPairsOfShoes = {
         content: 'shoes',
         discount: 10,
@@ -96,7 +101,8 @@ describe('Full flow', () => {
         .get(`/shopping-carts/${sessionId}`)
         .expect(200);
 
-      expect(response.body).toMatchObject({
+      let updatedCart = response.body as CartDetails;
+      expect(updatedCart).toMatchObject({
         id: current.id,
         createdAt: current.createdAt,
         sessionId,
@@ -115,11 +121,13 @@ describe('Full flow', () => {
         userId: null,
         status: ShoppingCartStatus.Opened,
       });
-      expect(response.body.updatedAt).not.toBeNull();
+      expect(updatedCart.updatedAt).not.toBeNull();
 
-      current = response.body;
+      current = response.body as CartDetails;
 
+      ///////////////////////////////////////////////////
       // 3. Add another item
+      ///////////////////////////////////////////////////
       const tShirt = {
         content: 'tshirt',
         discount: 20,
@@ -140,7 +148,9 @@ describe('Full flow', () => {
         .get(`/shopping-carts/${sessionId}`)
         .expect(200);
 
-      expect(response.body).toMatchObject({
+      updatedCart = response.body as CartDetails;
+
+      expect(updatedCart).toMatchObject({
         id: current.id,
         createdAt: current.createdAt,
         sessionId,
@@ -159,11 +169,15 @@ describe('Full flow', () => {
         userId: null,
         status: ShoppingCartStatus.Opened,
       });
-      expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
+      expect(
+        greaterOrEqual(updatedCart.updatedAt, current.updatedAt)
+      ).toBeTruthy();
 
-      current = response.body;
+      current = response.body as CartDetails;
 
-      // 3. Remove one item
+      ///////////////////////////////////////////////////
+      // 4. Remove one item
+      ///////////////////////////////////////////////////
       const pairOfShoes = {
         content: 'shoes',
         discount: 10,
@@ -184,7 +198,9 @@ describe('Full flow', () => {
         .get(`/shopping-carts/${sessionId}`)
         .expect(200);
 
-      expect(response.body).toMatchObject({
+      updatedCart = response.body as CartDetails;
+
+      expect(updatedCart).toMatchObject({
         id: current.id,
         createdAt: current.createdAt,
         sessionId,
@@ -203,9 +219,13 @@ describe('Full flow', () => {
         userId: null,
         status: ShoppingCartStatus.Opened,
       });
-      expect(response.body.updatedAt > current.updatedAt).toBeTruthy();
+      expect(
+        greaterOrEqual(updatedCart.updatedAt, current.updatedAt)
+      ).toBeTruthy();
 
-      // 3. Confirm cart
+      ///////////////////////////////////////////////////
+      // 5. Confirm cart
+      ///////////////////////////////////////////////////
       const confirmedData = {
         city: 'Legnica',
         content: 'Some content',
@@ -234,17 +254,21 @@ describe('Full flow', () => {
 
       const { updatedAt, ...currentWithoutUpdatedAt } = current;
 
-      expect(response.body).toMatchObject({
+      updatedCart = response.body as CartDetails;
+
+      expect(updatedCart).toMatchObject({
         ...currentWithoutUpdatedAt,
         ...confirmedData,
         items: [pairOfShoes, tShirt],
       });
-      expect(response.body.updatedAt > updatedAt).toBeTruthy();
+      expect(greaterOrEqual(updatedCart.updatedAt, updatedAt)).toBeTruthy();
 
-      current = response.body;
+      current = response.body as CartDetails;
 
-      // 4. Try to add product item
+      ///////////////////////////////////////////////////
+      // 6. Try to add product item
       // It should fail, as cart is already confirmed
+      ///////////////////////////////////////////////////
       await request(app)
         .post(`/shopping-carts/${sessionId}`)
         .send({

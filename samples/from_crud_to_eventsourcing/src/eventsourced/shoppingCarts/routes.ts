@@ -36,7 +36,9 @@ import { getUserData } from './user';
 
 export const router = Router();
 
+///////////////////////////////
 // Open Shopping cart
+///////////////////////////////
 router.post(
   '/v2/shopping-carts/:shoppingCartId?',
   async (request: Request, response: Response, next: NextFunction) => {
@@ -61,10 +63,21 @@ router.post(
   }
 );
 
+///////////////////////////////
 // Add Product Item
+///////////////////////////////
+type AddProductItemRequest = Request<
+  Partial<{ shoppingCartId: string }>,
+  unknown,
+  Partial<{ productId: number; quantity: number }>
+>;
 router.post(
   '/v2/shopping-carts/:shoppingCartId/product-items',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (
+    request: AddProductItemRequest,
+    response: Response,
+    next: NextFunction
+  ) => {
     try {
       const shoppingCartId = assertNotEmptyString(
         request.params.shoppingCartId
@@ -98,10 +111,23 @@ router.post(
   }
 );
 
+///////////////////////////////
 // Remove Product Item
+///////////////////////////////
+type RemoveProductItemRequest = Request<
+  Partial<{ shoppingCartId: string }>,
+  unknown,
+  unknown,
+  Partial<{ productId: number; quantity: number }>
+>;
+
 router.delete(
   '/v2/shopping-carts/:shoppingCartId/product-items',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (
+    request: RemoveProductItemRequest,
+    response: Response,
+    next: NextFunction
+  ) => {
     try {
       const shoppingCartId = assertNotEmptyString(
         request.params.shoppingCartId
@@ -133,10 +159,23 @@ router.delete(
   }
 );
 
+///////////////////////////////
 // Confirm Shopping Cart
+///////////////////////////////
+
+type ConfirmProductItemRequest = Request<
+  Partial<{ shoppingCartId: string; userId: string }>,
+  unknown,
+  Partial<{ content: string; line1: string; line2: string }>
+>;
+
 router.put(
   '/v2/users/:userId/shopping-carts/:shoppingCartId',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (
+    request: ConfirmProductItemRequest,
+    response: Response,
+    next: NextFunction
+  ) => {
     try {
       const shoppingCartId = assertNotEmptyString(
         request.params.shoppingCartId
@@ -170,6 +209,9 @@ router.put(
   }
 );
 
+///////////////////////////////
+// Get Shopping cart details
+///////////////////////////////
 router.get(
   '/v2/shopping-carts/:shoppingCartId',
   async (request: Request, response: Response, next: NextFunction) => {

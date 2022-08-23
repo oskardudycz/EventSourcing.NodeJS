@@ -10,7 +10,7 @@ Imagine that the company you work for has an efficiently developed ECommerce pla
 
 The business concluded that the information about the final state of the shopping cart is not sufficient. Having the entire workflow history, it would be possible to analyze better the operations performed by the user (e.g. analysis of related products, products taken out of the basket, abandoned baskets, etc.). The business also wants to handle diagnostics and support better to solve reported problems.
 
-The sample focuses on the specific shopping cart workflow, assuming you can reuse the strategies for other functionalities accordingly. 
+The sample focuses on the specific shopping cart workflow, assuming you can reuse the strategies for other functionalities accordingly.
 
 Having the following shopping cart process:
 
@@ -24,6 +24,7 @@ Having the following shopping cart process:
 ## CRUD application
 
 The current application is a NodeJS monolith application. It has two endpoints:
+
 - insert/update - used for all the business operations, updates database state with the new values,
 - get - returns the current shopping cart state.
 
@@ -45,10 +46,10 @@ The assumption to have such a generic approach was that we're using a rich front
 1. Run: `docker-compose up`.
 2. Wait until all dockers got are downloaded and running.
 3. You should automatically get:
-    - Postgres DB
-    - PG Admin - IDE for postgres. Available at: http://localhost:5050.
-        - Login: `admin@pgadmin.org`, Password: `admin`
-        - To connect to server click right mouse on Servers, then Register Server and use host: `postgres`, user: `postgres`, password: `Password12!`
+   - Postgres DB
+   - PG Admin - IDE for postgres. Available at: http://localhost:5050.
+     - Login: `admin@pgadmin.org`, Password: `admin`
+     - To connect to server click right mouse on Servers, then Register Server and use host: `postgres`, user: `postgres`, password: `Password12!`
    - EventStoreDB UI: http://localhost:2113/
 
 ### CRUD
