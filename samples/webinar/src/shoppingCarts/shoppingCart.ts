@@ -104,10 +104,7 @@ export const toShoppingCartStreamName = (shoppingCartId: string) =>
   `shopping_cart-${shoppingCartId}`;
 
 export const assertShoppingCartIsNotClosed = (shoppingCart: ShoppingCart) => {
-  if (
-    (shoppingCart.status & ShoppingCartStatus.Closed) ===
-    ShoppingCartStatus.Closed
-  ) {
+  if (shoppingCart.status !== ShoppingCartStatus.Opened) {
     throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
   }
 };
