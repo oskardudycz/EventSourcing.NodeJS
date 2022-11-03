@@ -4,8 +4,12 @@ on:
   # run it on push to the default repository branch
   push:
     branches: [main]
+    paths:
+      - "samples/from_crud_to_eventsourcing/**"
   # run it during pull request
   pull_request:
+    paths:
+      - "samples/from_crud_to_eventsourcing/**"
 
 defaults:
   run:

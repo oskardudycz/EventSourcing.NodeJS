@@ -4,8 +4,10 @@ on:
   # run it on push to the default repository branch
   push:
     branches: [main]
+      - "samples/snapshots/**"
   # run it during pull request
   pull_request:
+      - "samples/snapshots/**"
 
 defaults:
   run:
