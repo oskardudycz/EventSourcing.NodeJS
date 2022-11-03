@@ -1,6 +1,6 @@
 ## From CRUD to Event-Sourced application
 
-<a href="https://www.architecture-weekly.com/p/webinar-1-from-crud-to-event-sourcing" target="_blank"><img src="https://substackcdn.com/image/fetch/w_1920,h_1080,c_fill,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-video.s3.amazonaws.com%2Fvideo_upload%2Fpost%2F69390705%2Fd71d5510-0aca-4fa9-aa6e-01fbbf29ac1d%2Ftranscoded-00002.png" alt="vent-Driven revolution, from CRUD to Event Sourcing" width="320" height="240" border="10" /></a>
+<a href="https://www.architecture-weekly.com/p/webinar-1-from-crud-to-event-sourcing" target="_blank"><img src="https://substackcdn.com/image/fetch/w_1920,h_1080,c_fill,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-video.s3.amazonaws.com%2Fvideo_upload%2Fpost%2F69390705%2Fd71d5510-0aca-4fa9-aa6e-01fbbf29ac1d%2Ftranscoded-00002.png" alt="vent-Driven revolution, from CRUD to Event Sourcing" width="600" height="338" border="10" /></a>
 
 ## Overview
 
