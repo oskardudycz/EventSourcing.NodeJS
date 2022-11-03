@@ -26,14 +26,14 @@ jobs:
       # define the test matrix
       matrix:
         # selected operation systems to run CI
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         # selected node version to run CI
-        node-version: [14.x, 15.x]
+        node-version: [16.x, 18.x]
 
     steps:
       - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           # use the node version defined in matrix above
           node-version: ${{ matrix.node-version }}
