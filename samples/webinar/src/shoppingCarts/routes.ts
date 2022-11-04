@@ -50,9 +50,19 @@ router.post(
 // TODO: Add Pattern matching here
 
 // Add Product Item
+type AddProductItemRequest = Request<
+  Partial<{ shoppingCartId: string }>,
+  unknown,
+  Partial<{ productId: number; quantity: number }>
+>;
+
 router.post(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (
+    request: AddProductItemRequest,
+    response: Response,
+    next: NextFunction
+  ) => {
     try {
       const shoppingCartId = assertNotEmptyString(
         request.params.shoppingCartId
@@ -102,8 +112,8 @@ router.delete(
         {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
           productItem: {
-            productId: assertNotEmptyString(request.body.productId),
-            quantity: assertPositiveNumber(request.body.quantity),
+            productId: assertNotEmptyString(request.query.productId),
+            quantity: assertPositiveNumber(request.query.quantity),
           },
         },
         expectedRevision

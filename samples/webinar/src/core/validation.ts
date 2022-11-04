@@ -8,14 +8,14 @@ export const enum ValidationErrors {
   NOT_AN_UNSIGNED_BIGINT = 'NOT_AN_UNSIGNED_BIGINT',
 }
 
-export const assertNotEmptyString = (value: any): string => {
+export const assertNotEmptyString = (value: unknown): string => {
   if (typeof value !== 'string' || value.length === 0) {
     throw ValidationErrors.NOT_A_NONEMPTY_STRING;
   }
   return value;
 };
 
-export const assertPositiveNumber = (value: any): number => {
+export const assertPositiveNumber = (value: unknown): number => {
   if (typeof value !== 'number' || value <= 0) {
     throw ValidationErrors.NOT_A_POSITIVE_NUMBER;
   }

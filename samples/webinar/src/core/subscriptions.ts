@@ -41,7 +41,7 @@ export const SubscriptionToAll =
           console.info(`Stopping subscription.`);
           return;
         }
-        console.error(`Received error: ${error ?? 'UNEXPECTED ERROR'}.`);
+        console.error(`Received error: ${JSON.stringify(error)}.`);
       }
     );
     return subscription;

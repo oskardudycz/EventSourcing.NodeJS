@@ -4,9 +4,11 @@ on:
   # run it on push to the default repository branch
   push:
     branches: [main]
+    paths:
       - "samples/webinar/**"
   # run it during pull request
   pull_request:
+    paths:
       - "samples/webinar/**"
 
 defaults:

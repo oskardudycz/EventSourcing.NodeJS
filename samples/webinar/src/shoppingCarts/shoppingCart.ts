@@ -79,14 +79,16 @@ export interface ShoppingCart {
 }
 
 export const isCashierShoppingCartEvent = (
-  event: any
+  event: unknown
 ): event is ShoppingCartEvent => {
   return (
     event != null &&
-    (event.type === 'shopping-cart-opened' ||
-      event.type === 'product-item-added-to-shopping-cart' ||
-      event.type === 'product-item-removed-from-shopping-cart' ||
-      event.type === 'shopping-cart-confirmed')
+    ((event as ShoppingCartEvent).type === 'shopping-cart-opened' ||
+      (event as ShoppingCartEvent).type ===
+        'product-item-added-to-shopping-cart' ||
+      (event as ShoppingCartEvent).type ===
+        'product-item-removed-from-shopping-cart' ||
+      (event as ShoppingCartEvent).type === 'shopping-cart-confirmed')
   );
 };
 

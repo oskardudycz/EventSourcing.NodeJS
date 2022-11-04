@@ -39,7 +39,7 @@ export const getWeakETagValue = (etag: ETag): WeakETag => {
   return weak[1] as WeakETag;
 };
 
-export const toWeakETag = (value: number | bigint): WeakETag => {
+export const toWeakETag = (value: number | bigint | string): WeakETag => {
   return `W/"${value}"`;
 };
 

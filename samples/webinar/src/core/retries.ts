@@ -5,7 +5,7 @@
 export type RetryOptions = Readonly<{
   maxRetries?: number;
   delay?: number;
-  shouldRetry?: (error: any) => boolean;
+  shouldRetry?: (error: unknown) => boolean;
 }>;
 
 export const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
@@ -33,7 +33,9 @@ export const retryPromise = async <T = never>(
       return await callback();
     } catch (error) {
       if (!shouldRetry(error) || retryCount == maxRetries) {
-        console.error(`[retry] Exceeded max retry count, throwing: ${error}`);
+        console.error(
+          `[retry] Exceeded max retry count, throwing: ${JSON.stringify(error)}`
+        );
         throw error;
       }
 
@@ -42,7 +44,7 @@ export const retryPromise = async <T = never>(
       console.warn(
         `[retry] Retrying (number: ${
           retryCount + 1
-        }, delay: ${sleepTime}): ${error}`
+        }, delay: ${sleepTime}): ${JSON.stringify(error)}`
       );
 
       await sleep(sleepTime);

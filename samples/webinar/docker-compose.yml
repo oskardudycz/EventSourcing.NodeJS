@@ -4,8 +4,8 @@ services:
   #######################################################
   #  EventStoreDB
   #######################################################
-  eventstoredb:
-    image: eventstore/eventstore:21.10.5-buster-slim
+  eventstore.db:
+    image: eventstore/eventstore:21.10.8-buster-slim
     # use this image if you're running ARM-based proc like Apple M1
     # image: ghcr.io/eventstore/eventstore:21.10.0-alpha-arm64v8
     environment:
@@ -29,7 +29,7 @@ services:
         target: /var/log/eventstore
     networks:
       - esdb_network
-
+      
   mongodb:
     image: mongo:5.0
     # environment:

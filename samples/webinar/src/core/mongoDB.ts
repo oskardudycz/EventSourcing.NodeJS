@@ -2,7 +2,13 @@
 /// MongoDB
 //////////////////////////////////////
 
-import { MongoClient, Collection, ObjectId, UpdateResult } from 'mongodb';
+import {
+  MongoClient,
+  Collection,
+  Document,
+  ObjectId,
+  UpdateResult,
+} from 'mongodb';
 import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
 import { getEventStore } from './streams';
 import {
@@ -34,9 +40,9 @@ export type ExecuteOnMongoDBOptions =
     }
   | string;
 
-export const getMongoCollection = async <Document>(
+export const getMongoCollection = async <Doc extends Document>(
   options: ExecuteOnMongoDBOptions
-): Promise<Collection<Document>> => {
+): Promise<Collection<Doc>> => {
   const mongo = await getMongoDB();
 
   const { databaseName, collectionName } =
@@ -45,7 +51,7 @@ export const getMongoCollection = async <Document>(
       : { databaseName: undefined, collectionName: options };
 
   const db = mongo.db(databaseName);
-  return db.collection<Document>(collectionName);
+  return db.collection<Doc>(collectionName);
 };
 
 export const toObjectId = (id: string) => id as unknown as ObjectId;

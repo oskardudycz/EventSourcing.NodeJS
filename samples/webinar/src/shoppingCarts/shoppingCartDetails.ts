@@ -101,7 +101,7 @@ export const projectProductItemAddedToShoppingCart = async (
     return;
   }
 
-  retryIfNotUpdated(() =>
+  await retryIfNotUpdated(() =>
     shoppingCarts.updateOne(
       {
         _id: toObjectId(event.data.shoppingCartId),

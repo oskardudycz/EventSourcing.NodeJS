@@ -20,10 +20,13 @@ export const isWeakETag = (etag: ETag): etag is WeakETag => {
 };
 
 export const getWeakETagValue = (etag: ETag): WeakETag => {
-  return WeakETagRegex.exec(etag)![1] as WeakETag;
+  const weak = WeakETagRegex.exec(etag);
+  if (weak == null || weak.length == 0)
+    throw new Error(ETagErrors.WRONG_WEAK_ETAG_FORMAT);
+  return weak[1] as WeakETag;
 };
 
-export const toWeakETag = (value: any): WeakETag => {
+export const toWeakETag = (value: number | bigint | string): WeakETag => {
   return `W/"${value}"`;
 };
 

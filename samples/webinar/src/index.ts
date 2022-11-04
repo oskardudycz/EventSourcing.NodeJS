@@ -20,4 +20,4 @@ startAPI(router);
   await SubscriptionToAllWithMongoCheckpoints('sub_shopping_carts', [
     storeCheckpointInCollection(projectToShoppingCartItem),
   ]);
-})();
+})().catch(console.log);
