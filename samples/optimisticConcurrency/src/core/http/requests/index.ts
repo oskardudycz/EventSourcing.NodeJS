@@ -1,5 +1,13 @@
 import { Request } from 'express';
+import { ParamsDictionary } from 'express-serve-static-core';
 import { failure, Result, success } from '../../primitives';
+
+export type ApiRequest = Request<
+  Record<string, unknown> | ParamsDictionary,
+  unknown,
+  unknown,
+  Record<string, unknown> | qs.ParsedQs
+>;
 
 export type WeakETag = `W/${string}`;
 export type ETag = WeakETag | string;
@@ -16,26 +24,29 @@ export function isWeakETag(etag: ETag): etag is WeakETag {
 }
 
 export function getWeakETagValue(etag: ETag): string {
-  return WeakETagRegex.exec(etag)![1];
+  const weak = WeakETagRegex.exec(etag);
+  if (weak == null || weak.length == 0)
+    throw new Error('WRONG_WEAK_ETAG_FORMAT');
+  return weak[1] as WeakETag;
 }
 
-export function toWeakETag(value: any): WeakETag {
+export function toWeakETag(value: number | bigint | string): WeakETag {
   return `W/"${value}"`;
 }
 
 export function getETagFromIfMatch(
-  request: Request
+  request: ApiRequest
 ): Result<ETag, MISSING_IF_MATCH_HEADER> {
   const etag = request.headers['if-match'];
 
   if (etag === undefined) {
     return failure('MISSING_IF_MATCH_HEADER');
   }
-  return success(<ETag>etag);
+  return success(etag);
 }
 
 export function getWeakETagValueFromIfMatch(
-  request: Request
+  request: ApiRequest
 ): Result<string, WRONG_WEAK_ETAG_FORMAT | MISSING_IF_MATCH_HEADER> {
   const etag = getETagFromIfMatch(request);
 

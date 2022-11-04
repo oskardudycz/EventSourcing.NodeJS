@@ -24,32 +24,34 @@ export async function subscribeToStream(
   handleEvent: (event: StreamEvent) => Promise<void>,
   options?: SubscribeToStreamOptions
 ): Promise<Result<StreamSubscription>> {
-  return pipeResultAsync(loadCheckpoint, async (currentPosition) => {
-    return success(
-      client
-        .subscribeToStream(streamName, options)
-        .on('data', async function (resolvedEvent) {
-          if (!resolvedEvent.event) {
-            console.log(`Event without data received`);
-            return;
-          }
+  return pipeResultAsync(loadCheckpoint, (_currentPosition) => {
+    return Promise.resolve(
+      success(
+        client
+          .subscribeToStream(streamName, options)
+          .on('data', async function (resolvedEvent) {
+            if (!resolvedEvent.event) {
+              console.log(`Event without data received`);
+              return;
+            }
 
-          const event = {
-            streamRevision: resolvedEvent.event!.revision,
-            streamName: resolvedEvent.event!.streamId,
-            event: <Event>{
-              type: resolvedEvent.event!.type,
-              data: resolvedEvent.event!.data,
-              metadata: resolvedEvent.event!.metadata,
-            },
-          };
+            const event = {
+              streamRevision: resolvedEvent.event.revision,
+              streamName: resolvedEvent.event.streamId,
+              event: <Event>{
+                type: resolvedEvent.event.type,
+                data: resolvedEvent.event.data,
+                metadata: resolvedEvent.event.metadata,
+              },
+            };
 
-          //TODO: add here some retry logic
-          await handleEvent(event);
+            //TODO: add here some retry logic
+            await handleEvent(event);
 
-          //TODO: add here some retry logic
-          await storeCheckpoint(subscriptionId, resolvedEvent.event.revision);
-        })
+            //TODO: add here some retry logic
+            await storeCheckpoint(subscriptionId, resolvedEvent.event.revision);
+          })
+      )
     );
   })(subscriptionId);
 }

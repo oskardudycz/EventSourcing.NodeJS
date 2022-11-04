@@ -13,6 +13,7 @@ import {
 import app from '../../app';
 import { getSubscription } from '../../getSubscription';
 import { disconnectFromMongoDB } from '#core/mongoDB';
+import { TestResponse } from '#testing/api/testResponse';
 
 describe('Full flow', () => {
   let esdbContainer: StartedEventStoreDBContainer;
@@ -21,10 +22,10 @@ describe('Full flow', () => {
   const clientId = uuid();
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
-    mongodbContainer = await new MongoDBContainer().startContainer();
+    mongodbContainer = await new MongoDBContainer().start();
     config.mongoDB.connectionString = mongodbContainer.getConnectionString();
     console.log(config.mongoDB.connectionString);
 
@@ -36,78 +37,79 @@ describe('Full flow', () => {
     }
 
     subscription = subscriptionResult.value;
-    subscription.subscribe();
+    void subscription.subscribe();
   });
 
   afterAll(async () => {
     try {
       await subscription.unsubscribe();
     } catch (err) {
-      console.warn(`Failed to unsubscribe: ${err}`);
+      console.warn(err);
     }
     await disconnectFromMongoDB();
-    await esdbContainer.stop();
     await mongodbContainer.stop();
+    await esdbContainer.stop();
   });
 
   describe('Shopping Cart', () => {
     let shoppingCartId: string;
     let currentRevision: string;
-    let firstProductId: string = uuid();
+    const firstProductId: string = uuid();
 
     it("should open when it wasn't open yet", async () => {
-      await request(app)
+      let response = (await request(app)
         .post(`/clients/${clientId}/shopping-carts`)
         .expect(201)
-        .expect('Content-Type', /json/)
-        .then(async (response) => {
-          expect(response.body).toHaveProperty('id');
-          expect(response.headers['etag']).toBeDefined();
-          expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+        .expect('Content-Type', /json/)) as TestResponse<{ id: string }>;
 
-          expect(response.headers['location']).toBeDefined();
-          expect(response.headers['location']).toBe(
-            `/clients/${clientId}/shopping-carts/${response.body.id}`
-          );
+      if (!response.body.id) {
+        expect(false).toBeTruthy();
+        return;
+      }
 
-          currentRevision = response.headers['etag'];
-          shoppingCartId = response.body.id;
-        });
+      expect(response.headers['etag']).toBeDefined();
+      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+
+      expect(response.headers['location']).toBeDefined();
+      expect(response.headers['location']).toBe(
+        `/clients/${clientId}/shopping-carts/${response.body.id}`
+      );
+
+      currentRevision = response.headers['etag'];
+      shoppingCartId = response.body.id;
 
       await request(app)
         .get(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
         .expect(200)
         .expect('Content-Type', /json/);
 
-      await request(app)
+      response = await request(app)
         .post(
           `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`
         )
         .set('If-Match', currentRevision)
         .send({ productId: firstProductId, quantity: 10 })
         .expect(200)
-        .expect('Content-Type', /plain/)
-        .then(async (response) => {
-          expect(response.headers['etag']).toBeDefined();
-          expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+        .expect('Content-Type', /plain/);
 
-          currentRevision = response.headers['etag'];
-        });
+      expect(response.headers['etag']).toBeDefined();
+      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
 
-      await request(app)
+      currentRevision = response.headers['etag'];
+
+      response = await request(app)
         .delete(
-          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${firstProductId}&quantity=${5}`
         )
         .set('If-Match', currentRevision)
-        .send({ productId: firstProductId, quantity: 5 })
+        .send()
         .expect(200)
-        .expect('Content-Type', /plain/)
-        .then(async (response) => {
-          expect(response.headers['etag']).toBeDefined();
-          expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+        .expect('Content-Type', /plain/);
 
-          currentRevision = response.headers['etag'];
-        });
+      expect(response.headers['etag']).toBeDefined();
+      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+
+      currentRevision = response.headers['etag'];
 
       await request(app)
         .get(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)

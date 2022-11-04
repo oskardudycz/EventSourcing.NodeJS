@@ -3,8 +3,8 @@ import { sleep } from '#core/primitives';
 
 export async function retryTest(
   test: () => request.Test,
-  retriesLeft: number = 5,
-  delay: number = 1000
+  retriesLeft = 5,
+  delay = 1000
 ) {
   try {
     await test();

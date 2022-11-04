@@ -58,7 +58,7 @@ export function getSubscriptionToAll<TError = never>(
         return success(subscription);
       } catch (error) {
         console.error(
-          `Received error while subscribing: ${error ?? 'UNEXPECTED ERROR'}.`
+          `Received error while subscribing: ${JSON.stringify(error)}.`
         );
         throw error;
       }
@@ -93,12 +93,12 @@ function handleEvent<TError = never>(
       }
 
       const event: StreamEvent = {
-        streamRevision: resolvedEvent.event!.revision,
-        streamName: resolvedEvent.event!.streamId,
+        streamRevision: resolvedEvent.event.revision,
+        streamName: resolvedEvent.event.streamId,
         event: <Event>{
-          type: resolvedEvent.event!.type,
-          data: resolvedEvent.event!.data,
-          metadata: resolvedEvent.event!.metadata,
+          type: resolvedEvent.event.type,
+          data: resolvedEvent.event.data,
+          metadata: resolvedEvent.event.metadata,
         },
       };
 

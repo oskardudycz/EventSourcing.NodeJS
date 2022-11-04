@@ -1,4 +1,4 @@
-import { MongoClient, Collection, UpdateResult } from 'mongodb';
+import { MongoClient, Collection, UpdateResult, Document } from 'mongodb';
 import { config } from '#config';
 import {
   DEFAULT_RETRY_OPTIONS,
@@ -41,9 +41,9 @@ export type ExecuteOnMongoDBOptions =
     }
   | string;
 
-export async function getMongoCollection<Document>(
+export async function getMongoCollection<Doc extends Document>(
   options: ExecuteOnMongoDBOptions
-): Promise<Collection<Document>> {
+): Promise<Collection<Doc>> {
   const mongo = await getMongoDB();
 
   const { databaseName, collectionName } =
@@ -52,7 +52,7 @@ export async function getMongoCollection<Document>(
       : { databaseName: undefined, collectionName: options };
 
   const db = mongo.db(databaseName);
-  return db.collection<Document>(collectionName);
+  return db.collection<Doc>(collectionName);
 }
 
 export type FAILED_TO_UPDATE_DOCUMENT = 'FAILED_TO_UPDATE_DOCUMENT';

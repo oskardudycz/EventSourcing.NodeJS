@@ -2,6 +2,7 @@ import { ErrorType, EventStoreDBClient } from '@eventstore/db-client';
 import { GetStreamMetadataOptions } from '@eventstore/db-client/dist/streams';
 import { STREAM_NOT_FOUND, METADATA_NOT_FOUND } from './';
 import { failure, Result, success } from '../../primitives';
+import { isErrorWithType } from '../errors';
 
 export async function readStreamMetadata<
   StreamMetadata extends Record<string, unknown>
@@ -19,8 +20,8 @@ export async function readStreamMetadata<
     if (!result.metadata) return failure('METADATA_NOT_FOUND');
 
     return success(result.metadata);
-  } catch (error: any) {
-    if (error.type == ErrorType.STREAM_NOT_FOUND) {
+  } catch (error) {
+    if (isErrorWithType(error) && error.type == ErrorType.STREAM_NOT_FOUND) {
       return failure('STREAM_NOT_FOUND');
     }
 

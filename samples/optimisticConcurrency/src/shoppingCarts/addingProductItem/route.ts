@@ -16,10 +16,20 @@ import { AddProductItemToShoppingCart } from '.';
 import { getAndUpdate } from '#core/eventStore/appending';
 import { assertUnreachable } from '#core/primitives';
 
+type AddProductItemRequest = Request<
+  Partial<{ shoppingCartId: string }>,
+  unknown,
+  Partial<{ productId: number; quantity: number }>
+>;
+
 export const route = (router: Router) =>
   router.post(
     '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-    async function (request: Request, response: Response, next: NextFunction) {
+    async function (
+      request: AddProductItemRequest,
+      response: Response,
+      next: NextFunction
+    ) {
       try {
         const command = mapRequestToCommand(request);
 
@@ -59,7 +69,7 @@ export const route = (router: Router) =>
   );
 
 function mapRequestToCommand(
-  request: Request
+  request: AddProductItemRequest
 ): AddProductItemToShoppingCart | ValidationError | WRONG_ETAG {
   if (!isNotEmptyString(request.params.shoppingCartId)) {
     return 'MISSING_SHOPPING_CARD_ID';

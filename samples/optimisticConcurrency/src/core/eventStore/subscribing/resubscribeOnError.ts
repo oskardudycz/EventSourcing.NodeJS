@@ -20,9 +20,9 @@ async function resubscribe<T>(subscribe: () => Promise<T>): Promise<T> {
       result = await subscribe();
     } catch (error) {
       console.error(
-        `Received error while reconnecting: ${
-          error ?? 'UNEXPECTED ERROR'
-        }. Reconnecting.`
+        `Received error while reconnecting: ${JSON.stringify(
+          error
+        )}. Reconnecting.`
       );
     }
   } while (!result);

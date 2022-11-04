@@ -10,4 +10,4 @@ const subscription = subscriptionResult.value;
 
 (async () => {
   await subscription.subscribe();
-})();
+})().catch(console.error);

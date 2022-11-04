@@ -1,3 +1,4 @@
+import { isErrorWithType } from '#core/eventStore/errors';
 import { ErrorType, EventStoreDBClient } from '@eventstore/db-client';
 import { asyncSize, asyncIsEmpty } from 'iter-tools-es';
 
@@ -9,8 +10,12 @@ export async function expectStreamToNotExist(
     const isEmpty = await asyncIsEmpty(eventStore.readStream(streamName));
 
     expect(isEmpty).toBeFalsy();
-  } catch (error: any) {
-    expect(error?.type).toBe(ErrorType.STREAM_NOT_FOUND);
+  } catch (error) {
+    if (!isErrorWithType(error)) {
+      expect(true).toBeFalsy();
+      return;
+    }
+    expect(error.type).toBe(ErrorType.STREAM_NOT_FOUND);
   }
 }
 
