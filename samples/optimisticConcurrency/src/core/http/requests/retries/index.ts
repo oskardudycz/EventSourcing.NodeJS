@@ -3,7 +3,7 @@ import { sleep } from '#core/primitives';
 export type RetryOptions = Readonly<{
   maxRetries?: number;
   delay?: number;
-  shouldRetry?: (error: any) => boolean;
+  shouldRetry?: (error: unknown) => boolean;
 }>;
 
 export const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
@@ -21,14 +21,18 @@ export async function retryPromise<T = never>(
     ...DEFAULT_RETRY_OPTIONS,
     ...options,
   };
+  let nonRetryableError;
 
   do {
     try {
       return await callback();
     } catch (error) {
       if (!shouldRetry(error) || retryCount == maxRetries) {
-        console.error(`[retry] Exceeded max retry count, throwing: ${error}`);
-        throw error;
+        console.error(
+          `[retry] Exceeded max retry count, throwing: ${JSON.stringify(error)}`
+        );
+        nonRetryableError = error;
+        break;
       }
 
       const sleepTime = Math.pow(2, retryCount) * delay + Math.random() * delay;
@@ -36,13 +40,20 @@ export async function retryPromise<T = never>(
       console.warn(
         `[retry] Retrying (number: ${
           retryCount + 1
-        }, delay: ${sleepTime}): ${error}`
+        }, delay: ${sleepTime}): ${JSON.stringify(error)}`
       );
 
       await sleep(sleepTime);
       retryCount++;
     }
-  } while (true);
+  } while (retryCount < maxRetries);
+
+  console.error(
+    `[retry] Exceeded max retry count, throwing: ${JSON.stringify(
+      nonRetryableError
+    )}`
+  );
+  throw nonRetryableError;
 }
 
 declare global {

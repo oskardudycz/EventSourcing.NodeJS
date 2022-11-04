@@ -11,20 +11,20 @@ export class Subscription {
   constructor(private onSubscribe: () => Promise<Result<ESDBSubscription>>) {}
 
   public subscribe(): Promise<Result<boolean>> {
-    return resubscribeOnError(() => {
-      return new Promise<Result<boolean>>(async (resolve, reject) => {
-        const subscriptionResult = await this.onSubscribe();
+    return resubscribeOnError(async () => {
+      const subscriptionResult = await this.onSubscribe();
 
+      return new Promise<Result<boolean>>((resolve, reject) => {
         if (subscriptionResult.isError) return subscriptionResult;
 
         this.subscription = subscriptionResult.value;
 
         this.subscription
-          .on('error', async (error) => {
-            console.error(`Received error: ${error ?? 'UNEXPECTED ERROR'}.`);
+          .on('error', (error) => {
+            console.error(`Received error: ${JSON.stringify(error)}.`);
             reject(error);
           })
-          .on('close', async () => {
+          .on('close', () => {
             console.info(`Subscription closed.`);
             resolve(success(false));
           })

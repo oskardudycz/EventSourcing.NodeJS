@@ -1,6 +1,10 @@
 import { Result, success } from './result';
 import { switchError, switchErrorAsync } from './switchError';
 
+/* eslint @typescript-eslint/no-explicit-any: 0 */
+/* eslint @typescript-eslint/no-unsafe-argument: 0 */
+/* eslint @typescript-eslint/no-unsafe-return: 0 */
+
 export function pipe<T1, R1, R2>(
   f1: ((arg: T1) => R1) | (() => R1),
   f2: (arg: R1) => R2

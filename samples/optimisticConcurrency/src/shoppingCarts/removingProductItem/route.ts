@@ -66,11 +66,11 @@ function mapRequestToCommand(
     return 'MISSING_SHOPPING_CARD_ID';
   }
 
-  if (!isNotEmptyString(request.body.productId)) {
+  if (!isNotEmptyString(request.query.productId)) {
     return 'MISSING_PRODUCT_ID';
   }
 
-  if (!isPositiveNumber(request.body.quantity)) {
+  if (!isPositiveNumber(Number(request.query.quantity))) {
     return 'INVALID_PRODUCT_ITEM_QUANTITY';
   }
 
@@ -85,8 +85,8 @@ function mapRequestToCommand(
     data: {
       shoppingCartId: request.params.shoppingCartId,
       productItem: {
-        productId: request.body.productId,
-        quantity: request.body.quantity,
+        productId: request.query.productId,
+        quantity: Number(request.query.quantity),
       },
     },
     metadata: {

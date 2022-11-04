@@ -70,7 +70,7 @@ function mapRequestToCommand(
   return {
     type: 'confirm-shopping-cart',
     data: {
-      shoppingCartId: request.body.shoppingCartId,
+      shoppingCartId: request.params.shoppingCartId,
     },
     metadata: {
       $expectedRevision: expectedRevision.value,

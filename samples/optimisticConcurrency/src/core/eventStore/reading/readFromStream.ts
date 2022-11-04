@@ -4,6 +4,7 @@ import { STREAM_NOT_FOUND } from '.';
 
 import { Event, StreamEvent } from '../../events';
 import { failure, Result, success } from '../../primitives';
+import { isErrorWithType } from '../errors';
 
 export type ReadFromStreamOptions = {
   toPosition?: bigint;
@@ -32,19 +33,19 @@ export async function readFromStream<StreamEventType extends Event>(
         break;
 
       events.push({
-        streamRevision: resolvedEvent.event!.revision,
-        streamName: resolvedEvent.event!.streamId,
+        streamRevision: resolvedEvent.event.revision,
+        streamName: resolvedEvent.event.streamId,
         event: <StreamEventType>{
-          type: resolvedEvent.event!.type,
-          data: resolvedEvent.event!.data,
+          type: resolvedEvent.event.type,
+          data: resolvedEvent.event.data,
           metadata: resolvedEvent.event?.metadata,
         },
       });
     }
 
     return success(events);
-  } catch (error: any) {
-    if (error.type == ErrorType.STREAM_NOT_FOUND) {
+  } catch (error) {
+    if (isErrorWithType(error) && error.type == ErrorType.STREAM_NOT_FOUND) {
       return failure('STREAM_NOT_FOUND');
     }
 

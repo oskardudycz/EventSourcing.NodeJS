@@ -1,9 +1,9 @@
+import { jsonEvent } from '@eventstore/db-client';
+import { v4 as uuid } from 'uuid';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from './eventStoreDBContainer';
-import { jsonEvent } from '@eventstore/db-client';
-import { v4 as uuid } from 'uuid';
 
 describe('EventStoreDBContainer', () => {
   jest.setTimeout(180_000);
@@ -11,7 +11,7 @@ describe('EventStoreDBContainer', () => {
   let container: StartedEventStoreDBContainer;
 
   beforeAll(async () => {
-    container = await new EventStoreDBContainer().startContainer();
+    container = await new EventStoreDBContainer().start();
   });
 
   it('should connect to EventStoreDB and append new event', async () => {

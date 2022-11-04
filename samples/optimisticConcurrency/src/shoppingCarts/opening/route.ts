@@ -53,7 +53,7 @@ function mapRequestToCommand(
   return {
     type: 'open-shopping-cart',
     data: {
-      clientId: request.body.clientId,
+      clientId: request.params.clientId,
       shoppingCartId: uuid(),
     },
   };
