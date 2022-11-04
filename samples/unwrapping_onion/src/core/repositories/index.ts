@@ -19,11 +19,22 @@ export class MongoDbRepository<T extends Document & { _id: ObjectId }>
     const db = mongo.db(databaseName);
     this.collection = db.collection<T>(collectionName);
   }
+
   async add(entity: T): Promise<void> {
-    await this.collection.updateOne(entity, {}, { upsert: true });
+    console.log('Entity!' + JSON.stringify(entity));
+    await this.collection.updateOne(
+      { _id: entity._id } as Filter<T>,
+      { $set: entity },
+      { upsert: true }
+    );
   }
+
   async update(entity: T): Promise<void> {
-    await this.collection.updateOne(entity, {}, { upsert: false });
+    await this.collection.updateOne(
+      { _id: entity._id } as Filter<T>,
+      { $set: entity },
+      { upsert: false }
+    );
   }
 
   async find(id: string): Promise<T | null> {

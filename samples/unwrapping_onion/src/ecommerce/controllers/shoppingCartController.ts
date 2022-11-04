@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { CommandBus } from '#core/commands';
 import { sendCreated } from '#core/http';
 import OpenShoppingCart from '../domain/commands/shoppingCarts/openShoppingCart';
+import { mongoObjectId } from '#core/mongodb';
 
 class ShoppingCartController {
   public router = Router();
@@ -17,7 +18,7 @@ class ShoppingCartController {
     next: NextFunction
   ) => {
     try {
-      const command = new OpenShoppingCart(uuid(), uuid());
+      const command = new OpenShoppingCart(mongoObjectId(), uuid());
       await this.commandBus.send(command);
 
       sendCreated(response, command.shoppingCartId);
