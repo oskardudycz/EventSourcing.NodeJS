@@ -10,6 +10,7 @@ import {
 } from '#testing/api/mongoDB/mongoDBContainer';
 import { disconnectFromMongoDB } from '#core/mongodb';
 import { Application } from 'express';
+import { ShoppingCartStatus } from '../../ecommerce/models/shoppingCarts/shoppingCartStatus';
 
 describe('Full flow', () => {
   let app: Application;
@@ -29,7 +30,7 @@ describe('Full flow', () => {
 
   describe('Shopping Cart', () => {
     const clientId = uuid();
-    // let shoppingCartId: string;
+    let shoppingCartId: string;
     // let currentRevision: string;
     // let lastRevision: string;
     // const firstProductId: string = uuid();
@@ -38,7 +39,7 @@ describe('Full flow', () => {
       ///////////////////////////////////////////////////
       // 1. Open Shopping Cart
       ///////////////////////////////////////////////////
-      const response = (await request(app)
+      let response = (await request(app)
         .post(`/${clientId}/shopping-carts`)
         .send()
         .expect(201)) as TestResponse<{ id: string }>;
@@ -59,36 +60,25 @@ describe('Full flow', () => {
       // );
 
       //currentRevision = response.headers['etag'];
-      // shoppingCartId = current.id;
+      shoppingCartId = current.id;
 
-      // response = await request(app)
-      //   .get(`/v2/shopping-carts/${shoppingCartId}`)
-      //   //.set('If-Not-Match', lastRevision)
-      //   .expect(200);
+      response = await request(app)
+        .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
+        //.set('If-Not-Match', lastRevision)
+        .expect(200);
 
       // expect(response.headers['etag']).toBe(currentRevision);
       // lastRevision = response.headers['etag'];
 
-      // expect(response.body).toMatchObject({
-      //   sessionId: shoppingCartId,
-      //   city: null,
-      //   content: null,
-      //   country: null,
-      //   email: null,
-      //   firstName: null,
-      //   items: [],
-      //   lastName: null,
-      //   line1: null,
-      //   line2: null,
-      //   middleName: null,
-      //   mobile: null,
-      //   province: null,
-      //   updatedAt: null,
-      //   userId: null,
-      //   status: ShoppingCartStatus.Opened,
-      // });
-      // expect(response.body).toHaveProperty('id');
-      // expect(response.body).toHaveProperty('createdAt');
+      expect(response.body).toMatchObject({
+        _id: shoppingCartId,
+        clientId,
+        status: ShoppingCartStatus.Opened,
+        productItems: [],
+        confirmedAt: null,
+        revision: 1,
+      });
+      expect(response.body).toHaveProperty('openedAt');
       // current = response.body;
 
       // ///////////////////////////////////////////////////
