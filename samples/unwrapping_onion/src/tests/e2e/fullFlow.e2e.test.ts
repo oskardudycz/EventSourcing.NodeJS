@@ -1,18 +1,10 @@
-import { Application } from 'express';
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
-import { getApplication } from '#core/api';
 // import { greaterOrEqual } from '#core/validation';
 import { TestResponse } from '#testing/api/testResponse';
-import controllers from '../../ecommerce/controllers/index';
+import app from '../../ecommerce/app';
 
 describe('Full flow', () => {
-  let app: Application;
-
-  beforeAll(() => {
-    app = getApplication(...controllers);
-  });
-
   describe('Shopping Cart', () => {
     const clientId = uuid();
     // let shoppingCartId: string;

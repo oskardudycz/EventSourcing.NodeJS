@@ -41,11 +41,12 @@
         "-i",
         "--no-cache",
         "--runTestsByPath",
-        "${relativeFile}",
+        "${fileBasenameNoExtension}",
         "--watchAll"
       ],
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "runtimeExecutable": "/home/oskar/.nvm/versions/node/v18.7.0/bin/node"
     }
   ]
 }
