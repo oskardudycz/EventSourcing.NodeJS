@@ -1,10 +1,15 @@
 import { startAPI } from '#core/api';
-import { disconnectFromMongoDB } from '#core/mongodb';
-import app from './app';
+import { disconnectFromMongoDB, getMongoDB } from '#core/mongodb';
+import initApp from './app';
 
 //////////////////////////////////////////////////////////
 /// API
 //////////////////////////////////////////////////////////
 
 process.once('SIGTERM', disconnectFromMongoDB);
-startAPI(app, 5000);
+
+(async () => {
+  const mongo = await getMongoDB();
+  const app = initApp(mongo);
+  startAPI(app);
+})().catch(console.error);
