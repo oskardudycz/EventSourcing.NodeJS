@@ -1,10 +1,29 @@
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
+import { config } from '#config';
 // import { greaterOrEqual } from '#core/validation';
 import { TestResponse } from '#testing/api/testResponse';
 import app from '../../ecommerce/app';
+import {
+  MongoDBContainer,
+  StartedMongoDBContainer,
+} from '#testing/api/mongoDB/mongoDBContainer';
+import { disconnectFromMongoDB } from '#core/mongodb';
 
 describe('Full flow', () => {
+  let mongodbContainer: StartedMongoDBContainer;
+
+  beforeAll(async () => {
+    mongodbContainer = await new MongoDBContainer().start();
+    config.mongoDB.connectionString = mongodbContainer.getConnectionString();
+    console.log(config.mongoDB.connectionString);
+  });
+
+  afterAll(async () => {
+    await disconnectFromMongoDB();
+    await mongodbContainer.stop();
+  });
+
   describe('Shopping Cart', () => {
     const clientId = uuid();
     // let shoppingCartId: string;
