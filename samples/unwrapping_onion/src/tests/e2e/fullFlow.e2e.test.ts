@@ -3,20 +3,23 @@ import { v4 as uuid } from 'uuid';
 import { config } from '#config';
 // import { greaterOrEqual } from '#core/validation';
 import { TestResponse } from '#testing/api/testResponse';
-import app from '../../ecommerce/app';
+import initApp from '../../ecommerce/app';
 import {
   MongoDBContainer,
   StartedMongoDBContainer,
 } from '#testing/api/mongoDB/mongoDBContainer';
 import { disconnectFromMongoDB } from '#core/mongodb';
+import { Application } from 'express';
 
 describe('Full flow', () => {
+  let app: Application;
   let mongodbContainer: StartedMongoDBContainer;
 
   beforeAll(async () => {
     mongodbContainer = await new MongoDBContainer().start();
     config.mongoDB.connectionString = mongodbContainer.getConnectionString();
     console.log(config.mongoDB.connectionString);
+    app = initApp(mongodbContainer.getClient());
   });
 
   afterAll(async () => {
