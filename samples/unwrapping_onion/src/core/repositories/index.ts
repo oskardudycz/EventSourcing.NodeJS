@@ -21,7 +21,6 @@ export class MongoDbRepository<T extends Document & { _id: ObjectId }>
   }
 
   async add(entity: T): Promise<void> {
-    console.log('Entity!' + JSON.stringify(entity));
     await this.collection.updateOne(
       { _id: entity._id } as Filter<T>,
       { $set: entity },
@@ -38,7 +37,9 @@ export class MongoDbRepository<T extends Document & { _id: ObjectId }>
   }
 
   async find(id: string): Promise<T | null> {
-    const result = await this.collection.findOne(new ObjectId(id) as Filter<T>);
+    const result = await this.collection.findOne({
+      _id: new ObjectId(id),
+    } as Filter<T>);
 
     if (result === null) return null;
 
