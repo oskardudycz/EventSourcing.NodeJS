@@ -16,9 +16,7 @@ export const getApplication = (...routers: Router[]) => {
   return app;
 };
 
-export const startAPI = (port = 5000, ...routers: Router[]) => {
-  const app = getApplication(...routers);
-
+export const startAPI = (app: Application, port = 5000) => {
   const server = http.createServer(app);
 
   server.listen(port);

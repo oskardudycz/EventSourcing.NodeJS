@@ -14,5 +14,6 @@
     "node_modules/": true,
     "dist/": true
   },
-  "files.eol": "\n"
+  "files.eol": "\n",
+  "debug.javascript.autoAttachFilter": "disabled"
 }
