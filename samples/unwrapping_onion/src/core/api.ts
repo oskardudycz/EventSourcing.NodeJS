@@ -1,7 +1,7 @@
 import express, { Application, Router } from 'express';
 import http from 'http';
 
-export const getApplication = (router: Router) => {
+export const getApplication = (...routers: Router[]) => {
   const app: Application = express();
 
   app.set('etag', false);
@@ -11,13 +11,13 @@ export const getApplication = (router: Router) => {
       extended: true,
     })
   );
-  app.use(router);
+  app.use(...routers);
 
   return app;
 };
 
-export const startAPI = (router: Router, port = 5000) => {
-  const app = getApplication(router);
+export const startAPI = (port = 5000, ...routers: Router[]) => {
+  const app = getApplication(...routers);
 
   const server = http.createServer(app);
 
