@@ -1,0 +1,270 @@
+{
+  "info": {
+    "_postman_id": "54a877f0-a5d8-49d7-a3d8-289705cb6fe0",
+    "name": "ShoppingCarts",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Open Shopping Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"id returned\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    console.log(jsonData.id)\r",
+              "    pm.expect(jsonData.id).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"shoppingCartId\", jsonData.id);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:5000/clients/someclient/shopping-carts/",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["clients", "someclient", "shopping-carts", ""]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Shopping Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "\r",
+              "\r",
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "localhost:5000/clients/:clientId/shopping-carts/{{shoppingCartId}}",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            ":clientId",
+            "shopping-carts",
+            "{{shoppingCartId}}"
+          ],
+          "variable": [
+            {
+              "key": "clientId",
+              "value": null
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add Product Item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{ETag}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"productId\": \"shoes\",\r\n    \"quantity\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:5000/clients/someclient/shopping-carts/{{shoppingCartId}}/product-items",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "someclient",
+            "shopping-carts",
+            "{{shoppingCartId}}",
+            "product-items"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Product Item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{ETag}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"productId\": \"shoes\",\r\n    \"quantity\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:5000/clients/someclient/shopping-carts/{{shoppingCartId}}/product-items/",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "someclient",
+            "shopping-carts",
+            "{{shoppingCartId}}",
+            "product-items",
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Confirm Shopping Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{ETag}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"productId\": \"shoes\",\r\n    \"quantity\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:5000/clients/someclient/shopping-carts/{{shoppingCartId}}/",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "someclient",
+            "shopping-carts",
+            "{{shoppingCartId}}",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "shoppingCartId",
+      "value": ""
+    },
+    {
+      "key": "ETag",
+      "value": ""
+    }
+  ]
+}
