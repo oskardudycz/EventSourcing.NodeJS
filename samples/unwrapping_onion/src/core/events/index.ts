@@ -1,11 +1,11 @@
 export class Event {}
 
 export interface EventBus {
-  publish<C extends Event>(event: C): Promise<void>;
+  publish<E extends Event>(event: E): Promise<void>;
 }
 
-export interface EventHandler<C extends Event> {
-  handle(event: C): Promise<void>;
+export interface EventHandler<E extends Event> {
+  handle(event: E): Promise<void>;
 }
 
 type RegisteredHandler =
@@ -24,7 +24,7 @@ const eventHandlers: ((event: Event) => RegisteredHandler)[] = [];
 export const EventBusFactory = (): EventBus => {
   if (eventBus === undefined) {
     eventBus = {
-      publish: async <C extends Event>(event: C): Promise<void> => {
+      publish: async <E extends Event>(event: E): Promise<void> => {
         const handlers = eventHandlers
           .map((handler) => handler(event))
           .filter((handler) => handler.canHandle);
