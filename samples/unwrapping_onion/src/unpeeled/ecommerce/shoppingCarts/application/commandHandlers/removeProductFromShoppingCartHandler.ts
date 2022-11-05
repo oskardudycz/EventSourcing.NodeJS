@@ -21,12 +21,10 @@ export class RemoveProductItemFromShoppingCartHandler
     }
 
     const aggregate = this.mapper.toAggregate(model);
-    aggregate.removeProductItem(command.productItem);
+    const event = aggregate.removeProductItem(command.productItem);
 
     await this.repository.add(this.mapper.toModel(aggregate));
 
-    for (const event of aggregate.dequeueUncomittedEvents()) {
-      await this.eventBus.publish(event);
-    }
+    await this.eventBus.publish(event);
   }
 }

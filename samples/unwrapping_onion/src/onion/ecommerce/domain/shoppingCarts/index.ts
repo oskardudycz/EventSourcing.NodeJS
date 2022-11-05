@@ -39,7 +39,7 @@ export class ShoppingCart extends Aggregate {
     return this._confirmedAt;
   }
 
-  public static open(id: string, customerId: string): ShoppingCart {
+  public static open(id: string, customerId: string) {
     const openedAt = new Date();
 
     const aggregate = new ShoppingCart(
@@ -57,7 +57,7 @@ export class ShoppingCart extends Aggregate {
     return aggregate;
   }
 
-  public addProductItem(newProductItem: ProductItem): void {
+  public addProductItem(newProductItem: ProductItem) {
     if (this.status !== ShoppingCartStatus.Opened) {
       throw Error('Cannot add product to not opened shopping cart');
     }
@@ -71,22 +71,21 @@ export class ShoppingCart extends Aggregate {
 
     if (!currentProductItem) {
       this._productItems = [...this._productItems, newProductItem];
-      return;
+    } else {
+      const newQuantity = currentProductItem.quantity + quantity;
+      const mergedProductItem = { productId, quantity: newQuantity };
+
+      this._productItems = this._productItems.map((pi) =>
+        pi.productId === productId ? mergedProductItem : pi
+      );
     }
-
-    const newQuantity = currentProductItem.quantity + quantity;
-    const mergedProductItem = { productId, quantity: newQuantity };
-
-    this._productItems = this._productItems.map((pi) =>
-      pi.productId === productId ? mergedProductItem : pi
-    );
 
     this.enqueue(
       new ProductItemAddedToShoppingCart(this._id, newProductItem, new Date())
     );
   }
 
-  public removeProductItem(productItemToRemove: ProductItem): void {
+  public removeProductItem(productItemToRemove: ProductItem) {
     if (this.status !== ShoppingCartStatus.Opened) {
       throw Error('Cannot remove product from not opened shopping cart');
     }
@@ -106,15 +105,13 @@ export class ShoppingCart extends Aggregate {
       this._productItems = this._productItems.filter(
         (pi) => pi.productId !== productId
       );
-      return;
+    } else {
+      const mergedProductItem = { productId, quantity: newQuantity };
+
+      this._productItems = this._productItems.map((pi) =>
+        pi.productId === productId ? mergedProductItem : pi
+      );
     }
-
-    const mergedProductItem = { productId, quantity: newQuantity };
-
-    this._productItems = this._productItems.map((pi) =>
-      pi.productId === productId ? mergedProductItem : pi
-    );
-
     this.enqueue(
       new ProductItemRemovedFromShoppingCart(
         this._id,
@@ -124,7 +121,7 @@ export class ShoppingCart extends Aggregate {
     );
   }
 
-  public confirm(): void {
+  public confirm() {
     if (this.status !== ShoppingCartStatus.Opened) {
       throw Error('Cannot confirm to not opened shopping cart');
     }

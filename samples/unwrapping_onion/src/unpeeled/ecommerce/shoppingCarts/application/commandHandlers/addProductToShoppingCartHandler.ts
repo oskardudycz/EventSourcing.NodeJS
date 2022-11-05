@@ -21,12 +21,10 @@ export class AddProductItemToShoppingCartHandler
     }
 
     const aggregate = this.mapper.toAggregate(model);
-    aggregate.addProductItem(command.productItem);
+    const event = aggregate.addProductItem(command.productItem);
 
     await this.repository.add(this.mapper.toModel(aggregate));
 
-    for (const event of aggregate.dequeueUncomittedEvents()) {
-      await this.eventBus.publish(event);
-    }
+    await this.eventBus.publish(event);
   }
 }
