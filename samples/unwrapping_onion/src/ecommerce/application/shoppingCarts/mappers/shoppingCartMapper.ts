@@ -1,7 +1,7 @@
 import { Mapper } from '#core/mapping';
 import { ObjectId } from 'mongodb';
-import { ShoppingCart } from '../../domain/aggregates/shoppingCarts';
-import { ShoppingCartModel } from '../../models/shoppingCarts/shoppingCart';
+import { ShoppingCart } from 'src/ecommerce/domain/shoppingCarts';
+import { ShoppingCartModel } from '../../../models/shoppingCarts/shoppingCart';
 
 export class ShoppingCartMapper
   implements Mapper<ShoppingCart, ShoppingCartModel>

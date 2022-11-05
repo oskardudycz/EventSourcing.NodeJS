@@ -1,7 +1,7 @@
 import { CommandHandler } from '#core/commands';
 import { ShoppingCartRepository } from 'src/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
 import { AddProductItemToShoppingCart } from '../commands/shoppingCarts/addProductItemToShoppingCart';
-import { ShoppingCartMapper } from '../mapper';
+import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 
 export class AddProductItemToShoppingCartHandler
   implements CommandHandler<AddProductItemToShoppingCart>

@@ -1,8 +1,8 @@
 import { CommandHandler } from '#core/commands';
 import { OpenShoppingCart } from '../commands/shoppingCarts/openShoppingCart';
-import { ShoppingCart } from 'src/ecommerce/domain/aggregates/shoppingCarts';
+import { ShoppingCart } from 'src/ecommerce/domain/shoppingCarts';
 import { ShoppingCartRepository } from 'src/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
-import { ShoppingCartMapper } from '../mapper';
+import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 
 export class OpenShoppingCartHandler
   implements CommandHandler<OpenShoppingCart>
