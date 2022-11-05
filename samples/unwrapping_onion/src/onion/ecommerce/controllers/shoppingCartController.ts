@@ -131,7 +131,7 @@ export class ShoppingCartController {
       const query = new GetShoppingCartById(
         assertNotEmptyString(request.params.shoppingCartId)
       );
-      const result = await this.queryBus.send(query);
+      const result = await this.queryBus.query(query);
 
       response.send(result);
     } catch (error) {
@@ -149,7 +149,7 @@ export class ShoppingCartController {
       const query = new GetCustomerShoppingHistory(
         assertNotEmptyString(request.params.customerId)
       );
-      const result = await this.queryBus.send(query);
+      const result = await this.queryBus.query(query);
 
       response.send(result);
     } catch (error) {

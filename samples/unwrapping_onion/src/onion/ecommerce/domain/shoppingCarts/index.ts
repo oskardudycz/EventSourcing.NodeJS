@@ -1,19 +1,22 @@
+import { Aggregate } from '#core/aggregates';
 import { ProductItem } from 'src/onion/ecommerce/common/shoppingCarts/productItem';
+import { ProductItemAddedToShoppingCart } from './events/productItemAddedToShoppingCart';
+import { ProductItemRemovedFromShoppingCart } from './events/productItemRemovedFromShoppingCart';
+import { ShoppingCartConfirmed } from './events/shoppingCartConfirmed';
+import { ShoppingCartOpened } from './events/shoppingCartOpened';
 import { ShoppingCartStatus } from './shoppingCartStatus';
 
-export class ShoppingCart {
+export class ShoppingCart extends Aggregate {
   public constructor(
-    private _id: string,
+    id: string,
     private _customerId: string,
     private _status: string,
     private _productItems: ProductItem[],
     private _openedAt: Date,
     private _confirmedAt: Date | undefined,
-    private _revision: number
-  ) {}
-
-  public get id() {
-    return this._id;
+    revision: number
+  ) {
+    super(id, revision);
   }
 
   public get customerId() {
@@ -36,20 +39,22 @@ export class ShoppingCart {
     return this._confirmedAt;
   }
 
-  public get revision() {
-    return this._revision;
-  }
-
   public static open(id: string, customerId: string): ShoppingCart {
-    return new ShoppingCart(
+    const openedAt = new Date();
+
+    const aggregate = new ShoppingCart(
       id,
       customerId,
       ShoppingCartStatus.Opened,
       [],
       new Date(),
       undefined,
-      1
+      0
     );
+
+    aggregate.enqueue(new ShoppingCartOpened(id, customerId, openedAt));
+
+    return aggregate;
   }
 
   public addProductItem(newProductItem: ProductItem): void {
@@ -74,6 +79,10 @@ export class ShoppingCart {
 
     this._productItems = this._productItems.map((pi) =>
       pi.productId === productId ? mergedProductItem : pi
+    );
+
+    this.enqueue(
+      new ProductItemAddedToShoppingCart(this._id, newProductItem, new Date())
     );
   }
 
@@ -105,6 +114,14 @@ export class ShoppingCart {
     this._productItems = this._productItems.map((pi) =>
       pi.productId === productId ? mergedProductItem : pi
     );
+
+    this.enqueue(
+      new ProductItemRemovedFromShoppingCart(
+        this._id,
+        productItemToRemove,
+        new Date()
+      )
+    );
   }
 
   public confirm(): void {
@@ -113,6 +130,8 @@ export class ShoppingCart {
     }
     this._status = ShoppingCartStatus.Confirmed;
     this._confirmedAt = new Date();
+
+    this.enqueue(new ShoppingCartConfirmed(this._id, this._confirmedAt));
   }
 
   private findProductItem(

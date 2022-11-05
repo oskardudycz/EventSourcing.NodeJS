@@ -1,4 +1,5 @@
 import { CommandHandler } from '#core/commands';
+import { EventBus } from '#core/events';
 import { ShoppingCartRepository } from 'src/onion/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
 import { RemoveProductItemFromShoppingCart } from '../commands/shoppingCarts/removeProductItemFromShoppingCart';
 import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
@@ -8,7 +9,8 @@ export class RemoveProductItemFromShoppingCartHandler
 {
   constructor(
     private repository: ShoppingCartRepository,
-    private mapper: ShoppingCartMapper
+    private mapper: ShoppingCartMapper,
+    private eventBus: EventBus
   ) {}
 
   async handle(command: RemoveProductItemFromShoppingCart): Promise<void> {
@@ -22,5 +24,9 @@ export class RemoveProductItemFromShoppingCartHandler
     aggregate.removeProductItem(command.productItem);
 
     await this.repository.add(this.mapper.toModel(aggregate));
+
+    for (const event of aggregate.dequeueUncomittedEvents()) {
+      await this.eventBus.publish(event);
+    }
   }
 }

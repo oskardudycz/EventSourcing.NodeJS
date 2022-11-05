@@ -16,27 +16,38 @@ import { ConfirmShoppingCartHandler } from './commandHandlers/confirmShoppingCar
 import { GetCustomerShoppingHistory } from './queries/getCustomerShoppingHistory';
 import { GetCustomerShoppingHistoryHandler } from './queryHandlers/getCustomerShoppingHistoryHandler';
 import { CustomerShoppingHistoryMapper } from './mappers/customerShoppingHistoryMapper';
+import { EventBusFactory } from '#core/events';
 
 const registerHandlers = (mongo: MongoClient) => {
   const repository = new MongoDBShoppingCartRepository(mongo);
+  const eventBus = EventBusFactory();
+
   const shoppingCartMapper = new ShoppingCartMapper();
   const shoppingHistoryMapper = new CustomerShoppingHistoryMapper();
 
   registerCommandHandler(
     OpenShoppingCart,
-    new OpenShoppingCartHandler(repository, shoppingCartMapper)
+    new OpenShoppingCartHandler(repository, shoppingCartMapper, eventBus)
   );
   registerCommandHandler(
     AddProductItemToShoppingCart,
-    new AddProductItemToShoppingCartHandler(repository, shoppingCartMapper)
+    new AddProductItemToShoppingCartHandler(
+      repository,
+      shoppingCartMapper,
+      eventBus
+    )
   );
   registerCommandHandler(
     RemoveProductItemFromShoppingCart,
-    new RemoveProductItemFromShoppingCartHandler(repository, shoppingCartMapper)
+    new RemoveProductItemFromShoppingCartHandler(
+      repository,
+      shoppingCartMapper,
+      eventBus
+    )
   );
   registerCommandHandler(
     ConfirmShoppingCart,
-    new ConfirmShoppingCartHandler(repository, shoppingCartMapper)
+    new ConfirmShoppingCartHandler(repository, shoppingCartMapper, eventBus)
   );
   registerQueryHandler(
     GetShoppingCartById,

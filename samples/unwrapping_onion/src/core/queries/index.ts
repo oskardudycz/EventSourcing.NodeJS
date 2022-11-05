@@ -1,7 +1,7 @@
 export class Query {}
 
 export interface QueryBus {
-  send<Q extends Query, Result>(query: Q): Promise<Result>;
+  query<Q extends Query, Result>(query: Q): Promise<Result>;
 }
 
 export interface QueryHandler<Q extends Query, Result> {
@@ -24,7 +24,7 @@ const queryHandlers: ((query: Query) => RegisteredHandler)[] = [];
 export const QueryBusFactory = (): QueryBus => {
   if (queryBus === undefined) {
     queryBus = {
-      send: async <Q extends Query, Result>(query: Q): Promise<Result> => {
+      query: async <Q extends Query, Result>(query: Q): Promise<Result> => {
         const handler = queryHandlers
           .map((handler) => handler(query))
           .find((handler) => handler.canHandle);
