@@ -10,7 +10,7 @@ import { OpenShoppingCartHandler } from './commandHandlers/openShoppingCartHandl
 import { AddProductItemToShoppingCartHandler } from './commandHandlers/addProductToShoppingCartHandler';
 import { RemoveProductItemFromShoppingCartHandler } from './commandHandlers/removeProductFromShoppingCartHandler';
 import { GetShoppingCartByIdHandler } from './queryHandlers/getShoppingCartByIdQueryHandler';
-import { MongoDBShoppingCartRepository } from 'src/unpeeled/ecommerce/shoppingCarts/infrastructure/shoppingCartRepository';
+import { ShoppingCartRepository } from 'src/unpeeled/ecommerce/shoppingCarts/infrastructure/shoppingCartRepository';
 import { ConfirmShoppingCart } from './commands/shoppingCarts/confirmShoppingCart';
 import { ConfirmShoppingCartHandler } from './commandHandlers/confirmShoppingCart';
 import { GetCustomerShoppingHistory } from './queries/getCustomerShoppingHistory';
@@ -19,7 +19,7 @@ import { CustomerShoppingHistoryMapper } from './mappers/customerShoppingHistory
 import { EventBusFactory } from '#core/events';
 
 const registerHandlers = (mongo: MongoClient) => {
-  const repository = new MongoDBShoppingCartRepository(mongo);
+  const repository = new ShoppingCartRepository(mongo);
   const eventBus = EventBusFactory();
 
   const shoppingCartMapper = new ShoppingCartMapper();
