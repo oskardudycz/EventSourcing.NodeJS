@@ -1,7 +1,7 @@
 import { CommandHandler } from '#core/commands';
 import { OpenShoppingCart } from '../commands/shoppingCarts/openShoppingCart';
-import { ShoppingCart } from 'src/unpeeled/ecommerce/domain/shoppingCarts';
-import { ShoppingCartRepository } from 'src/unpeeled/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
+import { ShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts/domain';
+import { ShoppingCartRepository } from 'src/unpeeled/ecommerce/shoppingCarts/infrastructure/shoppingCartRepository';
 import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 import { EventBus } from '#core/events';
 

@@ -3,17 +3,16 @@ import { CommandBus } from '#core/commands';
 import { sendCreated } from '#core/http';
 import { mongoObjectId } from '#core/mongodb';
 import { QueryBus } from '#core/queries';
-import { OpenShoppingCart } from 'src/unpeeled/ecommerce/application/shoppingCarts/commands/shoppingCarts/openShoppingCart';
-import { GetShoppingCartById } from 'src/unpeeled/ecommerce/application/shoppingCarts/queries/getShoppingCartById';
+import { OpenShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts/application/commands/shoppingCarts/openShoppingCart';
+import { GetShoppingCartById } from 'src/unpeeled/ecommerce/shoppingCarts/application/queries/getShoppingCartById';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
-import { AddProductItemToShoppingCartRequest } from 'src/unpeeled/ecommerce/requests/shoppingCarts/addProductItemToShoppingCartRequest';
-import { AddProductItemToShoppingCart } from 'src/unpeeled/ecommerce/application/shoppingCarts/commands/shoppingCarts/addProductItemToShoppingCart';
-import { ProductItem } from 'src/unpeeled/ecommerce/common/shoppingCarts/productItem';
-import { RemoveProductItemFromShoppingCart } from 'src/unpeeled/ecommerce/application/shoppingCarts/commands/shoppingCarts/removeProductItemFromShoppingCart';
-import { RemoveProductItemFromShoppingCartRequest } from 'src/unpeeled/ecommerce/requests/shoppingCarts/removeProductItemFromShoppingCartRequest.ts';
-import { ConfirmShoppingCart } from 'src/unpeeled/ecommerce/application/shoppingCarts/commands/shoppingCarts/confirmShoppingCart';
-import { GetCustomerShoppingHistory } from '../application/shoppingCarts/queries/getCustomerShoppingHistory';
-
+import { AddProductItemToShoppingCartRequest } from 'src/unpeeled/ecommerce/shoppingCarts/requests/addProductItemToShoppingCartRequest';
+import { AddProductItemToShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts/application/commands/shoppingCarts/addProductItemToShoppingCart';
+import { ProductItem } from 'src/unpeeled/ecommerce/shoppingCarts/common/productItem';
+import { RemoveProductItemFromShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts/application/commands/shoppingCarts/removeProductItemFromShoppingCart';
+import { RemoveProductItemFromShoppingCartRequest } from 'src/unpeeled/ecommerce/shoppingCarts/requests/removeProductItemFromShoppingCartRequest.ts';
+import { ConfirmShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts/application/commands/shoppingCarts/confirmShoppingCart';
+import { GetCustomerShoppingHistory } from 'src/unpeeled/ecommerce/shoppingCarts/application/queries/getCustomerShoppingHistory';
 export class ShoppingCartController {
   public router = Router();
 

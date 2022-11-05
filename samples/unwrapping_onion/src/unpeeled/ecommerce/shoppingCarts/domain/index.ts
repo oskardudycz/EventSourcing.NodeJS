@@ -1,5 +1,5 @@
 import { Aggregate } from '#core/aggregates';
-import { ProductItem } from 'src/unpeeled/ecommerce/common/shoppingCarts/productItem';
+import { ProductItem } from 'src/unpeeled/ecommerce/shoppingCarts/common/productItem';
 import { ProductItemAddedToShoppingCart } from './events/productItemAddedToShoppingCart';
 import { ProductItemRemovedFromShoppingCart } from './events/productItemRemovedFromShoppingCart';
 import { ShoppingCartConfirmed } from './events/shoppingCartConfirmed';

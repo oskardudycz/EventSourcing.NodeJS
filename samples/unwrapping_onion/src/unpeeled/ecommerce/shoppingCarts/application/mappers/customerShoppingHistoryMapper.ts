@@ -1,5 +1,5 @@
 import { Mapper } from '#core/mapping';
-import { ShoppingCartModel } from 'src/unpeeled/ecommerce/models/shoppingCarts/shoppingCart';
+import { ShoppingCartModel } from 'src/unpeeled/ecommerce/shoppingCarts/models/shoppingCart';
 import { CustomerShoppingHistoryItem } from '../queries/customerShoppingHistoryItem';
 
 export class CustomerShoppingHistoryMapper

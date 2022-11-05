@@ -1,6 +1,6 @@
 import { MongoDbRepository, Repository } from '#core/repositories';
 import { MongoClient } from 'mongodb';
-import { ShoppingCartModel } from 'src/unpeeled/ecommerce/models/shoppingCarts/shoppingCart';
+import { ShoppingCartModel } from 'src/unpeeled/ecommerce/shoppingCarts/models/shoppingCart';
 
 export interface ShoppingCartRepository extends Repository<ShoppingCartModel> {
   findAllByCustomerId(customerId: string): Promise<ShoppingCartModel[]>;

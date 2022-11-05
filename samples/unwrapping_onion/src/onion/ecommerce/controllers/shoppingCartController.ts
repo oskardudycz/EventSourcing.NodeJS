@@ -12,7 +12,7 @@ import { ProductItem } from 'src/onion/ecommerce/common/shoppingCarts/productIte
 import { RemoveProductItemFromShoppingCart } from 'src/onion/ecommerce/application/shoppingCarts/commands/shoppingCarts/removeProductItemFromShoppingCart';
 import { RemoveProductItemFromShoppingCartRequest } from 'src/onion/ecommerce/requests/shoppingCarts/removeProductItemFromShoppingCartRequest.ts';
 import { ConfirmShoppingCart } from 'src/onion/ecommerce/application/shoppingCarts/commands/shoppingCarts/confirmShoppingCart';
-import { GetCustomerShoppingHistory } from '../application/shoppingCarts/queries/getCustomerShoppingHistory';
+import { GetCustomerShoppingHistory } from 'src/onion/ecommerce/application/shoppingCarts/queries/getCustomerShoppingHistory';
 
 export class ShoppingCartController {
   public router = Router();

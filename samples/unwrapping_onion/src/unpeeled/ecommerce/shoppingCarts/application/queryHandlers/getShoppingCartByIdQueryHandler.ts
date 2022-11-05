@@ -1,7 +1,7 @@
 import { QueryHandler } from '#core/queries';
-import { GetShoppingCartById } from 'src/unpeeled/ecommerce/application/shoppingCarts/queries/getShoppingCartById';
-import { ShoppingCartRepository } from 'src/unpeeled/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
-import { ShoppingCartModel } from 'src/unpeeled/ecommerce/models/shoppingCarts/shoppingCart';
+import { GetShoppingCartById } from 'src/unpeeled/ecommerce/shoppingCarts/application/queries/getShoppingCartById';
+import { ShoppingCartRepository } from 'src/unpeeled/ecommerce/shoppingCarts/infrastructure/shoppingCartRepository';
+import { ShoppingCartModel } from 'src/unpeeled/ecommerce/shoppingCarts/models/shoppingCart';
 
 export class GetShoppingCartByIdHandler
   implements QueryHandler<GetShoppingCartById, ShoppingCartModel | null>

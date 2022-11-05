@@ -10,7 +10,7 @@ import {
 } from '#testing/api/mongoDB/mongoDBContainer';
 import { disconnectFromMongoDB } from '#core/mongodb';
 import { Application } from 'express';
-import { ShoppingCartStatus } from 'src/unpeeled/ecommerce/domain/shoppingCarts/shoppingCartStatus';
+import { ShoppingCartStatus } from 'src/unpeeled/ecommerce/shoppingCarts/domain/shoppingCartStatus';
 
 describe('Full flow', () => {
   let app: Application;
