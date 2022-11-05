@@ -191,7 +191,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
         productItems: [pairOfShoes, tShirt],
         confirmedAt: null,
-        revision: 1,
+        revision: 2,
       });
       // expect(
       //   greaterOrEqual(response.body.updatedAt, current.updatedAt)
@@ -232,7 +232,7 @@ describe('Full flow', () => {
         customerId,
         status: ShoppingCartStatus.Confirmed,
         productItems: [pairOfShoes, tShirt],
-        revision: 1,
+        revision: 3,
       });
       expect(response.body).toHaveProperty('openedAt');
       // expect(
