@@ -1,17 +1,17 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { CommandBus } from '#core/commands';
 import { sendCreated } from '#core/http';
-import OpenShoppingCart from '../domain/commands/shoppingCarts/openShoppingCart';
 import { mongoObjectId } from '#core/mongodb';
 import { QueryBus } from '#core/queries';
-import GetShoppingCartById from '../domain/queries/getShoppingCartById';
+import OpenShoppingCart from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/openShoppingCart';
+import GetShoppingCartById from 'src/ecommerce/application/shoppingCarts/queries/getShoppingCartById';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
-import { AddProductItemToShoppingCartRequest } from '../requests/shoppingCarts/addProductItemToShoppingCartRequest';
-import AddProductItemToShoppingCart from '../domain/commands/shoppingCarts/addProductItemToShoppingCart';
-import { ProductItem } from '../models/shoppingCarts/productItem';
-import RemoveProductItemFromShoppingCart from '../domain/commands/shoppingCarts/removeProductItemFromShoppingCart';
-import { RemoveProductItemFromShoppingCartRequest } from '../requests/shoppingCarts/removeProductItemFromShoppingCartRequest.ts';
-import ConfirmShoppingCart from '../domain/commands/shoppingCarts/confirmShoppingCart';
+import { AddProductItemToShoppingCartRequest } from 'src/ecommerce/requests/shoppingCarts/addProductItemToShoppingCartRequest';
+import AddProductItemToShoppingCart from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/addProductItemToShoppingCart';
+import { ProductItem } from 'src/ecommerce/common/shoppingCarts/productItem';
+import RemoveProductItemFromShoppingCart from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/removeProductItemFromShoppingCart';
+import { RemoveProductItemFromShoppingCartRequest } from 'src/ecommerce/requests/shoppingCarts/removeProductItemFromShoppingCartRequest.ts';
+import ConfirmShoppingCart from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/confirmShoppingCart';
 
 class ShoppingCartController {
   public router = Router();

@@ -1,5 +1,5 @@
 import { CommandHandler } from '#core/commands';
-import OpenShoppingCart from '../../../domain/commands/shoppingCarts/openShoppingCart';
+import OpenShoppingCart from '../commands/shoppingCarts/openShoppingCart';
 import ShoppingCartRepository from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
 import ShoppingCartMapper from '../mapper';
 import ShoppingCart from '../../../domain/aggregates/shoppingCarts';
