@@ -44,7 +44,7 @@ export const CommandBusFactory = (): CommandBus => {
   return commandBus;
 };
 
-export const RegisterCommandHandler = <C extends Command>(
+export const registerCommandHandler = <C extends Command>(
   commandType: Constructor<C>,
   commandHandler: CommandHandler<C>
 ) => {

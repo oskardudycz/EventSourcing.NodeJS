@@ -45,8 +45,7 @@
         "--watchAll"
       ],
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "runtimeExecutable": "/home/oskar/.nvm/versions/node/v18.7.0/bin/node"
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

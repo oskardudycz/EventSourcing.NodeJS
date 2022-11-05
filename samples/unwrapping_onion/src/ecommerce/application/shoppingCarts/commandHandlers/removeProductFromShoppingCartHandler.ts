@@ -1,17 +1,17 @@
 import { CommandHandler } from '#core/commands';
 import { ShoppingCartRepository } from 'src/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
-import { AddProductItemToShoppingCart } from '../commands/shoppingCarts/addProductItemToShoppingCart';
+import { RemoveProductItemFromShoppingCart } from '../commands/shoppingCarts/removeProductItemFromShoppingCart';
 import { ShoppingCartMapper } from '../mapper';
 
-export class AddProductItemToShoppingCartHandler
-  implements CommandHandler<AddProductItemToShoppingCart>
+export class RemoveProductItemFromShoppingCartHandler
+  implements CommandHandler<RemoveProductItemFromShoppingCart>
 {
   constructor(
     private repository: ShoppingCartRepository,
     private mapper: ShoppingCartMapper
   ) {}
 
-  async handle(command: AddProductItemToShoppingCart): Promise<void> {
+  async handle(command: RemoveProductItemFromShoppingCart): Promise<void> {
     const model = await this.repository.find(command.shoppingCartId);
 
     if (model === null) {
@@ -19,7 +19,7 @@ export class AddProductItemToShoppingCartHandler
     }
 
     const aggregate = this.mapper.toAggregate(model);
-    aggregate.addProductItem(command.productItem);
+    aggregate.removeProductItem(command.productItem);
 
     await this.repository.add(this.mapper.toModel(aggregate));
   }

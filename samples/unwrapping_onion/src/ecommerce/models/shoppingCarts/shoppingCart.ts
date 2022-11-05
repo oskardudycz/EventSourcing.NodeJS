@@ -4,7 +4,7 @@ import { ProductItem } from 'src/ecommerce/common/shoppingCarts/productItem';
 export class ShoppingCartModel {
   constructor(
     public _id: ObjectId,
-    public clientId: string,
+    public customerId: string,
     public status: string,
     public productItems: ProductItem[],
     public openedAt: Date,
