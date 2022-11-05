@@ -21,12 +21,10 @@ export class ConfirmShoppingCartHandler
     }
 
     const aggregate = this.mapper.toAggregate(model);
-    aggregate.confirm();
+    const event = aggregate.confirm();
 
     await this.repository.add(this.mapper.toModel(aggregate));
 
-    for (const event of aggregate.dequeueUncomittedEvents()) {
-      await this.eventBus.publish(event);
-    }
+    await this.eventBus.publish(event);
   }
 }

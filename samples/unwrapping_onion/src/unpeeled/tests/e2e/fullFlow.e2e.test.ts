@@ -10,7 +10,7 @@ import {
 } from '#testing/api/mongoDB/mongoDBContainer';
 import { disconnectFromMongoDB } from '#core/mongodb';
 import { Application } from 'express';
-import { ShoppingCartStatus } from 'src/unpeeled/ecommerce/shoppingCarts/domain/shoppingCartStatus';
+import { ShoppingCartStatus } from 'src/unpeeled/ecommerce/shoppingCarts/';
 
 describe('Full flow', () => {
   let app: Application;
@@ -114,7 +114,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
         productItems: [twoPairsOfShoes],
         confirmedAt: null,
-        revision: 1,
+        revision: 2,
       });
       // expect(response.body.updatedAt).not.toBeNull();
       // current = response.body;
@@ -152,7 +152,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
         productItems: [twoPairsOfShoes, tShirt],
         confirmedAt: null,
-        revision: 1,
+        revision: 3,
       });
       // expect(
       //   greaterOrEqual(response.body.updatedAt, current.updatedAt)
@@ -191,7 +191,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
         productItems: [pairOfShoes, tShirt],
         confirmedAt: null,
-        revision: 2,
+        revision: 4,
       });
       // expect(
       //   greaterOrEqual(response.body.updatedAt, current.updatedAt)
@@ -232,7 +232,7 @@ describe('Full flow', () => {
         customerId,
         status: ShoppingCartStatus.Confirmed,
         productItems: [pairOfShoes, tShirt],
-        revision: 3,
+        revision: 5,
       });
       expect(response.body).toHaveProperty('openedAt');
       // expect(
