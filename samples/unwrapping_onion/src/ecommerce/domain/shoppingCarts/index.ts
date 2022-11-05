@@ -112,6 +112,7 @@ export class ShoppingCart {
       throw Error('Cannot confirm to not opened shopping cart');
     }
     this._status = ShoppingCartStatus.Confirmed;
+    this._confirmedAt = new Date();
   }
 
   private findProductItem(

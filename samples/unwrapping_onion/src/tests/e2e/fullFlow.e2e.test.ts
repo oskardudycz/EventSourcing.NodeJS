@@ -10,7 +10,7 @@ import {
 } from '#testing/api/mongoDB/mongoDBContainer';
 import { disconnectFromMongoDB } from '#core/mongodb';
 import { Application } from 'express';
-import { ShoppingCartStatus } from '../../ecommerce/domain/aggregates/shoppingCarts/shoppingCartStatus';
+import { ShoppingCartStatus } from '../../ecommerce/domain/shoppingCarts/shoppingCartStatus';
 
 describe('Full flow', () => {
   let app: Application;
@@ -219,30 +219,39 @@ describe('Full flow', () => {
       // expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
       // currentRevision = response.headers['etag'];
 
-      // response = await request(app)
-      //   .get(`/customers/${customerId}/shopping-carts/${shoppingCartId}`)
-      //   .set('If-Not-Match', lastRevision)
-      //   .expect(200);
+      response = await request(app)
+        .get(`/customers/${customerId}/shopping-carts/${shoppingCartId}`)
+        // .set('If-Not-Match', lastRevision)
+        .expect(200);
 
       // expect(response.headers['etag']).toBe(currentRevision);
       // lastRevision = response.headers['etag'];
 
-      // expect(response.body).toMatchObject({
-      //   id: current.id,
-      //   createdAt: current.createdAt,
-      //   sessionId: shoppingCartId,
-      //   items: [pairOfShoes, tShirt],
-      //   status: ShoppingCartStatus.Confirmed,
-      //   ...confirmedData,
-      // });
+      expect(response.body).toMatchObject({
+        _id: shoppingCartId,
+        customerId,
+        status: ShoppingCartStatus.Confirmed,
+        productItems: [pairOfShoes, tShirt],
+        revision: 1,
+      });
+      expect(response.body).toHaveProperty('openedAt');
       // expect(
       //   greaterOrEqual(response.body.updatedAt, current.updatedAt)
       // ).toBeTruthy();
       // current = response.body;
 
-      // // response = await request(app)
-      // //   .get(`/customers/${customerId}/shopping-carts/${shoppingCartId}`)
-      // //   .expect(200);
+      response = await request(app)
+        .get(`/customers/${customerId}/shopping-carts/`)
+        .expect(200);
+
+      expect(response.body).toMatchObject([
+        {
+          shoppingCartId,
+          customerId,
+          status: ShoppingCartStatus.Confirmed,
+          totalCount: 2,
+        },
+      ]);
 
       // // const { updatedAt, ...currentWithoutUpdatedAt } = current;
 

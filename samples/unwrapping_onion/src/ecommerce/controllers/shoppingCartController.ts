@@ -12,16 +12,13 @@ import { ProductItem } from 'src/ecommerce/common/shoppingCarts/productItem';
 import { RemoveProductItemFromShoppingCart } from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/removeProductItemFromShoppingCart';
 import { RemoveProductItemFromShoppingCartRequest } from 'src/ecommerce/requests/shoppingCarts/removeProductItemFromShoppingCartRequest.ts';
 import { ConfirmShoppingCart } from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/confirmShoppingCart';
+import { GetCustomerShoppingHistory } from '../application/shoppingCarts/queries/getCustomerShoppingHistory';
 
-class ShoppingCartController {
+export class ShoppingCartController {
   public router = Router();
 
   constructor(private commandBus: CommandBus, private queryBus: QueryBus) {
     this.router.post('/customers/:customerId/shopping-carts/', this.open);
-    this.router.get(
-      '/customers/:customerId/shopping-carts/:shoppingCartId',
-      this.getById
-    );
     this.router.post(
       '/customers/:customerId/shopping-carts/:shoppingCartId/product-items',
       this.addProductItem
@@ -33,6 +30,14 @@ class ShoppingCartController {
     this.router.post(
       '/customers/:customerId/shopping-carts/:shoppingCartId/confirm',
       this.confirm
+    );
+    this.router.get(
+      '/customers/:customerId/shopping-carts/:shoppingCartId',
+      this.getById
+    );
+    this.router.get(
+      '/customers/:customerId/shopping-carts/',
+      this.getCustomerShoppingHistory
     );
   }
 
@@ -134,6 +139,22 @@ class ShoppingCartController {
       next(error);
     }
   };
-}
 
-export default ShoppingCartController;
+  private getCustomerShoppingHistory = async (
+    request: Request,
+    response: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const query = new GetCustomerShoppingHistory(
+        assertNotEmptyString(request.params.customerId)
+      );
+      const result = await this.queryBus.send(query);
+
+      response.send(result);
+    } catch (error) {
+      console.error(error);
+      next(error);
+    }
+  };
+}

@@ -6,10 +6,10 @@ export interface Repository<T> {
   find(id: string): Promise<T | null>;
 }
 
-export class MongoDbRepository<T extends Document & { _id: ObjectId }>
+export abstract class MongoDbRepository<T extends Document & { _id: ObjectId }>
   implements Repository<T>
 {
-  private collection: Collection<T>;
+  protected collection: Collection<T>;
 
   constructor(
     mongo: MongoClient,

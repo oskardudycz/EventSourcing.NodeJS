@@ -1,7 +1,7 @@
 import { CommandHandler } from '#core/commands';
 import { ShoppingCartRepository } from 'src/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
 import { RemoveProductItemFromShoppingCart } from '../commands/shoppingCarts/removeProductItemFromShoppingCart';
-import { ShoppingCartMapper } from '../mapper';
+import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 
 export class RemoveProductItemFromShoppingCartHandler
   implements CommandHandler<RemoveProductItemFromShoppingCart>

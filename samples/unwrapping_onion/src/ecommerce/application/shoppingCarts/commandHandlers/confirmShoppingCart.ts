@@ -1,7 +1,7 @@
 import { CommandHandler } from '#core/commands';
 import { ShoppingCartRepository } from 'src/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
 import { ConfirmShoppingCart } from '../commands/shoppingCarts/confirmShoppingCart';
-import { ShoppingCartMapper } from '../mapper';
+import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 
 export class ConfirmShoppingCartHandler
   implements CommandHandler<ConfirmShoppingCart>

@@ -1,9 +1,17 @@
-import { MongoDbRepository } from '#core/repositories';
+import { MongoDbRepository, Repository } from '#core/repositories';
 import { MongoClient } from 'mongodb';
 import { ShoppingCartModel } from 'src/ecommerce/models/shoppingCarts/shoppingCart';
 
-export class ShoppingCartRepository extends MongoDbRepository<ShoppingCartModel> {
+export interface ShoppingCartRepository extends Repository<ShoppingCartModel> {
+  findAllByCustomerId(customerId: string): Promise<ShoppingCartModel[]>;
+}
+
+export class MongoDBShoppingCartRepository extends MongoDbRepository<ShoppingCartModel> {
   constructor(mongo: MongoClient) {
     super(mongo, 'shoppingCarts');
+  }
+
+  async findAllByCustomerId(customerId: string): Promise<ShoppingCartModel[]> {
+    return this.collection.find({ customerId }).toArray();
   }
 }
