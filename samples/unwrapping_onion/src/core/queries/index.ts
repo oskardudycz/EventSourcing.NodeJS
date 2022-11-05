@@ -42,7 +42,7 @@ export const QueryBusFactory = (): QueryBus => {
   return queryBus;
 };
 
-export const RegisterQueryHandler = <C extends Query, Result>(
+export const registerQueryHandler = <C extends Query, Result>(
   queryType: Constructor<C>,
   queryHandler: QueryHandler<C, Result>
 ) => {

@@ -1,15 +1,15 @@
 import { Mapper } from '#core/mapping';
 import { ObjectId } from 'mongodb';
-import ShoppingCart from '../../domain/aggregates/shoppingCarts';
+import { ShoppingCart } from '../../domain/aggregates/shoppingCarts';
 import { ShoppingCartModel } from '../../models/shoppingCarts/shoppingCart';
 
-export default class ShoppingCartMapper
+export class ShoppingCartMapper
   implements Mapper<ShoppingCart, ShoppingCartModel>
 {
   toModel(aggregate: ShoppingCart): ShoppingCartModel {
     return new ShoppingCartModel(
       new ObjectId(aggregate.id),
-      aggregate.clientId,
+      aggregate.customerId,
       aggregate.status,
       aggregate.productItems,
       aggregate.openedAt,
@@ -20,7 +20,7 @@ export default class ShoppingCartMapper
   toAggregate(model: ShoppingCartModel): ShoppingCart {
     return new ShoppingCart(
       model._id.toHexString(),
-      model.clientId,
+      model.customerId,
       model.status,
       model.productItems,
       model.openedAt,

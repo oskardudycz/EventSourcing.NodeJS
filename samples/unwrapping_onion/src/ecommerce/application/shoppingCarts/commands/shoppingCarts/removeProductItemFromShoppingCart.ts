@@ -1,7 +1,7 @@
 import { Command } from '#core/commands';
 import { ProductItem } from 'src/ecommerce/common/shoppingCarts/productItem';
 
-export default class RemoveProductItemFromShoppingCart extends Command {
+export class RemoveProductItemFromShoppingCart extends Command {
   constructor(
     public readonly shoppingCartId: string,
     public readonly productItem: ProductItem

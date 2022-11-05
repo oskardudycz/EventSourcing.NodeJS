@@ -1,10 +1,10 @@
 import { ProductItem } from 'src/ecommerce/common/shoppingCarts/productItem';
 import { ShoppingCartStatus } from './shoppingCartStatus';
 
-export default class ShoppingCart {
+export class ShoppingCart {
   public constructor(
     private _id: string,
-    private _clientId: string,
+    private _customerId: string,
     private _status: string,
     private _productItems: ProductItem[],
     private _openedAt: Date,
@@ -16,8 +16,8 @@ export default class ShoppingCart {
     return this._id;
   }
 
-  public get clientId() {
-    return this._clientId;
+  public get customerId() {
+    return this._customerId;
   }
 
   public get status() {
@@ -40,10 +40,10 @@ export default class ShoppingCart {
     return this._revision;
   }
 
-  public static open(id: string, clientId: string): ShoppingCart {
+  public static open(id: string, customerId: string): ShoppingCart {
     return new ShoppingCart(
       id,
-      clientId,
+      customerId,
       ShoppingCartStatus.Opened,
       [],
       new Date(),
@@ -53,6 +53,10 @@ export default class ShoppingCart {
   }
 
   public addProductItem(newProductItem: ProductItem): void {
+    if (this.status !== ShoppingCartStatus.Opened) {
+      throw Error('Cannot add product to not opened shopping cart');
+    }
+
     const { productId, quantity } = newProductItem;
 
     const currentProductItem = this.findProductItem(
@@ -74,6 +78,10 @@ export default class ShoppingCart {
   }
 
   public removeProductItem(productItemToRemove: ProductItem): void {
+    if (this.status !== ShoppingCartStatus.Opened) {
+      throw Error('Cannot remove product from not opened shopping cart');
+    }
+
     const { productId, quantity } = productItemToRemove;
 
     const currentProductItem = this.findProductItem(
@@ -97,6 +105,13 @@ export default class ShoppingCart {
     this._productItems = this._productItems.map((pi) =>
       pi.productId === productId ? mergedProductItem : pi
     );
+  }
+
+  public confirm(): void {
+    if (this.status !== ShoppingCartStatus.Opened) {
+      throw Error('Cannot confirm to not opened shopping cart');
+    }
+    this._status = ShoppingCartStatus.Confirmed;
   }
 
   private findProductItem(

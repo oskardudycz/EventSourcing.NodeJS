@@ -1,3 +1,3 @@
-export default class GetShoppingCartById {
+export class GetShoppingCartById {
   constructor(public readonly shoppingCartId: string) {}
 }

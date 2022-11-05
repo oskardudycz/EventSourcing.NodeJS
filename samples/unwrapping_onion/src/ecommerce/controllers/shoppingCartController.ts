@@ -3,32 +3,35 @@ import { CommandBus } from '#core/commands';
 import { sendCreated } from '#core/http';
 import { mongoObjectId } from '#core/mongodb';
 import { QueryBus } from '#core/queries';
-import OpenShoppingCart from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/openShoppingCart';
-import GetShoppingCartById from 'src/ecommerce/application/shoppingCarts/queries/getShoppingCartById';
+import { OpenShoppingCart } from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/openShoppingCart';
+import { GetShoppingCartById } from 'src/ecommerce/application/shoppingCarts/queries/getShoppingCartById';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
 import { AddProductItemToShoppingCartRequest } from 'src/ecommerce/requests/shoppingCarts/addProductItemToShoppingCartRequest';
-import AddProductItemToShoppingCart from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/addProductItemToShoppingCart';
+import { AddProductItemToShoppingCart } from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/addProductItemToShoppingCart';
 import { ProductItem } from 'src/ecommerce/common/shoppingCarts/productItem';
-import RemoveProductItemFromShoppingCart from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/removeProductItemFromShoppingCart';
+import { RemoveProductItemFromShoppingCart } from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/removeProductItemFromShoppingCart';
 import { RemoveProductItemFromShoppingCartRequest } from 'src/ecommerce/requests/shoppingCarts/removeProductItemFromShoppingCartRequest.ts';
-import ConfirmShoppingCart from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/confirmShoppingCart';
+import { ConfirmShoppingCart } from 'src/ecommerce/application/shoppingCarts/commands/shoppingCarts/confirmShoppingCart';
 
 class ShoppingCartController {
   public router = Router();
 
   constructor(private commandBus: CommandBus, private queryBus: QueryBus) {
-    this.router.post('/:clientId/shopping-carts/', this.open);
-    this.router.get('/:clientId/shopping-carts/:shoppingCartId', this.getById);
+    this.router.post('/customers/:customerId/shopping-carts/', this.open);
+    this.router.get(
+      '/customers/:customerId/shopping-carts/:shoppingCartId',
+      this.getById
+    );
     this.router.post(
-      '/:clientId/shopping-carts/:shoppingCartId/product-items',
+      '/customers/:customerId/shopping-carts/:shoppingCartId/product-items',
       this.addProductItem
     );
     this.router.delete(
-      '/:clientId/shopping-carts/:shoppingCartId/product-items',
+      '/customers/:customerId/shopping-carts/:shoppingCartId/product-items',
       this.removeProductItem
     );
     this.router.post(
-      '/:clientId/shopping-carts/:shoppingCartId/confirm',
+      '/customers/:customerId/shopping-carts/:shoppingCartId/confirm',
       this.confirm
     );
   }
@@ -41,7 +44,7 @@ class ShoppingCartController {
     try {
       const command = new OpenShoppingCart(
         mongoObjectId(),
-        assertNotEmptyString(request.params.clientId)
+        assertNotEmptyString(request.params.customerId)
       );
       await this.commandBus.send(command);
 
@@ -84,7 +87,7 @@ class ShoppingCartController {
         assertNotEmptyString(request.params.shoppingCartId),
         new ProductItem(
           assertNotEmptyString(request.query.productId),
-          assertPositiveNumber(request.query.quantity)
+          assertPositiveNumber(Number(request.query.quantity))
         )
       );
       await this.commandBus.send(command);
