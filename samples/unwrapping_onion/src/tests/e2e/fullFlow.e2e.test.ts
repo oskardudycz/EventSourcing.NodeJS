@@ -79,52 +79,41 @@ describe('Full flow', () => {
         revision: 1,
       });
       expect(response.body).toHaveProperty('openedAt');
-      // current = response.body;
+      //current = response.body;
 
-      // ///////////////////////////////////////////////////
-      // // 2. Add product item
-      // ///////////////////////////////////////////////////
-      // const twoPairsOfShoes = {
-      //   quantity: 2,
-      //   productId: 123,
-      // };
-      // response = await request(app)
-      //   .post(`/v2/shopping-carts/${shoppingCartId}/product-items`)
-      //   .set('If-Match', currentRevision)
-      //   .send(twoPairsOfShoes)
-      //   .expect(200);
+      ///////////////////////////////////////////////////
+      // 2. Add product item
+      ///////////////////////////////////////////////////
+      const twoPairsOfShoes = {
+        quantity: 2,
+        productId: '123',
+      };
+      response = await request(app)
+        .post(`/${clientId}/shopping-carts/${shoppingCartId}/product-items`)
+        //.set('If-Match', currentRevision)
+        .send(twoPairsOfShoes)
+        .expect(200);
 
       // expect(response.headers['etag']).toBeDefined();
       // expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
       // currentRevision = response.headers['etag'];
 
-      // response = await request(app)
-      //   .get(`/v2/shopping-carts/${shoppingCartId}`)
-      //   .set('If-Not-Match', lastRevision)
-      //   .expect(200);
+      response = await request(app)
+        .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
+        //.set('If-Not-Match', lastRevision)
+        .expect(200);
 
       // expect(response.headers['etag']).toBe(currentRevision);
       // lastRevision = response.headers['etag'];
 
-      // expect(response.body).toMatchObject({
-      //   id: current.id,
-      //   createdAt: current.createdAt,
-      //   sessionId: shoppingCartId,
-      //   city: null,
-      //   content: null,
-      //   country: null,
-      //   email: null,
-      //   firstName: null,
-      //   items: [twoPairsOfShoes],
-      //   lastName: null,
-      //   line1: null,
-      //   line2: null,
-      //   middleName: null,
-      //   mobile: null,
-      //   province: null,
-      //   userId: null,
-      //   status: ShoppingCartStatus.Opened,
-      // });
+      expect(response.body).toMatchObject({
+        _id: shoppingCartId,
+        clientId,
+        status: ShoppingCartStatus.Opened,
+        productItems: [twoPairsOfShoes],
+        confirmedAt: null,
+        revision: 1,
+      });
       // expect(response.body.updatedAt).not.toBeNull();
       // current = response.body;
 
@@ -136,7 +125,7 @@ describe('Full flow', () => {
       //   quantity: 1,
       // };
       // response = await request(app)
-      //   .post(`/v2/shopping-carts/${shoppingCartId}/product-items`)
+      //   .post(`/${clientId}/shopping-carts/${shoppingCartId}/product-items`)
       //   .set('If-Match', currentRevision)
       //   .send(tShirt)
       //   .expect(200);
@@ -146,7 +135,7 @@ describe('Full flow', () => {
       // currentRevision = response.headers['etag'];
 
       // response = await request(app)
-      //   .get(`/v2/shopping-carts/${shoppingCartId}`)
+      //   .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
       //   .set('If-Not-Match', lastRevision)
       //   .expect(200);
 
@@ -186,7 +175,7 @@ describe('Full flow', () => {
       // };
       // response = await request(app)
       //   .delete(
-      //     `/v2/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`
+      //     `/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`
       //   )
       //   .set('If-Match', currentRevision)
       //   .expect(200);
@@ -196,7 +185,7 @@ describe('Full flow', () => {
       // currentRevision = response.headers['etag'];
 
       // response = await request(app)
-      //   .get(`/v2/shopping-carts/${shoppingCartId}`)
+      //   .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
       //   .set('If-Not-Match', lastRevision)
       //   .expect(200);
 
@@ -238,7 +227,7 @@ describe('Full flow', () => {
       // };
 
       // response = await request(app)
-      //   .put(`/v2/users/${userId}/shopping-carts/${shoppingCartId}`)
+      //   .put(`/users/${userId}/shopping-carts/${shoppingCartId}`)
       //   .set('If-Match', currentRevision)
       //   .send(confirmedData)
       //   .expect(200);
@@ -248,7 +237,7 @@ describe('Full flow', () => {
       // currentRevision = response.headers['etag'];
 
       // response = await request(app)
-      //   .get(`/v2/shopping-carts/${shoppingCartId}`)
+      //   .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
       //   .set('If-Not-Match', lastRevision)
       //   .expect(200);
 
@@ -269,7 +258,7 @@ describe('Full flow', () => {
       // current = response.body;
 
       // // response = await request(app)
-      // //   .get(`/shopping-carts/${shoppingCartId}`)
+      // //   .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
       // //   .expect(200);
 
       // // const { updatedAt, ...currentWithoutUpdatedAt } = current;
@@ -286,7 +275,7 @@ describe('Full flow', () => {
       // // // 4. Try to add product item
       // // // It should fail, as cart is already confirmed
       // // await request(app)
-      // //   .post(`/shopping-carts/${shoppingCartId}`)
+      // //   .post(`/${clientId}/shopping-carts/${shoppingCartId}`)
       // //   .send({
       // //     ...current,
       // //     items: [twoPairsOfShoes, tShirt],
@@ -294,7 +283,7 @@ describe('Full flow', () => {
       // //   .expect(412);
 
       // // response = await request(app)
-      // //   .get(`/shopping-carts/${shoppingCartId}`)
+      // //   .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
       // //   .expect(200);
 
       // // expect(response.body).toMatchObject(current);
