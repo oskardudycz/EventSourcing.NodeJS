@@ -1,17 +1,17 @@
 import { CommandHandler } from '#core/commands';
-import { ShoppingCartRepository } from 'src/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
-import { ConfirmShoppingCart } from '../commands/shoppingCarts/confirmShoppingCart';
+import { ShoppingCartRepository } from 'src/onion/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
+import { RemoveProductItemFromShoppingCart } from '../commands/shoppingCarts/removeProductItemFromShoppingCart';
 import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 
-export class ConfirmShoppingCartHandler
-  implements CommandHandler<ConfirmShoppingCart>
+export class RemoveProductItemFromShoppingCartHandler
+  implements CommandHandler<RemoveProductItemFromShoppingCart>
 {
   constructor(
     private repository: ShoppingCartRepository,
     private mapper: ShoppingCartMapper
   ) {}
 
-  async handle(command: ConfirmShoppingCart): Promise<void> {
+  async handle(command: RemoveProductItemFromShoppingCart): Promise<void> {
     const model = await this.repository.find(command.shoppingCartId);
 
     if (model === null) {
@@ -19,7 +19,7 @@ export class ConfirmShoppingCartHandler
     }
 
     const aggregate = this.mapper.toAggregate(model);
-    aggregate.confirm();
+    aggregate.removeProductItem(command.productItem);
 
     await this.repository.add(this.mapper.toModel(aggregate));
   }

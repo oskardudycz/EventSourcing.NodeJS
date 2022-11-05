@@ -1,4 +1,4 @@
-import { ProductItem } from 'src/ecommerce/common/shoppingCarts/productItem';
+import { ProductItem } from 'src/onion/ecommerce/common/shoppingCarts/productItem';
 import { ShoppingCartStatus } from './shoppingCartStatus';
 
 export class ShoppingCart {
