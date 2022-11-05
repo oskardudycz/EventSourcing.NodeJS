@@ -1,11 +1,11 @@
 import { CommandHandler } from '#core/commands';
 import { EventBus } from '#core/events';
-import { ShoppingCartRepository } from 'src/unpeeled/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
-import { AddProductItemToShoppingCart } from '../commands/shoppingCarts/addProductItemToShoppingCart';
+import { ShoppingCartRepository } from 'src/unpeeled/ecommerce/shoppingCarts/infrastructure/shoppingCartRepository';
+import { RemoveProductItemFromShoppingCart } from '../commands/shoppingCarts/removeProductItemFromShoppingCart';
 import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 
-export class AddProductItemToShoppingCartHandler
-  implements CommandHandler<AddProductItemToShoppingCart>
+export class RemoveProductItemFromShoppingCartHandler
+  implements CommandHandler<RemoveProductItemFromShoppingCart>
 {
   constructor(
     private repository: ShoppingCartRepository,
@@ -13,7 +13,7 @@ export class AddProductItemToShoppingCartHandler
     private eventBus: EventBus
   ) {}
 
-  async handle(command: AddProductItemToShoppingCart): Promise<void> {
+  async handle(command: RemoveProductItemFromShoppingCart): Promise<void> {
     const model = await this.repository.find(command.shoppingCartId);
 
     if (model === null) {
@@ -21,7 +21,7 @@ export class AddProductItemToShoppingCartHandler
     }
 
     const aggregate = this.mapper.toAggregate(model);
-    aggregate.addProductItem(command.productItem);
+    aggregate.removeProductItem(command.productItem);
 
     await this.repository.add(this.mapper.toModel(aggregate));
 

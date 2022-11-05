@@ -1,5 +1,5 @@
 import { Event } from '#core/events';
-import { ProductItem } from 'src/unpeeled/ecommerce/common/shoppingCarts/productItem';
+import { ProductItem } from 'src/unpeeled/ecommerce/shoppingCarts/common/productItem';
 
 export class ProductItemAddedToShoppingCart extends Event {
   constructor(

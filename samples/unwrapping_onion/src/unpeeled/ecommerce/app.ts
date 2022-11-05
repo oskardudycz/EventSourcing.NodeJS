@@ -1,7 +1,7 @@
 import { getApplication } from '#core/api';
 import { MongoClient } from 'mongodb';
-import registerHandlers from './application/shoppingCarts';
-import controllers from './controllers';
+import registerHandlers from './shoppingCarts/application';
+import controllers from './shoppingCarts/controllers';
 
 const initApp = (mongo: MongoClient) => {
   registerHandlers(mongo);

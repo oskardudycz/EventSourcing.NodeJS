@@ -1,5 +1,5 @@
 import { Command } from '#core/commands';
-import { ProductItem } from 'src/unpeeled/ecommerce/common/shoppingCarts/productItem';
+import { ProductItem } from 'src/unpeeled/ecommerce/shoppingCarts/common/productItem';
 
 export class RemoveProductItemFromShoppingCart extends Command {
   constructor(
