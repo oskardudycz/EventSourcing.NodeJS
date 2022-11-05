@@ -1,6 +1,6 @@
 import { CommandHandler } from '#core/commands';
 import ShoppingCartRepository from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
-import AddProductItemToShoppingCart from '../../../domain/commands/shoppingCarts/addProductItemToShoppingCart';
+import AddProductItemToShoppingCart from '../commands/shoppingCarts/addProductItemToShoppingCart';
 import ShoppingCartMapper from '../mapper';
 
 export default class AddProductItemToShoppingCartHandler

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { ProductItem } from './productItem';
+import { ProductItem } from 'src/ecommerce/common/shoppingCarts/productItem';
 
 export class ShoppingCartModel {
   constructor(
