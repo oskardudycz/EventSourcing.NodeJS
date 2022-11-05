@@ -1,8 +1,10 @@
 import { ProductItem } from 'src/unpeeled/ecommerce/shoppingCarts/common/productItem';
-import { ProductItemAddedToShoppingCart } from './domain/events/productItemAddedToShoppingCart';
-import { ProductItemRemovedFromShoppingCart } from './domain/events/productItemRemovedFromShoppingCart';
-import { ShoppingCartConfirmed } from './domain/events/shoppingCartConfirmed';
-import { ShoppingCartOpened } from './domain/events/shoppingCartOpened';
+import {
+  ProductItemAddedToShoppingCart,
+  ProductItemRemovedFromShoppingCart,
+  ShoppingCartConfirmed,
+  ShoppingCartOpened,
+} from './events';
 
 export class ShoppingCart {
   public constructor(
@@ -43,7 +45,10 @@ export class ShoppingCart {
     return this._revision;
   }
 
-  public static open(id: string, customerId: string) {
+  public static open(
+    id: string,
+    customerId: string
+  ): { aggregate: ShoppingCart; event: ShoppingCartOpened } {
     const openedAt = new Date();
 
     return {
@@ -52,15 +57,24 @@ export class ShoppingCart {
         customerId,
         ShoppingCartStatus.Opened,
         [],
-        new Date(),
+        openedAt,
         undefined,
         1
       ),
-      event: new ShoppingCartOpened(id, customerId, openedAt),
+      event: {
+        type: 'shopping-cart-opened',
+        data: {
+          shoppingCartId: id,
+          customerId,
+          openedAt: openedAt,
+        },
+      },
     };
   }
 
-  public addProductItem(newProductItem: ProductItem) {
+  public addProductItem(
+    newProductItem: ProductItem
+  ): ProductItemAddedToShoppingCart {
     if (this.status !== ShoppingCartStatus.Opened) {
       throw Error('Cannot add product to not opened shopping cart');
     }
@@ -85,14 +99,19 @@ export class ShoppingCart {
 
     this._revision++;
 
-    return new ProductItemAddedToShoppingCart(
-      this._id,
-      newProductItem,
-      new Date()
-    );
+    return {
+      type: 'product-item-added-to-shopping-cart',
+      data: {
+        shoppingCartId: this.id,
+        productItem: newProductItem,
+        addedAt: new Date(),
+      },
+    };
   }
 
-  public removeProductItem(productItemToRemove: ProductItem) {
+  public removeProductItem(
+    productItemToRemove: ProductItem
+  ): ProductItemRemovedFromShoppingCart {
     if (this.status !== ShoppingCartStatus.Opened) {
       throw Error('Cannot remove product from not opened shopping cart');
     }
@@ -122,14 +141,17 @@ export class ShoppingCart {
 
     this._revision++;
 
-    return new ProductItemRemovedFromShoppingCart(
-      this._id,
-      productItemToRemove,
-      new Date()
-    );
+    return {
+      type: 'product-item-removed-from-shopping-cart',
+      data: {
+        shoppingCartId: this.id,
+        productItem: productItemToRemove,
+        removedAt: new Date(),
+      },
+    };
   }
 
-  public confirm() {
+  public confirm(): ShoppingCartConfirmed {
     if (this.status !== ShoppingCartStatus.Opened) {
       throw Error('Cannot confirm to not opened shopping cart');
     }
@@ -138,7 +160,13 @@ export class ShoppingCart {
 
     this._revision++;
 
-    return new ShoppingCartConfirmed(this._id, this._confirmedAt);
+    return {
+      type: 'shopping-cart-confirmed',
+      data: {
+        shoppingCartId: this.id,
+        confirmedAt: this._confirmedAt,
+      },
+    };
   }
 
   private findProductItem(

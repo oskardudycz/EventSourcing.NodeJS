@@ -47,7 +47,7 @@ export class ShoppingCart extends Aggregate {
       customerId,
       ShoppingCartStatus.Opened,
       [],
-      new Date(),
+      openedAt,
       undefined,
       0
     );
