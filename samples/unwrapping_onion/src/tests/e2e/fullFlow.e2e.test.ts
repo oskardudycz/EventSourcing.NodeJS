@@ -10,7 +10,7 @@ import {
 } from '#testing/api/mongoDB/mongoDBContainer';
 import { disconnectFromMongoDB } from '#core/mongodb';
 import { Application } from 'express';
-import { ShoppingCartStatus } from '../../ecommerce/models/shoppingCarts/shoppingCartStatus';
+import { ShoppingCartStatus } from '../../ecommerce/domain/aggregates/shoppingCarts/shoppingCartStatus';
 
 describe('Full flow', () => {
   let app: Application;
@@ -120,47 +120,36 @@ describe('Full flow', () => {
       // ///////////////////////////////////////////////////
       // // 3. Add another item
       // ///////////////////////////////////////////////////
-      // const tShirt = {
-      //   productId: 456,
-      //   quantity: 1,
-      // };
-      // response = await request(app)
-      //   .post(`/${clientId}/shopping-carts/${shoppingCartId}/product-items`)
-      //   .set('If-Match', currentRevision)
-      //   .send(tShirt)
-      //   .expect(200);
+      const tShirt = {
+        productId: '456',
+        quantity: 1,
+      };
+      response = await request(app)
+        .post(`/${clientId}/shopping-carts/${shoppingCartId}/product-items`)
+        //.set('If-Match', currentRevision)
+        .send(tShirt)
+        .expect(200);
 
       // expect(response.headers['etag']).toBeDefined();
       // expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
       // currentRevision = response.headers['etag'];
 
-      // response = await request(app)
-      //   .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
-      //   .set('If-Not-Match', lastRevision)
-      //   .expect(200);
+      response = await request(app)
+        .get(`/${clientId}/shopping-carts/${shoppingCartId}`)
+        //.set('If-Not-Match', lastRevision)
+        .expect(200);
 
       // expect(response.headers['etag']).toBe(currentRevision);
       // lastRevision = response.headers['etag'];
 
-      // expect(response.body).toMatchObject({
-      //   id: current.id,
-      //   createdAt: current.createdAt,
-      //   sessionId: shoppingCartId,
-      //   city: null,
-      //   content: null,
-      //   country: null,
-      //   email: null,
-      //   firstName: null,
-      //   items: [twoPairsOfShoes, tShirt],
-      //   lastName: null,
-      //   line1: null,
-      //   line2: null,
-      //   middleName: null,
-      //   mobile: null,
-      //   province: null,
-      //   userId: null,
-      //   status: ShoppingCartStatus.Opened,
-      // });
+      expect(response.body).toMatchObject({
+        _id: shoppingCartId,
+        clientId,
+        status: ShoppingCartStatus.Opened,
+        productItems: [twoPairsOfShoes, tShirt],
+        confirmedAt: null,
+        revision: 1,
+      });
       // expect(
       //   greaterOrEqual(response.body.updatedAt, current.updatedAt)
       // ).toBeTruthy();

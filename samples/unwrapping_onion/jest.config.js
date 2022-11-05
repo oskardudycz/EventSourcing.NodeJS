@@ -10,6 +10,7 @@ module.exports = {
     '#core/(.*)': '<rootDir>/src/core/$1',
     '#config': '<rootDir>/config.ts',
     '#testing/(.*)': '<rootDir>/src/testing/$1',
+    'src/(.*)': '<rootDir>/src/$1',
   },
   globals: {
     'ts-jest': {

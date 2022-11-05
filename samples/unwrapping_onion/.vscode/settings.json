@@ -15,5 +15,9 @@
     "dist/": true
   },
   "files.eol": "\n",
-  "debug.javascript.autoAttachFilter": "disabled"
+  "debug.javascript.autoAttachFilter": "disabled",
+  "search.exclude": {
+    "**/.git": true,
+    "**/node_modules": true
+  }
 }
