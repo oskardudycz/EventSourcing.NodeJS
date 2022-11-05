@@ -1,6 +1,6 @@
 import { Mapper } from '#core/mapping';
 import { ObjectId } from 'mongodb';
-import { ShoppingCart } from 'src/ecommerce/domain/shoppingCarts';
+import { ShoppingCart } from 'src/onion/ecommerce/domain/shoppingCarts';
 import { ShoppingCartModel } from '../../../models/shoppingCarts/shoppingCart';
 
 export class ShoppingCartMapper
