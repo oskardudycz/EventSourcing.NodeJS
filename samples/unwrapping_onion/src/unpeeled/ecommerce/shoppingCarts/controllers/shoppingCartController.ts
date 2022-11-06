@@ -13,10 +13,20 @@ import { RemoveProductItemFromShoppingCart } from 'src/unpeeled/ecommerce/shoppi
 import { RemoveProductItemFromShoppingCartRequest } from 'src/unpeeled/ecommerce/shoppingCarts/requests/removeProductItemFromShoppingCartRequest.ts';
 import { ConfirmShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts/application/commands/shoppingCarts/confirmShoppingCart';
 import { GetCustomerShoppingHistory } from 'src/unpeeled/ecommerce/shoppingCarts/application/queries/getCustomerShoppingHistory';
+import { ShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts';
+import { ShoppingCartRepository } from '../infrastructure/shoppingCartRepository';
+import { EventBus } from '#core/events';
+import { ShoppingCartModel } from '../models/shoppingCart';
+import { ShoppingCartMapper } from '../application/mappers/shoppingCartMapper';
 export class ShoppingCartController {
   public router = Router();
 
-  constructor(private commandBus: CommandBus, private queryBus: QueryBus) {
+  constructor(
+    private repository: ShoppingCartRepository,
+    private mapper: ShoppingCartMapper,
+    private eventBus: EventBus,
+    private queryBus: QueryBus
+  ) {
     this.router.post('/customers/:customerId/shopping-carts/', this.open);
     this.router.post(
       '/customers/:customerId/shopping-carts/:shoppingCartId/product-items',
@@ -50,7 +60,14 @@ export class ShoppingCartController {
         mongoObjectId(),
         assertNotEmptyString(request.params.customerId)
       );
-      await this.commandBus.send(command);
+      const event = ShoppingCart.open(
+        command.shoppingCartId,
+        command.customerId
+      );
+
+      await this.repository.store({} as ShoppingCartModel, event);
+
+      await this.eventBus.publish(event);
 
       sendCreated(response, command.shoppingCartId);
     } catch (error) {
@@ -72,7 +89,20 @@ export class ShoppingCartController {
           assertPositiveNumber(request.body.quantity)
         )
       );
-      await this.commandBus.send(command);
+      const model = await this.repository.find(command.shoppingCartId);
+
+      if (model === null) {
+        throw Error(
+          `Shopping cart with id ${command.shoppingCartId} not found!`
+        );
+      }
+
+      const aggregate = this.mapper.toAggregate(model);
+      const event = aggregate.addProductItem(command.productItem);
+
+      await this.repository.store(model, event);
+
+      await this.eventBus.publish(event);
 
       response.sendStatus(200);
     } catch (error) {
@@ -94,7 +124,20 @@ export class ShoppingCartController {
           assertPositiveNumber(Number(request.query.quantity))
         )
       );
-      await this.commandBus.send(command);
+      const model = await this.repository.find(command.shoppingCartId);
+
+      if (model === null) {
+        throw Error(
+          `Shopping cart with id ${command.shoppingCartId} not found!`
+        );
+      }
+
+      const aggregate = this.mapper.toAggregate(model);
+      const event = aggregate.removeProductItem(command.productItem);
+
+      await this.repository.store(model, event);
+
+      await this.eventBus.publish(event);
 
       response.sendStatus(200);
     } catch (error) {
@@ -112,7 +155,20 @@ export class ShoppingCartController {
       const command = new ConfirmShoppingCart(
         assertNotEmptyString(request.params.shoppingCartId)
       );
-      await this.commandBus.send(command);
+      const model = await this.repository.find(command.shoppingCartId);
+
+      if (model === null) {
+        throw Error(
+          `Shopping cart with id ${command.shoppingCartId} not found!`
+        );
+      }
+
+      const aggregate = this.mapper.toAggregate(model);
+      const event = aggregate.confirm();
+
+      await this.repository.store(model, event);
+
+      await this.eventBus.publish(event);
 
       response.sendStatus(200);
     } catch (error) {
