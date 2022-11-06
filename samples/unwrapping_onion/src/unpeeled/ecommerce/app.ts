@@ -1,9 +1,11 @@
 import { getApplication } from '#core/api';
+import { EventBusFactory } from '#core/events';
 import { MongoClient } from 'mongodb';
-import { getControllers } from './shoppingCarts/controllers';
+import { configureShoppingCartsModule } from './shoppingCarts';
 
 const initApp = (mongo: MongoClient) => {
-  return getApplication(getControllers(mongo));
+  const eventBus = EventBusFactory();
+  return getApplication(configureShoppingCartsModule(mongo, eventBus));
 };
 
 export default initApp;

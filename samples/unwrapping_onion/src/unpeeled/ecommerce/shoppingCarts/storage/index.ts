@@ -1,9 +1,17 @@
-import { getById } from '#core/repositories';
+import { getById } from '#core/mongo';
 import { Collection, ObjectId } from 'mongodb';
-import { ShoppingCartModel } from 'src/unpeeled/ecommerce/shoppingCarts/models/shoppingCart';
-import { ShoppingCart, ShoppingCartStatus } from '..';
-import { CustomerShoppingHistoryItem } from '../application/queries/customerShoppingHistoryItem';
-import { ShoppingCartEvent } from '../events';
+import { ProductItem, ShoppingCart, ShoppingCartStatus } from '../shoppingCart';
+import { ShoppingCartEvent } from '../shoppingCart';
+
+export type ShoppingCartModel = {
+  _id: ObjectId;
+  customerId: string;
+  status: string;
+  productItems: ProductItem[];
+  openedAt: Date;
+  confirmedAt: Date | undefined;
+  revision: number;
+};
 
 export const getShoppingCart = async (
   carts: Collection<ShoppingCartModel>,
@@ -19,23 +27,6 @@ export const getShoppingCart = async (
     ),
     revision: model.revision,
   };
-};
-
-export const findAllByCustomerId = async (
-  carts: Collection<ShoppingCartModel>,
-  customerId: string
-): Promise<CustomerShoppingHistoryItem[]> => {
-  const result = await carts.find({ customerId }).toArray();
-
-  return result.map(
-    (cart) =>
-      new CustomerShoppingHistoryItem(
-        cart.customerId,
-        cart._id.toHexString(),
-        cart.status,
-        cart.productItems.length
-      )
-  );
 };
 
 export const store = async (

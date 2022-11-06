@@ -1,7 +1,7 @@
 import express, { Application, Router } from 'express';
 import http from 'http';
 
-export const getApplication = (routers: Router[]) => {
+export const getApplication = (...routers: Router[]) => {
   const app: Application = express();
 
   app.set('etag', false);
