@@ -5,10 +5,16 @@ import { QueryBus } from '#core/queries';
 import { GetShoppingCartById } from 'src/unpeeled/ecommerce/shoppingCarts/application/queries/getShoppingCartById';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
 import { AddProductItemToShoppingCartRequest } from 'src/unpeeled/ecommerce/shoppingCarts/requests/addProductItemToShoppingCartRequest';
-import { ProductItem } from 'src/unpeeled/ecommerce/shoppingCarts/common/productItem';
+import { ProductItem } from 'src/unpeeled/ecommerce/shoppingCarts/productItems/productItem';
 import { RemoveProductItemFromShoppingCartRequest } from 'src/unpeeled/ecommerce/shoppingCarts/requests/removeProductItemFromShoppingCartRequest.ts';
 import { GetCustomerShoppingHistory } from 'src/unpeeled/ecommerce/shoppingCarts/application/queries/getCustomerShoppingHistory';
-import { ShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts';
+import {
+  addProductItem as addProductItemToShoppingCart,
+  confirm as confirmShoppingCart,
+  open as openShoppingCart,
+  removeProductItem as removeProductItemFromShoppingCart,
+  ShoppingCart,
+} from 'src/unpeeled/ecommerce/shoppingCarts';
 import { EventBus } from '#core/events';
 import { ShoppingCartModel } from '../models/shoppingCart';
 import { Collection, MongoClient } from 'mongodb';
@@ -64,7 +70,7 @@ export class ShoppingCartController {
         },
       };
 
-      const event = ShoppingCart.open(
+      const event = openShoppingCart(
         command.data.shoppingCartId,
         command.data.customerId
       );
@@ -95,12 +101,15 @@ export class ShoppingCartController {
           ),
         },
       };
-      const aggregate = await getShoppingCart(
+      const cart = await getShoppingCart(
         this.carts,
         command.data.shoppingCartId
       );
 
-      const event = aggregate.addProductItem(command.data.productItem);
+      const event = addProductItemToShoppingCart(
+        cart,
+        command.data.productItem
+      );
 
       await store(this.carts, event);
       await this.eventBus.publish(event);
@@ -128,12 +137,15 @@ export class ShoppingCartController {
           ),
         },
       };
-      const aggregate = await getShoppingCart(
+      const cart = await getShoppingCart(
         this.carts,
         command.data.shoppingCartId
       );
 
-      const event = aggregate.removeProductItem(command.data.productItem);
+      const event = removeProductItemFromShoppingCart(
+        cart,
+        command.data.productItem
+      );
 
       await store(this.carts, event);
       await this.eventBus.publish(event);
@@ -157,12 +169,12 @@ export class ShoppingCartController {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
         },
       };
-      const aggregate = await getShoppingCart(
+      const cart = await getShoppingCart(
         this.carts,
         command.data.shoppingCartId
       );
 
-      const event = aggregate.confirm();
+      const event = confirmShoppingCart(cart);
 
       await store(this.carts, event);
       await this.eventBus.publish(event);
