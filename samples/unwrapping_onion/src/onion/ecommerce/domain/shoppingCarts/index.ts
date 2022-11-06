@@ -99,7 +99,7 @@ export class ShoppingCart extends Aggregate {
 
     const newQuantity = (currentProductItem?.quantity ?? 0) - quantity;
 
-    if (newQuantity < 0) throw 'PRODUCT_ITEM_NOT_FOUND';
+    if (newQuantity < 0) throw new Error('Product Item not found');
 
     if (newQuantity === 0) {
       this._productItems = this._productItems.filter(

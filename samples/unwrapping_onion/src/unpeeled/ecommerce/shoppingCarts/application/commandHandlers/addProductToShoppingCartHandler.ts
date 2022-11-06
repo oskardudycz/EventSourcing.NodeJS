@@ -23,7 +23,7 @@ export class AddProductItemToShoppingCartHandler
     const aggregate = this.mapper.toAggregate(model);
     const event = aggregate.addProductItem(command.productItem);
 
-    await this.repository.add(this.mapper.toModel(aggregate));
+    await this.repository.store(model, event);
 
     await this.eventBus.publish(event);
   }
