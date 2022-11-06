@@ -1,4 +1,4 @@
-import { MongoDbRepository, Repository } from '#core/repositories';
+import { MongoDbRepository, Repository } from '#core/mongo/repository';
 import { MongoClient } from 'mongodb';
 import { ShoppingCartModel } from 'src/onion/ecommerce/models/shoppingCarts/shoppingCart';
 

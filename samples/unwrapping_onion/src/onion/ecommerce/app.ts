@@ -5,7 +5,7 @@ import controllers from './controllers';
 
 const initApp = (mongo: MongoClient) => {
   registerHandlers(mongo);
-  return getApplication(controllers);
+  return getApplication(...controllers);
 };
 
 export default initApp;
