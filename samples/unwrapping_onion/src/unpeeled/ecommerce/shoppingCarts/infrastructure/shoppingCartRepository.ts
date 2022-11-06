@@ -1,5 +1,5 @@
 import { MongoDbRepository } from '#core/repositories';
-import { MongoClient, ObjectId } from 'mongodb';
+import { Collection, MongoClient, ObjectId } from 'mongodb';
 import { ProductItem } from 'src/onion/ecommerce/common/shoppingCarts/productItem';
 import { ShoppingCartModel } from 'src/unpeeled/ecommerce/shoppingCarts/models/shoppingCart';
 import { ShoppingCartStatus } from '..';
@@ -13,46 +13,95 @@ export class ShoppingCartRepository extends MongoDbRepository<ShoppingCartModel>
   async findAllByCustomerId(customerId: string): Promise<ShoppingCartModel[]> {
     return this.collection.find({ customerId }).toArray();
   }
-
-  public async store(entity: ShoppingCartModel, event: ShoppingCartEvent) {
-    return await this.upsert(apply(entity, event));
-  }
 }
 
-const apply = (cart: ShoppingCartModel, event: ShoppingCartEvent) => {
+export const store = async (
+  carts: Collection<ShoppingCartModel>,
+  event: ShoppingCartEvent,
+  cart?: ShoppingCartModel
+): Promise<void> => {
   switch (event.type) {
-    case 'shopping-cart-opened':
-      return new ShoppingCartModel(
-        new ObjectId(event.data.shoppingCartId),
-        event.data.customerId,
-        ShoppingCartStatus.Opened,
-        [],
-        event.data.openedAt,
-        undefined,
-        1
+    case 'shopping-cart-opened': {
+      await carts.updateOne(
+        { _id: new ObjectId(event.data.shoppingCartId) },
+        {
+          $set: {
+            customerId: event.data.customerId,
+            status: ShoppingCartStatus.Opened,
+            productItems: [],
+            openedAt: event.data.openedAt,
+            confirmedAt: undefined,
+            revision: 1,
+          },
+        },
+        { upsert: true }
       );
-    case 'product-item-added-to-shopping-cart':
-      return {
-        ...cart,
-        productItems: addProductItem(cart.productItems, event.data.productItem),
-        revision: cart.revision + 1,
-      };
-    case 'product-item-removed-from-shopping-cart':
-      return {
-        ...cart,
-        productItems: removeProductItem(
-          cart.productItems,
-          event.data.productItem
-        ),
-        revision: cart.revision + 1,
-      };
-    case 'shopping-cart-confirmed':
-      return {
-        ...cart,
-        status: ShoppingCartStatus.Confirmed,
-        confirmedAt: event.data.confirmedAt,
-        revision: cart.revision + 1,
-      };
+      return;
+    }
+    case 'product-item-added-to-shopping-cart': {
+      if (cart === undefined) {
+        throw Error('Cannot update not existing cart!');
+      }
+
+      await carts.updateOne(
+        { _id: cart._id },
+        {
+          $set: {
+            productItems: addProductItem(
+              cart.productItems,
+              event.data.productItem
+            ),
+          },
+          $inc: {
+            revision: 1,
+          },
+        },
+        { upsert: false }
+      );
+      return;
+    }
+    case 'product-item-removed-from-shopping-cart': {
+      if (cart === undefined) {
+        throw Error('Cannot update not existing cart!');
+      }
+
+      await carts.updateOne(
+        { _id: cart._id },
+        {
+          $set: {
+            productItems: removeProductItem(
+              cart.productItems,
+              event.data.productItem
+            ),
+          },
+          $inc: {
+            revision: 1,
+          },
+        },
+        { upsert: false }
+      );
+      return;
+    }
+    case 'shopping-cart-confirmed': {
+      if (cart === undefined) {
+        throw Error('Cannot update not existing cart!');
+      }
+
+      await carts.updateOne(
+        { _id: cart._id },
+        {
+          $set: {
+            status: ShoppingCartStatus.Confirmed,
+            confirmedAt: event.data.confirmedAt,
+          },
+          $inc: {
+            revision: 1,
+          },
+        },
+        { upsert: false }
+      );
+      return;
+    }
   }
 };
 
