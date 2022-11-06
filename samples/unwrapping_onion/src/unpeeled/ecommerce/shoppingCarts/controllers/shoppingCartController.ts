@@ -11,7 +11,6 @@ import { GetCustomerShoppingHistory } from 'src/unpeeled/ecommerce/shoppingCarts
 import { ShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts';
 import { EventBus } from '#core/events';
 import { ShoppingCartModel } from '../models/shoppingCart';
-import { ShoppingCartMapper } from '../application/mappers/shoppingCartMapper';
 import { Collection, MongoClient } from 'mongodb';
 import {
   OpenShoppingCart,
@@ -19,8 +18,11 @@ import {
   RemoveProductItemFromShoppingCart,
   ConfirmShoppingCart,
 } from '../commands';
-import { getCollection, getById } from '#core/repositories';
-import { store } from '../infrastructure/shoppingCartRepository';
+import { getCollection } from '#core/repositories';
+import {
+  getShoppingCart,
+  store,
+} from '../infrastructure/shoppingCartRepository';
 
 export class ShoppingCartController {
   public router = Router();
@@ -28,7 +30,6 @@ export class ShoppingCartController {
 
   constructor(
     mongo: MongoClient,
-    private mapper: ShoppingCartMapper,
     private eventBus: EventBus,
     private queryBus: QueryBus
   ) {
@@ -101,12 +102,14 @@ export class ShoppingCartController {
           ),
         },
       };
-      const model = await getById(this.carts, command.data.shoppingCartId);
+      const aggregate = await getShoppingCart(
+        this.carts,
+        command.data.shoppingCartId
+      );
 
-      const aggregate = this.mapper.toAggregate(model);
       const event = aggregate.addProductItem(command.data.productItem);
 
-      await store(this.carts, event, model);
+      await store(this.carts, event, aggregate);
       await this.eventBus.publish(event);
 
       response.sendStatus(200);
@@ -132,12 +135,14 @@ export class ShoppingCartController {
           ),
         },
       };
-      const model = await getById(this.carts, command.data.shoppingCartId);
+      const aggregate = await getShoppingCart(
+        this.carts,
+        command.data.shoppingCartId
+      );
 
-      const aggregate = this.mapper.toAggregate(model);
       const event = aggregate.removeProductItem(command.data.productItem);
 
-      await store(this.carts, event, model);
+      await store(this.carts, event, aggregate);
       await this.eventBus.publish(event);
 
       response.sendStatus(200);
@@ -159,12 +164,14 @@ export class ShoppingCartController {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
         },
       };
-      const model = await getById(this.carts, command.data.shoppingCartId);
+      const aggregate = await getShoppingCart(
+        this.carts,
+        command.data.shoppingCartId
+      );
 
-      const aggregate = this.mapper.toAggregate(model);
       const event = aggregate.confirm();
 
-      await store(this.carts, event, model);
+      await store(this.carts, event, aggregate);
       await this.eventBus.publish(event);
 
       response.sendStatus(200);
