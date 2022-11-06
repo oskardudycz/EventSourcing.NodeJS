@@ -36,6 +36,14 @@ export abstract class MongoDbRepository<T extends Document & { _id: ObjectId }>
     );
   }
 
+  async upsert(entity: T): Promise<void> {
+    await this.collection.updateOne(
+      { _id: entity._id } as Filter<T>,
+      { $set: entity },
+      { upsert: true }
+    );
+  }
+
   async find(id: string): Promise<T | null> {
     const result = await this.collection.findOne({
       _id: new ObjectId(id),

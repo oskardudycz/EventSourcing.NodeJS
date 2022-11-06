@@ -4,6 +4,7 @@ import { ShoppingCart } from 'src/unpeeled/ecommerce/shoppingCarts';
 import { ShoppingCartRepository } from 'src/unpeeled/ecommerce/shoppingCarts/infrastructure/shoppingCartRepository';
 import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 import { EventBus } from '#core/events';
+import { ShoppingCartModel } from '../../models/shoppingCart';
 
 export class OpenShoppingCartHandler
   implements CommandHandler<OpenShoppingCart>
@@ -15,12 +16,9 @@ export class OpenShoppingCartHandler
   ) {}
 
   async handle(command: OpenShoppingCart): Promise<void> {
-    const { aggregate, event } = ShoppingCart.open(
-      command.shoppingCartId,
-      command.customerId
-    );
+    const event = ShoppingCart.open(command.shoppingCartId, command.customerId);
 
-    await this.repository.add(this.mapper.toModel(aggregate));
+    await this.repository.store({} as ShoppingCartModel, event);
 
     await this.eventBus.publish(event);
   }
