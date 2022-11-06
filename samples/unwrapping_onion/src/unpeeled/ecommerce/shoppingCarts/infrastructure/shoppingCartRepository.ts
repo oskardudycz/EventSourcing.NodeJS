@@ -1,8 +1,8 @@
-import { MongoDbRepository } from '#core/repositories';
+import { getById, MongoDbRepository } from '#core/repositories';
 import { Collection, MongoClient, ObjectId } from 'mongodb';
 import { ProductItem } from 'src/onion/ecommerce/common/shoppingCarts/productItem';
 import { ShoppingCartModel } from 'src/unpeeled/ecommerce/shoppingCarts/models/shoppingCart';
-import { ShoppingCartStatus } from '..';
+import { ShoppingCart, ShoppingCartStatus } from '..';
 import { ShoppingCartEvent } from '../events';
 
 export class ShoppingCartRepository extends MongoDbRepository<ShoppingCartModel> {
@@ -15,10 +15,27 @@ export class ShoppingCartRepository extends MongoDbRepository<ShoppingCartModel>
   }
 }
 
+export const getShoppingCart = async (
+  carts: Collection<ShoppingCartModel>,
+  id: string
+): Promise<ShoppingCart> => {
+  const model = await getById(carts, id);
+
+  return new ShoppingCart(
+    model._id.toHexString(),
+    model.customerId,
+    model.status,
+    model.productItems,
+    model.openedAt,
+    model.confirmedAt,
+    model.revision
+  );
+};
+
 export const store = async (
   carts: Collection<ShoppingCartModel>,
   event: ShoppingCartEvent,
-  cart?: ShoppingCartModel
+  cart?: ShoppingCart
 ): Promise<void> => {
   switch (event.type) {
     case 'shopping-cart-opened': {
@@ -44,7 +61,7 @@ export const store = async (
       }
 
       await carts.updateOne(
-        { _id: cart._id },
+        { _id: new ObjectId(cart.id) },
         {
           $set: {
             productItems: addProductItem(
@@ -66,7 +83,7 @@ export const store = async (
       }
 
       await carts.updateOne(
-        { _id: cart._id },
+        { _id: new ObjectId(cart.id) },
         {
           $set: {
             productItems: removeProductItem(
@@ -88,7 +105,7 @@ export const store = async (
       }
 
       await carts.updateOne(
-        { _id: cart._id },
+        { _id: new ObjectId(cart.id) },
         {
           $set: {
             status: ShoppingCartStatus.Confirmed,
