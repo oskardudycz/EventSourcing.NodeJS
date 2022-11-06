@@ -11,12 +11,14 @@ export const getShoppingCart = async (
 ): Promise<ShoppingCart> => {
   const model = await getById(carts, id);
 
-  return new ShoppingCart(
-    model._id.toHexString(),
-    model.status,
-    new Map(model.productItems.map((p) => [p.productId, p.quantity])),
-    model.revision
-  );
+  return {
+    id: model._id.toHexString(),
+    status: model.status,
+    productItems: new Map(
+      model.productItems.map((p) => [p.productId, p.quantity])
+    ),
+    revision: model.revision,
+  };
 };
 
 export const findAllByCustomerId = async (
