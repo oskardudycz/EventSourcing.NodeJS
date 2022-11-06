@@ -18,21 +18,14 @@ import {
   RemoveProductItemFromShoppingCart,
   ConfirmShoppingCart,
 } from '../commands';
-import { getCollection } from '#core/repositories';
-import {
-  getShoppingCart,
-  store,
-} from '../infrastructure/shoppingCartRepository';
+import { getById, getCollection } from '#core/repositories';
+import { findAllByCustomerId, getShoppingCart, store } from '../storage';
 
 export class ShoppingCartController {
   public router = Router();
   private carts: Collection<ShoppingCartModel>;
 
-  constructor(
-    mongo: MongoClient,
-    private eventBus: EventBus,
-    private queryBus: QueryBus
-  ) {
+  constructor(mongo: MongoClient, private eventBus: EventBus) {
     this.carts = getCollection<ShoppingCartModel>(mongo, 'shoppingCarts');
     this.router.post('/customers/:customerId/shopping-carts/', this.open);
     this.router.post(
@@ -109,7 +102,7 @@ export class ShoppingCartController {
 
       const event = aggregate.addProductItem(command.data.productItem);
 
-      await store(this.carts, event, aggregate);
+      await store(this.carts, event);
       await this.eventBus.publish(event);
 
       response.sendStatus(200);
@@ -142,7 +135,7 @@ export class ShoppingCartController {
 
       const event = aggregate.removeProductItem(command.data.productItem);
 
-      await store(this.carts, event, aggregate);
+      await store(this.carts, event);
       await this.eventBus.publish(event);
 
       response.sendStatus(200);
@@ -171,7 +164,7 @@ export class ShoppingCartController {
 
       const event = aggregate.confirm();
 
-      await store(this.carts, event, aggregate);
+      await store(this.carts, event);
       await this.eventBus.publish(event);
 
       response.sendStatus(200);
@@ -190,7 +183,7 @@ export class ShoppingCartController {
       const query = new GetShoppingCartById(
         assertNotEmptyString(request.params.shoppingCartId)
       );
-      const result = await this.queryBus.query(query);
+      const result = await getById(this.carts, query.shoppingCartId);
 
       response.send(result);
     } catch (error) {
@@ -208,7 +201,7 @@ export class ShoppingCartController {
       const query = new GetCustomerShoppingHistory(
         assertNotEmptyString(request.params.customerId)
       );
-      const result = await this.queryBus.query(query);
+      const result = await findAllByCustomerId(this.carts, query.customerId);
 
       response.send(result);
     } catch (error) {

@@ -9,11 +9,8 @@ import {
 export class ShoppingCart {
   public constructor(
     public id: string,
-    public customerId: string,
     public status: string,
-    public productItems: ProductItem[],
-    public openedAt: Date,
-    public confirmedAt: Date | undefined,
+    public productItems: Map<string, number>,
     public revision: number
   ) {}
 
@@ -54,12 +51,9 @@ export class ShoppingCart {
 
     const { productId, quantity } = productItemToRemove;
 
-    const currentProductItem = this.findProductItem(
-      this.productItems,
-      productId
-    );
+    const currentQuantity = this.productItems.get(productId);
 
-    const newQuantity = (currentProductItem?.quantity ?? 0) - quantity;
+    const newQuantity = (currentQuantity ?? 0) - quantity;
 
     if (newQuantity < 0) throw new Error('Product Item not found');
 
@@ -84,13 +78,6 @@ export class ShoppingCart {
         confirmedAt: new Date(),
       },
     };
-  }
-
-  private findProductItem(
-    productItems: ProductItem[],
-    productId: string
-  ): ProductItem | undefined {
-    return productItems.find((pi) => pi.productId === productId);
   }
 }
 
