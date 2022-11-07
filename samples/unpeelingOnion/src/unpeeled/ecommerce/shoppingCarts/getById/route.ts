@@ -4,7 +4,7 @@ import { Collection } from 'mongodb';
 import { ShoppingCartModel } from '../storage/';
 import { getById } from '#core/mongo';
 
-export const getShoppingCartByIdRouter = (
+export const getShoppingCartByIdRoute = (
   carts: Collection<ShoppingCartModel>,
   router: Router
 ) =>

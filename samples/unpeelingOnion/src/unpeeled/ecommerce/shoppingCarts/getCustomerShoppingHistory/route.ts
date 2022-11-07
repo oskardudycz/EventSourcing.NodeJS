@@ -4,12 +4,12 @@ import { Collection } from 'mongodb';
 import { ShoppingCartModel } from '../storage/';
 import { findAllByCustomerId, GetCustomerShoppingHistory } from './handler';
 
-export const getCustomerShoppingHistoryRouter = (
+export const getCustomerShoppingHistoryRoute = (
   carts: Collection<ShoppingCartModel>,
   router: Router
 ) =>
   router.get(
-    '/customers/:customerId/shopping-carts/:shoppingCartId/',
+    '/customers/:customerId/shopping-carts/',
     async (request: Request, response: Response, next: NextFunction) => {
       try {
         const query = from(request);
