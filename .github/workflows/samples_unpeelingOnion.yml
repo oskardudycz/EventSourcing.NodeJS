@@ -1,20 +1,20 @@
-name: Samples - Unwrapping Onion
+name: Samples - Unpeeling Onion
 
 on:
   # run it on push to the default repository branch
   push:
     branches: [main]
     paths:
-      - "samples/unwrappingOnion/**"
+      - "samples/unpeelingOnion/**"
   # run it during pull request
   pull_request:
     paths:
-      - "samples/unwrappingOnion/**"
+      - "samples/unpeelingOnion/**"
 
 defaults:
   run:
     # relative path to the place where source code (with package.json) is located
-    working-directory: samples/unwrappingOnion
+    working-directory: samples/unpeelingOnion
 
 jobs:
   build-and-test-code:
