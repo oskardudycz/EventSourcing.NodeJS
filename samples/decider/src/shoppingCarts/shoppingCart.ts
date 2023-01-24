@@ -6,8 +6,10 @@ import {
   addProductItem,
   assertProductItemExists,
   ProductItem,
+  ProductItems,
   removeProductItem,
 } from './productItem';
+import { Map } from 'immutable';
 import { Decider } from '#core/decider';
 
 //////////////////////////////////////
@@ -62,23 +64,10 @@ export type ShoppingCart =
     }
   | {
       status: 'Pending';
-      id: string;
-      clientId: string;
-      productItems: ProductItem[];
+      productItems: ProductItems;
     }
   | {
-      status: 'Confirmed';
-      id: string;
-      clientId: string;
-      productItems: ProductItem[];
-      confirmedAt: Date;
-    }
-  | {
-      status: 'Canceled';
-      id: string;
-      clientId: string;
-      productItems: ProductItem[];
-      canceledAt: Date;
+      status: 'Closed';
     };
 
 //////////////////////////////////////
@@ -86,58 +75,46 @@ export type ShoppingCart =
 //////////////////////////////////////
 
 export const evolve = (
-  currentState: ShoppingCart,
-  event: ShoppingCartEvent
+  cart: ShoppingCart,
+  { type, data: event }: ShoppingCartEvent
 ): ShoppingCart => {
-  switch (event.type) {
+  switch (type) {
     case 'ShoppingCartOpened':
-      if (currentState.status != 'Empty') return currentState;
+      if (cart.status != 'Empty') return cart;
 
       return {
-        id: event.data.shoppingCartId,
-        clientId: event.data.clientId,
-        productItems: [],
+        productItems: Map<string, number>(),
         status: 'Pending',
       };
     case 'ProductItemAddedToShoppingCart':
-      if (currentState.status != 'Pending') return currentState;
+      if (cart.status != 'Pending') return cart;
 
       return {
-        ...currentState,
-        productItems: addProductItem(
-          currentState.productItems,
-          event.data.productItem
-        ),
+        ...cart,
+        productItems: addProductItem(cart.productItems, event.productItem),
       };
     case 'ProductItemRemovedFromShoppingCart':
-      if (currentState.status != 'Pending') return currentState;
+      if (cart.status != 'Pending') return cart;
 
       return {
-        ...currentState,
-        productItems: removeProductItem(
-          currentState.productItems,
-          event.data.productItem
-        ),
+        ...cart,
+        productItems: removeProductItem(cart.productItems, event.productItem),
       };
     case 'ShoppingCartConfirmed':
-      if (currentState.status != 'Pending') return currentState;
+      if (cart.status != 'Pending') return cart;
 
       return {
-        ...currentState,
-        status: 'Confirmed',
-        confirmedAt: new Date(event.data.confirmedAt),
+        status: 'Closed',
       };
     case 'ShoppingCartCanceled':
-      if (currentState.status != 'Pending') return currentState;
+      if (cart.status != 'Pending') return cart;
 
       return {
-        ...currentState,
-        status: 'Canceled',
-        canceledAt: new Date(event.data.canceledAt),
+        status: 'Closed',
       };
     default: {
-      const _: never = event;
-      return currentState;
+      const _: never = type;
+      return cart;
     }
   }
 };

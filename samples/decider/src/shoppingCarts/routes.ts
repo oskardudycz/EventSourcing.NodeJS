@@ -11,6 +11,7 @@ import {
   ShoppingCartEvent,
   toShoppingCartStreamId,
 } from './shoppingCart';
+import { mongoObjectId } from '#core/mongoDB';
 //import { getShoppingCartsCollection } from './shoppingCartDetails';
 
 //////////////////////////////////////
@@ -31,7 +32,7 @@ const on = HTTPHandler<ShoppingCartCommand>(handleCommand);
 router.post(
   '/clients/:clientId/shopping-carts/',
   on((request, handle) => {
-    const shoppingCartId = uuid();
+    const shoppingCartId = mongoObjectId();
 
     return handle(shoppingCartId, {
       type: 'OpenShoppingCart',
