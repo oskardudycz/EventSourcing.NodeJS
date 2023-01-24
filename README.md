@@ -762,32 +762,48 @@ Follow the instructions in exercises folders.
    }
    ```
 9. To make sure that all is working fine we'll create the new app (e.g. in the `src/index.ts`)
+    ```typescript
+    import express, { Application, Request, Response } from "express";
+    import http from "http";
+    
+    const app: Application = express();
+    const server = http.createServer(app);
+    
+    app.get("/", (req: Request, res: Response) => {
+      res.json({ greeting: "Hello World!" });
+    });
+    
+    const PORT = 5000;
+    
+    server.listen(PORT);
+    
+    server.on("listening", () => {
+      console.info("server up listening");
+    });
+    ```
+    This will create an Express application that will be listening on port `5000` and return the JSON (with dummy data greeting with `"Hello World!"`). 
 
-```typescript
-import express, { Application, Request, Response } from "express";
-import http from "http";
-
-const app: Application = express();
-const server = http.createServer(app);
-
-app.get("/", (req: Request, res: Response) => {
-  res.json({ greeting: "Hello World!" });
-});
-
-const PORT = 5000;
-
-server.listen(PORT);
-
-server.on("listening", () => {
-  console.info("server up listening");
-});
-```
-
-This will create an Express application that will be listening on port `5000` and return the JSON (with dummy data greeting with `"Hello World!"`). 10. [Nodemon](https://nodemon.io/) to have hot-reload of the running Express server code. - install:
-`bash npm i -D nodemon ` - add script to [package.json](./samples/simple/package.json) to run Express server with Nodemon:
-`json { "scripts": { "dev:start": "nodemon src/index.ts", } } ` - you can run dev script as:
-`bash npm run dev:start ` - open in browser http://localhost:5000/ and check if you see result:
-`json { "greeting": "Hello World!" } `
+10. [Nodemon](https://nodemon.io/) to have hot-reload of the running Express server code. 
+    - install:
+    ```bash
+    npm i -D nodemon
+    ```
+    - add script to [package.json](./samples/simple/package.json) to run Express server with Nodemon:
+    ```json
+    {
+      "scripts": {
+        "dev:start": "nodemon src/index.ts",
+      }
+    }
+    ```
+    - you can run dev script as:
+    ```bash
+    npm run dev:start
+    ```
+    - open in browser http://localhost:5000/ and check if you see result:
+    ```json
+    { "greeting": "Hello World!" }
+    ```
 
 ### VSCode debug configuration
 
