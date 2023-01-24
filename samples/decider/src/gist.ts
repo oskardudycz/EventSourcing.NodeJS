@@ -561,16 +561,22 @@ router.post(
   })
 );
 
+type AddProductItemToShoppingCartRequest = Request<
+  Partial<{ shoppingCartId: string }>,
+  unknown,
+  Partial<{ productId: number; quantity: number }>
+>;
+
 // Add Product Item
 router.post(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  on((request, handle) => {
+  on((request: AddProductItemToShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     return handle(shoppingCartId, {
       type: 'AddProductItemToShoppingCart',
       data: {
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+        shoppingCartId,
         productItem: {
           productId: assertNotEmptyString(request.body.productId),
           quantity: assertPositiveNumber(request.body.quantity),
@@ -580,50 +586,61 @@ router.post(
   })
 );
 
+export type RemoveProductItemFromShoppingCartRequest = Request<
+  Partial<{ shoppingCartId: string }>,
+  unknown,
+  unknown,
+  Partial<{ productId: number; quantity: number }>
+>;
+
 // Remove Product Item
 router.post(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  on((request, handle) => {
+  on((request: RemoveProductItemFromShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     return handle(shoppingCartId, {
       type: 'RemoveProductItemFromShoppingCart',
       data: {
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+        shoppingCartId,
         productItem: {
-          productId: assertNotEmptyString(request.body.productId),
-          quantity: assertPositiveNumber(request.body.quantity),
+          productId: assertNotEmptyString(request.query.productId),
+          quantity: assertPositiveNumber(request.query.quantity),
         },
       },
     });
   })
 );
 
+type ConfirmShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
+
 // Confirm Shopping Cart
 router.put(
   '/clients/:clientId/shopping-carts/:shoppingCartId',
-  on((request, handle) => {
+  on((request: ConfirmShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     return handle(shoppingCartId, {
       type: 'ConfirmShoppingCart',
       data: {
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+        shoppingCartId,
       },
     });
   })
 );
 
+type CancelShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
+
 // Confirm Shopping Cart
 router.delete(
   '/clients/:clientId/shopping-carts/:shoppingCartId',
-  on((request, handle) => {
+  on((request: CancelShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     return handle(shoppingCartId, {
       type: 'CancelShoppingCart',
       data: {
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+        shoppingCartId,
       },
     });
   })
@@ -639,24 +656,28 @@ const enum ValidationErrors {
   NOT_AN_UNSIGNED_BIGINT = 'NOT_AN_UNSIGNED_BIGINT',
 }
 
-const assertNotEmptyString = (value: any): string => {
+export const assertNotEmptyString = (value: unknown): string => {
   if (typeof value !== 'string' || value.length === 0) {
-    throw ValidationErrors.NOT_A_NONEMPTY_STRING;
+    throw new Error(ValidationErrors.NOT_A_NONEMPTY_STRING);
   }
   return value;
 };
 
-const assertPositiveNumber = (value: any): number => {
+export const assertPositiveNumber = (value: unknown): number => {
   if (typeof value !== 'number' || value <= 0) {
-    throw ValidationErrors.NOT_A_POSITIVE_NUMBER;
+    throw new Error(ValidationErrors.NOT_A_POSITIVE_NUMBER);
   }
   return value;
 };
 
-const assertUnsignedBigInt = (value: string): bigint => {
+export const assertUnsignedBigInt = (value: string): bigint => {
+  if (value === undefined) {
+    throw new Error(ValidationErrors.NOT_AN_UNSIGNED_BIGINT);
+  }
+
   const number = BigInt(value);
   if (number < 0) {
-    throw ValidationErrors.NOT_AN_UNSIGNED_BIGINT;
+    throw new Error(ValidationErrors.NOT_AN_UNSIGNED_BIGINT);
   }
   return number;
 };
@@ -683,7 +704,7 @@ const getWeakETagValue = (etag: ETag): string => {
   return result[1];
 };
 
-const toWeakETag = (value: any): WeakETag => {
+const toWeakETag = (value: number | bigint | string): WeakETag => {
   return `W/"${value}"`;
 };
 

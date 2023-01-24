@@ -26,7 +26,7 @@ export const getWeakETagValue = (etag: ETag): string => {
   return result[1];
 };
 
-export const toWeakETag = (value: any): WeakETag => {
+export const toWeakETag = (value: number | bigint | string): WeakETag => {
   return `W/"${value}"`;
 };
 
