@@ -631,7 +631,7 @@ router.put(
 
 type CancelShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
 
-// Confirm Shopping Cart
+// Cancel Shopping Cart
 router.delete(
   '/clients/:clientId/shopping-carts/:shoppingCartId',
   on((request: CancelShoppingCartRequest, handle) => {
