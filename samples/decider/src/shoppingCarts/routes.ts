@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Request, Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { CommandHandler } from '#core/commandHandling';
 import { HTTPHandler } from '#core/http';
@@ -43,16 +43,22 @@ router.post(
   })
 );
 
+type AddProductItemToShoppingCartRequest = Request<
+  Partial<{ shoppingCartId: string }>,
+  unknown,
+  Partial<{ productId: number; quantity: number }>
+>;
+
 // Add Product Item
 router.post(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  on((request, handle) => {
+  on((request: AddProductItemToShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     return handle(shoppingCartId, {
       type: 'AddProductItemToShoppingCart',
       data: {
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+        shoppingCartId,
         productItem: {
           productId: assertNotEmptyString(request.body.productId),
           quantity: assertPositiveNumber(request.body.quantity),
@@ -62,50 +68,61 @@ router.post(
   })
 );
 
+export type RemoveProductItemFromShoppingCartRequest = Request<
+  Partial<{ shoppingCartId: string }>,
+  unknown,
+  unknown,
+  Partial<{ productId: number; quantity: number }>
+>;
+
 // Remove Product Item
 router.post(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  on((request, handle) => {
+  on((request: RemoveProductItemFromShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     return handle(shoppingCartId, {
       type: 'RemoveProductItemFromShoppingCart',
       data: {
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+        shoppingCartId,
         productItem: {
-          productId: assertNotEmptyString(request.body.productId),
-          quantity: assertPositiveNumber(request.body.quantity),
+          productId: assertNotEmptyString(request.query.productId),
+          quantity: assertPositiveNumber(request.query.quantity),
         },
       },
     });
   })
 );
 
+type ConfirmShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
+
 // Confirm Shopping Cart
 router.put(
   '/clients/:clientId/shopping-carts/:shoppingCartId',
-  on((request, handle) => {
+  on((request: ConfirmShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     return handle(shoppingCartId, {
       type: 'ConfirmShoppingCart',
       data: {
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+        shoppingCartId,
       },
     });
   })
 );
 
-// Confirm Shopping Cart
+type CancelShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
+
+// Cancel Shopping Cart
 router.delete(
   '/clients/:clientId/shopping-carts/:shoppingCartId',
-  on((request, handle) => {
+  on((request: CancelShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     return handle(shoppingCartId, {
       type: 'CancelShoppingCart',
       data: {
-        shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
+        shoppingCartId,
       },
     });
   })
