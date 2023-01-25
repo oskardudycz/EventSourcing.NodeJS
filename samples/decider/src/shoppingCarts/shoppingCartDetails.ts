@@ -12,8 +12,6 @@ import {
   ShoppingCartEvent,
 } from './shoppingCart';
 
-export const getShoppingCartsCollection = () =>
-  getMongoCollection<ShoppingCartDetails>('shoppingCartDetails');
 
 export const ShoppingCartStatus = {
   Pending: 'Pending',
@@ -32,7 +30,10 @@ type ShoppingCartDetails = Readonly<{
   revision: number;
 }>;
 
-export const store = async (
+export const getShoppingCartsCollection = () =>
+  getMongoCollection<ShoppingCartDetails>('shoppingCartDetails');
+
+export const project = async (
   carts: Collection<ShoppingCartDetails>,
   event: ShoppingCartEvent,
   expectedRevision: number
@@ -165,5 +166,5 @@ export const projectToShoppingCartDetails = async (
   const expectedRevision = streamRevision - 1;
   const shoppingCarts = await getShoppingCartsCollection();
 
-  await retryIfNotUpdated(() => store(shoppingCarts, event, expectedRevision));
+  await retryIfNotUpdated(() => project(shoppingCarts, event, expectedRevision));
 };

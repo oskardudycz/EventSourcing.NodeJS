@@ -12,6 +12,7 @@ import {
   toShoppingCartStreamId,
 } from './shoppingCart';
 import { mongoObjectId } from '#core/mongoDB';
+import { getProductPrice } from './productItem';
 //import { getShoppingCartsCollection } from './shoppingCartDetails';
 
 //////////////////////////////////////
@@ -53,16 +54,22 @@ type AddProductItemToShoppingCartRequest = Request<
 // Add Product Item
 router.post(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  on((request: AddProductItemToShoppingCartRequest, handle) => {
+  on(async(request: AddProductItemToShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
+
+    const productId = assertNotEmptyString(request.body.productId);
+    const quantity = assertPositiveNumber(request.body.quantity);
+
+    const price = await getProductPrice(productId);
 
     return handle(shoppingCartId, {
       type: 'AddProductItemToShoppingCart',
       data: {
         shoppingCartId,
         productItem: {
-          productId: assertNotEmptyString(request.body.productId),
-          quantity: assertPositiveNumber(request.body.quantity),
+          productId,
+          quantity,
+          price
         },
       },
     });

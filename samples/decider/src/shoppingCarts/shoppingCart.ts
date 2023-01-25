@@ -5,6 +5,7 @@
 import {
   addProductItem,
   assertProductItemExists,
+  PricedProductItem,
   ProductItem,
   ProductItems,
   removeProductItem,
@@ -16,7 +17,7 @@ import { Decider } from '#core/decider';
 /// Events
 //////////////////////////////////////
 
-export type ShoppingCartEvent =
+export type ShoppingCartEvent = 
   | {
       type: 'ShoppingCartOpened';
       data: {
@@ -29,7 +30,7 @@ export type ShoppingCartEvent =
       type: 'ProductItemAddedToShoppingCart';
       data: {
         shoppingCartId: string;
-        productItem: ProductItem;
+        productItem: PricedProductItem;
       };
     }
   | {
@@ -135,7 +136,7 @@ export type ShoppingCartCommand =
       type: 'AddProductItemToShoppingCart';
       data: {
         shoppingCartId: string;
-        productItem: ProductItem;
+        productItem: PricedProductItem;
       };
     }
   | {
@@ -267,10 +268,11 @@ export const isCashierShoppingCartEvent = (
 ): event is ShoppingCartEvent => {
   return (
     event != null &&
-    (event.type === 'shopping-cart-opened' ||
-      event.type === 'product-item-added-to-shopping-cart' ||
-      event.type === 'product-item-removed-from-shopping-cart' ||
-      event.type === 'shopping-cart-confirmed')
+    (event.type === 'OpenShoppingCart' ||
+      event.type === 'ProductItemAddedToShoppingCart' ||
+      event.type === 'ProductItemRemovedFromShoppingCart' ||
+      event.type === 'ShoppingCartConfirmed' ||
+      event.type === 'ShoppingCartCanceled')
   );
 };
 
