@@ -54,7 +54,7 @@ type AddProductItemToShoppingCartRequest = Request<
 // Add Product Item
 router.post(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-  on(async(request: AddProductItemToShoppingCartRequest, handle) => {
+  on(async (request: AddProductItemToShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
     const productId = assertNotEmptyString(request.body.productId);
@@ -69,7 +69,7 @@ router.post(
         productItem: {
           productId,
           quantity,
-          price
+          price,
         },
       },
     });
