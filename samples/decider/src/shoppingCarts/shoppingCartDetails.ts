@@ -12,7 +12,6 @@ import {
   ShoppingCartEvent,
 } from './shoppingCart';
 
-
 export const ShoppingCartStatus = {
   Pending: 'Pending',
   Canceled: 'Canceled',
@@ -166,5 +165,7 @@ export const projectToShoppingCartDetails = async (
   const expectedRevision = streamRevision - 1;
   const shoppingCarts = await getShoppingCartsCollection();
 
-  await retryIfNotUpdated(() => project(shoppingCarts, event, expectedRevision));
+  await retryIfNotUpdated(() =>
+    project(shoppingCarts, event, expectedRevision)
+  );
 };

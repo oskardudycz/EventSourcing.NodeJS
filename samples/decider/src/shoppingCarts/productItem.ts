@@ -11,8 +11,8 @@ export interface ProductItem {
 }
 
 export type PricedProductItem = ProductItem & {
-  price:number
-}
+  price: number;
+};
 
 export type ProductItems = Map<string, number>;
 
@@ -53,8 +53,7 @@ export const assertProductItemExists = (
   }
 };
 
-
 export const getProductPrice = (_productId: string): Promise<number> => {
   // You should call some real service or storage in real life, aye?
   return Promise.resolve(Math.random());
-}
+};

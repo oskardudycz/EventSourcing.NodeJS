@@ -17,7 +17,7 @@ import { Decider } from '#core/decider';
 /// Events
 //////////////////////////////////////
 
-export type ShoppingCartEvent = 
+export type ShoppingCartEvent =
   | {
       type: 'ShoppingCartOpened';
       data: {
