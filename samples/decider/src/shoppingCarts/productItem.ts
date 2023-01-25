@@ -5,12 +5,16 @@
 import { Map } from 'immutable';
 import { ShoppingCartErrors } from './shoppingCart';
 
-export type ProductItems = Map<string, number>;
-
 export interface ProductItem {
   productId: string;
   quantity: number;
 }
+
+export type PricedProductItem = ProductItem & {
+  price:number
+}
+
+export type ProductItems = Map<string, number>;
 
 export const addProductItem = (
   productItems: ProductItems,
@@ -48,3 +52,9 @@ export const assertProductItemExists = (
     throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
   }
 };
+
+
+export const getProductPrice = (_productId: string): Promise<number> => {
+  // You should call some real service or storage in real life, aye?
+  return Promise.resolve(Math.random());
+}
