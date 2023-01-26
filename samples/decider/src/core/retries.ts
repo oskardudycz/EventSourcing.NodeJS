@@ -33,7 +33,8 @@ export const retryPromise = async <T = never>(
       return await callback();
     } catch (error) {
       if (!shouldRetry(error) || retryCount == maxRetries) {
-        console.error(`[retry] Exceeded max retry count, throwing: ${error}`);
+        console.error(`[retry] Exceeded max retry count, throwing:`);
+        console.error(error);
         throw error;
       }
 
