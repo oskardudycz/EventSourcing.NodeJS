@@ -1,17 +1,11 @@
 import { getMongoCollection, retryIfNotFound } from '#core/mongoDB';
 import { SubscriptionResolvedEvent } from '#core/subscriptions';
-import { Collection, Long, ObjectId, UpdateResult } from 'mongodb';
+import { Collection, Long, ObjectId } from 'mongodb';
 import {
   isCashierShoppingCartEvent,
   ShoppingCartErrors,
   ShoppingCartEvent,
 } from './shoppingCart';
-
-export const ShoppingCartStatus = {
-  Pending: 'Pending',
-  Canceled: 'Canceled',
-  Confirmed: 'Confirmed',
-};
 
 type PendingShoppingCart = {
   shoppingCartId: string;
@@ -159,52 +153,6 @@ export const project = async (
         ]
       );
       break;
-      // await carts.updateOne(
-      //   {
-      //     position: { $lt: eventPosition },
-      //     'pending.shoppingCartId': event.shoppingCartId,
-      //   },
-      //   [
-      //     {
-      //       $set: {
-      //         totalProductsCount: {
-      //           $add: ['$totalProductsCount', 'pending.$.totalProductsCount'],
-      //         },
-      //         totalProductsAmount: {
-      //           $add: ['$totalProductsAmount', 'pending.$.totalProductsAmount'],
-      //         },
-      //       },
-      //     },
-      //     {
-      //       $project: {
-      //         _id: 0,
-      //         filtered: {
-      //           $filter: {
-      //             input: '$pending',
-      //             as: 'item',
-      //             cond: {
-      //               $ne: ['$$item.shoppingCartId', event.shoppingCartId],
-      //             },
-      //           },
-      //         },
-      //       },
-      //     },
-      //   ]
-      // );
-
-      // return carts.updateOne(
-      //   {
-      //     position: { $lt: eventPosition },
-      //     'pending.shoppingCartId': event.shoppingCartId,
-      //   },
-      //   {
-      //     $pull: {
-      //       pending: {
-      //         shoppingCartId: event.shoppingCartId,
-      //       },
-      //     },
-      //   }
-      // );
     }
     case 'ShoppingCartCanceled': {
       await clientShoppingHistory.updateOne(
