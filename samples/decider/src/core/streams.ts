@@ -6,10 +6,12 @@ import {
   EventStoreDBClient,
   jsonEvent,
   NO_STREAM,
+  StreamNotFoundError,
   WrongExpectedVersionError,
 } from '@eventstore/db-client';
 import { Event } from './decider';
-import { ETag, getExpectedRevisionFromETag, toWeakETag } from './eTag';
+import { ETag, getWeakETagValue, toWeakETag } from './eTag';
+import { assertBigInt } from './validation';
 
 //////////////////////////////////////
 /// ESDB
@@ -30,17 +32,25 @@ export const getEventStore = (connectionString?: string) => {
 export const readStream = async <EventType extends Event>(
   eventStore: EventStoreDBClient,
   streamId: string
-) => {
+): Promise<EventType[]> => {
   const events = [];
-  for await (const { event } of eventStore.readStream<EventType>(streamId)) {
-    if (!event) continue;
+  try {
+    for await (const { event } of eventStore.readStream<EventType>(streamId)) {
+      if (!event) continue;
 
-    events.push(<EventType>{
-      type: event.type,
-      data: event.data,
-    });
+      events.push(<EventType>{
+        type: event.type,
+        data: event.data,
+      });
+    }
+    return events;
+  } catch (error) {
+    if (error instanceof StreamNotFoundError) {
+      return [];
+    }
+
+    throw error;
   }
-  return events;
 };
 
 export type AppendResult =
@@ -78,5 +88,25 @@ export const appendToStream = async (
       };
     }
     throw error;
+  }
+};
+
+export const getExpectedRevisionFromETag = (
+  eTag: ETag
+): bigint | 'no_stream' => {
+  const revision = assertBigInt(getWeakETagValue(eTag));
+
+  if (revision === -1n) return NO_STREAM;
+
+  return revision;
+};
+
+export const disconnectFromEventStore = async () => {
+  const eventStore = getEventStore();
+
+  try {
+    return await eventStore.dispose();
+  } catch (ex) {
+    console.error(ex);
   }
 };

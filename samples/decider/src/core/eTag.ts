@@ -1,4 +1,4 @@
-import { assertUnsignedBigInt } from './validation';
+import { assertBigInt } from './validation';
 
 //////////////////////////////////////
 /// ETAG
@@ -7,7 +7,7 @@ import { assertUnsignedBigInt } from './validation';
 export type WeakETag = `W/${string}`;
 export type ETag = WeakETag | string;
 
-export const WeakETagRegex = /W\/"(\d+.*)"/;
+export const WeakETagRegex = /W\/"(-?\d+.*)"/;
 
 export const enum ETagErrors {
   WRONG_WEAK_ETAG_FORMAT = 'WRONG_WEAK_ETAG_FORMAT',
@@ -29,6 +29,3 @@ export const getWeakETagValue = (etag: ETag): string => {
 export const toWeakETag = (value: number | bigint | string): WeakETag => {
   return `W/"${value}"`;
 };
-
-export const getExpectedRevisionFromETag = (eTag: ETag): bigint =>
-  assertUnsignedBigInt(getWeakETagValue(eTag));
