@@ -1,4 +1,4 @@
-import { getMongoCollection, retryIfNotUpdated } from '#core/mongoDB';
+import { getMongoCollection, retryIfNotFound } from '#core/mongoDB';
 import { SubscriptionResolvedEvent } from '#core/subscriptions';
 import { Collection, Long, ObjectId, UpdateResult } from 'mongodb';
 import {
@@ -13,14 +13,17 @@ export const ShoppingCartStatus = {
   Confirmed: 'Confirmed',
 };
 
+type PendingShoppingCart = {
+  shoppingCartId: string;
+  totalProductsCount: number;
+  totalAmount: number;
+  isDeleted: boolean;
+};
+
 type ClientShoppingHistory = Readonly<{
   totalProductsCount: number;
   totalAmount: number;
-  pending: {
-    shoppingCartId: string;
-    totalProductsCount: number;
-    totalAmount: number;
-  }[];
+  pending: PendingShoppingCart[];
   position: Long;
 }>;
 
@@ -28,13 +31,13 @@ export const getClientShoppingHistoryCollection = () =>
   getMongoCollection<ClientShoppingHistory>('clientShoppingHistory');
 
 export const project = async (
-  carts: Collection<ClientShoppingHistory>,
+  clientShoppingHistory: Collection<ClientShoppingHistory>,
   { type, data: event }: ShoppingCartEvent,
   eventPosition: Long
-): Promise<UpdateResult> => {
+): Promise<void> => {
   switch (type) {
     case 'ShoppingCartOpened': {
-      await carts.updateOne(
+      await clientShoppingHistory.updateOne(
         { _id: new ObjectId(event.clientId) },
         {
           $setOnInsert: {
@@ -47,7 +50,7 @@ export const project = async (
         { upsert: true }
       );
 
-      return carts.updateOne(
+      await clientShoppingHistory.updateOne(
         { _id: new ObjectId(event.clientId), position: { $lt: eventPosition } },
         {
           $addToSet: {
@@ -55,13 +58,15 @@ export const project = async (
               shoppingCartId: event.shoppingCartId,
               totalAmount: 0,
               totalProductsCount: 0,
+              isDeleted: false,
             },
           },
         }
       );
+      break;
     }
     case 'ProductItemAddedToShoppingCart': {
-      return carts.updateOne(
+      await clientShoppingHistory.updateOne(
         {
           position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
@@ -77,9 +82,10 @@ export const project = async (
           },
         }
       );
+      break;
     }
     case 'ProductItemRemovedFromShoppingCart': {
-      return carts.updateOne(
+      await clientShoppingHistory.updateOne(
         {
           position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
@@ -95,32 +101,113 @@ export const project = async (
           },
         }
       );
+      break;
     }
     case 'ShoppingCartConfirmed': {
-      return carts.updateOne(
+      const history = await retryIfNotFound(() =>
+        clientShoppingHistory.findOne(
+          {
+            position: { $lt: eventPosition },
+            'pending.shoppingCartId': event.shoppingCartId,
+          },
+          {
+            projection: {
+              'pending.$': 1,
+            },
+          }
+        )
+      ).catch(console.warn);
+
+      if (!history || history.pending.length === 0) return;
+
+      await clientShoppingHistory.updateOne(
         {
           position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
         },
         [
           {
-            $inc: {
-              totalProductsCount: 'pending.$.totalProductsCount',
-              totalProductsAmount: 'pending.$.totalProductsAmount',
+            $set: {
+              totalProductsCount: {
+                $add: [
+                  '$totalProductsCount',
+                  history.pending[0].totalProductsCount,
+                ],
+              },
+              totalAmount: {
+                $add: ['$totalAmount', history.pending[0].totalAmount],
+              },
             },
           },
           {
-            $pull: {
+            $project: {
+              _id: 0,
+              totalProductsCount: 0,
+              totalAmount: 0,
+              position: 0,
               pending: {
-                shoppingCartId: event.shoppingCartId,
+                $filter: {
+                  input: '$pending',
+                  as: 'item',
+                  cond: {
+                    $ne: ['$$item.shoppingCartId', event.shoppingCartId],
+                  },
+                },
               },
             },
           },
         ]
       );
+      break;
+      // await carts.updateOne(
+      //   {
+      //     position: { $lt: eventPosition },
+      //     'pending.shoppingCartId': event.shoppingCartId,
+      //   },
+      //   [
+      //     {
+      //       $set: {
+      //         totalProductsCount: {
+      //           $add: ['$totalProductsCount', 'pending.$.totalProductsCount'],
+      //         },
+      //         totalProductsAmount: {
+      //           $add: ['$totalProductsAmount', 'pending.$.totalProductsAmount'],
+      //         },
+      //       },
+      //     },
+      //     {
+      //       $project: {
+      //         _id: 0,
+      //         filtered: {
+      //           $filter: {
+      //             input: '$pending',
+      //             as: 'item',
+      //             cond: {
+      //               $ne: ['$$item.shoppingCartId', event.shoppingCartId],
+      //             },
+      //           },
+      //         },
+      //       },
+      //     },
+      //   ]
+      // );
+
+      // return carts.updateOne(
+      //   {
+      //     position: { $lt: eventPosition },
+      //     'pending.shoppingCartId': event.shoppingCartId,
+      //   },
+      //   {
+      //     $pull: {
+      //       pending: {
+      //         shoppingCartId: event.shoppingCartId,
+      //       },
+      //     },
+      //   }
+      // );
     }
     case 'ShoppingCartCanceled': {
-      return carts.updateOne(
+      await clientShoppingHistory.updateOne(
         {
           position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
@@ -133,6 +220,7 @@ export const project = async (
           },
         }
       );
+      break;
     }
     default: {
       const _: never = event;
