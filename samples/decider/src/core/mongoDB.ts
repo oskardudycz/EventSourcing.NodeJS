@@ -121,8 +121,10 @@ export const loadCheckPointFromCollection = async (subscriptionId: string) => {
 };
 
 export const storeCheckpointInCollection =
-  (handle: EventHandler) => async (event: SubscriptionResolvedEvent) => {
-    await handle(event);
+  (...handlers: EventHandler[]) =>
+  async (event: SubscriptionResolvedEvent) => {
+    await Promise.all(handlers.map((handle) => handle(event)));
+
     const checkpoints = await getCheckpointsCollection();
 
     await checkpoints.updateOne(

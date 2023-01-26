@@ -6,7 +6,6 @@ import {
   addProductItem,
   assertProductItemExists,
   PricedProductItem,
-  ProductItem,
   ProductItems,
   removeProductItem,
 } from './productItem';
@@ -37,7 +36,7 @@ export type ShoppingCartEvent =
       type: 'ProductItemRemovedFromShoppingCart';
       data: {
         shoppingCartId: string;
-        productItem: ProductItem;
+        productItem: PricedProductItem;
       };
     }
   | {
@@ -84,7 +83,7 @@ export const evolve = (
       if (cart.status != 'Empty') return cart;
 
       return {
-        productItems: Map<string, number>(),
+        productItems: Map<string, Map<number, number>>(),
         status: 'Pending',
       };
     case 'ProductItemAddedToShoppingCart':
@@ -143,7 +142,7 @@ export type ShoppingCartCommand =
       type: 'RemoveProductItemFromShoppingCart';
       data: {
         shoppingCartId: string;
-        productItem: ProductItem;
+        productItem: PricedProductItem;
       };
     }
   | {
@@ -264,11 +263,11 @@ export const decider: Decider<
 //////////////////////////////////////
 
 export const isCashierShoppingCartEvent = (
-  event: any
+  event: null | { type: string }
 ): event is ShoppingCartEvent => {
   return (
     event != null &&
-    (event.type === 'OpenShoppingCart' ||
+    (event.type === 'ShoppingCartOpened' ||
       event.type === 'ProductItemAddedToShoppingCart' ||
       event.type === 'ProductItemRemovedFromShoppingCart' ||
       event.type === 'ShoppingCartConfirmed' ||

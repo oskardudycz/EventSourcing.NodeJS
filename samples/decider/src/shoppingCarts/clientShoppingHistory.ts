@@ -48,7 +48,7 @@ export const project = async (
       );
 
       return carts.updateOne(
-        { _id: new ObjectId(event.clientId), position: { $gt: eventPosition } },
+        { _id: new ObjectId(event.clientId), position: { $lt: eventPosition } },
         {
           $addToSet: {
             pending: {
@@ -57,19 +57,13 @@ export const project = async (
               totalProductsCount: 0,
             },
           },
-          $setOnInsert: {
-            totalProductsCount: 0,
-            totalAmount: 0,
-            pending: [],
-            position: eventPosition,
-          },
         }
       );
     }
     case 'ProductItemAddedToShoppingCart': {
       return carts.updateOne(
         {
-          position: { $gt: eventPosition },
+          position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
         },
         {
@@ -87,13 +81,14 @@ export const project = async (
     case 'ProductItemRemovedFromShoppingCart': {
       return carts.updateOne(
         {
-          position: { $gt: eventPosition },
+          position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
         },
         {
           $inc: {
             'pending.$.quantity': -event.productItem.quantity,
-            'pending.$.totalAmount': -event.productItem.quantity, //TODO!* event.productItem.price,
+            'pending.$.totalAmount':
+              -event.productItem.quantity * event.productItem.price,
           },
           $set: {
             position: eventPosition,
@@ -104,7 +99,7 @@ export const project = async (
     case 'ShoppingCartConfirmed': {
       return carts.updateOne(
         {
-          position: { $gt: eventPosition },
+          position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
         },
         [
@@ -127,7 +122,7 @@ export const project = async (
     case 'ShoppingCartCanceled': {
       return carts.updateOne(
         {
-          position: { $gt: eventPosition },
+          position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
         },
         {
@@ -151,15 +146,12 @@ export const projectToClientShoppingHistory = async (
 ): Promise<void> => {
   const event = resolvedEvent.event;
   if (event === undefined) return Promise.resolve();
-  const eventData = event.data;
   const eventPosition = event.position.commit;
 
-  if (event === undefined || !isCashierShoppingCartEvent(eventData))
+  if (event === undefined || !isCashierShoppingCartEvent(event))
     return Promise.resolve();
 
-  const shoppingCarts = await getClientShoppingHistoryCollection();
+  const summary = await getClientShoppingHistoryCollection();
 
-  await retryIfNotUpdated(() =>
-    project(shoppingCarts, eventData, Long.fromBigInt(eventPosition))
-  );
+  await project(summary, event, Long.fromBigInt(eventPosition));
 };

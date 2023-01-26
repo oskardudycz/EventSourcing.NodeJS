@@ -34,7 +34,7 @@
   },
   "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
   "dependencies": {
-    "@eventstore/db-client": "4.0.0",
+    "@eventstore/db-client": "5.0.0",
     "@faker-js/faker": "7.6.0",
     "convict": "6.2.3",
     "dotenv": "16.0.3",

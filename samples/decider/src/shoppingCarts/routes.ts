@@ -1,5 +1,4 @@
-import { Request, Router } from 'express';
-import { v4 as uuid } from 'uuid';
+import { NextFunction, Request, Response, Router } from 'express';
 import { CommandHandler } from '#core/commandHandling';
 import { HTTPHandler } from '#core/http';
 import { getEventStore } from '#core/streams';
@@ -13,6 +12,9 @@ import {
 } from './shoppingCart';
 import { mongoObjectId } from '#core/mongoDB';
 import { getProductPrice } from './productItem';
+import { toWeakETag } from '#core/eTag';
+import { getShoppingCartsCollection } from './shoppingCartDetails';
+import { ObjectId } from 'mongodb';
 //import { getShoppingCartsCollection } from './shoppingCartDetails';
 
 //////////////////////////////////////
@@ -80,11 +82,11 @@ export type RemoveProductItemFromShoppingCartRequest = Request<
   Partial<{ shoppingCartId: string }>,
   unknown,
   unknown,
-  Partial<{ productId: number; quantity: number }>
+  Partial<{ productId: number; quantity: number; price: number }>
 >;
 
 // Remove Product Item
-router.post(
+router.delete(
   '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
   on((request: RemoveProductItemFromShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
@@ -96,6 +98,7 @@ router.post(
         productItem: {
           productId: assertNotEmptyString(request.query.productId),
           quantity: assertPositiveNumber(request.query.quantity),
+          price: assertPositiveNumber(request.query.price),
         },
       },
     });
@@ -105,8 +108,8 @@ router.post(
 type ConfirmShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
 
 // Confirm Shopping Cart
-router.put(
-  '/clients/:clientId/shopping-carts/:shoppingCartId',
+router.post(
+  '/clients/:clientId/shopping-carts/:shoppingCartId/confirm',
   on((request: ConfirmShoppingCartRequest, handle) => {
     const shoppingCartId = assertNotEmptyString(request.params.shoppingCartId);
 
@@ -136,25 +139,25 @@ router.delete(
   })
 );
 
-// router.get(
-//   '/clients/:clientId/shopping-carts/:shoppingCartId',
-//   async (request: Request, response: Response, next: NextFunction) => {
-//     try {
-//       const collection = await getShoppingCartsCollection();
+router.get(
+  '/clients/:clientId/shopping-carts/:shoppingCartId',
+  async (request: Request, response: Response, next: NextFunction) => {
+    try {
+      const collection = await getShoppingCartsCollection();
 
-//       const result = await collection.findOne({
-//         shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
-//       });
+      const result = await collection.findOne({
+        _id: new ObjectId(assertNotEmptyString(request.params.shoppingCartId)),
+      });
 
-//       if (result === null) {
-//         response.sendStatus(404);
-//         return;
-//       }
+      if (result === null) {
+        response.sendStatus(404);
+        return;
+      }
 
-//       response.set('ETag', toWeakETag(result.revision));
-//       response.send(result);
-//     } catch (error) {
-//       next(error);
-//     }
-//   }
-// );
+      response.set('ETag', toWeakETag(result.revision));
+      response.send(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+);

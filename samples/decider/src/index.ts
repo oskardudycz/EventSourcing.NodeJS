@@ -1,23 +1,30 @@
 import { startAPI } from '#core/api';
-// import {
-//   SubscriptionToAllWithMongoCheckpoints,
-//   storeCheckpointInCollection,
-// } from '#core/mongoDB';
+import {
+  SubscriptionToAllWithMongoCheckpoints,
+  storeCheckpointInCollection,
+} from '#core/mongoDB';
 import { router } from './shoppingCarts/routes';
-//import { projectToShoppingCartItem } from './shoppingCarts/shoppingCartDetails';
+import { projectToShoppingCartDetails } from './shoppingCarts/shoppingCartDetails';
+import { projectToClientShoppingHistory } from './shoppingCarts/clientShoppingHistory';
+import { disconnectFromEventStore } from '#core/streams';
 
-//////////////////////////////////////
-/// API
-//////////////////////////////////////
+process.once('SIGTERM', disconnectFromEventStore);
+
+////////////////////////////////////
+// API
+////////////////////////////////////
 
 startAPI(router);
 
-//////////////////////////////////////
-/// Run
-//////////////////////////////////////
+////////////////////////////////////
+// Run
+////////////////////////////////////
 
-// (async () => {
-//   await SubscriptionToAllWithMongoCheckpoints('sub_shopping_carts', [
-//     storeCheckpointInCollection(projectToShoppingCartItem),
-//   ]);
-// })();
+(async () => {
+  await SubscriptionToAllWithMongoCheckpoints('sub_shopping_carts', [
+    storeCheckpointInCollection(
+      projectToShoppingCartDetails,
+      projectToClientShoppingHistory
+    ),
+  ]);
+})().catch(console.error);

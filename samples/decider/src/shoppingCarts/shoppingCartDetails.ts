@@ -3,9 +3,9 @@
 //////////////////////////////////////
 
 import { Collection, ObjectId, UpdateResult } from 'mongodb';
-import { getMongoCollection, retryIfNotUpdated } from '../core/mongoDB';
+import { getMongoCollection } from '../core/mongoDB';
 import { SubscriptionResolvedEvent } from '../core/subscriptions';
-import { ProductItem } from './productItem';
+import { PricedProductItem } from './productItem';
 import {
   isCashierShoppingCartEvent,
   ShoppingCartErrors,
@@ -22,7 +22,7 @@ type ShoppingCartDetails = Readonly<{
   shoppingCartId: string;
   clientId: string;
   status: string;
-  productItems: ProductItem[];
+  productItems: PricedProductItem[];
   openedAt: string;
   confirmedAt?: string;
   canceledAt?: string;
@@ -35,8 +35,9 @@ export const getShoppingCartsCollection = () =>
 export const project = async (
   carts: Collection<ShoppingCartDetails>,
   event: ShoppingCartEvent,
-  expectedRevision: number
+  streamRevision: number
 ): Promise<UpdateResult> => {
+  const expectedRevision = streamRevision - 1;
   switch (event.type) {
     case 'ShoppingCartOpened': {
       return carts.updateOne(
@@ -48,7 +49,7 @@ export const project = async (
             productItems: [],
             openedAt: event.data.openedAt,
             confirmedAt: undefined,
-            revision: expectedRevision,
+            revision: streamRevision,
           },
         },
         { upsert: true }
@@ -59,12 +60,14 @@ export const project = async (
         {
           _id: new ObjectId(event.data.shoppingCartId),
           'productItems.productId': { $ne: event.data.productItem.productId },
+          'productItems.price': { $ne: event.data.productItem.price },
         },
         {
           $addToSet: {
             productItems: {
               productId: event.data.productItem.productId,
               quantity: 0,
+              price: event.data.productItem.price,
             },
           },
         }
@@ -77,7 +80,7 @@ export const project = async (
         },
         {
           $inc: {
-            'productItems.$[orderItem].quantity':
+            'productItems.$[productItem].quantity':
               event.data.productItem.quantity,
             revision: 1,
           },
@@ -85,7 +88,8 @@ export const project = async (
         {
           arrayFilters: [
             {
-              'orderItem.productId': event.data.productItem.productId,
+              'productItem.productId': event.data.productItem.productId,
+              'productItem.price': event.data.productItem.price,
             },
           ],
           upsert: true,
@@ -162,10 +166,7 @@ export const projectToShoppingCartDetails = async (
 
   const { event } = resolvedEvent;
   const streamRevision = Number(event.revision);
-  const expectedRevision = streamRevision - 1;
   const shoppingCarts = await getShoppingCartsCollection();
 
-  await retryIfNotUpdated(() =>
-    project(shoppingCarts, event, expectedRevision)
-  );
+  await project(shoppingCarts, event, streamRevision);
 };

@@ -14,39 +14,42 @@ export type PricedProductItem = ProductItem & {
   price: number;
 };
 
-export type ProductItems = Map<string, number>;
+export type ProductItems = Map<string, Map<number, number>>;
 
 export const addProductItem = (
   productItems: ProductItems,
-  newProductItem: ProductItem
+  { productId, quantity, price }: PricedProductItem
 ): ProductItems => {
-  const { productId, quantity } = newProductItem;
-
-  return productItems.update(
-    productId,
-    (currentQuantity) => (currentQuantity ?? 0) + quantity
+  return productItems.update(productId, (productWithPrice) =>
+    (productWithPrice ?? Map<number, number>()).update(
+      price,
+      (currentQuantity) => (currentQuantity ?? 0) + quantity
+    )
   );
 };
 
 export const removeProductItem = (
   productItems: ProductItems,
-  productItemToRemove: ProductItem
+  { productId, quantity, price }: PricedProductItem
 ): ProductItems => {
-  const { productId, quantity } = productItemToRemove;
-
-  assertProductItemExists(productItems, productItemToRemove);
-
-  return productItems.update(
-    productId,
-    (currentQuantity) => (currentQuantity ?? 0) - quantity
+  return productItems.update(productId, (productWithPrice) =>
+    (productWithPrice ?? Map<number, number>()).update(
+      price,
+      (currentQuantity) => {
+        if (!currentQuantity || currentQuantity < quantity) {
+          throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+        }
+        return currentQuantity - quantity;
+      }
+    )
   );
 };
 
 export const assertProductItemExists = (
   productItems: ProductItems,
-  { productId, quantity }: ProductItem
+  { productId, quantity, price }: PricedProductItem
 ): void => {
-  const currentQuantity = productItems.get(productId) ?? 0;
+  const currentQuantity = productItems.get(productId)?.get(price) ?? 0;
 
   if (currentQuantity < quantity) {
     throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
