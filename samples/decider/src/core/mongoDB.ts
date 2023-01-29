@@ -3,6 +3,7 @@
 //////////////////////////////////////
 
 import { config } from '#config';
+import { EventStoreDBClient } from '@eventstore/db-client';
 import {
   MongoClient,
   Collection,
@@ -54,11 +55,10 @@ export type ExecuteOnMongoDBOptions =
     }
   | string;
 
-export async function getMongoCollection<Doc extends Document>(
+export function getMongoCollection<Doc extends Document>(
+  mongo: MongoClient,
   options: ExecuteOnMongoDBOptions
-): Promise<Collection<Doc>> {
-  const mongo = await getMongoDB();
-
+): Collection<Doc> {
   const { databaseName, collectionName } =
     typeof options !== 'string'
       ? options
@@ -121,35 +121,31 @@ export const retryIfNotUpdated = (
 /// MongoDB Checkpointing
 //////////////////////////////////////
 
-export const getCheckpointsCollection = () =>
-  getMongoCollection<Checkpoint>('checkpoints');
+export const getCheckpointsCollection = (mongo: MongoClient) =>
+  getMongoCollection<Checkpoint>(mongo, 'checkpoints');
 
-export const loadCheckPointFromCollection = async (subscriptionId: string) => {
-  const checkpoints = await getCheckpointsCollection();
+export const loadCheckPointFromCollection =
+  (mongo: MongoClient) => async (subscriptionId: string) => {
+    const checkpoints = getCheckpointsCollection(mongo);
 
-  const checkpoint = await checkpoints.findOne({
-    _id: toObjectId(subscriptionId),
-  });
+    const checkpoint = await checkpoints.findOne({
+      _id: toObjectId(subscriptionId),
+    });
 
-  return checkpoint != null ? BigInt(checkpoint.position) : undefined;
-};
+    return checkpoint != null ? BigInt(checkpoint.position) : undefined;
+  };
 
 export const storeCheckpointInCollection =
-  (...handlers: EventHandler[]) =>
-  async (event: SubscriptionResolvedEvent) => {
-    if (!event.commitPosition) return;
-
-    await Promise.all(handlers.map((handle) => handle(event)));
-
-    const checkpoints = await getCheckpointsCollection();
+  (mongo: MongoClient) => async (subscriptionId: string, position: bigint) => {
+    const checkpoints = getCheckpointsCollection(mongo);
 
     await checkpoints.updateOne(
       {
-        _id: toObjectId(event.subscriptionId),
+        _id: toObjectId(subscriptionId),
       },
       {
         $set: {
-          position: event.commitPosition.toString(),
+          position: position.toString(),
         },
       },
       {
@@ -170,7 +166,12 @@ export const mongoObjectId = () => {
   );
 };
 
-export const SubscriptionToAllWithMongoCheckpoints = SubscriptionToAll(
-  getEventStore(),
-  loadCheckPointFromCollection
-);
+export const SubscriptionToAllWithMongoCheckpoints = (
+  eventStore: EventStoreDBClient,
+  mongo: MongoClient
+) =>
+  SubscriptionToAll(
+    eventStore,
+    loadCheckPointFromCollection(mongo),
+    storeCheckpointInCollection(mongo)
+  );

@@ -10,7 +10,7 @@ import {
   ShoppingCartEvent,
   toShoppingCartStreamId,
 } from './shoppingCart';
-import { mongoObjectId } from '#core/mongoDB';
+import { getMongoDB, mongoObjectId } from '#core/mongoDB';
 import { getProductPrice } from './productItem';
 import { toWeakETag } from '#core/eTag';
 import { getShoppingCartsCollection } from './shoppingCartDetails';
@@ -143,7 +143,7 @@ router.get(
   '/clients/:clientId/shopping-carts/:shoppingCartId',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
-      const collection = await getShoppingCartsCollection();
+      const collection = getShoppingCartsCollection(await getMongoDB());
 
       const result = await collection.findOne({
         _id: new ObjectId(assertNotEmptyString(request.params.shoppingCartId)),

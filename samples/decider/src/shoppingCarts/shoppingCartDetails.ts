@@ -2,7 +2,7 @@
 /// ShoppingCartDetails projection
 //////////////////////////////////////
 
-import { Collection, ObjectId, UpdateResult } from 'mongodb';
+import { Collection, MongoClient, ObjectId, UpdateResult } from 'mongodb';
 import { getMongoCollection } from '../core/mongoDB';
 import { SubscriptionResolvedEvent } from '../core/subscriptions';
 import { PricedProductItem } from './productItem';
@@ -29,8 +29,8 @@ type ShoppingCartDetails = Readonly<{
   revision: number;
 }>;
 
-export const getShoppingCartsCollection = () =>
-  getMongoCollection<ShoppingCartDetails>('shoppingCartDetails');
+export const getShoppingCartsCollection = (mongo: MongoClient) =>
+  getMongoCollection<ShoppingCartDetails>(mongo, 'shoppingCartDetails');
 
 export const project = async (
   carts: Collection<ShoppingCartDetails>,
@@ -155,18 +155,18 @@ export const project = async (
   }
 };
 
-export const projectToShoppingCartDetails = async (
-  resolvedEvent: SubscriptionResolvedEvent
-): Promise<void> => {
-  if (
-    resolvedEvent.event === undefined ||
-    !isCashierShoppingCartEvent(resolvedEvent.event)
-  )
-    return Promise.resolve();
+export const projectToShoppingCartDetails =
+  (mongo: MongoClient) =>
+  async (resolvedEvent: SubscriptionResolvedEvent): Promise<void> => {
+    if (
+      resolvedEvent.event === undefined ||
+      !isCashierShoppingCartEvent(resolvedEvent.event)
+    )
+      return Promise.resolve();
 
-  const { event } = resolvedEvent;
-  const streamRevision = Number(event.revision);
-  const shoppingCarts = await getShoppingCartsCollection();
+    const { event } = resolvedEvent;
+    const streamRevision = Number(event.revision);
+    const shoppingCarts = getShoppingCartsCollection(mongo);
 
-  await project(shoppingCarts, event, streamRevision);
-};
+    await project(shoppingCarts, event, streamRevision);
+  };

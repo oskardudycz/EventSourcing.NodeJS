@@ -2,11 +2,12 @@ import { startAPI } from '#core/api';
 import {
   SubscriptionToAllWithMongoCheckpoints,
   storeCheckpointInCollection,
+  getMongoDB,
 } from '#core/mongoDB';
 import { router } from './shoppingCarts/routes';
 import { projectToShoppingCartDetails } from './shoppingCarts/shoppingCartDetails';
 import { projectToClientShoppingHistory } from './shoppingCarts/clientShoppingHistory';
-import { disconnectFromEventStore } from '#core/streams';
+import { disconnectFromEventStore, getEventStore } from '#core/streams';
 
 process.once('SIGTERM', disconnectFromEventStore);
 
@@ -21,10 +22,11 @@ startAPI(router);
 ////////////////////////////////////
 
 (async () => {
-  await SubscriptionToAllWithMongoCheckpoints('sub_shopping_carts', [
-    storeCheckpointInCollection(
-      projectToShoppingCartDetails,
-      projectToClientShoppingHistory
-    ),
-  ]);
+  const eventStore = getEventStore();
+  const mongo = await getMongoDB();
+
+  await SubscriptionToAllWithMongoCheckpoints(eventStore, mongo)(
+    'sub_shopping_carts',
+    [projectToShoppingCartDetails(mongo), projectToClientShoppingHistory(mongo)]
+  );
 })().catch(console.error);
