@@ -18,8 +18,7 @@ export const ShoppingCartStatus = {
   Confirmed: 'Confirmed',
 };
 
-type ShoppingCartDetails = Readonly<{
-  shoppingCartId: string;
+export type ShoppingCartDetails = Readonly<{
   clientId: string;
   status: string;
   productItems: PricedProductItem[];
@@ -32,7 +31,7 @@ type ShoppingCartDetails = Readonly<{
 export const getShoppingCartsCollection = (mongo: MongoClient) =>
   getMongoCollection<ShoppingCartDetails>(mongo, 'shoppingCartDetails');
 
-export const project = async (
+const project = async (
   carts: Collection<ShoppingCartDetails>,
   event: ShoppingCartEvent,
   streamRevision: number
@@ -48,7 +47,6 @@ export const project = async (
             status: ShoppingCartStatus.Pending,
             productItems: [],
             openedAt: event.data.openedAt,
-            confirmedAt: undefined,
             revision: streamRevision,
           },
         },
