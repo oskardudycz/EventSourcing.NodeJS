@@ -5,7 +5,7 @@
 export type RetryOptions = Readonly<{
   maxRetries?: number;
   delay?: number;
-  shouldRetry?: (error: any) => boolean;
+  shouldRetry?: (error: unknown) => boolean;
 }>;
 
 export const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
@@ -41,10 +41,9 @@ export const retryPromise = async <T = never>(
       const sleepTime = Math.pow(2, retryCount) * delay + Math.random() * delay;
 
       console.warn(
-        `[retry] Retrying (number: ${
-          retryCount + 1
-        }, delay: ${sleepTime}): ${error}`
+        `[retry] Retrying (number: ${retryCount + 1}, delay: ${sleepTime})`
       );
+      console.warn(error);
 
       await sleep(sleepTime);
       retryCount++;

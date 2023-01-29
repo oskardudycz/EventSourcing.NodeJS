@@ -123,6 +123,8 @@ export const loadCheckPointFromCollection = async (subscriptionId: string) => {
 export const storeCheckpointInCollection =
   (...handlers: EventHandler[]) =>
   async (event: SubscriptionResolvedEvent) => {
+    if (!event.commitPosition) return;
+
     await Promise.all(handlers.map((handle) => handle(event)));
 
     const checkpoints = await getCheckpointsCollection();
@@ -133,7 +135,7 @@ export const storeCheckpointInCollection =
       },
       {
         $set: {
-          position: event.commitPosition!.toString(),
+          position: event.commitPosition.toString(),
         },
       },
       {
