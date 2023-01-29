@@ -10,7 +10,7 @@ export type RetryOptions = Readonly<{
 
 export const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
   maxRetries: 5,
-  delay: 500,
+  delay: 100,
   shouldRetry: () => true,
 };
 
@@ -48,7 +48,7 @@ export const retryPromise = async <T = never>(
       await sleep(sleepTime);
       retryCount++;
     }
-  } while (retryCount == maxRetries);
+  } while (retryCount != maxRetries);
 
   throw '[retry] Exceeded max retry count';
 };

@@ -2,6 +2,7 @@
 /// MongoDB
 //////////////////////////////////////
 
+import { config } from '#config';
 import {
   MongoClient,
   Collection,
@@ -19,19 +20,32 @@ import {
 } from './subscriptions';
 
 let mongoClient: MongoClient;
+let isOpened = false;
 
 export const getMongoDB = async (
   connectionString?: string
 ): Promise<MongoClient> => {
+  if (!connectionString && !config.mongoDB.connectionString) {
+    throw 'MongoDB connection string not set. Please define "MONGODB_CONNECTION_STRING" environment variable';
+  }
+
   if (!mongoClient) {
     mongoClient = new MongoClient(
-      connectionString ?? 'mongodb://localhost:27017/'
+      connectionString ?? config.mongoDB.connectionString
     );
     await mongoClient.connect();
+    isOpened = true;
   }
 
   return mongoClient;
 };
+
+export async function disconnectFromMongoDB(): Promise<void> {
+  if (!isOpened) return;
+
+  isOpened = false;
+  return mongoClient.close();
+}
 
 export type ExecuteOnMongoDBOptions =
   | {
@@ -48,7 +62,7 @@ export async function getMongoCollection<Doc extends Document>(
   const { databaseName, collectionName } =
     typeof options !== 'string'
       ? options
-      : { databaseName: undefined, collectionName: options };
+      : { databaseName: config.mongoDB.databaseName, collectionName: options };
 
   const db = mongo.db(databaseName);
   return db.collection<Doc>(collectionName);

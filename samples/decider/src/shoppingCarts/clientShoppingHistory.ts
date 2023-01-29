@@ -7,18 +7,18 @@ import {
   ShoppingCartEvent,
 } from './shoppingCart';
 
-type PendingShoppingCart = {
+export type PendingShoppingCart = {
   shoppingCartId: string;
   totalProductsCount: number;
   totalAmount: number;
   isDeleted: boolean;
 };
 
-type ClientShoppingHistory = Readonly<{
+export type ClientShoppingHistory = Readonly<{
   totalProductsCount: number;
   totalAmount: number;
   pending: PendingShoppingCart[];
-  position: Long;
+  position: number | Long;
 }>;
 
 export const getClientShoppingHistoryCollection = () =>

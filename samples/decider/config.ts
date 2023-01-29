@@ -19,7 +19,7 @@ const convictConfig = convict({
     },
     databaseName: {
       format: String,
-      default: 'mongodb://localhost:27017',
+      default: 'test',
       arg: 'MONGODB_DATABASE_NAME',
       env: 'MONGODB_DATABASE_NAME',
     },
