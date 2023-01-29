@@ -1,6 +1,10 @@
-import { getMongoCollection, retryIfNotFound } from '#core/mongoDB';
+import {
+  EmptyUpdateResult,
+  getMongoCollection,
+  retryIfNotFound,
+} from '#core/mongoDB';
 import { SubscriptionResolvedEvent } from '#core/subscriptions';
-import { Collection, Long, MongoClient, ObjectId } from 'mongodb';
+import { Collection, Long, MongoClient, ObjectId, UpdateResult } from 'mongodb';
 import {
   isCashierShoppingCartEvent,
   ShoppingCartErrors,
@@ -28,7 +32,7 @@ const project = async (
   clientShoppingHistory: Collection<ClientShoppingHistory>,
   { type, data: event }: ShoppingCartEvent,
   eventPosition: Long
-): Promise<void> => {
+): Promise<UpdateResult> => {
   switch (type) {
     case 'ShoppingCartOpened': {
       await clientShoppingHistory.updateOne(
@@ -44,7 +48,7 @@ const project = async (
         { upsert: true }
       );
 
-      await clientShoppingHistory.updateOne(
+      return clientShoppingHistory.updateOne(
         { _id: new ObjectId(event.clientId), position: { $lt: eventPosition } },
         {
           $set: {
@@ -60,10 +64,9 @@ const project = async (
           },
         }
       );
-      break;
     }
     case 'ProductItemAddedToShoppingCart': {
-      await clientShoppingHistory.updateOne(
+      return clientShoppingHistory.updateOne(
         {
           position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
@@ -79,10 +82,9 @@ const project = async (
           },
         }
       );
-      break;
     }
     case 'ProductItemRemovedFromShoppingCart': {
-      await clientShoppingHistory.updateOne(
+      return clientShoppingHistory.updateOne(
         {
           position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
@@ -98,7 +100,6 @@ const project = async (
           },
         }
       );
-      break;
     }
     case 'ShoppingCartConfirmed': {
       const history = await retryIfNotFound(() =>
@@ -115,9 +116,9 @@ const project = async (
         )
       ).catch(console.warn);
 
-      if (!history || history.pending.length === 0) return;
+      if (!history || history.pending.length === 0) return EmptyUpdateResult;
 
-      await clientShoppingHistory.updateOne(
+      return clientShoppingHistory.updateOne(
         {
           position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
@@ -155,10 +156,9 @@ const project = async (
           },
         ]
       );
-      break;
     }
     case 'ShoppingCartCanceled': {
-      await clientShoppingHistory.updateOne(
+      return clientShoppingHistory.updateOne(
         {
           position: { $lt: eventPosition },
           'pending.shoppingCartId': event.shoppingCartId,
@@ -171,7 +171,6 @@ const project = async (
           },
         }
       );
-      break;
     }
     default: {
       const _: never = event;
@@ -182,16 +181,16 @@ const project = async (
 
 export const projectToClientShoppingHistory =
   (mongo: MongoClient) =>
-  async (resolvedEvent: SubscriptionResolvedEvent): Promise<void> => {
+  (resolvedEvent: SubscriptionResolvedEvent): Promise<UpdateResult> => {
     const event = resolvedEvent.event;
-    if (event === undefined) return Promise.resolve();
+    if (event === undefined) return Promise.resolve(EmptyUpdateResult);
 
     const eventPosition = event.position.commit;
 
     if (event === undefined || !isCashierShoppingCartEvent(event))
-      return Promise.resolve();
+      return Promise.resolve(EmptyUpdateResult);
 
     const shoppingHistory = getClientShoppingHistoryCollection(mongo);
 
-    await project(shoppingHistory, event, Long.fromBigInt(eventPosition));
+    return project(shoppingHistory, event, Long.fromBigInt(eventPosition));
   };

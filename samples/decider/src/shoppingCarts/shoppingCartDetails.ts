@@ -3,7 +3,7 @@
 //////////////////////////////////////
 
 import { Collection, MongoClient, ObjectId, UpdateResult } from 'mongodb';
-import { getMongoCollection } from '../core/mongoDB';
+import { EmptyUpdateResult, getMongoCollection } from '../core/mongoDB';
 import { SubscriptionResolvedEvent } from '../core/subscriptions';
 import { PricedProductItem } from './productItem';
 import {
@@ -155,16 +155,16 @@ const project = async (
 
 export const projectToShoppingCartDetails =
   (mongo: MongoClient) =>
-  async (resolvedEvent: SubscriptionResolvedEvent): Promise<void> => {
+  (resolvedEvent: SubscriptionResolvedEvent): Promise<UpdateResult> => {
     if (
       resolvedEvent.event === undefined ||
       !isCashierShoppingCartEvent(resolvedEvent.event)
     )
-      return Promise.resolve();
+      return Promise.resolve(EmptyUpdateResult);
 
     const { event } = resolvedEvent;
     const streamRevision = Number(event.revision);
     const shoppingCarts = getShoppingCartsCollection(mongo);
 
-    await project(shoppingCarts, event, streamRevision);
+    return project(shoppingCarts, event, streamRevision);
   };

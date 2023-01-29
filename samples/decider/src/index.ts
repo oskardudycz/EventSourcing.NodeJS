@@ -27,6 +27,13 @@ startAPI(router);
 
   await SubscriptionToAllWithMongoCheckpoints(eventStore, mongo)(
     'sub_shopping_carts',
-    [projectToShoppingCartDetails(mongo), projectToClientShoppingHistory(mongo)]
+    [
+      async (event) => {
+        await projectToShoppingCartDetails(mongo)(event);
+      },
+      async (event) => {
+        await projectToClientShoppingHistory(mongo)(event);
+      },
+    ]
   );
 })().catch(console.error);

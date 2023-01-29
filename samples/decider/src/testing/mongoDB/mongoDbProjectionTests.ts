@@ -1,8 +1,16 @@
-import { Collection, Document, Filter, Long, ObjectId } from 'mongodb';
+import {
+  Collection,
+  Document,
+  Filter,
+  Long,
+  ObjectId,
+  UpdateResult,
+} from 'mongodb';
 import { Event } from '#core/decider';
 import { mongoObjectId, retryIfNotFound } from '#core/mongoDB';
 import { SubscriptionResolvedEvent } from '#core/subscriptions';
 import { AllStreamRecordedEvent } from '@eventstore/db-client';
+import { assert } from 'console';
 
 export const given = <
   Doc extends Document & HasRevisionOrPosition,
@@ -12,10 +20,18 @@ export const given = <
   ...events: Event[] | { event: E; revision?: bigint; position?: bigint }[]
 ) => {
   return {
-    when: (project: (event: SubscriptionResolvedEvent) => Promise<void>) => {
+    when: (
+      project: (event: SubscriptionResolvedEvent) => Promise<UpdateResult>
+    ) => {
       return {
-        then: async (id: string, expected: Doc) => {
+        then: async (
+          id: string,
+          expected: Doc,
+          options?: { changed?: number; acknowledged?: number }
+        ) => {
           let position = 0n;
+          let changesCount = 0;
+          let acknowledgementCount = 0;
 
           for (const event of events) {
             const options = {
@@ -30,8 +46,19 @@ export const given = <
               options
             );
 
-            await project(projectedEvent);
+            const result = await project(projectedEvent);
+
+            changesCount += result.upsertedCount;
+            acknowledgementCount += result.acknowledged ? 1 : 0;
+
             position++;
+          }
+
+          if (options?.changed !== undefined) {
+            expect(changesCount).toBe(options?.changed);
+          }
+          if (options?.acknowledged !== undefined) {
+            expect(acknowledgementCount).toBe(options?.acknowledged);
           }
 
           await assertUpdated(collection, id, expected);
