@@ -529,7 +529,7 @@ export const enum ValidationErrors {
   NOT_AN_UNSIGNED_BIGINT = 'NOT_AN_UNSIGNED_BIGINT',
 }
 
-export const assertNotEmptyString = (value: any): string => {
+export const assertNotEmptyString = (value: unknown): string => {
   if (typeof value !== 'string' || value.length === 0) {
     throw ValidationErrors.NOT_A_NONEMPTY_STRING;
   }
@@ -965,6 +965,8 @@ export const loadCheckPointFromCollection = async (subscriptionId: string) => {
 export const storeCheckpointInCollection =
   (...handlers: EventHandler[]) =>
   async (event: SubscriptionResolvedEvent) => {
+    if (!event.commitPosition) return;
+
     await Promise.all(handlers.map((handle) => handle(event)));
 
     const checkpoints = await getCheckpointsCollection();
@@ -975,7 +977,7 @@ export const storeCheckpointInCollection =
       },
       {
         $set: {
-          position: event.commitPosition!.toString(),
+          position: event.commitPosition.toString(),
         },
       },
       {
