@@ -38,7 +38,7 @@ const project = async (
             totalProductsCount: 0,
             totalAmount: 0,
             pending: [],
-            position: Long.fromNumber(0),
+            position: Long.fromNumber(-1),
           },
         },
         { upsert: true }
@@ -47,6 +47,9 @@ const project = async (
       await clientShoppingHistory.updateOne(
         { _id: new ObjectId(event.clientId), position: { $lt: eventPosition } },
         {
+          $set: {
+            position: eventPosition,
+          },
           $addToSet: {
             pending: {
               shoppingCartId: event.shoppingCartId,
