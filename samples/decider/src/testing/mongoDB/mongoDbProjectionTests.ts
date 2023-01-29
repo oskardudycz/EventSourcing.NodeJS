@@ -55,12 +55,12 @@ const assertUpdated = async <Doc extends Document & HasRevisionOrPosition>(
     // filter by id
     _id: new ObjectId(objectId),
     // ensure that we got document at expected revision or position
-    // ...('revision' in expected
-    //   ? { revision: expected.revision as number }
-    //   : {}),
-    // ...('position' in expected
-    //   ? { position: expected.position as number | Long }
-    //   : {}),
+    ...('revision' in expected
+      ? { revision: expected.revision as number }
+      : {}),
+    ...('position' in expected
+      ? { position: Long.fromBigInt(expected.position as bigint) }
+      : {}),
   } as unknown as Filter<Doc>;
 
   const item = await retryIfNotFound(() => collection.findOne(filter));
