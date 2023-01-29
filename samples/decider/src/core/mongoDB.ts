@@ -70,6 +70,14 @@ export function getMongoCollection<Doc extends Document>(
 
 export const toObjectId = (id: string) => id as unknown as ObjectId;
 
+export const EmptyUpdateResult = {
+  acknowledged: false,
+  matchedCount: 0,
+  modifiedCount: 0,
+  upsertedCount: 0,
+  upsertedId: new ObjectId(),
+};
+
 export const enum MongoDBErrors {
   FAILED_TO_UPDATE_DOCUMENT = 'FAILED_TO_UPDATE_DOCUMENT',
   DOCUMENT_NOT_FOUND = 'DOCUMENT_NOT_FOUND',
