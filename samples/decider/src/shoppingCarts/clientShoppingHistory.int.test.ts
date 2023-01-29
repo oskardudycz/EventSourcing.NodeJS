@@ -12,23 +12,29 @@ import {
 import { SubscriptionResolvedEvent } from '#core/subscriptions';
 import { AllStreamRecordedEvent } from '@eventstore/db-client';
 import {
+  ClientShoppingHistory,
   getClientShoppingHistoryCollection,
   projectToClientShoppingHistory,
 } from './clientShoppingHistory';
-import { Collection, Document, Filter, ObjectId } from 'mongodb';
+import { Collection, Document, Filter, MongoClient, ObjectId } from 'mongodb';
+import { getShoppingCartsCollection } from './shoppingCartDetails';
 
 describe('Client Shopping History', () => {
-  let mongodbContainer: StartedMongoDBContainer;
+  let mongoContainer: StartedMongoDBContainer;
+  let mongo: MongoClient;
+  let shoppingHistory: Collection<ClientShoppingHistory>;
 
   beforeAll(async () => {
-    mongodbContainer = await new MongoDBContainer().start();
-    config.mongoDB.connectionString = mongodbContainer.getConnectionString();
-    console.log(config.mongoDB.connectionString);
+    mongoContainer = await new MongoDBContainer().start();
+    console.log(mongoContainer.getConnectionString());
+    mongo = mongoContainer.getClient();
+    await mongo.connect();
+    shoppingHistory = getClientShoppingHistoryCollection(mongo);
   });
 
   afterAll(async () => {
-    //await disconnectFromMongoDB();
-    await mongodbContainer.stop();
+    await disconnectFromMongoDB();
+    await mongoContainer.stop();
   });
 
   describe('On ShoppingCartOpened event', () => {
@@ -36,7 +42,7 @@ describe('Client Shopping History', () => {
       const shoppingCartId: string = mongoObjectId();
       const clientId = mongoObjectId();
 
-      given(await getClientShoppingHistoryCollection(), {
+      await given(shoppingHistory, {
         type: 'ShoppingCartOpened',
         data: {
           shoppingCartId,
@@ -44,7 +50,7 @@ describe('Client Shopping History', () => {
           openedAt: new Date().toISOString(),
         },
       })
-        .when(projectToClientShoppingHistory)
+        .when(projectToClientShoppingHistory(mongo))
         .then(clientId, {
           totalProductsCount: 0,
           totalAmount: 0,

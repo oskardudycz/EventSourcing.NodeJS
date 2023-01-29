@@ -17,7 +17,8 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 export const SubscriptionToAll =
   (
     eventStore: EventStoreDBClient,
-    loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>
+    loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
+    storeCheckpoint: (subscriptionId: string, position: bigint) => Promise<void>
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
     const currentPosition = await loadCheckpoint(subscriptionId);
@@ -32,9 +33,14 @@ export const SubscriptionToAll =
 
     finished(
       subscription.on('data', async (resolvedEvent: AllStreamResolvedEvent) => {
+        if (!resolvedEvent.event?.position.commit) return;
         for (const handler of handlers) {
           await handler({ ...resolvedEvent, subscriptionId });
         }
+        await storeCheckpoint(
+          subscriptionId,
+          resolvedEvent.event?.position.commit
+        );
       }) as Readable,
       (error) => {
         if (!error) {

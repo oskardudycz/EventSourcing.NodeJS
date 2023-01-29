@@ -1,6 +1,6 @@
 import { getMongoCollection, retryIfNotFound } from '#core/mongoDB';
 import { SubscriptionResolvedEvent } from '#core/subscriptions';
-import { Collection, Long, ObjectId } from 'mongodb';
+import { Collection, Long, MongoClient, ObjectId } from 'mongodb';
 import {
   isCashierShoppingCartEvent,
   ShoppingCartErrors,
@@ -21,10 +21,10 @@ export type ClientShoppingHistory = Readonly<{
   position: number | Long;
 }>;
 
-export const getClientShoppingHistoryCollection = () =>
-  getMongoCollection<ClientShoppingHistory>('clientShoppingHistory');
+export const getClientShoppingHistoryCollection = (mongo: MongoClient) =>
+  getMongoCollection<ClientShoppingHistory>(mongo, 'clientShoppingHistory');
 
-export const project = async (
+const project = async (
   clientShoppingHistory: Collection<ClientShoppingHistory>,
   { type, data: event }: ShoppingCartEvent,
   eventPosition: Long
@@ -177,17 +177,18 @@ export const project = async (
   }
 };
 
-export const projectToClientShoppingHistory = async (
-  resolvedEvent: SubscriptionResolvedEvent
-): Promise<void> => {
-  const event = resolvedEvent.event;
-  if (event === undefined) return Promise.resolve();
-  const eventPosition = event.position.commit;
+export const projectToClientShoppingHistory =
+  (mongo: MongoClient) =>
+  async (resolvedEvent: SubscriptionResolvedEvent): Promise<void> => {
+    const event = resolvedEvent.event;
+    if (event === undefined) return Promise.resolve();
 
-  if (event === undefined || !isCashierShoppingCartEvent(event))
-    return Promise.resolve();
+    const eventPosition = event.position.commit;
 
-  const summary = await getClientShoppingHistoryCollection();
+    if (event === undefined || !isCashierShoppingCartEvent(event))
+      return Promise.resolve();
 
-  await project(summary, event, Long.fromBigInt(eventPosition));
-};
+    const shoppingHistory = getClientShoppingHistoryCollection(mongo);
+
+    await project(shoppingHistory, event, Long.fromBigInt(eventPosition));
+  };
