@@ -10,14 +10,14 @@ import { Event } from '#core/decider';
 import { mongoObjectId, retryIfNotFound } from '#core/mongoDB';
 import { SubscriptionResolvedEvent } from '#core/subscriptions';
 import { AllStreamRecordedEvent } from '@eventstore/db-client';
-import { assert } from 'console';
 
 export const given = <
-  Doc extends Document & HasRevisionOrPosition,
-  E extends Event
+  E extends Event,
+  Doc extends Document & HasRevisionOrPosition = Document &
+    HasRevisionOrPosition
 >(
   collection: Collection<Doc>,
-  ...events: Event[] | { event: E; revision?: bigint; position?: bigint }[]
+  ...events: (E | { event: E; revision?: bigint; position?: bigint })[]
 ) => {
   return {
     when: (

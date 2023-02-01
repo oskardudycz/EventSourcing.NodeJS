@@ -59,6 +59,7 @@ const project = async (
           _id: new ObjectId(event.data.shoppingCartId),
           'productItems.productId': { $ne: event.data.productItem.productId },
           'productItems.price': { $ne: event.data.productItem.price },
+          revision: expectedRevision,
         },
         {
           $addToSet: {
@@ -68,6 +69,9 @@ const project = async (
               price: event.data.productItem.price,
             },
           },
+        },
+        {
+          upsert: false,
         }
       );
 
@@ -90,7 +94,7 @@ const project = async (
               'productItem.price': event.data.productItem.price,
             },
           ],
-          upsert: true,
+          upsert: false,
         }
       );
     }
