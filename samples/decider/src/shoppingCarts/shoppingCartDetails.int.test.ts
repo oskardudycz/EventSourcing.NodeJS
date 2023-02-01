@@ -158,6 +158,111 @@ describe('Shopping Cart details', () => {
         );
     });
   });
+
+  describe('On ProductItemRemovedFromShoppingCart event', () => {
+    it('should decrease existing product item quantity', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+      const openedAt = new Date().toISOString();
+
+      const productId = mongoObjectId();
+      const price = 123;
+      const initialQuantity = 20;
+      const removedQuantity = 9;
+
+      await given<ShoppingCartEvent, ShoppingCartDetails>(
+        shoppingCarts,
+        ...openedWithProductItem(
+          { shoppingCartId, clientId, openedAt },
+          {
+            productId,
+            quantity: initialQuantity,
+            price,
+          }
+        ),
+        {
+          type: 'ProductItemRemovedFromShoppingCart',
+          data: {
+            shoppingCartId,
+            productItem: {
+              productId,
+              quantity: removedQuantity,
+              price,
+            },
+          },
+        }
+      )
+        .when(projectToShoppingCartDetails(mongo))
+        .then(shoppingCartId, {
+          clientId,
+          revision: 2,
+          openedAt,
+          status: ShoppingCartStatus.Pending,
+          productItems: [
+            {
+              productId,
+              quantity: initialQuantity - removedQuantity,
+              price,
+            },
+          ],
+        });
+    });
+
+    it('should be idempotent if run twice', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+      const openedAt = new Date().toISOString();
+
+      const productId = mongoObjectId();
+      const price = 123;
+      const initialQuantity = 20;
+      const removedQuantity = 9;
+
+      const productItemRemoved: ShoppingCartEvent = {
+        type: 'ProductItemRemovedFromShoppingCart',
+        data: {
+          shoppingCartId,
+          productItem: {
+            productId,
+            quantity: removedQuantity,
+            price,
+          },
+        },
+      };
+
+      await given<ShoppingCartEvent, ShoppingCartDetails>(
+        shoppingCarts,
+        ...openedWithProductItem(
+          { shoppingCartId, clientId, openedAt },
+          {
+            productId,
+            quantity: initialQuantity,
+            price,
+          }
+        ),
+        { event: productItemRemoved, revision: 2n },
+        { event: productItemRemoved, revision: 2n }
+      )
+        .when(projectToShoppingCartDetails(mongo))
+        .then(
+          shoppingCartId,
+          {
+            clientId,
+            revision: 2,
+            openedAt,
+            status: ShoppingCartStatus.Pending,
+            productItems: [
+              {
+                productId,
+                quantity: initialQuantity - removedQuantity,
+                price,
+              },
+            ],
+          },
+          { changed: 3 }
+        );
+    });
+  });
 });
 
 const opened = ({
@@ -177,4 +282,33 @@ const opened = ({
       openedAt: openedAt ?? new Date().toISOString(),
     },
   };
+};
+
+const openedWithProductItem = (
+  {
+    shoppingCartId,
+    clientId,
+    openedAt,
+  }: {
+    shoppingCartId: string;
+    clientId?: string;
+    openedAt?: string;
+    productItem?: PricedProductItem;
+  },
+  productItem: PricedProductItem
+): ShoppingCartEvent[] => {
+  return [
+    opened({
+      shoppingCartId,
+      clientId,
+      openedAt,
+    }),
+    {
+      type: 'ProductItemAddedToShoppingCart',
+      data: {
+        shoppingCartId,
+        productItem,
+      },
+    },
+  ];
 };
