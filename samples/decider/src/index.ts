@@ -1,7 +1,6 @@
 import { startAPI } from '#core/api';
 import {
   SubscriptionToAllWithMongoCheckpoints,
-  storeCheckpointInCollection,
   getMongoDB,
 } from '#core/mongoDB';
 import { router } from './shoppingCarts/routes';

@@ -1,9 +1,9 @@
 import {
   MongoDBContainer,
   StartedMongoDBContainer,
-  given,
+  Spec,
 } from '#testing/mongoDB';
-import { Collection, MongoClient } from 'mongodb';
+import { MongoClient } from 'mongodb';
 import { mongoObjectId } from '#core/mongoDB';
 import {
   getShoppingCartsCollection,
@@ -12,19 +12,23 @@ import {
   ShoppingCartStatus,
 } from './shoppingCartDetails';
 import { ShoppingCartEvent } from './shoppingCart';
-import { PricedProductItem, ProductItem } from 'src/gist';
+import { PricedProductItem } from 'src/gist';
 
 describe('Shopping Cart details', () => {
   let mongoContainer: StartedMongoDBContainer;
   let mongo: MongoClient;
-  let shoppingCarts: Collection<ShoppingCartDetails>;
+  let given: Spec<ShoppingCartEvent, ShoppingCartDetails>;
 
   beforeAll(async () => {
     mongoContainer = await new MongoDBContainer().start();
     console.log(mongoContainer.getConnectionString());
     mongo = mongoContainer.getClient();
     await mongo.connect();
-    shoppingCarts = getShoppingCartsCollection(mongo);
+
+    given = Spec.for(
+      getShoppingCartsCollection(mongo),
+      projectToShoppingCartDetails(mongo)
+    );
   });
 
   afterAll(async () => {
@@ -38,15 +42,15 @@ describe('Shopping Cart details', () => {
       const clientId = mongoObjectId();
       const openedAt = new Date().toISOString();
 
-      await given(shoppingCarts, {
-        type: 'ShoppingCartOpened',
-        data: {
-          shoppingCartId,
-          clientId,
-          openedAt,
-        },
-      })
-        .when(projectToShoppingCartDetails(mongo))
+      await given()
+        .when({
+          type: 'ShoppingCartOpened',
+          data: {
+            shoppingCartId,
+            clientId,
+            openedAt,
+          },
+        })
         .then(shoppingCartId, {
           clientId,
           revision: 0,
@@ -70,19 +74,9 @@ describe('Shopping Cart details', () => {
         },
       };
 
-      await given(shoppingCarts, shoppingCartOpened, shoppingCartOpened)
-        .when(projectToShoppingCartDetails(mongo))
-        .then(
-          shoppingCartId,
-          {
-            clientId,
-            revision: 0,
-            openedAt,
-            status: ShoppingCartStatus.Pending,
-            productItems: [],
-          },
-          { changed: 1 }
-        );
+      await given(shoppingCartOpened)
+        .when({ event: shoppingCartOpened, revision: 0n })
+        .thenNotUpdated();
     });
   });
 
@@ -98,18 +92,14 @@ describe('Shopping Cart details', () => {
         price: 123,
       };
 
-      await given<ShoppingCartEvent, ShoppingCartDetails>(
-        shoppingCarts,
-        opened({ shoppingCartId, clientId, openedAt }),
-        {
+      await given(opened({ shoppingCartId, clientId, openedAt }))
+        .when({
           type: 'ProductItemAddedToShoppingCart',
           data: {
             shoppingCartId,
             productItem,
           },
-        }
-      )
-        .when(projectToShoppingCartDetails(mongo))
+        })
         .then(shoppingCartId, {
           clientId,
           revision: 1,
@@ -138,24 +128,12 @@ describe('Shopping Cart details', () => {
         },
       };
 
-      await given<ShoppingCartEvent, ShoppingCartDetails>(
-        shoppingCarts,
-        { event: opened({ shoppingCartId, clientId, openedAt }), revision: 0n },
-        { event: productItemAdded, revision: 1n },
-        { event: productItemAdded, revision: 1n }
+      await given(
+        opened({ shoppingCartId, clientId, openedAt }),
+        productItemAdded
       )
-        .when(projectToShoppingCartDetails(mongo))
-        .then(
-          shoppingCartId,
-          {
-            clientId,
-            revision: 1,
-            openedAt,
-            status: ShoppingCartStatus.Pending,
-            productItems: [productItem],
-          },
-          { changed: 2 }
-        );
+        .when({ event: productItemAdded, revision: 1n })
+        .thenNotUpdated();
     });
   });
 
@@ -170,17 +148,15 @@ describe('Shopping Cart details', () => {
       const initialQuantity = 20;
       const removedQuantity = 9;
 
-      await given<ShoppingCartEvent, ShoppingCartDetails>(
-        shoppingCarts,
-        ...openedWithProductItem(
-          { shoppingCartId, clientId, openedAt },
-          {
-            productId,
-            quantity: initialQuantity,
-            price,
-          }
-        ),
-        {
+      await given(
+        opened({ shoppingCartId, clientId, openedAt }),
+        productItemAdded(shoppingCartId, {
+          productId,
+          quantity: initialQuantity,
+          price,
+        })
+      )
+        .when({
           type: 'ProductItemRemovedFromShoppingCart',
           data: {
             shoppingCartId,
@@ -190,9 +166,7 @@ describe('Shopping Cart details', () => {
               price,
             },
           },
-        }
-      )
-        .when(projectToShoppingCartDetails(mongo))
+        })
         .then(shoppingCartId, {
           clientId,
           revision: 2,
@@ -230,37 +204,17 @@ describe('Shopping Cart details', () => {
         },
       };
 
-      await given<ShoppingCartEvent, ShoppingCartDetails>(
-        shoppingCarts,
-        ...openedWithProductItem(
-          { shoppingCartId, clientId, openedAt },
-          {
-            productId,
-            quantity: initialQuantity,
-            price,
-          }
-        ),
-        { event: productItemRemoved, revision: 2n },
-        { event: productItemRemoved, revision: 2n }
+      await given(
+        opened({ shoppingCartId, clientId, openedAt }),
+        productItemAdded(shoppingCartId, {
+          productId,
+          quantity: initialQuantity,
+          price,
+        }),
+        productItemRemoved
       )
-        .when(projectToShoppingCartDetails(mongo))
-        .then(
-          shoppingCartId,
-          {
-            clientId,
-            revision: 2,
-            openedAt,
-            status: ShoppingCartStatus.Pending,
-            productItems: [
-              {
-                productId,
-                quantity: initialQuantity - removedQuantity,
-                price,
-              },
-            ],
-          },
-          { changed: 3 }
-        );
+        .when({ event: productItemRemoved, revision: 2n })
+        .thenNotUpdated();
     });
   });
 });
@@ -284,31 +238,15 @@ const opened = ({
   };
 };
 
-const openedWithProductItem = (
-  {
-    shoppingCartId,
-    clientId,
-    openedAt,
-  }: {
-    shoppingCartId: string;
-    clientId?: string;
-    openedAt?: string;
-    productItem?: PricedProductItem;
-  },
+const productItemAdded = (
+  shoppingCartId: string,
   productItem: PricedProductItem
-): ShoppingCartEvent[] => {
-  return [
-    opened({
+): ShoppingCartEvent => {
+  return {
+    type: 'ProductItemAddedToShoppingCart',
+    data: {
       shoppingCartId,
-      clientId,
-      openedAt,
-    }),
-    {
-      type: 'ProductItemAddedToShoppingCart',
-      data: {
-        shoppingCartId,
-        productItem,
-      },
+      productItem,
     },
-  ];
+  };
 };

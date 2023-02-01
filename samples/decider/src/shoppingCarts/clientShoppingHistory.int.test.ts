@@ -1,7 +1,7 @@
 import {
   MongoDBContainer,
+  Spec,
   StartedMongoDBContainer,
-  given,
 } from '#testing/mongoDB';
 import { mongoObjectId } from '#core/mongoDB';
 import {
@@ -9,19 +9,24 @@ import {
   getClientShoppingHistoryCollection,
   projectToClientShoppingHistory,
 } from './clientShoppingHistory';
-import { Collection, MongoClient } from 'mongodb';
+import { MongoClient } from 'mongodb';
+import { ShoppingCartEvent } from './shoppingCart';
 
 describe('Client Shopping History', () => {
   let mongoContainer: StartedMongoDBContainer;
   let mongo: MongoClient;
-  let shoppingHistory: Collection<ClientShoppingHistory>;
+  let given: Spec<ShoppingCartEvent, ClientShoppingHistory>;
 
   beforeAll(async () => {
     mongoContainer = await new MongoDBContainer().start();
     console.log(mongoContainer.getConnectionString());
     mongo = mongoContainer.getClient();
     await mongo.connect();
-    shoppingHistory = getClientShoppingHistoryCollection(mongo);
+
+    given = Spec.for(
+      getClientShoppingHistoryCollection(mongo),
+      projectToClientShoppingHistory(mongo)
+    );
   });
 
   afterAll(async () => {
@@ -34,15 +39,15 @@ describe('Client Shopping History', () => {
       const shoppingCartId: string = mongoObjectId();
       const clientId = mongoObjectId();
 
-      await given(shoppingHistory, {
-        type: 'ShoppingCartOpened',
-        data: {
-          shoppingCartId,
-          clientId,
-          openedAt: new Date().toISOString(),
-        },
-      })
-        .when(projectToClientShoppingHistory(mongo))
+      await given()
+        .when({
+          type: 'ShoppingCartOpened',
+          data: {
+            shoppingCartId,
+            clientId,
+            openedAt: new Date().toISOString(),
+          },
+        })
         .then(clientId, {
           totalProductsCount: 0,
           totalAmount: 0,
