@@ -48,18 +48,16 @@ export const given = <
 
             const result = await project(projectedEvent);
 
-            changesCount += result.upsertedCount;
+            changesCount += result.upsertedCount + result.modifiedCount;
             acknowledgementCount += result.acknowledged ? 1 : 0;
 
             position++;
           }
 
-          if (options?.changed !== undefined) {
-            expect(changesCount).toBe(options?.changed);
-          }
-          if (options?.acknowledged !== undefined) {
-            expect(acknowledgementCount).toBe(options?.acknowledged);
-          }
+          expect(changesCount).toBe(options?.changed ?? events.length);
+          expect(acknowledgementCount).toBe(
+            options?.acknowledged ?? events.length
+          );
 
           await assertUpdated(collection, id, expected);
         },

@@ -42,7 +42,7 @@ const project = async (
       return carts.updateOne(
         { _id: new ObjectId(event.data.shoppingCartId) },
         {
-          $set: {
+          $setOnInsert: {
             clientId: event.data.clientId,
             status: ShoppingCartStatus.Pending,
             productItems: [],

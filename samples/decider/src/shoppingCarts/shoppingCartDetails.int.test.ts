@@ -15,14 +15,14 @@ import {
 describe('Shopping Cart details', () => {
   let mongoContainer: StartedMongoDBContainer;
   let mongo: MongoClient;
-  let shoppingHistory: Collection<ShoppingCartDetails>;
+  let shoppingCarts: Collection<ShoppingCartDetails>;
 
   beforeAll(async () => {
     mongoContainer = await new MongoDBContainer().start();
     console.log(mongoContainer.getConnectionString());
     mongo = mongoContainer.getClient();
     await mongo.connect();
-    shoppingHistory = getShoppingCartsCollection(mongo);
+    shoppingCarts = getShoppingCartsCollection(mongo);
   });
 
   afterAll(async () => {
@@ -36,12 +36,12 @@ describe('Shopping Cart details', () => {
       const clientId = mongoObjectId();
       const openedAt = new Date().toISOString();
 
-      await given(shoppingHistory, {
+      await given(shoppingCarts, {
         type: 'ShoppingCartOpened',
         data: {
           shoppingCartId,
           clientId,
-          openedAt: new Date().toISOString(),
+          openedAt,
         },
       })
         .when(projectToShoppingCartDetails(mongo))
@@ -52,6 +52,35 @@ describe('Shopping Cart details', () => {
           status: ShoppingCartStatus.Pending,
           productItems: [],
         });
+    });
+
+    it('should be idempotent if run twice', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+      const openedAt = new Date().toISOString();
+
+      const shoppingCartOpened = {
+        type: 'ShoppingCartOpened',
+        data: {
+          shoppingCartId,
+          clientId,
+          openedAt,
+        },
+      };
+
+      await given(shoppingCarts, shoppingCartOpened, shoppingCartOpened)
+        .when(projectToShoppingCartDetails(mongo))
+        .then(
+          shoppingCartId,
+          {
+            clientId,
+            revision: 0,
+            openedAt,
+            status: ShoppingCartStatus.Pending,
+            productItems: [],
+          },
+          { changed: 1 }
+        );
     });
   });
 });
