@@ -11,6 +11,8 @@ import {
   ShoppingCartDetails,
   ShoppingCartStatus,
 } from './shoppingCartDetails';
+import { ShoppingCartEvent } from './shoppingCart';
+import { PricedProductItem, ProductItem } from 'src/gist';
 
 describe('Shopping Cart details', () => {
   let mongoContainer: StartedMongoDBContainer;
@@ -59,7 +61,7 @@ describe('Shopping Cart details', () => {
       const clientId = mongoObjectId();
       const openedAt = new Date().toISOString();
 
-      const shoppingCartOpened = {
+      const shoppingCartOpened: ShoppingCartEvent = {
         type: 'ShoppingCartOpened',
         data: {
           shoppingCartId,
@@ -83,4 +85,96 @@ describe('Shopping Cart details', () => {
         );
     });
   });
+
+  describe('On ProductItemAddedToShoppingCart event', () => {
+    it('should add product item to items list', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+      const openedAt = new Date().toISOString();
+
+      const productItem: PricedProductItem = {
+        productId: mongoObjectId(),
+        quantity: 2,
+        price: 123,
+      };
+
+      await given<ShoppingCartEvent, ShoppingCartDetails>(
+        shoppingCarts,
+        opened({ shoppingCartId, clientId, openedAt }),
+        {
+          type: 'ProductItemAddedToShoppingCart',
+          data: {
+            shoppingCartId,
+            productItem,
+          },
+        }
+      )
+        .when(projectToShoppingCartDetails(mongo))
+        .then(shoppingCartId, {
+          clientId,
+          revision: 1,
+          openedAt,
+          status: ShoppingCartStatus.Pending,
+          productItems: [productItem],
+        });
+    });
+
+    it('should be idempotent if run twice', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+      const openedAt = new Date().toISOString();
+
+      const productItem: PricedProductItem = {
+        productId: mongoObjectId(),
+        quantity: 2,
+        price: 123,
+      };
+
+      const productItemAdded: ShoppingCartEvent = {
+        type: 'ProductItemAddedToShoppingCart',
+        data: {
+          shoppingCartId,
+          productItem,
+        },
+      };
+
+      await given<ShoppingCartEvent, ShoppingCartDetails>(
+        shoppingCarts,
+        { event: opened({ shoppingCartId, clientId, openedAt }), revision: 0n },
+        { event: productItemAdded, revision: 1n },
+        { event: productItemAdded, revision: 1n }
+      )
+        .when(projectToShoppingCartDetails(mongo))
+        .then(
+          shoppingCartId,
+          {
+            clientId,
+            revision: 1,
+            openedAt,
+            status: ShoppingCartStatus.Pending,
+            productItems: [productItem],
+          },
+          { changed: 2 }
+        );
+    });
+  });
 });
+
+const opened = ({
+  shoppingCartId,
+  clientId,
+  openedAt,
+}: {
+  shoppingCartId?: string;
+  clientId?: string;
+  openedAt?: string;
+}): ShoppingCartEvent => {
+  return {
+    type: 'ShoppingCartOpened',
+    data: {
+      shoppingCartId: shoppingCartId ?? mongoObjectId(),
+      clientId: clientId ?? mongoObjectId(),
+      openedAt: openedAt ?? new Date().toISOString(),
+    },
+  };
+};
