@@ -260,6 +260,60 @@ describe('Client Shopping History', () => {
         .thenNotUpdated();
     });
   });
+
+  describe('On ShoppingCartConfirmed event', () => {
+    it('should increase totals and remove shopping cart from pending', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+
+      const productId = mongoObjectId();
+      const price = 123;
+      const quantity = 20;
+
+      await given(
+        opened({ shoppingCartId, clientId }),
+        productItemAdded(shoppingCartId, {
+          productId,
+          quantity,
+          price,
+        })
+      )
+        .when({
+          type: 'ShoppingCartConfirmed',
+          data: {
+            shoppingCartId,
+            confirmedAt: new Date().toISOString(),
+          },
+        })
+        .then(clientId, {
+          totalQuantity: quantity,
+          totalAmount: quantity * price,
+          pending: [],
+          position: 2,
+        });
+    });
+
+    it('should be idempotent if run twice', async () => {
+      const clientId: string = mongoObjectId();
+      const shoppingCartId: string = mongoObjectId();
+
+      const shoppingCartConfirmed: ShoppingCartEvent = {
+        type: 'ShoppingCartConfirmed',
+        data: {
+          shoppingCartId,
+          confirmedAt: new Date().toISOString(),
+        },
+      };
+
+      await given(
+        opened({ shoppingCartId, clientId }),
+        productItemAdded(shoppingCartId),
+        shoppingCartConfirmed
+      )
+        .when({ event: shoppingCartConfirmed, position: 2n })
+        .thenNotUpdated();
+    });
+  });
 });
 
 const opened = ({
@@ -283,13 +337,17 @@ const opened = ({
 
 const productItemAdded = (
   shoppingCartId: string,
-  productItem: PricedProductItem
+  productItem?: PricedProductItem
 ): ShoppingCartEvent => {
   return {
     type: 'ProductItemAddedToShoppingCart',
     data: {
       shoppingCartId,
-      productItem,
+      productItem: productItem ?? {
+        productId: mongoObjectId(),
+        quantity: 20,
+        price: 123,
+      },
     },
   };
 };
