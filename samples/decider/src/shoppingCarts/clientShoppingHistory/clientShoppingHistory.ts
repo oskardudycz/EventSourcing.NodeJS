@@ -165,6 +165,9 @@ const project = async (
               shoppingCartId: event.shoppingCartId,
             },
           },
+          $set: {
+            position: eventPosition,
+          },
         }
       );
     }

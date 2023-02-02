@@ -314,6 +314,60 @@ describe('Client Shopping History', () => {
         .thenNotUpdated();
     });
   });
+
+  describe('On ShoppingCartCanceled event', () => {
+    it('should remove shopping cart from pending', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+
+      const productId = mongoObjectId();
+      const price = 123;
+      const quantity = 20;
+
+      await given(
+        opened({ shoppingCartId, clientId }),
+        productItemAdded(shoppingCartId, {
+          productId,
+          quantity,
+          price,
+        })
+      )
+        .when({
+          type: 'ShoppingCartCanceled',
+          data: {
+            shoppingCartId,
+            canceledAt: new Date().toISOString(),
+          },
+        })
+        .then(clientId, {
+          totalQuantity: 0,
+          totalAmount: 0,
+          pending: [],
+          position: 2,
+        });
+    });
+
+    it('should be idempotent if run twice', async () => {
+      const clientId: string = mongoObjectId();
+      const shoppingCartId: string = mongoObjectId();
+
+      const shoppingCartCanceled: ShoppingCartEvent = {
+        type: 'ShoppingCartCanceled',
+        data: {
+          shoppingCartId,
+          canceledAt: new Date().toISOString(),
+        },
+      };
+
+      await given(
+        opened({ shoppingCartId, clientId }),
+        productItemAdded(shoppingCartId),
+        shoppingCartCanceled
+      )
+        .when({ event: shoppingCartCanceled, position: 2n })
+        .thenNotUpdated();
+    });
+  });
 });
 
 const opened = ({

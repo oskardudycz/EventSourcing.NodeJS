@@ -71,7 +71,7 @@ export function getMongoCollection<Doc extends Document>(
 export const toObjectId = (id: string) => id as unknown as ObjectId;
 
 export const EmptyUpdateResult = {
-  acknowledged: false,
+  acknowledged: true,
   matchedCount: 0,
   modifiedCount: 0,
   upsertedCount: 0,
