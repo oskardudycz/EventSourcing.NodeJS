@@ -79,7 +79,6 @@ export const Spec = {
             const thenUpdated = async (times: number): Promise<void> => {
               const { changesCount } = await run();
 
-              console.log(`${changesCount} - ${givenEvents.length}`);
               expect(changesCount - givenEvents.length).toBe(times);
             };
 
