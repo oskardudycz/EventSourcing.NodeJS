@@ -49,10 +49,34 @@ export const Spec = {
               for (const event of allEvents) {
                 const options = {
                   position:
-                    'position' in event ? event.position ?? position : position,
+                    'position' in event && event.position
+                      ? event.position
+                      : position,
                   revision:
-                    'revision' in event ? event.revision ?? position : position,
+                    'revision' in event && event.revision
+                      ? event.revision
+                      : position,
                 };
+
+                console.log(
+                  JSON.stringify(
+                    event,
+                    (key, value) =>
+                      typeof value === 'bigint'
+                        ? value.toString()
+                        : (value as unknown) // return everything else unchanged
+                  )
+                );
+
+                console.log(
+                  JSON.stringify(
+                    options,
+                    (key, value) =>
+                      typeof value === 'bigint'
+                        ? value.toString()
+                        : (value as unknown) // return everything else unchanged
+                  )
+                );
 
                 const projectedEvent = toSubscriptionEvent(
                   'event' in event ? event.event : event,
@@ -75,6 +99,7 @@ export const Spec = {
             const thenUpdated = async (times: number): Promise<void> => {
               const { changesCount } = await run();
 
+              console.log(`${changesCount} - ${givenEvents.length}`);
               expect(changesCount - givenEvents.length).toBe(times);
             };
 

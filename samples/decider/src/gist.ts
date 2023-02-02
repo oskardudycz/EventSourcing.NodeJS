@@ -1168,13 +1168,13 @@ export const projectToShoppingCartDetails = async (
 
 type PendingShoppingCart = {
   shoppingCartId: string;
-  totalProductsCount: number;
+  totalQuantity: number;
   totalAmount: number;
   isDeleted: boolean;
 };
 
 type ClientShoppingHistory = Readonly<{
-  totalProductsCount: number;
+  totalQuantity: number;
   totalAmount: number;
   pending: PendingShoppingCart[];
   position: Long;
@@ -1194,7 +1194,7 @@ export const project = async (
         { _id: new ObjectId(event.clientId) },
         {
           $setOnInsert: {
-            totalProductsCount: 0,
+            totalQuantity: 0,
             totalAmount: 0,
             pending: [],
             position: Long.fromNumber(0),
@@ -1210,7 +1210,7 @@ export const project = async (
             pending: {
               shoppingCartId: event.shoppingCartId,
               totalAmount: 0,
-              totalProductsCount: 0,
+              totalQuantity: 0,
               isDeleted: false,
             },
           },
@@ -1281,11 +1281,8 @@ export const project = async (
         [
           {
             $set: {
-              totalProductsCount: {
-                $add: [
-                  '$totalProductsCount',
-                  history.pending[0].totalProductsCount,
-                ],
+              totalQuantity: {
+                $add: ['$totalQuantity', history.pending[0].totalQuantity],
               },
               totalAmount: {
                 $add: ['$totalAmount', history.pending[0].totalAmount],
@@ -1295,7 +1292,7 @@ export const project = async (
           {
             $project: {
               _id: 0,
-              totalProductsCount: 0,
+              totalQuantity: 0,
               totalAmount: 0,
               position: 0,
               pending: {

@@ -6,7 +6,7 @@ describe('MongoDBContainer', () => {
   let container: StartedMongoDBContainer;
 
   beforeAll(async () => {
-    container = await new MongoDBContainer().start();
+    container = await new MongoDBContainer({ withoutReuse: true }).start();
   });
 
   it('should connect to MongoDB and store new document', async () => {
@@ -27,6 +27,6 @@ describe('MongoDBContainer', () => {
   });
 
   afterAll(async () => {
-    await container.stop();
+    if (container) await container.stop();
   });
 });
