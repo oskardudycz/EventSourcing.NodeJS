@@ -1,8 +1,4 @@
-import {
-  MongoDBContainer,
-  Spec,
-  StartedMongoDBContainer,
-} from '#testing/mongoDB';
+import { MongoDBContainer, Spec } from '#testing/mongoDB';
 import { mongoObjectId } from '#core/mongoDB';
 import {
   ClientShoppingHistory,
@@ -64,14 +60,13 @@ describe('Client Shopping History', () => {
     it('should be idempotent if run twice', async () => {
       const shoppingCartId: string = mongoObjectId();
       const clientId = mongoObjectId();
-      const openedAt = new Date().toISOString();
 
       const shoppingCartOpened: ShoppingCartEvent = {
         type: 'ShoppingCartOpened',
         data: {
           shoppingCartId,
           clientId,
-          openedAt,
+          openedAt: new Date().toISOString(),
         },
       };
 
@@ -85,7 +80,6 @@ describe('Client Shopping History', () => {
     it('should add product item to items list', async () => {
       const shoppingCartId: string = mongoObjectId();
       const clientId = mongoObjectId();
-      const openedAt = new Date().toISOString();
 
       const quantity = 2;
       const price = 123;
@@ -96,7 +90,7 @@ describe('Client Shopping History', () => {
         price,
       };
 
-      await given(opened({ shoppingCartId, clientId, openedAt }))
+      await given(opened({ shoppingCartId, clientId }))
         .when({
           type: 'ProductItemAddedToShoppingCart',
           data: {
@@ -142,7 +136,6 @@ describe('Client Shopping History', () => {
     it('should add product items to items list for multiple events', async () => {
       const shoppingCartId: string = mongoObjectId();
       const clientId = mongoObjectId();
-      const openedAt = new Date().toISOString();
 
       const productId = mongoObjectId();
       const initialQuantity = 2;
@@ -159,7 +152,7 @@ describe('Client Shopping History', () => {
       const totalQuantity = initialQuantity + additionalQuantity;
 
       await given(
-        opened({ shoppingCartId, clientId, openedAt }),
+        opened({ shoppingCartId, clientId }),
         productItemAdded(shoppingCartId, {
           productId,
           quantity: initialQuantity,
@@ -185,6 +178,86 @@ describe('Client Shopping History', () => {
           ],
           position: 2,
         });
+    });
+  });
+
+  describe('On ProductItemRemovedFromShoppingCart event', () => {
+    it('should decrease existing product item quantity', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+
+      const productId = mongoObjectId();
+      const price = 123;
+      const initialQuantity = 20;
+      const removedQuantity = 9;
+
+      const totalQuantity = initialQuantity - removedQuantity;
+
+      await given(
+        opened({ shoppingCartId, clientId }),
+        productItemAdded(shoppingCartId, {
+          productId,
+          quantity: initialQuantity,
+          price,
+        })
+      )
+        .when({
+          type: 'ProductItemRemovedFromShoppingCart',
+          data: {
+            shoppingCartId,
+            productItem: {
+              productId,
+              quantity: removedQuantity,
+              price,
+            },
+          },
+        })
+        .then(clientId, {
+          totalQuantity: 0,
+          totalAmount: 0,
+          pending: [
+            {
+              shoppingCartId,
+              totalAmount: totalQuantity * price,
+              totalQuantity,
+            },
+          ],
+          position: 2,
+        });
+    });
+
+    it('should be idempotent if run twice', async () => {
+      const clientId: string = mongoObjectId();
+      const shoppingCartId: string = mongoObjectId();
+
+      const productId = mongoObjectId();
+      const price = 123;
+      const initialQuantity = 20;
+      const removedQuantity = 9;
+
+      const productItemRemoved: ShoppingCartEvent = {
+        type: 'ProductItemRemovedFromShoppingCart',
+        data: {
+          shoppingCartId,
+          productItem: {
+            productId,
+            quantity: removedQuantity,
+            price,
+          },
+        },
+      };
+
+      await given(
+        opened({ shoppingCartId, clientId }),
+        productItemAdded(shoppingCartId, {
+          productId,
+          quantity: initialQuantity,
+          price,
+        }),
+        productItemRemoved
+      )
+        .when({ event: productItemRemoved, position: 2n })
+        .thenNotUpdated();
     });
   });
 });
