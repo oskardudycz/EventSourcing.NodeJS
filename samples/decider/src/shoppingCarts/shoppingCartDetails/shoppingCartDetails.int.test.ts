@@ -105,8 +105,6 @@ describe('Shopping Cart details', () => {
 
     it('should be idempotent if run twice', async () => {
       const shoppingCartId: string = mongoObjectId();
-      const clientId = mongoObjectId();
-      const openedAt = new Date().toISOString();
 
       const productItemAdded: ShoppingCartEvent = {
         type: 'ProductItemAddedToShoppingCart',
@@ -120,10 +118,7 @@ describe('Shopping Cart details', () => {
         },
       };
 
-      await given(
-        opened({ shoppingCartId, clientId, openedAt }),
-        productItemAdded
-      )
+      await given(opened({ shoppingCartId }), productItemAdded)
         .when({ event: productItemAdded, revision: 1n })
         .thenNotUpdated();
     });
@@ -176,8 +171,6 @@ describe('Shopping Cart details', () => {
 
     it('should be idempotent if run twice', async () => {
       const shoppingCartId: string = mongoObjectId();
-      const clientId = mongoObjectId();
-      const openedAt = new Date().toISOString();
 
       const productId = mongoObjectId();
       const price = 123;
@@ -197,7 +190,7 @@ describe('Shopping Cart details', () => {
       };
 
       await given(
-        opened({ shoppingCartId, clientId, openedAt }),
+        opened({ shoppingCartId }),
         productItemAdded(shoppingCartId, {
           productId,
           quantity: initialQuantity,

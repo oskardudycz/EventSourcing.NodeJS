@@ -49,34 +49,14 @@ export const Spec = {
               for (const event of allEvents) {
                 const options = {
                   position:
-                    'position' in event && event.position
+                    'position' in event && typeof event.position === 'bigint'
                       ? event.position
                       : position,
                   revision:
-                    'revision' in event && event.revision
+                    'revision' in event && typeof event.revision === 'bigint'
                       ? event.revision
                       : position,
                 };
-
-                console.log(
-                  JSON.stringify(
-                    event,
-                    (key, value) =>
-                      typeof value === 'bigint'
-                        ? value.toString()
-                        : (value as unknown) // return everything else unchanged
-                  )
-                );
-
-                console.log(
-                  JSON.stringify(
-                    options,
-                    (key, value) =>
-                      typeof value === 'bigint'
-                        ? value.toString()
-                        : (value as unknown) // return everything else unchanged
-                  )
-                );
 
                 const projectedEvent = toSubscriptionEvent(
                   'event' in event ? event.event : event,

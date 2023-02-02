@@ -118,14 +118,14 @@ describe('Client Shopping History', () => {
         });
     });
 
-    it.only('should be idempotent if run twice', async () => {
+    it('should be idempotent if run twice', async () => {
       const clientId: string = mongoObjectId();
       const shoppingCartId: string = mongoObjectId();
 
       const productItemAdded: ShoppingCartEvent = {
         type: 'ProductItemAddedToShoppingCart',
         data: {
-          shoppingCartId: clientId,
+          shoppingCartId,
           productItem: {
             productId: mongoObjectId(),
             quantity: 2,
