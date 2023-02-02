@@ -89,7 +89,7 @@ const project = async (
         },
         {
           $inc: {
-            'pending.$.quantity': -event.productItem.quantity,
+            'pending.$.totalQuantity': -event.productItem.quantity,
             'pending.$.totalAmount':
               -event.productItem.quantity * event.productItem.price,
           },
