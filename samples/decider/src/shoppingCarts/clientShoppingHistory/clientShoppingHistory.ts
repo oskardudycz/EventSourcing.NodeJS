@@ -130,14 +130,15 @@ const project = async (
               totalAmount: {
                 $add: ['$totalAmount', history.pending[0].totalAmount],
               },
+              position: eventPosition,
             },
           },
           {
             $project: {
               _id: 0,
-              totalQuantity: 0,
-              totalAmount: 0,
-              position: 0,
+              totalAmount: true,
+              totalQuantity: true,
+              position: true,
               pending: {
                 $filter: {
                   input: '$pending',
