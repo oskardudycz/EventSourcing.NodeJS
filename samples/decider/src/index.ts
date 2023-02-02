@@ -4,8 +4,8 @@ import {
   getMongoDB,
 } from '#core/mongoDB';
 import { router } from './shoppingCarts/routes';
-import { projectToShoppingCartDetails } from './shoppingCarts/shoppingCartDetails';
-import { projectToClientShoppingHistory } from './shoppingCarts/clientShoppingHistory';
+import { projectToShoppingCartDetails } from './shoppingCarts/shoppingCartDetails/shoppingCartDetails';
+import { projectToClientShoppingHistory } from './shoppingCarts/clientShoppingHistory/clientShoppingHistory';
 import { disconnectFromEventStore, getEventStore } from '#core/streams';
 
 process.once('SIGTERM', disconnectFromEventStore);

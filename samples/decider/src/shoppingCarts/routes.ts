@@ -13,7 +13,7 @@ import {
 import { getMongoDB, mongoObjectId } from '#core/mongoDB';
 import { getProductPrice } from './productItem';
 import { toWeakETag } from '#core/eTag';
-import { getShoppingCartsCollection } from './shoppingCartDetails';
+import { getShoppingCartsCollection } from './shoppingCartDetails/shoppingCartDetails';
 import { ObjectId } from 'mongodb';
 //import { getShoppingCartsCollection } from './shoppingCartDetails';
 

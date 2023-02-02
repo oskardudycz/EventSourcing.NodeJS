@@ -10,7 +10,7 @@ import {
   projectToClientShoppingHistory,
 } from './clientShoppingHistory';
 import { MongoClient } from 'mongodb';
-import { ShoppingCartEvent } from './shoppingCart';
+import { ShoppingCartEvent } from '../shoppingCart';
 
 describe('Client Shopping History', () => {
   let mongoContainer: StartedMongoDBContainer;

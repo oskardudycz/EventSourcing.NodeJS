@@ -11,7 +11,7 @@ import {
   ShoppingCartDetails,
   ShoppingCartStatus,
 } from './shoppingCartDetails';
-import { ShoppingCartEvent } from './shoppingCart';
+import { ShoppingCartEvent } from '../shoppingCart';
 import { PricedProductItem } from 'src/gist';
 
 describe('Shopping Cart details', () => {

@@ -3,14 +3,14 @@
 //////////////////////////////////////
 
 import { Collection, MongoClient, ObjectId, UpdateResult } from 'mongodb';
-import { EmptyUpdateResult, getMongoCollection } from '../core/mongoDB';
-import { SubscriptionResolvedEvent } from '../core/subscriptions';
-import { PricedProductItem } from './productItem';
+import { EmptyUpdateResult, getMongoCollection } from '../../core/mongoDB';
+import { SubscriptionResolvedEvent } from '../../core/subscriptions';
+import { PricedProductItem } from '../productItem';
 import {
   isCashierShoppingCartEvent,
   ShoppingCartErrors,
   ShoppingCartEvent,
-} from './shoppingCart';
+} from '../shoppingCart';
 
 export const ShoppingCartStatus = {
   Pending: 'Pending',

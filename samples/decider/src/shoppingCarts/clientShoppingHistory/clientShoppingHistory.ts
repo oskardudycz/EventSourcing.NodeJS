@@ -9,7 +9,7 @@ import {
   isCashierShoppingCartEvent,
   ShoppingCartErrors,
   ShoppingCartEvent,
-} from './shoppingCart';
+} from '../shoppingCart';
 
 export type PendingShoppingCart = {
   shoppingCartId: string;
