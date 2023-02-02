@@ -118,7 +118,7 @@ describe('Client Shopping History', () => {
         });
     });
 
-    it('should be idempotent if run twice', async () => {
+    it('should be idempotent if run twice for the same event', async () => {
       const clientId: string = mongoObjectId();
       const shoppingCartId: string = mongoObjectId();
 
@@ -137,6 +137,54 @@ describe('Client Shopping History', () => {
       await given(opened({ shoppingCartId, clientId }), productItemAdded)
         .when({ event: productItemAdded, position: 1n })
         .thenNotUpdated();
+    });
+
+    it('should add product items to items list for multiple events', async () => {
+      const shoppingCartId: string = mongoObjectId();
+      const clientId = mongoObjectId();
+      const openedAt = new Date().toISOString();
+
+      const productId = mongoObjectId();
+      const initialQuantity = 2;
+      const price = 123;
+
+      const additionalQuantity = 2;
+
+      const productItem: PricedProductItem = {
+        productId: mongoObjectId(),
+        quantity: additionalQuantity,
+        price,
+      };
+
+      const totalQuantity = initialQuantity + additionalQuantity;
+
+      await given(
+        opened({ shoppingCartId, clientId, openedAt }),
+        productItemAdded(shoppingCartId, {
+          productId,
+          quantity: initialQuantity,
+          price,
+        })
+      )
+        .when({
+          type: 'ProductItemAddedToShoppingCart',
+          data: {
+            shoppingCartId,
+            productItem,
+          },
+        })
+        .then(clientId, {
+          totalQuantity: 0,
+          totalAmount: 0,
+          pending: [
+            {
+              shoppingCartId,
+              totalAmount: totalQuantity * price,
+              totalQuantity,
+            },
+          ],
+          position: 2,
+        });
     });
   });
 });
