@@ -1,8 +1,4 @@
-import {
-  MongoDBContainer,
-  StartedMongoDBContainer,
-  Spec,
-} from '#testing/mongoDB';
+import { MongoDBContainer, Spec } from '#testing/mongoDB';
 import { MongoClient } from 'mongodb';
 import { mongoObjectId } from '#core/mongoDB';
 import {
@@ -15,12 +11,11 @@ import { ShoppingCartEvent } from '../shoppingCart';
 import { PricedProductItem } from 'src/gist';
 
 describe('Shopping Cart details', () => {
-  let mongoContainer: StartedMongoDBContainer;
   let mongo: MongoClient;
   let given: Spec<ShoppingCartEvent, ShoppingCartDetails>;
 
   beforeAll(async () => {
-    mongoContainer = await new MongoDBContainer().start();
+    const mongoContainer = await new MongoDBContainer().start();
     console.log(mongoContainer.getConnectionString());
     mongo = mongoContainer.getClient();
     await mongo.connect();
@@ -32,8 +27,7 @@ describe('Shopping Cart details', () => {
   });
 
   afterAll(async () => {
-    await mongo.close();
-    await mongoContainer.stop();
+    if (mongo) await mongo.close();
   });
 
   describe('On ShoppingCartOpened event', () => {
@@ -114,17 +108,15 @@ describe('Shopping Cart details', () => {
       const clientId = mongoObjectId();
       const openedAt = new Date().toISOString();
 
-      const productItem: PricedProductItem = {
-        productId: mongoObjectId(),
-        quantity: 2,
-        price: 123,
-      };
-
       const productItemAdded: ShoppingCartEvent = {
         type: 'ProductItemAddedToShoppingCart',
         data: {
           shoppingCartId,
-          productItem,
+          productItem: {
+            productId: mongoObjectId(),
+            quantity: 2,
+            price: 123,
+          },
         },
       };
 

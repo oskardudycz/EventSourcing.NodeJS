@@ -31,7 +31,7 @@ services:
       - esdb_network
 
   mongodb:
-    image: mongo:5.0
+    image: mongo:6.0.4
     # environment:
     #     MONGO_INITDB_ROOT_USERNAME: root
     #     MONGO_INITDB_ROOT_PASSWORD: rootpassword
