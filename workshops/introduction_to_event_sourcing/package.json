@@ -13,12 +13,12 @@
     "fix": "run-s fix:eslint fix:prettier",
     "fix:prettier": "prettier --write \"**/**/!(*.d).{ts,json,md}\"",
     "fix:eslint": "eslint **/*.ts --fix",
-    "test": "run-s test:unit test:int test:api test:e2e",
-    "test:unit": "jest unit --passWithNoTests",
-    "test:int": "jest int --passWithNoTests --forceExit",
-    "test:api": "jest api --passWithNoTests --forceExit",
-    "test:e2e": "jest e2e --passWithNoTests --forceExit",
-    "test:e2e:watch": "jest e2e --passWithNoTests --forceExit --watch"
+    "test": "run-s test:exercises test:solved",
+    "test:exercises": "jest exercise --passWithNoTests --forceExit",
+    "test:solved": "jest solved --testPathPattern=src\\solved --passWithNoTests --forceExit",
+    "test:watch": "jest test --passWithNoTests",
+    "test:exercises:watch": "jest exercise --passWithNoTests --forceExit --watch",
+    "test:solved:watch": "jest solved --passWithNoTests --forceExit --watch"
   },
   "repository": {
     "type": "git",
