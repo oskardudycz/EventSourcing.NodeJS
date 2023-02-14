@@ -22,7 +22,8 @@
       "error",
       { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
     ],
-    "@typescript-eslint/no-misused-promises": ["off"]
+    "@typescript-eslint/no-misused-promises": ["off"],
+    "@typescript-eslint/prefer-namespace-keyword": "off"
   },
   "settings": {
     "import/resolver": {
