@@ -55,17 +55,7 @@ enum ShoppingCartStatus {
   Canceled = 'Canceled',
 }
 
-export type ShoppingCart = Readonly<{
-  id: string;
-  clientId: string;
-  status: ShoppingCartStatus;
-  productItems: PricedProductItem[];
-  openedAt: Date;
-  confirmedAt?: Date;
-  canceledAt?: Date;
-}>;
-
-export class ShoppingCartOOP {
+export class ShoppingCart {
   constructor(
     private _id: string,
     private _clientId: string,
@@ -105,14 +95,38 @@ export class ShoppingCartOOP {
   }
 }
 
+export const getShoppingCart = (_events: ShoppingCartEvent[]): ShoppingCart => {
+  // 1. Add logic here
+  throw new Error('Not implemented!');
+};
+
 describe('Events definition', () => {
   it('all event types should be defined', () => {
     const shoppingCartId = uuid();
+
     const clientId = uuid();
+    const openedAt = new Date();
+    const confirmedAt = new Date();
+    const canceledAt = new Date();
+
+    const shoesId = uuid();
+
+    const twoPairsOfShoes: PricedProductItem = {
+      productId: shoesId,
+      quantity: 2,
+      unitPrice: 100,
+    };
     const pairOfShoes: PricedProductItem = {
-      productId: uuid(),
+      productId: shoesId,
       quantity: 1,
       unitPrice: 100,
+    };
+
+    const tShirtId = uuid();
+    const tShirt: PricedProductItem = {
+      productId: tShirtId,
+      quantity: 1,
+      unitPrice: 5,
     };
 
     const events: ShoppingCartEvent[] = [
@@ -122,14 +136,21 @@ describe('Events definition', () => {
         data: {
           shoppingCartId,
           clientId,
-          openedAt: new Date(),
+          openedAt,
         },
       },
       {
         type: 'ProductItemAddedToShoppingCart',
         data: {
           shoppingCartId,
-          productItem: pairOfShoes,
+          productItem: twoPairsOfShoes,
+        },
+      },
+      {
+        type: 'ProductItemAddedToShoppingCart',
+        data: {
+          shoppingCartId,
+          productItem: tShirt,
         },
       },
       {
@@ -140,18 +161,28 @@ describe('Events definition', () => {
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId,
-          confirmedAt: new Date(),
+          confirmedAt,
         },
       },
       {
         type: 'ShoppingCartCanceled',
         data: {
           shoppingCartId,
-          canceledAt: new Date(),
+          canceledAt,
         },
       },
     ];
 
-    expect(events.length).toBe(5);
+    const shoppingCart = getShoppingCart(events);
+
+    expect(shoppingCart).toBe({
+      id: shoppingCartId,
+      clientId,
+      status: ShoppingCartStatus.Canceled,
+      productItems: [pairOfShoes, tShirt],
+      openedAt,
+      confirmedAt,
+      canceledAt,
+    });
   });
 });

@@ -6,8 +6,8 @@ If needed you can modify the events or entity structure.
 
 There are two variations:
 
-- using fully immutable structures: [immutable/GettingStateFromEventsTests.cs](./Immutable/GettingStateFromEventsTests.cs),
-- using mutable entities: [oop/GettingStateFromEventsTests.cs](./Mutable/GettingStateFromEventsTests.cs).
+- using fully immutable structures: [immutable/gettingStateFromEvents.exercise.test.ts](./immutable/gettingStateFromEvents.exercise.test.ts),
+- using mutable entities: [oop/gettingStateFromEvents.exercise.test.ts](./oop/gettingStateFromEvents.exercise.test.ts).
 
 Select your preferred approach (or both) to solve this use case.
 
