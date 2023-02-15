@@ -93,11 +93,75 @@ export class ShoppingCart {
   get canceledAt() {
     return this._canceledAt;
   }
+
+  public evolve = ({ type, data: event }: ShoppingCartEvent): void => {
+    switch (type) {
+      case 'ShoppingCartOpened': {
+        this._id = event.shoppingCartId;
+        this._clientId = event.clientId;
+        (this._status = ShoppingCartStatus.Pending),
+          (this._openedAt = event.openedAt),
+          (this._productItems = []);
+        return;
+      }
+      case 'ProductItemAddedToShoppingCart': {
+        const {
+          productItem: { productId, quantity, unitPrice },
+        } = event;
+
+        const currentProductItem = this._productItems.find(
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+        );
+
+        if (currentProductItem) {
+          currentProductItem.quantity += quantity;
+        } else {
+          this._productItems.push(event.productItem);
+        }
+        return;
+      }
+      case 'ProductItemRemovedFromShoppingCart': {
+        const {
+          productItem: { productId, quantity, unitPrice },
+        } = event;
+
+        const currentProductItem = this._productItems.find(
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+        );
+
+        if (!currentProductItem) {
+          return;
+        }
+
+        currentProductItem.quantity -= quantity;
+
+        if (currentProductItem.quantity <= 0) {
+          this._productItems.splice(
+            this._productItems.indexOf(currentProductItem),
+            1
+          );
+        }
+        return;
+      }
+      case 'ShoppingCartConfirmed': {
+        this._status = ShoppingCartStatus.Confirmed;
+        this._confirmedAt = event.confirmedAt;
+        return;
+      }
+      case 'ShoppingCartCanceled': {
+        this._status = ShoppingCartStatus.Canceled;
+        this._canceledAt = event.canceledAt;
+        return;
+      }
+    }
+  };
 }
 
-export const getShoppingCart = (_events: ShoppingCartEvent[]): ShoppingCart => {
-  // 1. Add logic here
-  throw new Error('Not implemented!');
+export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
+  return events.reduce<ShoppingCart>((state, event) => {
+    state.evolve(event);
+    return state;
+  }, new ShoppingCart(undefined!, undefined!, undefined!, undefined!, undefined, undefined, undefined));
 };
 
 describe('Events definition', () => {
@@ -175,14 +239,19 @@ describe('Events definition', () => {
 
     const shoppingCart = getShoppingCart(events);
 
-    expect(shoppingCart).toBe({
-      id: shoppingCartId,
-      clientId,
-      status: ShoppingCartStatus.Canceled,
-      productItems: [pairOfShoes, tShirt],
-      openedAt,
-      confirmedAt,
-      canceledAt,
-    });
+    expect(shoppingCart).toBeInstanceOf(ShoppingCart);
+    expect(JSON.stringify(shoppingCart)).toBe(
+      JSON.stringify(
+        new ShoppingCart(
+          shoppingCartId,
+          clientId,
+          ShoppingCartStatus.Canceled,
+          openedAt,
+          [pairOfShoes, tShirt],
+          confirmedAt,
+          canceledAt
+        )
+      )
+    );
   });
 });
