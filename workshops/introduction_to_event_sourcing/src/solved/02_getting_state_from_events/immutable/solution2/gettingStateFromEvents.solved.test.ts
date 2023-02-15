@@ -55,38 +55,42 @@ enum ShoppingCartStatus {
   Canceled = 'Canceled',
 }
 
-export const addOrMerge = <T>(
+export const merge = <T>(
   array: T[],
   item: T,
   where: (current: T) => boolean,
-  onExisting: (current: T) => T
+  onExisting: (current: T) => T,
+  onNotFound: () => T | undefined = () => undefined
 ) => {
   let wasFound = false;
-  const result = array.map((p: T) => {
-    if (!where(p)) return p;
 
-    wasFound = true;
-    return onExisting(p);
-  });
-
-  return wasFound ? result : [...array, item];
-};
-
-export const removeOrMerge = <T>(
-  array: T[],
-  where: (current: T) => boolean,
-  update: (current: T) => T | undefined
-) => {
-  return array
+  const result = array
+    // merge the existing item if matches condition
     .map((p: T) => {
-      return where(p) ? update(p) : p;
+      if (!where(p)) return p;
+
+      wasFound = true;
+      return onExisting(p);
     })
+    // filter out item if undefined was returned
+    // for cases of removal
     .filter((p) => p !== undefined)
+    // make TypeScript happy
     .map((p) => {
       if (!p) throw Error('That should not happen');
 
       return p;
     });
+
+  // if item was not found and onNotFound action is defined
+  // try to generate new item
+  if (!wasFound) {
+    const result = onNotFound();
+
+    if (result !== undefined) return [...array, item];
+  }
+
+  return result;
 };
 
 export type ShoppingCart = Readonly<{
@@ -118,7 +122,7 @@ export const evolve = (
 
       return {
         ...state,
-        productItems: addOrMerge(
+        productItems: merge(
           productItems,
           productItem,
           (p) =>
@@ -129,7 +133,8 @@ export const evolve = (
               ...p,
               quantity: p.quantity + productItem.quantity,
             };
-          }
+          },
+          () => productItem
         ),
       };
     }
@@ -138,19 +143,17 @@ export const evolve = (
       const { productItem } = event;
       return {
         ...state,
-        productItems: removeOrMerge(
+        productItems: merge(
           productItems,
+          productItem,
           (p) =>
             p.productId === productItem.productId &&
             p.unitPrice === productItem.unitPrice,
           (p) => {
-            const newQuantity = p.quantity - productItem.quantity;
-            return newQuantity > 0
-              ? {
-                  ...p,
-                  quantity: newQuantity,
-                }
-              : undefined;
+            return {
+              ...p,
+              quantity: p.quantity - productItem.quantity,
+            };
           }
         ),
       };
