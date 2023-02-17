@@ -1,4 +1,4 @@
-# Exercise 04 - Appending events to EventStoreDB
+# Exercise 03 - Appending events to EventStoreDB
 
 Using a defined structure of events from the [first exercise](../01_events_definition/), fill a `AppendEvents` function to store events in [EventStoreDB](https://developers.eventstore.com/clients/grpc/).
 
