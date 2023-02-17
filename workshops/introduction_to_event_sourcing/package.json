@@ -13,9 +13,10 @@
     "fix": "run-s fix:eslint fix:prettier",
     "fix:prettier": "prettier --write \"**/**/!(*.d).{ts,json,md}\"",
     "fix:eslint": "eslint **/*.ts --fix",
-    "test": "run-s test:exercises test:solved",
+    "test": "run-s test:exercises test:solved test:infr",
     "test:exercises": "jest exercise --passWithNoTests --forceExit",
-    "test:solved": "jest solved --testPathPattern=src\\solved --passWithNoTests --forceExit",
+    "test:solved": "jest solved --passWithNoTests --forceExit",
+    "test:infr": "jest infr --passWithNoTests --forceExit",
     "test:watch": "jest test --passWithNoTests",
     "test:exercises:watch": "jest exercise --passWithNoTests --forceExit --watch",
     "test:solved:watch": "jest solved --passWithNoTests --forceExit --watch"

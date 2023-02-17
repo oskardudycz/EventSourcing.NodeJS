@@ -20,8 +20,9 @@ Read also my articles:
 - [How to get the current entity state from events?](https://event-driven.io/en/how_to_get_the_current_entity_state_in_event_sourcing/?utm_source=event_sourcing_net_workshop).
 - [Should you throw an exception when rebuilding the state from events?](https://event-driven.io/en/should_you_throw_exception_when_rebuilding_state_from_events/=event_sourcing_net_workshop)
 
-1. Mutable: [Mutable/GettingStateFromEventsTests.cs](./Mutable/GettingStateFromEventsTests.cs).
+1. Mutable: [oop/gettingStateFromEvents.solved.test.ts](./oop/gettingStateFromEvents.solved.test.ts).
 2. Immutable
 
-- Immutable entity using foreach with switch pattern matching [Immutable/Solution1/GettingStateFromEventsTests.cs](./Immutable/Solution1/GettingStateFromEventsTests.cs).
-- Fully immutable and functional with linq Aggregate method: [Immutable/GettingStateFromEventsTests.cs](./Immutable/Solution2/GettingStateFromEventsTests.cs).
+- with an explicit product items collection management [immutable/solution1/gettingStateFromEvents.solved.test.ts](./immutable/solution1/gettingStateFromEvents.solved.test.ts).
+- with a generic merge method for managing immutable collections [immutable/solution2gettingStateFromEvents.solved.test.ts](./immutable/solution2/gettingStateFromEvents.solved.test.ts).
+- using [Immutable.js](https://immutable-js.com/) for managing immutable collections [immutable/solution2gettingStateFromEvents.solved.test.ts](./immutable/solution2/gettingStateFromEvents.solved.test.ts).
