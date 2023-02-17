@@ -64,8 +64,8 @@ const appendEvents = async (
   streamName: string,
   events: ShoppingCartEvent[]
 ): Promise<AppendResult> => {
-  console.log(JSON.stringify(events));
   const serializedEvents = events.map(jsonEvent);
+
   return eventStore.appendToStream(streamName, serializedEvents, {
     expectedRevision: ANY,
   });
@@ -78,7 +78,6 @@ describe('Appending events', () => {
   beforeAll(async () => {
     esdbContainer = await new EventStoreDBContainer().start();
     const connectionString = esdbContainer.getConnectionString();
-    console.log(connectionString);
 
     // That's how EventStoreDB client is setup
     // We're taking the connection string from container
@@ -89,7 +88,7 @@ describe('Appending events', () => {
     if (eventStore) await eventStore.dispose();
   });
 
-  it.only('should append events to EventStoreDB', async () => {
+  it('should append events to EventStoreDB', async () => {
     const shoppingCartId = uuid();
     const clientId = uuid();
     const pairOfShoes: PricedProductItem = {
