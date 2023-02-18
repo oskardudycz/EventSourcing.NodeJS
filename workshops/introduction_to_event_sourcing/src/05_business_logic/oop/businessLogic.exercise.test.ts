@@ -11,45 +11,63 @@ export type PricedProductItem = ProductItem & {
   unitPrice: number;
 };
 
-export type ShoppingCartEvent =
-  | {
-      type: 'ShoppingCartOpened';
-      data: {
-        shoppingCartId: string;
-        clientId: string;
-        openedAt: Date;
-      };
-    }
-  | {
-      type: 'ProductItemAddedToShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ProductItemRemovedFromShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ShoppingCartConfirmed';
-      data: {
-        shoppingCartId: string;
-        confirmedAt: Date;
-      };
-    }
-  | {
-      type: 'ShoppingCartCanceled';
-      data: {
-        shoppingCartId: string;
-        canceledAt: Date;
-      };
-    };
+export type Event<
+  EventType extends string = string,
+  EventData extends Record<string, unknown> = Record<string, unknown>
+> = Readonly<{
+  type: Readonly<EventType>;
+  data: Readonly<EventData>;
+}>;
 
-enum ShoppingCartStatus {
+export type ShoppingCartOpened = Event<
+  'ShoppingCartOpened',
+  {
+    shoppingCartId: string;
+    clientId: string;
+    openedAt: Date;
+  }
+>;
+
+export type ProductItemAddedToShoppingCart = Event<
+  'ProductItemAddedToShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  }
+>;
+
+export type ProductItemRemovedFromShoppingCart = Event<
+  'ProductItemRemovedFromShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  }
+>;
+
+export type ShoppingCartConfirmed = Event<
+  'ShoppingCartConfirmed',
+  {
+    shoppingCartId: string;
+    confirmedAt: Date;
+  }
+>;
+
+export type ShoppingCartCanceled = Event<
+  'ShoppingCartCanceled',
+  {
+    shoppingCartId: string;
+    canceledAt: Date;
+  }
+>;
+
+export type ShoppingCartEvent =
+  | ShoppingCartOpened
+  | ProductItemAddedToShoppingCart
+  | ProductItemRemovedFromShoppingCart
+  | ShoppingCartConfirmed
+  | ShoppingCartCanceled;
+
+export enum ShoppingCartStatus {
   Pending = 'Pending',
   Confirmed = 'Confirmed',
   Canceled = 'Canceled',
@@ -153,10 +171,6 @@ export class ShoppingCart {
         this._canceledAt = event.canceledAt;
         return;
       }
-      default: {
-        const _: never = type;
-        throw new Error('Unknown Event Type');
-      }
     }
   };
 }
@@ -168,14 +182,35 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
   }, new ShoppingCart(undefined!, undefined!, undefined!, undefined!, undefined, undefined, undefined));
 };
 
-describe('Events definition', () => {
-  it('all event types should be defined', () => {
+export interface EventStore {
+  readStream<E extends Event>(streamId: string): E[];
+  appendEvents(streamId: string, events: Event[]): void;
+}
+
+export const getEventStore = () => {
+  const streams = new Map<string, Event[]>();
+
+  return {
+    readStream: <E extends Event>(streamId: string): E[] => {
+      return streams.get(streamId)?.map((e) => <E>e) ?? [];
+    },
+    appendEvents: (streamId: string, events: Event[]): void => {
+      const current = streams.get(streamId) ?? [];
+
+      streams.set(streamId, [...current, ...events]);
+    },
+  };
+};
+
+describe('Getting state from events', () => {
+  it('Should return the state from the sequence of events', () => {
+    const eventStore = getEventStore();
     const shoppingCartId = uuid();
 
     const clientId = uuid();
     const openedAt = new Date();
     const confirmedAt = new Date();
-    const canceledAt = new Date();
+    // const canceledAt = new Date();
 
     const shoesId = uuid();
 
@@ -197,8 +232,12 @@ describe('Events definition', () => {
       unitPrice: 5,
     };
 
-    const events: ShoppingCartEvent[] = [
-      // 2. Put your sample events here
+    // TODO: Fill the events store results of your business logic
+    // to be the same as events below
+
+    const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
+
+    expect(events).toEqual([
       {
         type: 'ShoppingCartOpened',
         data: {
@@ -232,14 +271,15 @@ describe('Events definition', () => {
           confirmedAt,
         },
       },
-      {
-        type: 'ShoppingCartCanceled',
-        data: {
-          shoppingCartId,
-          canceledAt,
-        },
-      },
-    ];
+      // This should fail
+      // {
+      //   type: 'ShoppingCartCanceled',
+      //   data: {
+      //     shoppingCartId,
+      //     canceledAt,
+      //   },
+      // },
+    ]);
 
     const shoppingCart = getShoppingCart(events);
 
@@ -249,11 +289,10 @@ describe('Events definition', () => {
         new ShoppingCart(
           shoppingCartId,
           clientId,
-          ShoppingCartStatus.Canceled,
+          ShoppingCartStatus.Confirmed,
           openedAt,
           [pairOfShoes, tShirt],
-          confirmedAt,
-          canceledAt
+          confirmedAt
         )
       )
     );

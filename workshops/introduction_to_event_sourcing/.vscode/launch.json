@@ -32,11 +32,10 @@
       "request": "launch",
       "program": "${workspaceFolder}/node_modules/jest/bin/jest",
       "args": [
+        "${fileBasenameNoExtension}",
         "--verbose",
         "-i",
         "--no-cache",
-        "--runTestsByPath",
-        "${fileBasenameNoExtension}",
         "--watchAll"
       ],
       "console": "integratedTerminal",
