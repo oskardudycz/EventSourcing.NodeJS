@@ -109,9 +109,9 @@ export class ShoppingCart {
       case 'ShoppingCartOpened': {
         this._id = event.shoppingCartId;
         this._clientId = event.clientId;
-        (this._status = ShoppingCartStatus.Pending),
-          (this._openedAt = event.openedAt),
-          (this._productItems = []);
+        this._status = ShoppingCartStatus.Pending;
+        this._openedAt = event.openedAt;
+        this._productItems = [];
         return;
       }
       case 'ProductItemAddedToShoppingCart': {

@@ -66,107 +66,123 @@ enum ShoppingCartStatus {
   Canceled = 'Canceled',
 }
 
-export class ShoppingCart {
-  constructor(
-    private _id: string,
-    private _clientId: string,
-    private _status: ShoppingCartStatus,
-    private _openedAt: Date,
-    private _productItems: PricedProductItem[] = [],
-    private _confirmedAt?: Date,
-    private _canceledAt?: Date
-  ) {}
+export type ShoppingCart = Readonly<{
+  id: string;
+  clientId: string;
+  status: ShoppingCartStatus;
+  productItems: PricedProductItem[];
+  openedAt: Date;
+  confirmedAt?: Date;
+  canceledAt?: Date;
+}>;
 
-  get id() {
-    return this._id;
+export const merge = <T>(
+  array: T[],
+  item: T,
+  where: (current: T) => boolean,
+  onExisting: (current: T) => T,
+  onNotFound: () => T | undefined = () => undefined
+) => {
+  let wasFound = false;
+
+  const result = array
+    // merge the existing item if matches condition
+    .map((p: T) => {
+      if (!where(p)) return p;
+
+      wasFound = true;
+      return onExisting(p);
+    })
+    // filter out item if undefined was returned
+    // for cases of removal
+    .filter((p) => p !== undefined)
+    // make TypeScript happy
+    .map((p) => {
+      if (!p) throw Error('That should not happen');
+
+      return p;
+    });
+
+  // if item was not found and onNotFound action is defined
+  // try to generate new item
+  if (!wasFound) {
+    const result = onNotFound();
+
+    if (result !== undefined) return [...array, item];
   }
 
-  get clientId() {
-    return this._clientId;
-  }
+  return result;
+};
 
-  get status() {
-    return this._status;
-  }
+export const evolve = (
+  state: ShoppingCart,
+  { type, data: event }: ShoppingCartEvent
+): ShoppingCart => {
+  switch (type) {
+    case 'ShoppingCartOpened':
+      return {
+        id: event.shoppingCartId,
+        clientId: event.clientId,
+        openedAt: event.openedAt,
+        productItems: [],
+        status: ShoppingCartStatus.Pending,
+      };
+    case 'ProductItemAddedToShoppingCart': {
+      const { productItems } = state;
+      const { productItem } = event;
 
-  get openedAt() {
-    return this._openedAt;
-  }
-
-  get productItems() {
-    return this._productItems;
-  }
-
-  get confirmedAt() {
-    return this._confirmedAt;
-  }
-
-  get canceledAt() {
-    return this._canceledAt;
-  }
-
-  public evolve = ({ type, data: event }: ShoppingCartEvent): void => {
-    switch (type) {
-      case 'ShoppingCartOpened': {
-        this._id = event.shoppingCartId;
-        this._clientId = event.clientId;
-        this._status = ShoppingCartStatus.Pending;
-        this._openedAt = event.openedAt;
-        this._productItems = [];
-        return;
-      }
-      case 'ProductItemAddedToShoppingCart': {
-        const {
-          productItem: { productId, quantity, unitPrice },
-        } = event;
-
-        const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
-        );
-
-        if (currentProductItem) {
-          currentProductItem.quantity += quantity;
-        } else {
-          this._productItems.push(event.productItem);
-        }
-        return;
-      }
-      case 'ProductItemRemovedFromShoppingCart': {
-        const {
-          productItem: { productId, quantity, unitPrice },
-        } = event;
-
-        const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
-        );
-
-        if (!currentProductItem) {
-          return;
-        }
-
-        currentProductItem.quantity -= quantity;
-
-        if (currentProductItem.quantity <= 0) {
-          this._productItems.splice(
-            this._productItems.indexOf(currentProductItem),
-            1
-          );
-        }
-        return;
-      }
-      case 'ShoppingCartConfirmed': {
-        this._status = ShoppingCartStatus.Confirmed;
-        this._confirmedAt = event.confirmedAt;
-        return;
-      }
-      case 'ShoppingCartCanceled': {
-        this._status = ShoppingCartStatus.Canceled;
-        this._canceledAt = event.canceledAt;
-        return;
-      }
+      return {
+        ...state,
+        productItems: merge(
+          productItems,
+          productItem,
+          (p) =>
+            p.productId === productItem.productId &&
+            p.unitPrice === productItem.unitPrice,
+          (p) => {
+            return {
+              ...p,
+              quantity: p.quantity + productItem.quantity,
+            };
+          },
+          () => productItem
+        ),
+      };
     }
-  };
-}
+    case 'ProductItemRemovedFromShoppingCart': {
+      const { productItems } = state;
+      const { productItem } = event;
+      return {
+        ...state,
+        productItems: merge(
+          productItems,
+          productItem,
+          (p) =>
+            p.productId === productItem.productId &&
+            p.unitPrice === productItem.unitPrice,
+          (p) => {
+            return {
+              ...p,
+              quantity: p.quantity - productItem.quantity,
+            };
+          }
+        ),
+      };
+    }
+    case 'ShoppingCartConfirmed':
+      return {
+        ...state,
+        status: ShoppingCartStatus.Confirmed,
+        confirmedAt: event.confirmedAt,
+      };
+    case 'ShoppingCartCanceled':
+      return {
+        ...state,
+        status: ShoppingCartStatus.Canceled,
+        canceledAt: event.canceledAt,
+      };
+  }
+};
 
 export type Event<
   EventType extends string = string,
@@ -327,12 +343,10 @@ export const getShoppingCart = async (
 
   const deserializedEvents = events.map(ShoppingCartEventSerde.deserialize);
 
-  if (events.length === 0) throw new Error('Shopping Cart was not found!');
+  if (deserializedEvents.length === 0)
+    throw new Error('Shopping Cart was not found!');
 
-  return deserializedEvents.reduce<ShoppingCart>((state, event) => {
-    state.evolve(event);
-    return state;
-  }, new ShoppingCart(undefined!, undefined!, undefined!, undefined!, undefined, undefined, undefined));
+  return deserializedEvents.reduce<ShoppingCart>(evolve, {} as ShoppingCart);
 };
 
 describe('Events definition', () => {
@@ -434,20 +448,14 @@ describe('Events definition', () => {
 
     const shoppingCart = await getShoppingCart(eventStore, streamName);
 
-    expect(shoppingCart.openedAt).toBeInstanceOf(Date);
-    expect(shoppingCart.confirmedAt).toBeInstanceOf(Date);
-    expect(shoppingCart.canceledAt).toBeInstanceOf(Date);
-
-    const { evolve: _, ...actual } = shoppingCart;
-    const { evolve: __, ...expected } = new ShoppingCart(
-      shoppingCartId,
+    expect(shoppingCart).toEqual({
+      id: shoppingCartId,
       clientId,
-      ShoppingCartStatus.Canceled,
+      status: ShoppingCartStatus.Canceled,
+      productItems: [pairOfShoes, tShirt],
       openedAt,
-      [pairOfShoes, tShirt],
       confirmedAt,
-      canceledAt
-    );
-    expect(actual).toStrictEqual(Object.assign({}, expected));
+      canceledAt,
+    });
   });
 });

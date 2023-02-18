@@ -28,7 +28,7 @@ export type ShoppingCartEvent =
       data: {
         shoppingCartId: string;
         clientId: string;
-        openedAt: Date;
+        openedAt: string;
       };
     }
   | {
@@ -49,14 +49,14 @@ export type ShoppingCartEvent =
       type: 'ShoppingCartConfirmed';
       data: {
         shoppingCartId: string;
-        confirmedAt: Date;
+        confirmedAt: string;
       };
     }
   | {
       type: 'ShoppingCartCanceled';
       data: {
         shoppingCartId: string;
-        canceledAt: Date;
+        canceledAt: string;
       };
     };
 
@@ -111,7 +111,7 @@ export class ShoppingCart {
         this._id = event.shoppingCartId;
         this._clientId = event.clientId;
         this._status = ShoppingCartStatus.Pending;
-        this._openedAt = event.openedAt;
+        this._openedAt = new Date(event.openedAt);
         this._productItems = [];
         return;
       }
@@ -156,12 +156,12 @@ export class ShoppingCart {
       }
       case 'ShoppingCartConfirmed': {
         this._status = ShoppingCartStatus.Confirmed;
-        this._confirmedAt = event.confirmedAt;
+        this._confirmedAt = new Date(event.confirmedAt);
         return;
       }
       case 'ShoppingCartCanceled': {
         this._status = ShoppingCartStatus.Canceled;
-        this._canceledAt = event.canceledAt;
+        this._canceledAt = new Date(event.canceledAt);
         return;
       }
     }
@@ -212,124 +212,15 @@ const appendEvents = async <EventType extends Event>(
   });
 };
 
-//////////////////////////////////////////
-//// SERIALIZATION
-//////////////////////////////////////////
-
-export type ShoppingCartEventPayload =
-  | {
-      type: 'ShoppingCartOpened';
-      data: {
-        shoppingCartId: string;
-        clientId: string;
-        openedAt: string;
-      };
-    }
-  | {
-      type: 'ProductItemAddedToShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ProductItemRemovedFromShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ShoppingCartConfirmed';
-      data: {
-        shoppingCartId: string;
-        confirmedAt: string;
-      };
-    }
-  | {
-      type: 'ShoppingCartCanceled';
-      data: {
-        shoppingCartId: string;
-        canceledAt: string;
-      };
-    };
-
-export const ShoppingCartEventSerde = {
-  serialize: ({ type, data }: ShoppingCartEvent): ShoppingCartEventPayload => {
-    switch (type) {
-      case 'ShoppingCartOpened': {
-        return {
-          type,
-          data: { ...data, openedAt: data.openedAt.toISOString() },
-        };
-      }
-      case 'ProductItemAddedToShoppingCart': {
-        return { type, data };
-      }
-      case 'ProductItemRemovedFromShoppingCart': {
-        return { type, data };
-      }
-      case 'ShoppingCartConfirmed': {
-        return {
-          type,
-          data: { ...data, confirmedAt: data.confirmedAt.toISOString() },
-        };
-      }
-      case 'ShoppingCartCanceled': {
-        return {
-          type,
-          data: { ...data, canceledAt: data.canceledAt.toISOString() },
-        };
-      }
-    }
-  },
-  deserialize: ({
-    type,
-    data,
-  }: ShoppingCartEventPayload): ShoppingCartEvent => {
-    switch (type) {
-      case 'ShoppingCartOpened': {
-        return {
-          type,
-          data: { ...data, openedAt: new Date(data.openedAt) },
-        };
-      }
-      case 'ProductItemAddedToShoppingCart': {
-        return jsonEvent({ type, data });
-      }
-      case 'ProductItemRemovedFromShoppingCart': {
-        return jsonEvent({ type, data });
-      }
-      case 'ShoppingCartConfirmed': {
-        return jsonEvent({
-          type,
-          data: { ...data, confirmedAt: new Date(data.confirmedAt) },
-        });
-      }
-      case 'ShoppingCartCanceled': {
-        return jsonEvent({
-          type,
-          data: { ...data, canceledAt: new Date(data.canceledAt) },
-        });
-      }
-    }
-  },
-};
-
 export const getShoppingCart = async (
   eventStore: EventStoreDBClient,
   streamId: string
 ): Promise<ShoppingCart> => {
-  const events = await readStream<ShoppingCartEventPayload>(
-    eventStore,
-    streamId
-  );
-
-  const deserializedEvents = events.map(ShoppingCartEventSerde.deserialize);
+  const events = await readStream<ShoppingCartEvent>(eventStore, streamId);
 
   if (events.length === 0) throw new Error('Shopping Cart was not found!');
 
-  return deserializedEvents.reduce<ShoppingCart>((state, event) => {
+  return events.reduce<ShoppingCart>((state, event) => {
     state.evolve(event);
     return state;
   }, new ShoppingCart(undefined!, undefined!, undefined!, undefined!, undefined, undefined, undefined));
@@ -387,7 +278,7 @@ describe('Events definition', () => {
         data: {
           shoppingCartId,
           clientId,
-          openedAt,
+          openedAt: openedAt.toISOString(),
         },
       },
       {
@@ -412,25 +303,21 @@ describe('Events definition', () => {
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId,
-          confirmedAt,
+          confirmedAt: confirmedAt.toISOString(),
         },
       },
       {
         type: 'ShoppingCartCanceled',
         data: {
           shoppingCartId,
-          canceledAt,
+          canceledAt: canceledAt.toISOString(),
         },
       },
     ];
 
     const streamName = `shopping_cart-${shoppingCartId}`;
 
-    await appendEvents(
-      eventStore,
-      streamName,
-      events.map(ShoppingCartEventSerde.serialize)
-    );
+    await appendEvents(eventStore, streamName, events);
 
     const shoppingCart = await getShoppingCart(eventStore, streamName);
 
