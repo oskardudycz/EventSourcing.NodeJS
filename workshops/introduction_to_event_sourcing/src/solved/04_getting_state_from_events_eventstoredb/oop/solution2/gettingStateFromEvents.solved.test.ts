@@ -164,6 +164,10 @@ export class ShoppingCart {
         this._canceledAt = event.canceledAt;
         return;
       }
+      default: {
+        const _: never = type;
+        throw new Error('Unknown Event Type');
+      }
     }
   };
 }

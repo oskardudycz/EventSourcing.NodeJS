@@ -181,6 +181,10 @@ export const evolve = (
         status: ShoppingCartStatus.Canceled,
         canceledAt: new Date(event.canceledAt),
       };
+    default: {
+      const _: never = type;
+      throw new Error('Unknown Event Type');
+    }
   }
 };
 

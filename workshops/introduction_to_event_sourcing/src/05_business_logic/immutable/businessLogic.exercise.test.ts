@@ -1,14 +1,3 @@
-import {
-  StartedEventStoreDBContainer,
-  EventStoreDBContainer,
-} from '#core/testing/eventStoreDB/eventStoreDBContainer';
-import {
-  ANY,
-  AppendResult,
-  EventStoreDBClient,
-  jsonEvent,
-  StreamNotFoundError,
-} from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
 
 // 1. Define your events and entity here
@@ -28,7 +17,7 @@ export type ShoppingCartEvent =
       data: {
         shoppingCartId: string;
         clientId: string;
-        openedAt: string;
+        openedAt: Date;
       };
     }
   | {
@@ -49,32 +38,22 @@ export type ShoppingCartEvent =
       type: 'ShoppingCartConfirmed';
       data: {
         shoppingCartId: string;
-        confirmedAt: string;
+        confirmedAt: Date;
       };
     }
   | {
       type: 'ShoppingCartCanceled';
       data: {
         shoppingCartId: string;
-        canceledAt: string;
+        canceledAt: Date;
       };
     };
 
-enum ShoppingCartStatus {
+export enum ShoppingCartStatus {
   Pending = 'Pending',
   Confirmed = 'Confirmed',
   Canceled = 'Canceled',
 }
-
-export type ShoppingCart = Readonly<{
-  id: string;
-  clientId: string;
-  status: ShoppingCartStatus;
-  productItems: PricedProductItem[];
-  openedAt: Date;
-  confirmedAt?: Date;
-  canceledAt?: Date;
-}>;
 
 export const merge = <T>(
   array: T[],
@@ -114,6 +93,16 @@ export const merge = <T>(
   return result;
 };
 
+export type ShoppingCart = Readonly<{
+  id: string;
+  clientId: string;
+  status: ShoppingCartStatus;
+  productItems: PricedProductItem[];
+  openedAt: Date;
+  confirmedAt?: Date;
+  canceledAt?: Date;
+}>;
+
 export const evolve = (
   state: ShoppingCart,
   { type, data: event }: ShoppingCartEvent
@@ -123,7 +112,7 @@ export const evolve = (
       return {
         id: event.shoppingCartId,
         clientId: event.clientId,
-        openedAt: new Date(event.openedAt),
+        openedAt: event.openedAt,
         productItems: [],
         status: ShoppingCartStatus.Pending,
       };
@@ -173,19 +162,20 @@ export const evolve = (
       return {
         ...state,
         status: ShoppingCartStatus.Confirmed,
-        confirmedAt: new Date(event.confirmedAt),
+        confirmedAt: event.confirmedAt,
       };
     case 'ShoppingCartCanceled':
       return {
         ...state,
         status: ShoppingCartStatus.Canceled,
-        canceledAt: new Date(event.canceledAt),
+        canceledAt: event.canceledAt,
       };
-    default: {
-      const _: never = type;
-      throw new Error('Unknown Event Type');
-    }
   }
+};
+
+export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
+  // 1. Add logic here
+  return events.reduce<ShoppingCart>(evolve, {} as ShoppingCart);
 };
 
 export type Event<
@@ -196,77 +186,35 @@ export type Event<
   data: Readonly<EventData>;
 }>;
 
-export const readStream = async <EventType extends Event>(
-  eventStore: EventStoreDBClient,
-  streamId: string
-): Promise<EventType[]> => {
-  const events = [];
-  try {
-    for await (const { event } of eventStore.readStream<EventType>(streamId)) {
-      if (!event) continue;
+export interface EventStore {
+  readStream<E extends Event>(streamId: string): E[];
+  appendEvents(streamId: string, events: Event[]): void;
+}
 
-      events.push(<EventType>{
-        type: event.type,
-        data: event.data,
-      });
-    }
-    return events;
-  } catch (error) {
-    if (error instanceof StreamNotFoundError) {
-      return [];
-    }
+export const getEventStore = () => {
+  const streams = new Map<string, Event[]>();
 
-    throw error;
-  }
+  return {
+    readStream: <E extends Event>(streamId: string): E[] => {
+      return streams.get(streamId)?.map((e) => <E>e) ?? [];
+    },
+    appendEvents: (streamId: string, events: Event[]): void => {
+      const current = streams.get(streamId) ?? [];
+
+      streams.set(streamId, [...current, ...events]);
+    },
+  };
 };
 
-const appendEvents = async <EventType extends Event>(
-  eventStore: EventStoreDBClient,
-  streamName: string,
-  events: EventType[]
-): Promise<AppendResult> => {
-  const serializedEvents = events.map(jsonEvent);
-
-  return eventStore.appendToStream(streamName, serializedEvents, {
-    expectedRevision: ANY,
-  });
-};
-
-export const getShoppingCart = async (
-  eventStore: EventStoreDBClient,
-  streamId: string
-): Promise<ShoppingCart> => {
-  const events = await readStream<ShoppingCartEvent>(eventStore, streamId);
-
-  if (events.length === 0) throw new Error('Shopping Cart was not found!');
-
-  return events.reduce<ShoppingCart>(evolve, {} as ShoppingCart);
-};
-
-describe('Events definition', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
-  let eventStore: EventStoreDBClient;
-
-  beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    const connectionString = esdbContainer.getConnectionString();
-
-    // That's how EventStoreDB client is setup
-    // We're taking the connection string from container
-    eventStore = EventStoreDBClient.connectionString(connectionString);
-  });
-
-  afterAll(async () => {
-    if (eventStore) await eventStore.dispose();
-  });
-
-  it('all event types should be defined', async () => {
+describe('Getting state from events', () => {
+  it('Should return the state from the sequence of events', () => {
+    const eventStore = getEventStore();
     const shoppingCartId = uuid();
 
     const clientId = uuid();
     const openedAt = new Date();
     const confirmedAt = new Date();
-    const canceledAt = new Date();
+    // const canceledAt = new Date();
 
     const shoesId = uuid();
 
@@ -288,14 +236,18 @@ describe('Events definition', () => {
       unitPrice: 5,
     };
 
-    const events: ShoppingCartEvent[] = [
-      // 2. Put your sample events here
+    // TODO: Fill the events store results of your business logic
+    // to be the same as events below
+
+    const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
+
+    expect(events).toEqual([
       {
         type: 'ShoppingCartOpened',
         data: {
           shoppingCartId,
           clientId,
-          openedAt: openedAt.toISOString(),
+          openedAt,
         },
       },
       {
@@ -320,32 +272,28 @@ describe('Events definition', () => {
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId,
-          confirmedAt: confirmedAt.toISOString(),
+          confirmedAt,
         },
       },
-      {
-        type: 'ShoppingCartCanceled',
-        data: {
-          shoppingCartId,
-          canceledAt: canceledAt.toISOString(),
-        },
-      },
-    ];
+      // This should fail
+      // {
+      //   type: 'ShoppingCartCanceled',
+      //   data: {
+      //     shoppingCartId,
+      //     canceledAt,
+      //   },
+      // },
+    ]);
 
-    const streamName = `shopping_cart-${shoppingCartId}`;
+    const shoppingCart = getShoppingCart(events);
 
-    await appendEvents(eventStore, streamName, events);
-
-    const shoppingCart = await getShoppingCart(eventStore, streamName);
-
-    expect(shoppingCart).toEqual({
+    expect(shoppingCart).toStrictEqual({
       id: shoppingCartId,
       clientId,
-      status: ShoppingCartStatus.Canceled,
+      status: ShoppingCartStatus.Confirmed,
       productItems: [pairOfShoes, tShirt],
       openedAt,
       confirmedAt,
-      canceledAt,
     });
   });
 });
