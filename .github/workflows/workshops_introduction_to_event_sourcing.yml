@@ -42,6 +42,14 @@ jobs:
         with:
           # use the node version defined in matrix above
           node-version: ${{ matrix.node-version }}
+      # install dependencies
+      - run: npm ci
+      # run linting (ESlint and Prettier)
+      - run: npm run lint
+      # run build
+      - run: npm run build:ts
+      # run tests
+      - run: npm test:solved
 
       - name: Install dependencies
         run: npm ci
