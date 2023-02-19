@@ -1,6 +1,7 @@
 # Exercise 07 - Business Logic
 
 Having the following shopping cart process:
+
 1. The customer may add a product to the shopping cart only after opening it.
 2. When selecting and adding a product to the basket customer needs to provide the quantity chosen. The product price is calculated by the system based on the current price list.
 3. The customer may remove a product with a given price from the cart.
@@ -13,6 +14,7 @@ Write the code that fulfils this logic. Remember that in Event Sourcing each bus
 ![events](./assets/events.jpg)
 
 There are two variations:
+
 - using mutable entities: [./oop/BusinessLogicTests.cs](./oop/businessLogic.exercise.test.ts),
 - using fully immutable structures: [./immutable/BusinessLogicTests.cs](./immutable/businessLogic.exercise.test.ts),
 
