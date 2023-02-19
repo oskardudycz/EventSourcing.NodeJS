@@ -1,13 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import {
-  ShoppingCartErrors,
-  openShoppingCart,
-  addProductItemToShoppingCart,
-  removeProductItemFromShoppingCart,
-  confirmShoppingCart,
-  cancelShoppingCart,
-  handleCommand,
-} from './businessLogic';
+import { getAndUpdate, ShoppingCartErrors } from './businessLogic';
 
 // 1. Define your events and entity here
 
@@ -20,53 +12,43 @@ export type PricedProductItem = ProductItem & {
   unitPrice: number;
 };
 
-export type ShoppingCartOpened = Event<
-  'ShoppingCartOpened',
-  {
-    shoppingCartId: string;
-    clientId: string;
-    openedAt: Date;
-  }
->;
-
-export type ProductItemAddedToShoppingCart = Event<
-  'ProductItemAddedToShoppingCart',
-  {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
-  }
->;
-
-export type ProductItemRemovedFromShoppingCart = Event<
-  'ProductItemRemovedFromShoppingCart',
-  {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
-  }
->;
-
-export type ShoppingCartConfirmed = Event<
-  'ShoppingCartConfirmed',
-  {
-    shoppingCartId: string;
-    confirmedAt: Date;
-  }
->;
-
-export type ShoppingCartCanceled = Event<
-  'ShoppingCartCanceled',
-  {
-    shoppingCartId: string;
-    canceledAt: Date;
-  }
->;
-
 export type ShoppingCartEvent =
-  | ShoppingCartOpened
-  | ProductItemAddedToShoppingCart
-  | ProductItemRemovedFromShoppingCart
-  | ShoppingCartConfirmed
-  | ShoppingCartCanceled;
+  | {
+      type: 'ShoppingCartOpened';
+      data: {
+        shoppingCartId: string;
+        clientId: string;
+        openedAt: Date;
+      };
+    }
+  | {
+      type: 'ProductItemAddedToShoppingCart';
+      data: {
+        shoppingCartId: string;
+        productItem: PricedProductItem;
+      };
+    }
+  | {
+      type: 'ProductItemRemovedFromShoppingCart';
+      data: {
+        shoppingCartId: string;
+        productItem: PricedProductItem;
+      };
+    }
+  | {
+      type: 'ShoppingCartConfirmed';
+      data: {
+        shoppingCartId: string;
+        confirmedAt: Date;
+      };
+    }
+  | {
+      type: 'ShoppingCartCanceled';
+      data: {
+        shoppingCartId: string;
+        canceledAt: Date;
+      };
+    };
 
 export enum ShoppingCartStatus {
   Pending = 'Pending',
@@ -229,8 +211,6 @@ export const getEventStore = () => {
   };
 };
 
-const handle = handleCommand(evolve, () => ({} as ShoppingCart));
-
 describe('Getting state from events', () => {
   it('Should return the state from the sequence of events', () => {
     const eventStore = getEventStore();
@@ -261,48 +241,36 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    handle(eventStore, shoppingCartId, (_) =>
-      openShoppingCart({ clientId, shoppingCartId, now: openedAt })
-    );
+    getAndUpdate(eventStore, shoppingCartId, {
+      type: 'OpenShoppingCart',
+      data: { clientId, shoppingCartId, now: openedAt },
+    });
 
-    handle(eventStore, shoppingCartId, (state) =>
-      addProductItemToShoppingCart(
-        {
-          shoppingCartId,
-          productItem: twoPairsOfShoes,
-        },
-        state
-      )
-    );
+    getAndUpdate(eventStore, shoppingCartId, {
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: twoPairsOfShoes },
+    });
 
-    handle(eventStore, shoppingCartId, (state) =>
-      addProductItemToShoppingCart(
-        {
-          shoppingCartId,
-          productItem: tShirt,
-        },
-        state
-      )
-    );
+    getAndUpdate(eventStore, shoppingCartId, {
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: tShirt },
+    });
 
-    handle(eventStore, shoppingCartId, (state) =>
-      removeProductItemFromShoppingCart(
-        {
-          shoppingCartId,
-          productItem: pairOfShoes,
-        },
-        state
-      )
-    );
+    getAndUpdate(eventStore, shoppingCartId, {
+      type: 'RemoveProductItemFromShoppingCart',
+      data: { shoppingCartId, productItem: pairOfShoes },
+    });
 
-    handle(eventStore, shoppingCartId, (state) =>
-      confirmShoppingCart({ shoppingCartId, now: confirmedAt }, state)
-    );
+    getAndUpdate(eventStore, shoppingCartId, {
+      type: 'ConfirmShoppingCart',
+      data: { shoppingCartId, now: confirmedAt },
+    });
 
     const cancel = () =>
-      handle(eventStore, shoppingCartId, (state) =>
-        cancelShoppingCart({ shoppingCartId, now: canceledAt }, state)
-      );
+      getAndUpdate(eventStore, shoppingCartId, {
+        type: 'CancelShoppingCart',
+        data: { shoppingCartId, now: canceledAt },
+      });
 
     expect(cancel).toThrowError(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
