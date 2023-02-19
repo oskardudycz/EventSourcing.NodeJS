@@ -1,5 +1,11 @@
 import { v4 as uuid } from 'uuid';
-import { getAndUpdate, ShoppingCartErrors } from './businessLogic';
+import {
+  CommandHandler,
+  decide,
+  Decider,
+  ShoppingCartCommand,
+  ShoppingCartErrors,
+} from './businessLogic';
 
 // 1. Define your events and entity here
 
@@ -210,6 +216,14 @@ export const getEventStore = () => {
     },
   };
 };
+
+const decider: Decider<ShoppingCart, ShoppingCartCommand, ShoppingCartEvent> = {
+  decide,
+  evolve,
+  getInitialState: () => ({} as ShoppingCart),
+};
+
+export const getAndUpdate = CommandHandler(decider);
 
 describe('Getting state from events', () => {
   it('Should return the state from the sequence of events', () => {

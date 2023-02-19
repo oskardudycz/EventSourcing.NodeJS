@@ -4,7 +4,6 @@
 
 import {
   EventStore,
-  getShoppingCart,
   PricedProductItem,
   ShoppingCart,
   ShoppingCartEvent,
@@ -76,7 +75,7 @@ export const assertProductItemExists = (
   }
 };
 
-const decide = (
+export const decide = (
   { type, data: command }: ShoppingCartCommand,
   shoppingCart: ShoppingCart
 ): ShoppingCartEvent | ShoppingCartEvent[] => {
@@ -159,16 +158,47 @@ const decide = (
   }
 };
 
-export const getAndUpdate = (
-  eventStore: EventStore,
-  streamId: string,
-  command: ShoppingCartCommand
-) => {
-  const events = eventStore.readStream<ShoppingCartEvent>(streamId);
+export type Event<
+  EventType extends string = string,
+  EventData extends Record<string, unknown> = Record<string, unknown>
+> = Readonly<{
+  type: Readonly<EventType>;
+  data: Readonly<EventData>;
+}>;
 
-  const state = getShoppingCart(events);
+export type Command<
+  CommandType extends string = string,
+  CommandData extends Record<string, unknown> = Record<string, unknown>
+> = Readonly<{
+  type: Readonly<CommandType>;
+  data: Readonly<CommandData>;
+}>;
 
-  const result = decide(command, state);
-
-  eventStore.appendEvents(streamId, Array.isArray(result) ? result : [result]);
+export type Decider<
+  State,
+  CommandType extends Command,
+  EventType extends Event
+> = {
+  decide: (command: CommandType, state: State) => EventType | EventType[];
+  evolve: (currentState: State, event: EventType) => State;
+  getInitialState: () => State;
 };
+
+export const CommandHandler =
+  <State, CommandType extends Command, EventType extends Event>({
+    decide,
+    evolve,
+    getInitialState,
+  }: Decider<State, CommandType, EventType>) =>
+  (eventStore: EventStore, streamId: string, command: CommandType): void => {
+    const events = eventStore.readStream<EventType>(streamId);
+
+    const state = events.reduce<State>(evolve, getInitialState());
+
+    const result = decide(command, state);
+
+    eventStore.appendEvents(
+      streamId,
+      Array.isArray(result) ? result : [result]
+    );
+  };

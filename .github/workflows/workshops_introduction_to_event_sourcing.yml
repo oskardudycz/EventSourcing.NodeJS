@@ -1,4 +1,4 @@
-name: Samples - Introduction to Event Sourcing
+name: Workshops - Introduction to Event Sourcing
 
 on:
   # run it on push to the default repository branch
@@ -31,17 +31,26 @@ jobs:
         node-version: [18.x]
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+
+      - name: Start containers
+        run: docker-compose -f "docker-compose.yml" up -d
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           # use the node version defined in matrix above
           node-version: ${{ matrix.node-version }}
-      # install dependencies
-      - run: npm ci
-      # run linting (ESlint and Prettier)
-      - run: npm run lint
-      # run build
-      - run: npm run build:ts
-      # run tests
-      - run: npm test
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting (ESlint and Prettier)
+        run: npm run lint
+
+      - name: Build
+        run: npm run build:ts
+
+      - name: Test
+        run: npm run test:solved

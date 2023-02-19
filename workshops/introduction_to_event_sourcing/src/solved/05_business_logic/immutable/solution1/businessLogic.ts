@@ -4,7 +4,6 @@
 
 import {
   EventStore,
-  evolve,
   PricedProductItem,
   ProductItemAddedToShoppingCart,
   ProductItemRemovedFromShoppingCart,
