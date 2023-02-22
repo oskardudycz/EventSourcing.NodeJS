@@ -179,7 +179,7 @@ describe('Getting state from events', () => {
     const cancel = () =>
       shoppingCartService.cancel({ shoppingCartId, now: canceledAt });
 
-    await expect(cancel).rejects.toThrowError(
+    await expect(cancel).rejects.toThrow(
       ShoppingCartErrors.CART_IS_ALREADY_CLOSED
     );
 

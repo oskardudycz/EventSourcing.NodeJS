@@ -70,7 +70,7 @@ export const assertProductItemExists = (
     )?.quantity ?? 0;
 
   if (currentQuantity < quantity) {
-    throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+    throw new Error(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
   }
 };
 
@@ -92,7 +92,7 @@ export const addProductItemToShoppingCart = (
   shoppingCart: ShoppingCart
 ): ProductItemAddedToShoppingCart => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+    throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
   return {
     type: 'ProductItemAddedToShoppingCart',
@@ -108,7 +108,7 @@ export const removeProductItemFromShoppingCart = (
   shoppingCart: ShoppingCart
 ): ProductItemRemovedFromShoppingCart => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+    throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
 
   assertProductItemExists(shoppingCart.productItems, command.productItem);
@@ -127,11 +127,11 @@ export const confirmShoppingCart = (
   shoppingCart: ShoppingCart
 ): ShoppingCartConfirmed => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+    throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
 
   if (shoppingCart.productItems.length === 0) {
-    throw ShoppingCartErrors.CART_IS_EMPTY;
+    throw new Error(ShoppingCartErrors.CART_IS_EMPTY);
   }
 
   return {
@@ -148,7 +148,7 @@ export const cancelShoppingCart = (
   shoppingCart: ShoppingCart
 ): ShoppingCartCanceled => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+    throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
 
   return {

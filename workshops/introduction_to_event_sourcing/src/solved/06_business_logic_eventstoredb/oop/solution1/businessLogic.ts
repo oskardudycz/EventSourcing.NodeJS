@@ -251,7 +251,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
       }
       default: {
         const _: never = type;
-        throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+        throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
       }
     }
   };

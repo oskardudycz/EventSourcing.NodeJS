@@ -71,7 +71,7 @@ export const assertProductItemExists = (
     )?.quantity ?? 0;
 
   if (currentQuantity < quantity) {
-    throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+    throw new Error(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
   }
 };
 
@@ -93,7 +93,7 @@ export const decide = (
 
     case 'AddProductItemToShoppingCart': {
       if (shoppingCart.status !== ShoppingCartStatus.Pending) {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
       return {
         type: 'ProductItemAddedToShoppingCart',
@@ -106,7 +106,7 @@ export const decide = (
 
     case 'RemoveProductItemFromShoppingCart': {
       if (shoppingCart.status !== ShoppingCartStatus.Pending) {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       assertProductItemExists(shoppingCart.productItems, command.productItem);
@@ -122,11 +122,11 @@ export const decide = (
 
     case 'ConfirmShoppingCart': {
       if (shoppingCart.status !== ShoppingCartStatus.Pending) {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       if (shoppingCart.productItems.length === 0) {
-        throw ShoppingCartErrors.CART_IS_EMPTY;
+        throw new Error(ShoppingCartErrors.CART_IS_EMPTY);
       }
 
       return {
@@ -140,7 +140,7 @@ export const decide = (
 
     case 'CancelShoppingCart': {
       if (shoppingCart.status !== ShoppingCartStatus.Pending) {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       return {
@@ -153,7 +153,7 @@ export const decide = (
     }
     default: {
       const _: never = command;
-      throw ShoppingCartErrors.UNKNOWN_COMMAND_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_COMMAND_TYPE);
     }
   }
 };
