@@ -1,4 +1,4 @@
-# Exercise 05 - Business Logic
+# Exercise 06 - Business Logic with EventStoreDB
 
 Having the following shopping cart process:
 
@@ -18,12 +18,6 @@ There are two variations:
 - using mutable entities: [./oop/BusinessLogicTests.cs](./oop/businessLogic.exercise.test.ts),
 - using fully immutable structures: [./immutable/BusinessLogicTests.cs](./immutable/businessLogic.exercise.test.ts),
 
-Select your preferred approach (or both) to solve this use case.
+Select your preferred approach (or all) to solve this use case using EventStoreDB.
 
 _**Note**: If needed update entities, events or test setup structure_
-
-## Solution
-
-1. Classical, mutable aggregates (rich domain model): [oop/solution1/businessLogic.solved.test.ts](./oop/solution1/businessLogic.solved.test.ts).
-2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [oop/solution2/businessLogic.solved.test.ts](./oop/solution2/businessLogic.solved.test.ts).
-3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/solution1/businessLogic.solved.test.ts](./immutable/solution1/businessLogic.solved.test.ts).
