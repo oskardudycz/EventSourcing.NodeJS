@@ -8,10 +8,10 @@ import { ETag } from './eTag';
 import { AppendResult, appendToStream, readStream } from './streams';
 
 export const CommandHandler =
-  <State, CommandType extends Command, EventType extends Event>(
+  <State, CommandType extends Command, StreamEvent extends Event>(
     getEventStore: () => EventStoreDBClient,
     toStreamId: (recordId: string) => string,
-    decider: Decider<State, CommandType, EventType>
+    decider: Decider<State, CommandType, StreamEvent>
   ) =>
   async (
     recordId: string,
@@ -21,7 +21,7 @@ export const CommandHandler =
     const eventStore = getEventStore();
 
     const streamId = toStreamId(recordId);
-    const events = await readStream<EventType>(eventStore, streamId);
+    const events = await readStream<StreamEvent>(eventStore, streamId);
 
     const state = events.reduce<State>(
       decider.evolve,

@@ -3,7 +3,11 @@
 //////////////////////////////////////
 
 import {
-  EventStore,
+  EventStoreDBClient,
+  jsonEvent,
+  StreamNotFoundError,
+} from '@eventstore/db-client';
+import {
   PricedProductItem,
   ShoppingCart,
   ShoppingCartEvent,
@@ -86,7 +90,7 @@ export const decide = (
         data: {
           shoppingCartId: command.shoppingCartId,
           clientId: command.clientId,
-          openedAt: command.now,
+          openedAt: command.now.toISOString(),
         },
       };
     }
@@ -133,7 +137,7 @@ export const decide = (
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId: command.shoppingCartId,
-          confirmedAt: command.now,
+          confirmedAt: command.now.toISOString(),
         },
       };
     }
@@ -147,7 +151,7 @@ export const decide = (
         type: 'ShoppingCartCanceled',
         data: {
           shoppingCartId: command.shoppingCartId,
-          canceledAt: command.now,
+          canceledAt: command.now.toISOString(),
         },
       };
     }
@@ -185,20 +189,39 @@ export type Decider<
 };
 
 export const CommandHandler =
-  <State, CommandType extends Command, StreamEvent extends Event>({
-    decide,
-    evolve,
-    getInitialState,
-  }: Decider<State, CommandType, StreamEvent>) =>
-  (eventStore: EventStore, streamId: string, command: CommandType): void => {
-    const events = eventStore.readStream<StreamEvent>(streamId);
+  <State, CommandType extends Command, StreamEvent extends Event>(
+    {
+      decide,
+      evolve,
+      getInitialState,
+    }: Decider<State, CommandType, StreamEvent>,
+    mapToStreamId: (id: string) => string
+  ) =>
+  async (eventStore: EventStoreDBClient, id: string, command: CommandType) => {
+    const streamId = mapToStreamId(id);
 
-    const state = events.reduce<State>(evolve, getInitialState());
+    let state = getInitialState();
+
+    try {
+      const readResult = eventStore.readStream<StreamEvent>(streamId);
+
+      for await (const { event } of readResult) {
+        if (!event) continue;
+
+        state = evolve(state, <StreamEvent>{
+          type: event.type,
+          data: event.data,
+        });
+      }
+    } catch (error) {
+      if (!(error instanceof StreamNotFoundError)) {
+        throw error;
+      }
+    }
 
     const result = decide(command, state);
 
-    eventStore.appendToStream(
-      streamId,
-      Array.isArray(result) ? result : [result]
-    );
+    const eventsToAppend = Array.isArray(result) ? result : [result];
+
+    return eventStore.appendToStream(streamId, eventsToAppend.map(jsonEvent));
   };

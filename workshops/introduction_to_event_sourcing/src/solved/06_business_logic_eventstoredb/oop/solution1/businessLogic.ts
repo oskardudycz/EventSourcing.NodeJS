@@ -1,9 +1,14 @@
 import {
+  EventStoreDBClient,
+  jsonEvent,
+  StreamNotFoundError,
+} from '@eventstore/db-client';
+import {
   PricedProductItem,
   ShoppingCartEvent,
   ShoppingCartStatus,
 } from './businessLogic.solved.test';
-import { Event, EventStore } from './businessLogic.solved.test';
+import { Event } from './businessLogic.solved.test';
 
 export abstract class Aggregate<E extends Event> {
   #uncommitedEvents: Event[] = [];
@@ -24,8 +29,8 @@ export abstract class Aggregate<E extends Event> {
 }
 
 export interface Repository<Entity> {
-  find(id: string): Entity;
-  store(id: string, entity: Entity): void;
+  find(id: string): Promise<Entity>;
+  store(id: string, entity: Entity): Promise<void>;
 }
 
 export class EventStoreRepository<
@@ -34,40 +39,57 @@ export class EventStoreRepository<
 > implements Repository<Entity>
 {
   constructor(
-    private eventStore: EventStore,
-    private getInitialState: () => Entity
+    private eventStore: EventStoreDBClient,
+    private getInitialState: () => Entity,
+    private mapToStreamId: (id: string) => string
   ) {}
 
-  find = (id: string): Entity => {
-    const currentState = this.getInitialState();
+  find = async (id: string): Promise<Entity> => {
+    const state = this.getInitialState();
 
-    const events = this.eventStore.readStream<StreamEvent>(id);
+    try {
+      const readResult = this.eventStore.readStream<StreamEvent>(
+        this.mapToStreamId(id)
+      );
 
-    for (const event of events) {
-      currentState.evolve(event);
+      for await (const { event } of readResult) {
+        if (!event) continue;
+
+        state.evolve(<StreamEvent>{
+          type: event.type,
+          data: event.data,
+        });
+      }
+    } catch (error) {
+      if (!(error instanceof StreamNotFoundError)) {
+        throw error;
+      }
     }
 
-    return currentState;
+    return state;
   };
 
-  store = (id: string, entity: Entity): void => {
+  store = async (id: string, entity: Entity): Promise<void> => {
     const events = entity.dequeueUncommitedEvents();
 
     if (events.length === 0) return;
 
-    this.eventStore.appendToStream(id, events);
+    await this.eventStore.appendToStream(
+      this.mapToStreamId(id),
+      events.map(jsonEvent)
+    );
   };
 }
 
 export abstract class ApplicationService<Entity> {
   constructor(protected repository: Repository<Entity>) {}
 
-  protected on = (id: string, handle: (state: Entity) => void) => {
-    const aggregate = this.repository.find(id);
+  protected on = async (id: string, handle: (state: Entity) => void) => {
+    const aggregate = await this.repository.find(id);
 
     handle(aggregate);
 
-    this.repository.store(id, aggregate);
+    await this.repository.store(id, aggregate);
   };
 }
 
@@ -126,7 +148,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
   public open = (shoppingCartId: string, clientId: string, now: Date) => {
     this.enqueue({
       type: 'ShoppingCartOpened',
-      data: { shoppingCartId, clientId, openedAt: now },
+      data: { shoppingCartId, clientId, openedAt: now.toISOString() },
     });
   };
 
@@ -155,7 +177,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
 
     this.enqueue({
       type: 'ShoppingCartConfirmed',
-      data: { shoppingCartId: this._id, confirmedAt: now },
+      data: { shoppingCartId: this._id, confirmedAt: now.toISOString() },
     });
   };
 
@@ -164,7 +186,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
 
     this.enqueue({
       type: 'ShoppingCartCanceled',
-      data: { shoppingCartId: this._id, canceledAt: now },
+      data: { shoppingCartId: this._id, canceledAt: now.toISOString() },
     });
   };
 
@@ -174,7 +196,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
         this._id = event.shoppingCartId;
         this._clientId = event.clientId;
         this._status = ShoppingCartStatus.Pending;
-        this._openedAt = event.openedAt;
+        this._openedAt = new Date(event.openedAt);
         this._productItems = [];
         return;
       }
@@ -219,12 +241,12 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
       }
       case 'ShoppingCartConfirmed': {
         this._status = ShoppingCartStatus.Confirmed;
-        this._confirmedAt = event.confirmedAt;
+        this._confirmedAt = new Date(event.confirmedAt);
         return;
       }
       case 'ShoppingCartCanceled': {
         this._status = ShoppingCartStatus.Canceled;
-        this._canceledAt = event.canceledAt;
+        this._canceledAt = new Date(event.canceledAt);
         return;
       }
       default: {

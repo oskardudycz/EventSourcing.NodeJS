@@ -1,7 +1,4 @@
-import {
-  StartedEventStoreDBContainer,
-  EventStoreDBContainer,
-} from '#core/testing/eventStoreDB/eventStoreDBContainer';
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
 
@@ -22,7 +19,7 @@ export type ShoppingCartEvent =
       data: {
         shoppingCartId: string;
         clientId: string;
-        openedAt: Date;
+        openedAt: string;
       };
     }
   | {
@@ -43,14 +40,14 @@ export type ShoppingCartEvent =
       type: 'ShoppingCartConfirmed';
       data: {
         shoppingCartId: string;
-        confirmedAt: Date;
+        confirmedAt: string;
       };
     }
   | {
       type: 'ShoppingCartCanceled';
       data: {
         shoppingCartId: string;
-        canceledAt: Date;
+        canceledAt: string;
       };
     };
 
@@ -117,7 +114,7 @@ export const evolve = (
       return {
         id: event.shoppingCartId,
         clientId: event.clientId,
-        openedAt: event.openedAt,
+        openedAt: new Date(event.openedAt),
         productItems: [],
         status: ShoppingCartStatus.Pending,
       };
@@ -167,13 +164,13 @@ export const evolve = (
       return {
         ...state,
         status: ShoppingCartStatus.Confirmed,
-        confirmedAt: event.confirmedAt,
+        confirmedAt: new Date(event.confirmedAt),
       };
     case 'ShoppingCartCanceled':
       return {
         ...state,
         status: ShoppingCartStatus.Canceled,
-        canceledAt: event.canceledAt,
+        canceledAt: new Date(event.canceledAt),
       };
   }
 };
@@ -184,12 +181,14 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
 };
 
 export type Event<
-  EventType extends string = string,
+  StreamEvent extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>
 > = Readonly<{
-  type: Readonly<EventType>;
+  type: Readonly<StreamEvent>;
   data: Readonly<EventData>;
 }>;
+
+export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
 export const readStream = async (
   eventStore: EventStoreDBClient,
@@ -209,19 +208,11 @@ export const readStream = async (
   return events;
 };
 
-export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
-
 describe('Getting state from events', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
   let eventStore: EventStoreDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    const connectionString = esdbContainer.getConnectionString();
-
-    // That's how EventStoreDB client is setup
-    // We're taking the connection string from container
-    eventStore = EventStoreDBClient.connectionString(connectionString);
+    eventStore = await getEventStoreDBTestClient();
   });
 
   it('Should return the state from the sequence of events', async () => {
@@ -263,7 +254,7 @@ describe('Getting state from events', () => {
         data: {
           shoppingCartId,
           clientId,
-          openedAt,
+          openedAt: openedAt.toISOString(),
         },
       },
       {
@@ -288,7 +279,7 @@ describe('Getting state from events', () => {
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId,
-          confirmedAt,
+          confirmedAt: confirmedAt.toISOString(),
         },
       },
       // This should fail
@@ -296,7 +287,7 @@ describe('Getting state from events', () => {
       //   type: 'ShoppingCartCanceled',
       //   data: {
       //     shoppingCartId,
-      //     canceledAt,
+      //     canceledAt: canceledAt.toISOString(),
       //   },
       // },
     ]);

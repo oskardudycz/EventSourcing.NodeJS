@@ -1,4 +1,15 @@
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
+import { EventStoreDBClient, StreamNotFoundError } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
+import {
+  ShoppingCartErrors,
+  openShoppingCart,
+  addProductItemToShoppingCart,
+  removeProductItemFromShoppingCart,
+  confirmShoppingCart,
+  cancelShoppingCart,
+  handleCommand,
+} from './businessLogic';
 
 // 1. Define your events and entity here
 
@@ -11,43 +22,53 @@ export type PricedProductItem = ProductItem & {
   unitPrice: number;
 };
 
+export type ShoppingCartOpened = Event<
+  'ShoppingCartOpened',
+  {
+    shoppingCartId: string;
+    clientId: string;
+    openedAt: string;
+  }
+>;
+
+export type ProductItemAddedToShoppingCart = Event<
+  'ProductItemAddedToShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  }
+>;
+
+export type ProductItemRemovedFromShoppingCart = Event<
+  'ProductItemRemovedFromShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  }
+>;
+
+export type ShoppingCartConfirmed = Event<
+  'ShoppingCartConfirmed',
+  {
+    shoppingCartId: string;
+    confirmedAt: string;
+  }
+>;
+
+export type ShoppingCartCanceled = Event<
+  'ShoppingCartCanceled',
+  {
+    shoppingCartId: string;
+    canceledAt: string;
+  }
+>;
+
 export type ShoppingCartEvent =
-  | {
-      type: 'ShoppingCartOpened';
-      data: {
-        shoppingCartId: string;
-        clientId: string;
-        openedAt: Date;
-      };
-    }
-  | {
-      type: 'ProductItemAddedToShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ProductItemRemovedFromShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ShoppingCartConfirmed';
-      data: {
-        shoppingCartId: string;
-        confirmedAt: Date;
-      };
-    }
-  | {
-      type: 'ShoppingCartCanceled';
-      data: {
-        shoppingCartId: string;
-        canceledAt: Date;
-      };
-    };
+  | ShoppingCartOpened
+  | ProductItemAddedToShoppingCart
+  | ProductItemRemovedFromShoppingCart
+  | ShoppingCartConfirmed
+  | ShoppingCartCanceled;
 
 export enum ShoppingCartStatus {
   Pending = 'Pending',
@@ -112,7 +133,7 @@ export const evolve = (
       return {
         id: event.shoppingCartId,
         clientId: event.clientId,
-        openedAt: event.openedAt,
+        openedAt: new Date(event.openedAt),
         productItems: [],
         status: ShoppingCartStatus.Pending,
       };
@@ -162,14 +183,18 @@ export const evolve = (
       return {
         ...state,
         status: ShoppingCartStatus.Confirmed,
-        confirmedAt: event.confirmedAt,
+        confirmedAt: new Date(event.confirmedAt),
       };
     case 'ShoppingCartCanceled':
       return {
         ...state,
         status: ShoppingCartStatus.Canceled,
-        canceledAt: event.canceledAt,
+        canceledAt: new Date(event.canceledAt),
       };
+    default: {
+      const _: never = type;
+      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
+    }
   }
 };
 
@@ -186,35 +211,54 @@ export type Event<
   data: Readonly<EventData>;
 }>;
 
-export interface EventStore {
-  readStream<E extends Event>(streamId: string): E[];
-  appendToStream(streamId: string, events: Event[]): void;
-}
+export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
-export const getEventStore = () => {
-  const streams = new Map<string, Event[]>();
+const handle = handleCommand(
+  evolve,
+  () => ({} as ShoppingCart),
+  mapShoppingCartStreamId
+);
 
-  return {
-    readStream: <E extends Event>(streamId: string): E[] => {
-      return streams.get(streamId)?.map((e) => <E>e) ?? [];
-    },
-    appendToStream: (streamId: string, events: Event[]): void => {
-      const current = streams.get(streamId) ?? [];
+export const readStream = async (
+  eventStore: EventStoreDBClient,
+  shoppingCartId: string
+) => {
+  try {
+    const readResult = eventStore.readStream<ShoppingCartEvent>(
+      mapShoppingCartStreamId(shoppingCartId)
+    );
 
-      streams.set(streamId, [...current, ...events]);
-    },
-  };
+    const events: ShoppingCartEvent[] = [];
+
+    for await (const { event } of readResult) {
+      if (!event) continue;
+      events.push(<ShoppingCartEvent>{ type: event.type, data: event.data });
+    }
+
+    return events;
+  } catch (error) {
+    if (error instanceof StreamNotFoundError) {
+      return [];
+    }
+
+    throw error;
+  }
 };
 
 describe('Getting state from events', () => {
-  it('Should return the state from the sequence of events', () => {
-    const eventStore = getEventStore();
+  let eventStore: EventStoreDBClient;
+
+  beforeAll(async () => {
+    eventStore = await getEventStoreDBTestClient();
+  });
+
+  it('Should return the state from the sequence of events', async () => {
     const shoppingCartId = uuid();
 
     const clientId = uuid();
     const openedAt = new Date();
     const confirmedAt = new Date();
-    // const canceledAt = new Date();
+    const canceledAt = new Date();
 
     const shoesId = uuid();
 
@@ -236,10 +280,53 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    // TODO: Fill the events store results of your business logic
-    // to be the same as events below
+    await handle(eventStore, shoppingCartId, (_) =>
+      openShoppingCart({ clientId, shoppingCartId, now: openedAt })
+    );
 
-    const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
+    await handle(eventStore, shoppingCartId, (state) =>
+      addProductItemToShoppingCart(
+        {
+          shoppingCartId,
+          productItem: twoPairsOfShoes,
+        },
+        state
+      )
+    );
+
+    await handle(eventStore, shoppingCartId, (state) =>
+      addProductItemToShoppingCart(
+        {
+          shoppingCartId,
+          productItem: tShirt,
+        },
+        state
+      )
+    );
+
+    await handle(eventStore, shoppingCartId, (state) =>
+      removeProductItemFromShoppingCart(
+        {
+          shoppingCartId,
+          productItem: pairOfShoes,
+        },
+        state
+      )
+    );
+
+    await handle(eventStore, shoppingCartId, (state) =>
+      confirmShoppingCart({ shoppingCartId, now: confirmedAt }, state)
+    );
+
+    const cancel = () =>
+      handle(eventStore, shoppingCartId, (state) =>
+        cancelShoppingCart({ shoppingCartId, now: canceledAt }, state)
+      );
+
+    await expect(cancel).rejects.toThrowError(
+      ShoppingCartErrors.CART_IS_ALREADY_CLOSED
+    );
+    const events = await readStream(eventStore, shoppingCartId);
 
     expect(events).toEqual([
       {
@@ -247,7 +334,7 @@ describe('Getting state from events', () => {
         data: {
           shoppingCartId,
           clientId,
-          openedAt,
+          openedAt: openedAt.toISOString(),
         },
       },
       {
@@ -272,7 +359,7 @@ describe('Getting state from events', () => {
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId,
-          confirmedAt,
+          confirmedAt: confirmedAt.toISOString(),
         },
       },
       // This should fail
@@ -280,7 +367,7 @@ describe('Getting state from events', () => {
       //   type: 'ShoppingCartCanceled',
       //   data: {
       //     shoppingCartId,
-      //     canceledAt,
+      //     canceledAt: canceledAt.toISOString(),
       //   },
       // },
     ]);

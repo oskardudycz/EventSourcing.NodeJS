@@ -29,16 +29,18 @@ export const getEventStore = (connectionString?: string) => {
   return eventStore;
 };
 
-export const readStream = async <EventType extends Event>(
+export const readStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamId: string
-): Promise<EventType[]> => {
+): Promise<StreamEvent[]> => {
   const events = [];
   try {
-    for await (const { event } of eventStore.readStream<EventType>(streamId)) {
+    for await (const { event } of eventStore.readStream<StreamEvent>(
+      streamId
+    )) {
       if (!event) continue;
 
-      events.push(<EventType>{
+      events.push(<StreamEvent>{
         type: event.type,
         data: event.data,
       });
