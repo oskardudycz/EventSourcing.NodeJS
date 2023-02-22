@@ -1,7 +1,4 @@
-import {
-  StartedEventStoreDBContainer,
-  EventStoreDBContainer,
-} from '#core/testing/eventStoreDB/eventStoreDBContainer';
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import {
   ANY,
   AppendResult,
@@ -189,23 +186,25 @@ export const evolve = (
 };
 
 export type Event<
-  EventType extends string = string,
+  StreamEvent extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>
 > = Readonly<{
-  type: Readonly<EventType>;
+  type: Readonly<StreamEvent>;
   data: Readonly<EventData>;
 }>;
 
-export const readStream = async <EventType extends Event>(
+export const readStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamId: string
-): Promise<EventType[]> => {
+): Promise<StreamEvent[]> => {
   const events = [];
   try {
-    for await (const { event } of eventStore.readStream<EventType>(streamId)) {
+    for await (const { event } of eventStore.readStream<StreamEvent>(
+      streamId
+    )) {
       if (!event) continue;
 
-      events.push(<EventType>{
+      events.push(<StreamEvent>{
         type: event.type,
         data: event.data,
       });
@@ -220,10 +219,10 @@ export const readStream = async <EventType extends Event>(
   }
 };
 
-const appendEvents = async <EventType extends Event>(
+const appendToStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: EventType[]
+  events: StreamEvent[]
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 
@@ -244,20 +243,10 @@ export const getShoppingCart = async (
 };
 
 describe('Events definition', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
   let eventStore: EventStoreDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    const connectionString = esdbContainer.getConnectionString();
-
-    // That's how EventStoreDB client is setup
-    // We're taking the connection string from container
-    eventStore = EventStoreDBClient.connectionString(connectionString);
-  });
-
-  afterAll(async () => {
-    if (eventStore) await eventStore.dispose();
+    eventStore = await getEventStoreDBTestClient();
   });
 
   it('all event types should be defined', async () => {
@@ -334,7 +323,7 @@ describe('Events definition', () => {
 
     const streamName = `shopping_cart-${shoppingCartId}`;
 
-    await appendEvents(eventStore, streamName, events);
+    await appendToStream(eventStore, streamName, events);
 
     const shoppingCart = await getShoppingCart(eventStore, streamName);
 

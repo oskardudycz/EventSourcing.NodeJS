@@ -3,7 +3,11 @@
 //////////////////////////////////////
 
 import {
-  EventStore,
+  EventStoreDBClient,
+  jsonEvent,
+  StreamNotFoundError,
+} from '@eventstore/db-client';
+import {
   PricedProductItem,
   ProductItemAddedToShoppingCart,
   ProductItemRemovedFromShoppingCart,
@@ -82,7 +86,7 @@ export const openShoppingCart = (
     data: {
       shoppingCartId: command.shoppingCartId,
       clientId: command.clientId,
-      openedAt: command.now,
+      openedAt: command.now.toISOString(),
     },
   };
 };
@@ -138,7 +142,7 @@ export const confirmShoppingCart = (
     type: 'ShoppingCartConfirmed',
     data: {
       shoppingCartId: command.shoppingCartId,
-      confirmedAt: command.now,
+      confirmedAt: command.now.toISOString(),
     },
   };
 };
@@ -147,7 +151,9 @@ export const cancelShoppingCart = (
   command: CancelShoppingCart,
   shoppingCart: ShoppingCart
 ): ShoppingCartCanceled => {
+  console.log('teeeest' + shoppingCart.status);
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
+    console.log('THROWING! ' + ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
     throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
   }
 
@@ -155,7 +161,7 @@ export const cancelShoppingCart = (
     type: 'ShoppingCartCanceled',
     data: {
       shoppingCartId: command.shoppingCartId,
-      canceledAt: command.now,
+      canceledAt: command.now.toISOString(),
     },
   };
 };
@@ -171,18 +177,36 @@ export type Event<
 export const handleCommand =
   <State, StreamEvent extends Event>(
     evolve: (state: State, event: StreamEvent) => State,
-    getInitialState: () => State
+    getInitialState: () => State,
+    mapToStreamId: (id: string) => string
   ) =>
-  (
-    eventStore: EventStore,
+  async (
+    eventStore: EventStoreDBClient,
     id: string,
     handle: (state: State) => StreamEvent | StreamEvent[]
   ) => {
-    const events = eventStore.readStream<StreamEvent>(id);
+    const streamId = mapToStreamId(id);
+    let state = getInitialState();
+    try {
+      const readResult = eventStore.readStream<StreamEvent>(streamId);
 
-    const state = events.reduce<State>(evolve, getInitialState());
+      for await (const { event } of readResult) {
+        if (!event) continue;
+
+        state = evolve(state, <StreamEvent>{
+          type: event.type,
+          data: event.data,
+        });
+      }
+    } catch (error) {
+      if (!(error instanceof StreamNotFoundError)) {
+        throw error;
+      }
+    }
 
     const result = handle(state);
 
-    eventStore.appendToStream(id, Array.isArray(result) ? result : [result]);
+    const eventsToAppend = Array.isArray(result) ? result : [result];
+
+    return eventStore.appendToStream(streamId, eventsToAppend.map(jsonEvent));
   };

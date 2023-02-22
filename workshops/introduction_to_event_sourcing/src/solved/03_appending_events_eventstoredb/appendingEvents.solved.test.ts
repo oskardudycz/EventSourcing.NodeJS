@@ -1,7 +1,4 @@
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#core/testing/eventStoreDB/eventStoreDBContainer';
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import {
   ANY,
   AppendResult,
@@ -59,7 +56,7 @@ export type ShoppingCartEvent =
       };
     };
 
-const appendEvents = async (
+const appendToStream = async (
   eventStore: EventStoreDBClient,
   streamName: string,
   events: ShoppingCartEvent[]
@@ -72,20 +69,12 @@ const appendEvents = async (
 };
 
 describe('Appending events', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
   let eventStore: EventStoreDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    const connectionString = esdbContainer.getConnectionString();
-
     // That's how EventStoreDB client is setup
     // We're taking the connection string from container
-    eventStore = EventStoreDBClient.connectionString(connectionString);
-  });
-
-  afterAll(async () => {
-    if (eventStore) await eventStore.dispose();
+    eventStore = await getEventStoreDBTestClient();
   });
 
   it('should append events to EventStoreDB', async () => {
@@ -136,7 +125,7 @@ describe('Appending events', () => {
 
     const streamName = `shopping_cart-${shoppingCartId}`;
 
-    const appendResult = await appendEvents(eventStore, streamName, events);
+    const appendResult = await appendToStream(eventStore, streamName, events);
 
     expect(Number(appendResult.nextExpectedRevision)).toBe(events.length - 1);
   });

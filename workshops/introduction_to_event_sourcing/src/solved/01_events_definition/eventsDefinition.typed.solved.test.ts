@@ -3,10 +3,10 @@ import { v4 as uuid } from 'uuid';
 // 1. Define your events and entity here
 
 export type Event<
-  EventType extends string = string,
+  StreamEvent extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>
 > = Readonly<{
-  type: Readonly<EventType>;
+  type: Readonly<StreamEvent>;
   data: Readonly<EventData>;
 }>;
 

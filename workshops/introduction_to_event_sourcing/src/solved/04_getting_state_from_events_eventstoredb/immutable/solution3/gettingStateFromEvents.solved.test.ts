@@ -1,7 +1,4 @@
-import {
-  StartedEventStoreDBContainer,
-  EventStoreDBContainer,
-} from '#core/testing/eventStoreDB/eventStoreDBContainer';
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import {
   ANY,
   AppendResult,
@@ -189,17 +186,17 @@ export const evolve = (
 };
 
 export type Event<
-  EventType extends string = string,
+  StreamEvent extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>
 > = Readonly<{
-  type: Readonly<EventType>;
+  type: Readonly<StreamEvent>;
   data: Readonly<EventData>;
 }>;
 
 export const StreamAggregator =
   <Entity, StreamEvent extends Event>(
     evolve: (currentState: Entity, event: StreamEvent) => Entity,
-    getDefault: () => Entity,
+    getInitialState: () => Entity,
     mapToStreamId: (id: string) => string
   ) =>
   async (
@@ -207,7 +204,7 @@ export const StreamAggregator =
     id: string
   ): Promise<Entity | undefined> => {
     try {
-      let currentState = getDefault();
+      let currentState = getInitialState();
       for await (const { event } of eventStore.readStream(mapToStreamId(id))) {
         if (!event) continue;
         currentState = evolve(currentState, <StreamEvent>{
@@ -225,10 +222,10 @@ export const StreamAggregator =
     }
   };
 
-const appendEvents = async <EventType extends Event>(
+const appendToStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: EventType[]
+  events: StreamEvent[]
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 
@@ -246,20 +243,10 @@ export const getShoppingCart = StreamAggregator(
 );
 
 describe('Events definition', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
   let eventStore: EventStoreDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    const connectionString = esdbContainer.getConnectionString();
-
-    // That's how EventStoreDB client is setup
-    // We're taking the connection string from container
-    eventStore = EventStoreDBClient.connectionString(connectionString);
-  });
-
-  afterAll(async () => {
-    if (eventStore) await eventStore.dispose();
+    eventStore = await getEventStoreDBTestClient();
   });
 
   it('all event types should be defined', async () => {
@@ -334,7 +321,7 @@ describe('Events definition', () => {
       },
     ];
 
-    await appendEvents(
+    await appendToStream(
       eventStore,
       mapShoppingCartStreamId(shoppingCartId),
       events

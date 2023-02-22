@@ -190,16 +190,16 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
 };
 
 export type Event<
-  EventType extends string = string,
+  StreamEvent extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>
 > = Readonly<{
-  type: Readonly<EventType>;
+  type: Readonly<StreamEvent>;
   data: Readonly<EventData>;
 }>;
 
 export interface EventStore {
   readStream<E extends Event>(streamId: string): E[];
-  appendEvents(streamId: string, events: Event[]): void;
+  appendToStream(streamId: string, events: Event[]): void;
 }
 
 export const getEventStore = () => {
@@ -209,7 +209,7 @@ export const getEventStore = () => {
     readStream: <E extends Event>(streamId: string): E[] => {
       return streams.get(streamId)?.map((e) => <E>e) ?? [];
     },
-    appendEvents: (streamId: string, events: Event[]): void => {
+    appendToStream: (streamId: string, events: Event[]): void => {
       const current = streams.get(streamId) ?? [];
 
       streams.set(streamId, [...current, ...events]);
@@ -223,7 +223,7 @@ const decider: Decider<ShoppingCart, ShoppingCartCommand, ShoppingCartEvent> = {
   getInitialState: () => ({} as ShoppingCart),
 };
 
-export const getAndUpdate = CommandHandler(decider);
+export const handle = CommandHandler(decider);
 
 describe('Getting state from events', () => {
   it('Should return the state from the sequence of events', () => {
@@ -255,33 +255,33 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    getAndUpdate(eventStore, shoppingCartId, {
+    handle(eventStore, shoppingCartId, {
       type: 'OpenShoppingCart',
       data: { clientId, shoppingCartId, now: openedAt },
     });
 
-    getAndUpdate(eventStore, shoppingCartId, {
+    handle(eventStore, shoppingCartId, {
       type: 'AddProductItemToShoppingCart',
       data: { shoppingCartId, productItem: twoPairsOfShoes },
     });
 
-    getAndUpdate(eventStore, shoppingCartId, {
+    handle(eventStore, shoppingCartId, {
       type: 'AddProductItemToShoppingCart',
       data: { shoppingCartId, productItem: tShirt },
     });
 
-    getAndUpdate(eventStore, shoppingCartId, {
+    handle(eventStore, shoppingCartId, {
       type: 'RemoveProductItemFromShoppingCart',
       data: { shoppingCartId, productItem: pairOfShoes },
     });
 
-    getAndUpdate(eventStore, shoppingCartId, {
+    handle(eventStore, shoppingCartId, {
       type: 'ConfirmShoppingCart',
       data: { shoppingCartId, now: confirmedAt },
     });
 
     const cancel = () =>
-      getAndUpdate(eventStore, shoppingCartId, {
+      handle(eventStore, shoppingCartId, {
         type: 'CancelShoppingCart',
         data: { shoppingCartId, now: canceledAt },
       });

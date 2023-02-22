@@ -1,77 +1,88 @@
 import {
+  EventStoreDBClient,
+  jsonEvent,
+  StreamNotFoundError,
+} from '@eventstore/db-client';
+import {
+  Event,
   PricedProductItem,
+  ProductItemAddedToShoppingCart,
+  ProductItemRemovedFromShoppingCart,
+  ShoppingCartCanceled,
+  ShoppingCartConfirmed,
   ShoppingCartEvent,
+  ShoppingCartOpened,
   ShoppingCartStatus,
 } from './businessLogic.solved.test';
-import { Event, EventStore } from './businessLogic.solved.test';
 
-export abstract class Aggregate<E extends Event> {
-  #uncommitedEvents: Event[] = [];
-
-  abstract evolve(event: E): void;
-
-  protected enqueue = (event: E) => {
-    this.#uncommitedEvents = [...this.#uncommitedEvents, event];
-  };
-
-  dequeueUncommitedEvents = (): Event[] => {
-    const events = this.#uncommitedEvents;
-
-    this.#uncommitedEvents = [];
-
-    return events;
-  };
+export interface Repository<Entity, StreamEvent extends Event> {
+  find(id: string): Promise<Entity>;
+  store(id: string, ...events: StreamEvent[]): Promise<void>;
 }
 
-export interface Repository<Entity> {
-  find(id: string): Entity;
-  store(id: string, entity: Entity): void;
-}
-
-export class EventStoreRepository<
-  Entity extends Aggregate<StreamEvent>,
-  StreamEvent extends Event
-> implements Repository<Entity>
+export class EventStoreRepository<Entity, StreamEvent extends Event>
+  implements Repository<Entity, StreamEvent>
 {
   constructor(
-    private eventStore: EventStore,
-    private getInitialState: () => Entity
+    private eventStore: EventStoreDBClient,
+    private getInitialState: () => Entity,
+    private evolve: (state: Entity, event: StreamEvent) => Entity,
+    private mapToStreamId: (id: string) => string
   ) {}
 
-  find = (id: string): Entity => {
-    const currentState = this.getInitialState();
+  find = async (id: string): Promise<Entity> => {
+    const state = this.getInitialState();
+    try {
+      const readResult = this.eventStore.readStream<StreamEvent>(
+        this.mapToStreamId(id)
+      );
 
-    const events = this.eventStore.readStream<StreamEvent>(id);
+      for await (const { event } of readResult) {
+        if (!event) continue;
 
-    for (const event of events) {
-      currentState.evolve(event);
+        this.evolve(state, <StreamEvent>{
+          type: event.type,
+          data: event.data,
+        });
+      }
+    } catch (error) {
+      if (!(error instanceof StreamNotFoundError)) {
+        throw error;
+      }
     }
 
-    return currentState;
+    return state;
   };
 
-  store = (id: string, entity: Entity): void => {
-    const events = entity.dequeueUncommitedEvents();
-
+  store = async (id: string, ...events: StreamEvent[]): Promise<void> => {
     if (events.length === 0) return;
 
-    this.eventStore.appendToStream(id, events);
+    await this.eventStore.appendToStream(
+      this.mapToStreamId(id),
+      events.map(jsonEvent)
+    );
   };
 }
 
-export abstract class ApplicationService<Entity> {
-  constructor(protected repository: Repository<Entity>) {}
+export abstract class ApplicationService<Entity, StreamEvent extends Event> {
+  constructor(protected repository: Repository<Entity, StreamEvent>) {}
 
-  protected on = (id: string, handle: (state: Entity) => void) => {
-    const aggregate = this.repository.find(id);
+  protected on = async (
+    id: string,
+    handle: (state: Entity) => StreamEvent | StreamEvent[]
+  ) => {
+    const aggregate = await this.repository.find(id);
 
-    handle(aggregate);
+    const result = handle(aggregate);
 
-    this.repository.store(id, aggregate);
+    return this.repository.store(
+      id,
+      ...(Array.isArray(result) ? result : [result])
+    );
   };
 }
 
-export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
+export class ShoppingCart {
   private constructor(
     private _id: string,
     private _clientId: string,
@@ -80,9 +91,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
     private _canceledAt?: Date
-  ) {
-    super();
-  }
+  ) {}
 
   get id() {
     return this._id;
@@ -123,109 +132,120 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
       undefined
     );
 
-  public open = (shoppingCartId: string, clientId: string, now: Date) => {
-    this.enqueue({
+  public open = (
+    shoppingCartId: string,
+    clientId: string,
+    now: Date
+  ): ShoppingCartOpened => {
+    return {
       type: 'ShoppingCartOpened',
-      data: { shoppingCartId, clientId, openedAt: now },
-    });
+      data: { shoppingCartId, clientId, openedAt: now.toISOString() },
+    };
   };
 
-  public addProductItem = (productItem: PricedProductItem): void => {
+  public addProductItem = (
+    productItem: PricedProductItem
+  ): ProductItemAddedToShoppingCart => {
     this.assertIsPending();
 
-    this.enqueue({
+    return {
       type: 'ProductItemAddedToShoppingCart',
       data: { productItem, shoppingCartId: this._id },
-    });
+    };
   };
 
-  public removeProductItem = (productItem: PricedProductItem): void => {
+  public removeProductItem = (
+    productItem: PricedProductItem
+  ): ProductItemRemovedFromShoppingCart => {
     this.assertIsPending();
     this.assertProductItemExists(productItem);
 
-    this.enqueue({
+    return {
       type: 'ProductItemRemovedFromShoppingCart',
       data: { productItem, shoppingCartId: this._id },
-    });
+    };
   };
 
-  public confirm = (now: Date): void => {
+  public confirm = (now: Date): ShoppingCartConfirmed => {
     this.assertIsPending();
     this.assertIsNotEmpty();
 
-    this.enqueue({
+    return {
       type: 'ShoppingCartConfirmed',
-      data: { shoppingCartId: this._id, confirmedAt: now },
-    });
+      data: { shoppingCartId: this._id, confirmedAt: now.toISOString() },
+    };
   };
 
-  public cancel = (now: Date): void => {
+  public cancel = (now: Date): ShoppingCartCanceled => {
     this.assertIsPending();
 
-    this.enqueue({
+    return {
       type: 'ShoppingCartCanceled',
-      data: { shoppingCartId: this._id, canceledAt: now },
-    });
+      data: { shoppingCartId: this._id, canceledAt: now.toISOString() },
+    };
   };
 
-  public evolve = ({ type, data: event }: ShoppingCartEvent): void => {
+  public static evolve = (
+    state: ShoppingCart,
+    { type, data: event }: ShoppingCartEvent
+  ): ShoppingCart => {
     switch (type) {
       case 'ShoppingCartOpened': {
-        this._id = event.shoppingCartId;
-        this._clientId = event.clientId;
-        this._status = ShoppingCartStatus.Pending;
-        this._openedAt = event.openedAt;
-        this._productItems = [];
-        return;
+        state._id = event.shoppingCartId;
+        state._clientId = event.clientId;
+        state._status = ShoppingCartStatus.Pending;
+        state._openedAt = new Date(event.openedAt);
+        state._productItems = [];
+        return state;
       }
       case 'ProductItemAddedToShoppingCart': {
         const {
           productItem: { productId, quantity, unitPrice },
         } = event;
 
-        const currentProductItem = this._productItems.find(
+        const currentProductItem = state._productItems.find(
           (pi) => pi.productId === productId && pi.unitPrice === unitPrice
         );
 
         if (currentProductItem) {
           currentProductItem.quantity += quantity;
         } else {
-          this._productItems.push({ ...event.productItem });
+          state._productItems.push({ ...event.productItem });
         }
-        return;
+        return state;
       }
       case 'ProductItemRemovedFromShoppingCart': {
         const {
           productItem: { productId, quantity, unitPrice },
         } = event;
 
-        const currentProductItem = this._productItems.find(
+        const currentProductItem = state._productItems.find(
           (pi) => pi.productId === productId && pi.unitPrice === unitPrice
         );
 
         if (!currentProductItem) {
-          return;
+          return state;
         }
 
         currentProductItem.quantity -= quantity;
 
         if (currentProductItem.quantity <= 0) {
-          this._productItems.splice(
-            this._productItems.indexOf(currentProductItem),
+          state._productItems.splice(
+            state._productItems.indexOf(currentProductItem),
             1
           );
         }
-        return;
+        return state;
       }
       case 'ShoppingCartConfirmed': {
-        this._status = ShoppingCartStatus.Confirmed;
-        this._confirmedAt = event.confirmedAt;
-        return;
+        state._status = ShoppingCartStatus.Confirmed;
+        state._confirmedAt = new Date(event.confirmedAt);
+        return state;
       }
       case 'ShoppingCartCanceled': {
-        this._status = ShoppingCartStatus.Canceled;
-        this._canceledAt = event.canceledAt;
-        return;
+        state._status = ShoppingCartStatus.Canceled;
+        state._canceledAt = new Date(event.canceledAt);
+        return state;
       }
       default: {
         const _: never = type;
@@ -303,8 +323,13 @@ export type ShoppingCartCommand =
   | ConfirmShoppingCart
   | CancelShoppingCart;
 
-export class ShoppingCartService extends ApplicationService<ShoppingCart> {
-  constructor(protected repository: Repository<ShoppingCart>) {
+export class ShoppingCartService extends ApplicationService<
+  ShoppingCart,
+  ShoppingCartEvent
+> {
+  constructor(
+    protected repository: Repository<ShoppingCart, ShoppingCartEvent>
+  ) {
     super(repository);
   }
 

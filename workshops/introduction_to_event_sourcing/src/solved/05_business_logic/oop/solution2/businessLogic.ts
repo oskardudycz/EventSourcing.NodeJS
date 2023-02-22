@@ -21,20 +21,20 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
 {
   constructor(
     private eventStore: EventStore,
-    private getDefault: () => Entity,
+    private getInitialState: () => Entity,
     private evolve: (state: Entity, event: StreamEvent) => Entity
   ) {}
 
   find = (id: string): Entity => {
     const events = this.eventStore.readStream<StreamEvent>(id);
 
-    return events.reduce<Entity>(this.evolve, this.getDefault());
+    return events.reduce<Entity>(this.evolve, this.getInitialState());
   };
 
   store = (id: string, ...events: StreamEvent[]): void => {
     if (events.length === 0) return;
 
-    this.eventStore.appendEvents(id, events);
+    this.eventStore.appendToStream(id, events);
   };
 }
 

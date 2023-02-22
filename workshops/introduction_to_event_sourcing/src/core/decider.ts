@@ -1,8 +1,8 @@
 export type Event<
-  EventType extends string = string,
+  StreamEvent extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>
 > = Readonly<{
-  type: Readonly<EventType>;
+  type: Readonly<StreamEvent>;
   data: Readonly<EventData>;
 }>;
 
@@ -17,9 +17,9 @@ export type Command<
 export type Decider<
   State,
   CommandType extends Command,
-  EventType extends Event
+  StreamEvent extends Event
 > = {
-  decide: (command: CommandType, state: State) => EventType | EventType[];
-  evolve: (currentState: State, event: EventType) => State;
+  decide: (command: CommandType, state: State) => StreamEvent | StreamEvent[];
+  evolve: (currentState: State, event: StreamEvent) => State;
   getInitialState: () => State;
 };
