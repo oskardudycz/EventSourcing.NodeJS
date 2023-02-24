@@ -1,7 +1,5 @@
 import { v4 as uuid } from 'uuid';
 
-// 1. Define your events and entity here
-
 export type Event<
   StreamEvent extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>

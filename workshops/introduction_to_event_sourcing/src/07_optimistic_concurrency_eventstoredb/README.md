@@ -1,4 +1,4 @@
-# Exercise 05 - Business Logic
+# Exercise 7 - Optimistic Concurrency with EventStoreDB
 
 Having the following shopping cart process:
 
@@ -9,26 +9,22 @@ Having the following shopping cart process:
 5. The customer may also cancel the shopping cart and reject all selected products.
 6. After shopping cart confirmation or cancellation, the product can no longer be added or removed from the cart.
 
+How will the solution change when we add requirements:
+
+1. We can add up to 10 products marked as "Super discount!".
+2. The customer can only have one open cart at a time.
+
 Write the code that fulfils this logic. Remember that in Event Sourcing each business operation has to result with a new business fact (so event). Use events and entities defined in previous exercises.
 
 ![events](./assets/events.jpg)
 
-There are two variations:
-
-- using mutable entities: [./oop/BusinessLogicTests.cs](./oop/businessLogic.exercise.test.ts),
-- using fully immutable structures: [./immutable/BusinessLogicTests.cs](./immutable/businessLogic.exercise.test.ts),
-
-Select your preferred approach (or both) to solve this use case.
-
-## Solution
+There are four variations:
 
 1. Classical, mutable aggregates (rich domain model): [oop/solution1/businessLogic.solved.test.ts](./oop/solution1/businessLogic.solved.test.ts).
 2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [oop/solution2/businessLogic.solved.test.ts](./oop/solution2/businessLogic.solved.test.ts).
 3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/solution1/businessLogic.solved.test.ts](./immutable/solution1/businessLogic.solved.test.ts).
 4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/solution2/businessLogic.solved.test.ts](./immutable/solution2/businessLogic.solved.test.ts).
 
-Read also my articles:
+Select your preferred approach (or all) to solve this use case using EventStoreDB.
 
-- [Straightforward Event Sourcing with TypeScript and NodeJS](https://event-driven.io/en/type_script_node_Js_event_sourcing/?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
-- [How to effectively compose your business logic](https://event-driven.io/en/how_to_effectively_compose_your_business_logic//?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
-- [Slim your aggregates with Event Sourcing!](https://event-driven.io/en/slim_your_entities_with_event_sourcing/?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
+_**Note**: If needed update entities, events or test setup structure_
