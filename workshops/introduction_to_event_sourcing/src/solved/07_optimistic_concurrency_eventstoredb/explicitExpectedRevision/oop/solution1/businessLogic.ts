@@ -6,38 +6,53 @@ import {
   StreamNotFoundError,
 } from '@eventstore/db-client';
 import {
-  Event,
   PricedProductItem,
-  ProductItemAddedToShoppingCart,
-  ProductItemRemovedFromShoppingCart,
-  ShoppingCartCanceled,
-  ShoppingCartConfirmed,
   ShoppingCartEvent,
-  ShoppingCartOpened,
   ShoppingCartStatus,
 } from './optimisticConcurrency.exercise.test';
+import { Event } from './optimisticConcurrency.exercise.test';
 
-export interface Repository<Entity, StreamEvent extends Event> {
+export abstract class Aggregate<E extends Event> {
+  #uncommitedEvents: Event[] = [];
+
+  abstract evolve(event: E): void;
+
+  protected enqueue = (event: E) => {
+    this.#uncommitedEvents = [...this.#uncommitedEvents, event];
+  };
+
+  dequeueUncommitedEvents = (): Event[] => {
+    const events = this.#uncommitedEvents;
+
+    this.#uncommitedEvents = [];
+
+    return events;
+  };
+}
+
+export interface Repository<Entity> {
   find(id: string): Promise<Entity>;
   store(
     id: string,
-    expectedRevision: AppendExpectedRevision,
-    ...events: StreamEvent[]
+    entity: Entity,
+    expectedRevision: AppendExpectedRevision
   ): Promise<AppendResult>;
 }
 
-export class EventStoreRepository<Entity, StreamEvent extends Event>
-  implements Repository<Entity, StreamEvent>
+export class EventStoreRepository<
+  Entity extends Aggregate<StreamEvent>,
+  StreamEvent extends Event
+> implements Repository<Entity>
 {
   constructor(
     private eventStore: EventStoreDBClient,
     private getInitialState: () => Entity,
-    private evolve: (state: Entity, event: StreamEvent) => Entity,
     private mapToStreamId: (id: string) => string
   ) {}
 
   find = async (id: string): Promise<Entity> => {
     const state = this.getInitialState();
+
     try {
       const readResult = this.eventStore.readStream<StreamEvent>(
         this.mapToStreamId(id)
@@ -46,7 +61,7 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
       for await (const { event } of readResult) {
         if (!event) continue;
 
-        this.evolve(state, <StreamEvent>{
+        state.evolve(<StreamEvent>{
           type: event.type,
           data: event.data,
         });
@@ -62,38 +77,38 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
 
   store = async (
     id: string,
-    // TODO: use this in code below to ensure optimistic concurrency
-    _expectedRevision: AppendExpectedRevision,
-    ...events: StreamEvent[]
+    entity: Entity,
+    expectedRevision: AppendExpectedRevision
   ): Promise<AppendResult> => {
+    const events = entity.dequeueUncommitedEvents();
+
     return this.eventStore.appendToStream(
       this.mapToStreamId(id),
-      events.map(jsonEvent)
+      events.map(jsonEvent),
+      {
+        expectedRevision,
+      }
     );
   };
 }
 
-export abstract class ApplicationService<Entity, StreamEvent extends Event> {
-  constructor(protected repository: Repository<Entity, StreamEvent>) {}
+export abstract class ApplicationService<Entity> {
+  constructor(protected repository: Repository<Entity>) {}
 
   protected on = async (
     id: string,
     expectedRevision: AppendExpectedRevision,
-    handle: (state: Entity) => StreamEvent | StreamEvent[]
+    handle: (state: Entity) => void
   ) => {
     const aggregate = await this.repository.find(id);
 
-    const result = handle(aggregate);
+    handle(aggregate);
 
-    return this.repository.store(
-      id,
-      expectedRevision,
-      ...(Array.isArray(result) ? result : [result])
-    );
+    return this.repository.store(id, aggregate, expectedRevision);
   };
 }
 
-export class ShoppingCart {
+export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
   private constructor(
     private _id: string,
     private _clientId: string,
@@ -102,7 +117,9 @@ export class ShoppingCart {
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
     private _canceledAt?: Date
-  ) {}
+  ) {
+    super();
+  }
 
   get id() {
     return this._id;
@@ -143,120 +160,109 @@ export class ShoppingCart {
       undefined
     );
 
-  public open = (
-    shoppingCartId: string,
-    clientId: string,
-    now: Date
-  ): ShoppingCartOpened => {
-    return {
+  public open = (shoppingCartId: string, clientId: string, now: Date) => {
+    this.enqueue({
       type: 'ShoppingCartOpened',
       data: { shoppingCartId, clientId, openedAt: now.toISOString() },
-    };
+    });
   };
 
-  public addProductItem = (
-    productItem: PricedProductItem
-  ): ProductItemAddedToShoppingCart => {
+  public addProductItem = (productItem: PricedProductItem): void => {
     this.assertIsPending();
 
-    return {
+    this.enqueue({
       type: 'ProductItemAddedToShoppingCart',
       data: { productItem, shoppingCartId: this._id },
-    };
+    });
   };
 
-  public removeProductItem = (
-    productItem: PricedProductItem
-  ): ProductItemRemovedFromShoppingCart => {
+  public removeProductItem = (productItem: PricedProductItem): void => {
     this.assertIsPending();
     this.assertProductItemExists(productItem);
 
-    return {
+    this.enqueue({
       type: 'ProductItemRemovedFromShoppingCart',
       data: { productItem, shoppingCartId: this._id },
-    };
+    });
   };
 
-  public confirm = (now: Date): ShoppingCartConfirmed => {
+  public confirm = (now: Date): void => {
     this.assertIsPending();
     this.assertIsNotEmpty();
 
-    return {
+    this.enqueue({
       type: 'ShoppingCartConfirmed',
       data: { shoppingCartId: this._id, confirmedAt: now.toISOString() },
-    };
+    });
   };
 
-  public cancel = (now: Date): ShoppingCartCanceled => {
+  public cancel = (now: Date): void => {
     this.assertIsPending();
 
-    return {
+    this.enqueue({
       type: 'ShoppingCartCanceled',
       data: { shoppingCartId: this._id, canceledAt: now.toISOString() },
-    };
+    });
   };
 
-  public static evolve = (
-    state: ShoppingCart,
-    { type, data: event }: ShoppingCartEvent
-  ): ShoppingCart => {
+  public evolve = ({ type, data: event }: ShoppingCartEvent): void => {
     switch (type) {
       case 'ShoppingCartOpened': {
-        state._id = event.shoppingCartId;
-        state._clientId = event.clientId;
-        state._status = ShoppingCartStatus.Pending;
-        state._openedAt = new Date(event.openedAt);
-        state._productItems = [];
-        return state;
+        this._id = event.shoppingCartId;
+        this._clientId = event.clientId;
+        this._status = ShoppingCartStatus.Pending;
+        this._openedAt = new Date(event.openedAt);
+        this._productItems = [];
+        return;
       }
       case 'ProductItemAddedToShoppingCart': {
         const {
           productItem: { productId, quantity, unitPrice },
         } = event;
 
-        const currentProductItem = state._productItems.find(
+        const currentProductItem = this._productItems.find(
           (pi) => pi.productId === productId && pi.unitPrice === unitPrice
         );
 
         if (currentProductItem) {
           currentProductItem.quantity += quantity;
         } else {
-          state._productItems.push({ ...event.productItem });
+          this._productItems.push({ ...event.productItem });
         }
-        return state;
+        return;
       }
       case 'ProductItemRemovedFromShoppingCart': {
         const {
           productItem: { productId, quantity, unitPrice },
         } = event;
 
-        const currentProductItem = state._productItems.find(
+        const currentProductItem = this._productItems.find(
           (pi) => pi.productId === productId && pi.unitPrice === unitPrice
         );
 
         if (!currentProductItem) {
-          return state;
+          return;
         }
 
         currentProductItem.quantity -= quantity;
 
         if (currentProductItem.quantity <= 0) {
-          state._productItems.splice(
-            state._productItems.indexOf(currentProductItem),
+          this._productItems.splice(
+            this._productItems.indexOf(currentProductItem),
             1
           );
         }
-        return state;
+        return;
       }
       case 'ShoppingCartConfirmed': {
-        state._status = ShoppingCartStatus.Confirmed;
-        state._confirmedAt = new Date(event.confirmedAt);
-        return state;
+        this._status = ShoppingCartStatus.Confirmed;
+        this._confirmedAt = new Date(event.confirmedAt);
+        return;
       }
       case 'ShoppingCartCanceled': {
-        state._status = ShoppingCartStatus.Canceled;
-        state._canceledAt = new Date(event.canceledAt);
-        return state;
+        this._status = ShoppingCartStatus.Canceled;
+        this._canceledAt = new Date(event.canceledAt);
+        return;
       }
       default: {
         const _: never = type;
@@ -334,13 +340,8 @@ export type ShoppingCartCommand =
   | ConfirmShoppingCart
   | CancelShoppingCart;
 
-export class ShoppingCartService extends ApplicationService<
-  ShoppingCart,
-  ShoppingCartEvent
-> {
-  constructor(
-    protected repository: Repository<ShoppingCart, ShoppingCartEvent>
-  ) {
+export class ShoppingCartService extends ApplicationService<ShoppingCart> {
+  constructor(protected repository: Repository<ShoppingCart>) {
     super(repository);
   }
 

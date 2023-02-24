@@ -3,6 +3,7 @@ import {
   AppendResult,
   EventStoreDBClient,
   jsonEvent,
+  NO_STREAM,
   StreamNotFoundError,
 } from '@eventstore/db-client';
 import {
@@ -18,7 +19,7 @@ import {
 } from './optimisticConcurrency.exercise.test';
 
 export interface Repository<Entity, StreamEvent extends Event> {
-  find(id: string): Promise<Entity>;
+  find(id: string): Promise<{ entity: Entity; revision: bigint | 'no_stream' }>;
   store(
     id: string,
     expectedRevision: AppendExpectedRevision,
@@ -36,8 +37,13 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
     private mapToStreamId: (id: string) => string
   ) {}
 
-  find = async (id: string): Promise<Entity> => {
+  find = async (
+    id: string
+  ): Promise<{ entity: Entity; revision: bigint | 'no_stream' }> => {
     const state = this.getInitialState();
+
+    let revision: bigint | 'no_stream' = NO_STREAM;
+
     try {
       const readResult = this.eventStore.readStream<StreamEvent>(
         this.mapToStreamId(id)
@@ -50,6 +56,8 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
           type: event.type,
           data: event.data,
         });
+
+        revision = event.revision;
       }
     } catch (error) {
       if (!(error instanceof StreamNotFoundError)) {
@@ -57,18 +65,20 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
       }
     }
 
-    return state;
+    return { entity: state, revision };
   };
 
   store = async (
     id: string,
-    // TODO: use this in code below to ensure optimistic concurrency
-    _expectedRevision: AppendExpectedRevision,
+    expectedRevision: AppendExpectedRevision,
     ...events: StreamEvent[]
   ): Promise<AppendResult> => {
     return this.eventStore.appendToStream(
       this.mapToStreamId(id),
-      events.map(jsonEvent)
+      events.map(jsonEvent),
+      {
+        expectedRevision,
+      }
     );
   };
 }
@@ -78,10 +88,10 @@ export abstract class ApplicationService<Entity, StreamEvent extends Event> {
 
   protected on = async (
     id: string,
-    expectedRevision: AppendExpectedRevision,
     handle: (state: Entity) => StreamEvent | StreamEvent[]
   ) => {
-    const aggregate = await this.repository.find(id);
+    const { entity: aggregate, revision: expectedRevision } =
+      await this.repository.find(id);
 
     const result = handle(aggregate);
 
@@ -344,43 +354,30 @@ export class ShoppingCartService extends ApplicationService<
     super(repository);
   }
 
-  public open = (
-    { shoppingCartId, clientId, now }: OpenShoppingCart,
-    expectedRevision: AppendExpectedRevision
-  ) =>
-    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
+  public open = ({ shoppingCartId, clientId, now }: OpenShoppingCart) =>
+    this.on(shoppingCartId, (shoppingCart) =>
       shoppingCart.open(shoppingCartId, clientId, now)
     );
 
-  public addProductItem = (
-    { shoppingCartId, productItem }: AddProductItemToShoppingCart,
-    expectedRevision: AppendExpectedRevision
-  ) =>
-    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
+  public addProductItem = ({
+    shoppingCartId,
+    productItem,
+  }: AddProductItemToShoppingCart) =>
+    this.on(shoppingCartId, (shoppingCart) =>
       shoppingCart.addProductItem(productItem)
     );
 
-  public removeProductItem = (
-    { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart,
-    expectedRevision: AppendExpectedRevision
-  ) =>
-    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
+  public removeProductItem = ({
+    shoppingCartId,
+    productItem,
+  }: RemoveProductItemFromShoppingCart) =>
+    this.on(shoppingCartId, (shoppingCart) =>
       shoppingCart.removeProductItem(productItem)
     );
 
-  public confirm = (
-    { shoppingCartId, now }: ConfirmShoppingCart,
-    expectedRevision: AppendExpectedRevision
-  ) =>
-    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
-      shoppingCart.confirm(now)
-    );
+  public confirm = ({ shoppingCartId, now }: ConfirmShoppingCart) =>
+    this.on(shoppingCartId, (shoppingCart) => shoppingCart.confirm(now));
 
-  public cancel = (
-    { shoppingCartId, now }: CancelShoppingCart,
-    expectedRevision: AppendExpectedRevision
-  ) =>
-    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
-      shoppingCart.cancel(now)
-    );
+  public cancel = ({ shoppingCartId, now }: CancelShoppingCart) =>
+    this.on(shoppingCartId, (shoppingCart) => shoppingCart.cancel(now));
 }

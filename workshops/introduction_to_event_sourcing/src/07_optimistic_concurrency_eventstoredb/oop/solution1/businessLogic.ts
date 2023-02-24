@@ -1,4 +1,6 @@
 import {
+  AppendExpectedRevision,
+  AppendResult,
   EventStoreDBClient,
   jsonEvent,
   StreamNotFoundError,
@@ -7,8 +9,8 @@ import {
   PricedProductItem,
   ShoppingCartEvent,
   ShoppingCartStatus,
-} from './optimisticConcurrency.exercise.test';
-import { Event } from './optimisticConcurrency.exercise.test';
+} from './optimisticConcurrency.exercise.solved';
+import { Event } from './optimisticConcurrency.exercise.solved';
 
 export abstract class Aggregate<E extends Event> {
   #uncommitedEvents: Event[] = [];
@@ -30,7 +32,11 @@ export abstract class Aggregate<E extends Event> {
 
 export interface Repository<Entity> {
   find(id: string): Promise<Entity>;
-  store(id: string, entity: Entity): Promise<void>;
+  store(
+    id: string,
+    entity: Entity,
+    expectedRevision: AppendExpectedRevision
+  ): Promise<AppendResult>;
 }
 
 export class EventStoreRepository<
@@ -69,12 +75,15 @@ export class EventStoreRepository<
     return state;
   };
 
-  store = async (id: string, entity: Entity): Promise<void> => {
+  store = async (
+    id: string,
+    entity: Entity,
+    // TODO: use this in code below to ensure optimistic concurrency
+    _expectedRevision: AppendExpectedRevision
+  ): Promise<AppendResult> => {
     const events = entity.dequeueUncommitedEvents();
 
-    if (events.length === 0) return;
-
-    await this.eventStore.appendToStream(
+    return this.eventStore.appendToStream(
       this.mapToStreamId(id),
       events.map(jsonEvent)
     );
@@ -84,12 +93,16 @@ export class EventStoreRepository<
 export abstract class ApplicationService<Entity> {
   constructor(protected repository: Repository<Entity>) {}
 
-  protected on = async (id: string, handle: (state: Entity) => void) => {
+  protected on = async (
+    id: string,
+    expectedRevision: AppendExpectedRevision,
+    handle: (state: Entity) => void
+  ) => {
     const aggregate = await this.repository.find(id);
 
     handle(aggregate);
 
-    await this.repository.store(id, aggregate);
+    return this.repository.store(id, aggregate, expectedRevision);
   };
 }
 
@@ -330,30 +343,43 @@ export class ShoppingCartService extends ApplicationService<ShoppingCart> {
     super(repository);
   }
 
-  public open = ({ shoppingCartId, clientId, now }: OpenShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) =>
+  public open = (
+    { shoppingCartId, clientId, now }: OpenShoppingCart,
+    expectedRevision: AppendExpectedRevision
+  ) =>
+    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
       shoppingCart.open(shoppingCartId, clientId, now)
     );
 
-  public addProductItem = ({
-    shoppingCartId,
-    productItem,
-  }: AddProductItemToShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) =>
+  public addProductItem = (
+    { shoppingCartId, productItem }: AddProductItemToShoppingCart,
+    expectedRevision: AppendExpectedRevision
+  ) =>
+    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
       shoppingCart.addProductItem(productItem)
     );
 
-  public removeProductItem = ({
-    shoppingCartId,
-    productItem,
-  }: RemoveProductItemFromShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) =>
+  public removeProductItem = (
+    { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart,
+    expectedRevision: AppendExpectedRevision
+  ) =>
+    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
       shoppingCart.removeProductItem(productItem)
     );
 
-  public confirm = ({ shoppingCartId, now }: ConfirmShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) => shoppingCart.confirm(now));
+  public confirm = (
+    { shoppingCartId, now }: ConfirmShoppingCart,
+    expectedRevision: AppendExpectedRevision
+  ) =>
+    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
+      shoppingCart.confirm(now)
+    );
 
-  public cancel = ({ shoppingCartId, now }: CancelShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) => shoppingCart.cancel(now));
+  public cancel = (
+    { shoppingCartId, now }: CancelShoppingCart,
+    expectedRevision: AppendExpectedRevision
+  ) =>
+    this.on(shoppingCartId, expectedRevision, (shoppingCart) =>
+      shoppingCart.cancel(now)
+    );
 }

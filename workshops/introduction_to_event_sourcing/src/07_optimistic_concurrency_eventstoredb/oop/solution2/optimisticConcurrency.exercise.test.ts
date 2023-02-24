@@ -1,5 +1,10 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
-import { EventStoreDBClient, StreamNotFoundError } from '@eventstore/db-client';
+import {
+  EventStoreDBClient,
+  NO_STREAM,
+  StreamNotFoundError,
+  WrongExpectedVersionError,
+} from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
 import {
   EventStoreRepository,
@@ -149,9 +154,6 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    // TODO: Fill the events store results of your business logic
-    // to be the same as events below
-
     const repository = new EventStoreRepository<
       ShoppingCart,
       ShoppingCartEvent
@@ -164,23 +166,69 @@ describe('Getting state from events', () => {
 
     const shoppingCartService = new ShoppingCartService(repository);
 
-    await shoppingCartService.open({ shoppingCartId, clientId, now: openedAt });
-    await shoppingCartService.addProductItem({
-      shoppingCartId,
-      productItem: twoPairsOfShoes,
-    });
-    await shoppingCartService.addProductItem({
-      shoppingCartId,
-      productItem: tShirt,
-    });
-    await shoppingCartService.removeProductItem({
-      shoppingCartId,
-      productItem: pairOfShoes,
-    });
-    await shoppingCartService.confirm({ shoppingCartId, now: confirmedAt });
+    let appendResult = await shoppingCartService.open(
+      {
+        shoppingCartId,
+        clientId,
+        now: openedAt,
+      },
+      NO_STREAM
+    );
+
+    appendResult = await shoppingCartService.addProductItem(
+      {
+        shoppingCartId,
+        productItem: twoPairsOfShoes,
+      },
+      appendResult.nextExpectedRevision
+    );
+
+    appendResult = await shoppingCartService.addProductItem(
+      {
+        shoppingCartId,
+        productItem: tShirt,
+      },
+      appendResult.nextExpectedRevision
+    );
+
+    appendResult = await shoppingCartService.removeProductItem(
+      {
+        shoppingCartId,
+        productItem: pairOfShoes,
+      },
+      appendResult.nextExpectedRevision
+    );
+
+    appendResult = await shoppingCartService.confirm(
+      {
+        shoppingCartId,
+        now: confirmedAt,
+      },
+      appendResult.nextExpectedRevision
+    );
+
+    // Let's check also negative scenario
+    // when someone tried to update using too old expected revision
+    const tooOldExpectedRevision = appendResult.nextExpectedRevision - 1n;
+
+    const updateWithTooOldExpectedRevision = () =>
+      shoppingCartService.confirm(
+        {
+          shoppingCartId,
+          now: confirmedAt,
+        },
+        tooOldExpectedRevision
+      );
+
+    await expect(updateWithTooOldExpectedRevision).rejects.toThrow(
+      WrongExpectedVersionError
+    );
 
     const cancel = () =>
-      shoppingCartService.cancel({ shoppingCartId, now: canceledAt });
+      shoppingCartService.cancel(
+        { shoppingCartId, now: canceledAt },
+        appendResult.nextExpectedRevision
+      );
 
     await expect(cancel).rejects.toThrow(
       ShoppingCartErrors.CART_IS_ALREADY_CLOSED

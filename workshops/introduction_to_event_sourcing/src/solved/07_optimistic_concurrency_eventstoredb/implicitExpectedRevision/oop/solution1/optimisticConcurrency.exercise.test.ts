@@ -80,10 +80,10 @@ export enum ShoppingCartStatus {
 }
 
 export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  return events.reduce<ShoppingCart>(
-    ShoppingCart.evolve,
-    ShoppingCart.default()
-  );
+  return events.reduce<ShoppingCart>((state, event) => {
+    state.evolve(event);
+    return state;
+  }, ShoppingCart.default());
 };
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
@@ -152,29 +152,46 @@ describe('Getting state from events', () => {
     const repository = new EventStoreRepository<
       ShoppingCart,
       ShoppingCartEvent
-    >(
-      eventStore,
-      ShoppingCart.default,
-      ShoppingCart.evolve,
-      mapShoppingCartStreamId
-    );
+    >(eventStore, ShoppingCart.default, mapShoppingCartStreamId);
 
     const shoppingCartService = new ShoppingCartService(repository);
 
-    await shoppingCartService.open({ shoppingCartId, clientId, now: openedAt });
+    await shoppingCartService.open({
+      shoppingCartId,
+      clientId,
+      now: openedAt,
+    });
+
     await shoppingCartService.addProductItem({
       shoppingCartId,
       productItem: twoPairsOfShoes,
     });
+
     await shoppingCartService.addProductItem({
       shoppingCartId,
       productItem: tShirt,
     });
+
     await shoppingCartService.removeProductItem({
       shoppingCartId,
       productItem: pairOfShoes,
     });
-    await shoppingCartService.confirm({ shoppingCartId, now: confirmedAt });
+
+    await shoppingCartService.confirm({
+      shoppingCartId,
+      now: confirmedAt,
+    });
+
+    // Let's try to confirm card again
+    const tryToConfirmCardAgain = () =>
+      shoppingCartService.confirm({
+        shoppingCartId,
+        now: confirmedAt,
+      });
+
+    await expect(tryToConfirmCardAgain).rejects.toThrow(
+      ShoppingCartErrors.CART_IS_ALREADY_CLOSED
+    );
 
     const cancel = () =>
       shoppingCartService.cancel({ shoppingCartId, now: canceledAt });
@@ -182,6 +199,7 @@ describe('Getting state from events', () => {
     await expect(cancel).rejects.toThrow(
       ShoppingCartErrors.CART_IS_ALREADY_CLOSED
     );
+
     const events = await readStream(eventStore, shoppingCartId);
 
     expect(events).toEqual([
@@ -231,6 +249,7 @@ describe('Getting state from events', () => {
     const shoppingCart = getShoppingCart(events);
 
     expect(shoppingCart).toBeInstanceOf(ShoppingCart);
+
     const actual = {
       shoppingCartId: shoppingCart.id,
       clientId: shoppingCart.clientId,
