@@ -8,8 +8,6 @@ import {
 } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
 
-// 1. Define your events and entity here
-
 export interface ProductItem {
   productId: string;
   quantity: number;

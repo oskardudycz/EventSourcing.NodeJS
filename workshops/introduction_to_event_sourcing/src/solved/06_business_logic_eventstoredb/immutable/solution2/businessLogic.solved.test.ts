@@ -9,8 +9,6 @@ import {
   ShoppingCartErrors,
 } from './businessLogic';
 
-// 1. Define your events and entity here
-
 export interface ProductItem {
   productId: string;
   quantity: number;
