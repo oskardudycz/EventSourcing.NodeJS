@@ -62,13 +62,15 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
 
   store = async (
     id: string,
-    // TODO: use this in code below to ensure optimistic concurrency
-    _expectedRevision: AppendExpectedRevision,
+    expectedRevision: AppendExpectedRevision,
     ...events: StreamEvent[]
   ): Promise<AppendResult> => {
     return this.eventStore.appendToStream(
       this.mapToStreamId(id),
-      events.map(jsonEvent)
+      events.map(jsonEvent),
+      {
+        expectedRevision,
+      }
     );
   };
 }

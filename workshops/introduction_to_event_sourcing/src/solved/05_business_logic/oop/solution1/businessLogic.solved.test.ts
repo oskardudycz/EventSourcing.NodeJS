@@ -134,9 +134,6 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    // TODO: Fill the events store results of your business logic
-    // to be the same as events below
-
     const repository = new EventStoreRepository<
       ShoppingCart,
       ShoppingCartEvent
