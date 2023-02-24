@@ -1,9 +1,5 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
-import {
-  EventStoreDBClient,
-  NO_STREAM,
-  StreamNotFoundError,
-} from '@eventstore/db-client';
+import { EventStoreDBClient, StreamNotFoundError } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
 import {
   ShoppingCartErrors,
