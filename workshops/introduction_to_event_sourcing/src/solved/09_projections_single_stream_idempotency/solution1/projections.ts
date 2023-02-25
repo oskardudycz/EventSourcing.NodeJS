@@ -65,7 +65,7 @@ export const ShoppingCartDetailsProjection = (
           document.totalAmount += productItem.quantity * productItem.unitPrice;
           document.totalItemsCount += productItem.quantity;
 
-          document.lastProcessedPosition++;
+          document.lastProcessedPosition = streamPosition;
 
           return document;
         });
@@ -99,7 +99,7 @@ export const ShoppingCartDetailsProjection = (
           document.totalAmount -= productItem.quantity * productItem.unitPrice;
           document.totalItemsCount -= productItem.quantity;
 
-          document.lastProcessedPosition++;
+          document.lastProcessedPosition = streamPosition;
 
           return document;
         });
@@ -112,7 +112,7 @@ export const ShoppingCartDetailsProjection = (
           document.status = ShoppingCartStatus.Confirmed;
           document.confirmedAt = event.confirmedAt;
 
-          document.lastProcessedPosition++;
+          document.lastProcessedPosition = streamPosition;
 
           return document;
         });
@@ -125,7 +125,7 @@ export const ShoppingCartDetailsProjection = (
           document.status = ShoppingCartStatus.Canceled;
           document.canceledAt = event.canceledAt;
 
-          document.lastProcessedPosition++;
+          document.lastProcessedPosition = streamPosition;
 
           return document;
         });
@@ -166,7 +166,7 @@ export const ShoppingCartShortInfoProjection = (
           document.totalAmount += productItem.quantity * productItem.unitPrice;
           document.totalItemsCount += productItem.quantity;
 
-          document.lastProcessedPosition++;
+          document.lastProcessedPosition = streamPosition;
 
           return document;
         });
@@ -181,7 +181,7 @@ export const ShoppingCartShortInfoProjection = (
           document.totalAmount -= productItem.quantity * productItem.unitPrice;
           document.totalItemsCount -= productItem.quantity;
 
-          document.lastProcessedPosition++;
+          document.lastProcessedPosition = streamPosition;
 
           return document;
         });

@@ -7,11 +7,7 @@ import {
   ShoppingCartStatus,
 } from './projections.exercise.test';
 
-export type VersionedDocument = {
-  lastProcessedPosition: number;
-};
-
-export const getAndStore = <T extends VersionedDocument>(
+export const getAndStore = <T>(
   collection: DocumentsCollection<T>,
   id: string,
   streamPosition: number,
@@ -19,14 +15,7 @@ export const getAndStore = <T extends VersionedDocument>(
 ) => {
   const document = collection.get(id) ?? ({} as T);
 
-  const updated = update(document);
-  updated.lastProcessedPosition = streamPosition;
-
-  collection.store(
-    id,
-    updated,
-    (d) => d.lastProcessedPosition < streamPosition
-  );
+  collection.store(id, update(document), { externalVersion: streamPosition });
 };
 
 export const ShoppingCartDetailsProjection = (
@@ -44,7 +33,6 @@ export const ShoppingCartDetailsProjection = (
             openedAt: event.openedAt,
             totalAmount: 0,
             totalItemsCount: 0,
-            lastProcessedPosition: streamPosition,
           };
         });
         return;
@@ -162,7 +150,6 @@ export const ShoppingCartShortInfoProjection = (
             clientId: event.clientId,
             totalAmount: 0,
             totalItemsCount: 0,
-            lastProcessedPosition: streamPosition,
           };
         });
         return;
