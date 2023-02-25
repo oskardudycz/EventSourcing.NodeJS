@@ -1,4 +1,8 @@
 import { v4 as uuid } from 'uuid';
+import {
+  ShoppingCartDetailsProjection,
+  ShoppingCartShortInfoProjection,
+} from './projections';
 import { getDatabase } from './tools/database';
 import { getEventStore } from './tools/eventStore';
 
@@ -131,9 +135,15 @@ describe('Getting state from events', () => {
     const shoppingCartInfos =
       database.collection<ShoppingCartShortInfo>('shoppingCartInfos');
 
-    // TODO:
-    // 1. Register here your event handlers using `eventStore.subscribe`.
-    // 2. Store results in database.
+    const shoppingCartDetailsProjection =
+      ShoppingCartDetailsProjection(shoppingCarts);
+
+    eventStore.subscribe(shoppingCartDetailsProjection);
+
+    const shoppingCartShortInfoProjection =
+      ShoppingCartShortInfoProjection(shoppingCartInfos);
+
+    eventStore.subscribe(shoppingCartShortInfoProjection);
 
     // first confirmed
     eventStore.appendToStream<ShoppingCartEvent>(
