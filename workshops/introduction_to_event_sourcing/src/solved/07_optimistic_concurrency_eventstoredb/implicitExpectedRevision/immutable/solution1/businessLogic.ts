@@ -167,10 +167,10 @@ export const cancelShoppingCart = (
 };
 
 export type Event<
-  StreamEvent extends string = string,
+  EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>
 > = Readonly<{
-  type: Readonly<StreamEvent>;
+  type: Readonly<EventType>;
   data: Readonly<EventData>;
 }>;
 
