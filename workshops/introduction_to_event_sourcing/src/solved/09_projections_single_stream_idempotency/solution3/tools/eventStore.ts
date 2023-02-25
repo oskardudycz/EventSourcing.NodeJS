@@ -62,7 +62,7 @@ export const getEventStore = () => {
 
       for (const eventEnvelope of eventEnvelopes) {
         for (const handler of handlers) {
-          var numberOfRepeatedPublish = Math.round(Math.random() * 5);
+          let numberOfRepeatedPublish = Math.round(Math.random() * 5);
 
           do {
             handler(eventEnvelope);

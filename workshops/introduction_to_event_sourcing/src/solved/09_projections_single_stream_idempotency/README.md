@@ -26,3 +26,7 @@ Read more about projections in my article:
 1. Dealing that with the projection logic [./solution1/projections.ts](./solution1/projections.ts)
 2. Using conditional update [./solution2/projections.ts](./solution2/projections.ts)
 3. Using database built-in mechanism [./solution3/projections.ts](./solution3/projections.ts)
+
+Read also more in my article:
+
+- [A simple trick for idempotency handling in the Elastic Search read model](https://event-driven.io/en/simple_trick_for_idempotency_handling_in_elastic_search_readm_model/?utm_source=event_sourcing_nodejs&utm_campaign=workshop)
