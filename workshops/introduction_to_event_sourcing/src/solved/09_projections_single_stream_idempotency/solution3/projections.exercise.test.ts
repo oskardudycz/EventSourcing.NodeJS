@@ -69,7 +69,6 @@ export type ShoppingCartDetails = {
   canceledAt?: string;
   totalAmount: number;
   totalItemsCount: number;
-  lastProcessedPosition: number;
 };
 
 export type ShoppingCartShortInfo = {
@@ -77,7 +76,6 @@ export type ShoppingCartShortInfo = {
   clientId: string;
   totalAmount: number;
   totalItemsCount: number;
-  lastProcessedPosition: number;
 };
 
 describe('Getting state from events', () => {
@@ -292,7 +290,6 @@ describe('Getting state from events', () => {
         pairOfShoes.unitPrice * pairOfShoes.quantity +
         tShirt.unitPrice * tShirt.quantity,
       totalItemsCount: pairOfShoes.quantity + tShirt.quantity,
-      lastProcessedPosition: 5,
     });
 
     let shoppingCartShortInfo = shoppingCartInfos.get(shoppingCartId);
@@ -309,7 +306,6 @@ describe('Getting state from events', () => {
       canceledAt,
       totalAmount: dress.unitPrice * dress.quantity,
       totalItemsCount: dress.quantity,
-      lastProcessedPosition: 3,
     });
 
     shoppingCartShortInfo = shoppingCartInfos.get(cancelledShoppingCartId);
@@ -326,7 +322,6 @@ describe('Getting state from events', () => {
       confirmedAt,
       totalAmount: dress.unitPrice * dress.quantity,
       totalItemsCount: dress.quantity,
-      lastProcessedPosition: 3,
     });
 
     shoppingCartShortInfo = shoppingCartInfos.get(otherClientShoppingCartId);
@@ -343,7 +338,6 @@ describe('Getting state from events', () => {
       confirmedAt,
       totalAmount: trousers.unitPrice * trousers.quantity,
       totalItemsCount: trousers.quantity,
-      lastProcessedPosition: 3,
     });
 
     shoppingCartShortInfo = shoppingCartInfos.get(otherConfirmedShoppingCartId);
@@ -359,7 +353,6 @@ describe('Getting state from events', () => {
       openedAt,
       totalAmount: 0,
       totalItemsCount: 0,
-      lastProcessedPosition: 1,
     });
 
     shoppingCartShortInfo = shoppingCartInfos.get(otherPendingShoppingCartId);
@@ -368,7 +361,6 @@ describe('Getting state from events', () => {
       clientId,
       totalAmount: 0,
       totalItemsCount: 0,
-      lastProcessedPosition: 1,
     });
   });
 });

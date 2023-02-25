@@ -15,7 +15,7 @@ Add event handlers registrations in [projections.exercise.test.ts](./projections
 
 If needed expand existing classes definition.
 
-Track and implement proper idempotency handling in projection event handlers. Change documents definitions and projection logic if needed.
+Track and implement proper idempotency handling in projection event handlers. Change documents definitions, projection logic or database if needed.
 
 Read more about projections in my article:
 

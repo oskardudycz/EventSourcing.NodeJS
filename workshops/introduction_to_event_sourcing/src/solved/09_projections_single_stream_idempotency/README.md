@@ -15,8 +15,14 @@ Add event handlers registrations in [projections.exercise.test.ts](./projections
 
 If needed expand existing classes definition.
 
-Track and implement proper idempotency handling in projection event handlers. Change documents definitions and projection logic if needed.
+Track and implement proper idempotency handling in projection event handlers. Change documents definitions, projection logic or database if needed.
 
 Read more about projections in my article:
 
 - [Guide to Projections and Read Models in Event-Driven Architecture](https://event-driven.io/en/projections_and_read_models_in_event_driven_architecture/?utm_source=event_sourcing_nodejs&utm_campaign=workshop)
+
+## Solution
+
+1. Dealing that with the projection logic [./solution1/projections.ts](./solution1/projections.ts)
+2. Using conditional update [./solution2/projections.ts](./solution2/projections.ts)
+3. Using database built-in mechanism [./solution3/projections.ts](./solution3/projections.ts)
