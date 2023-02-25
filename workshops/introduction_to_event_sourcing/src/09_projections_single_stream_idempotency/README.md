@@ -1,4 +1,4 @@
-# Exercise 08 - Projections
+# Exercise 09 - Projections Idempotency
 
 With the [Database](./tools/database.ts) interface representing the sample database, implement the following projections:
 
@@ -14,6 +14,8 @@ With the [Database](./tools/database.ts) interface representing the sample datab
 Add event handlers registrations in [projections.exercise.test.ts](./projections.exercise.test.ts) calling [eventStore.subscribe](./tools/eventStore.ts) method.
 
 If needed expand existing classes definition.
+
+Track and implement proper idempotency handling in projection event handlers.
 
 Read more about projections in my article:
 
