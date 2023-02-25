@@ -10,7 +10,7 @@ export type Event<
 
 export type EventMetadata = Readonly<{
   eventId: string;
-  streamPosition: bigint;
+  streamPosition: number;
   logPosition: bigint;
 }>;
 
@@ -52,7 +52,7 @@ export const getEventStore = () => {
           ...event,
           metadata: {
             eventId: uuid(),
-            streamPosition: BigInt(current.length + index + 1),
+            streamPosition: current.length + index + 1,
             logPosition: BigInt(getAllEventsCount() + index + 1),
           },
         };
