@@ -15,8 +15,6 @@ Add event handlers registrations in [projections.exercise.test.ts](./projections
 
 If needed expand existing classes definition.
 
-## Solutions
-
-Read more in my articles:
+Read more about projections in my article:
 
 - [Guide to Projections and Read Models in Event-Driven Architecture](https://event-driven.io/en/projections_and_read_models_in_event_driven_architecture/?utm_source=event_sourcing_nodejs&utm_campaign=workshop)
