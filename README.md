@@ -20,6 +20,8 @@ Tutorial, practical samples and other resources about Event Sourcing in NodeJS. 
     - [Conversation with Yves Lorphelin about CQRS](#conversation-with-yves-lorphelin-about-cqrs)
   - [Articles](#articles)
   - [Samples](#samples)
+  - [Self-paced training Kit Introduction to Event Sourcing](#self-paced-training-kit-introduction-to-event-sourcing)
+  - [Exercises](#exercises)
   - [Node.js project configuration](#nodejs-project-configuration)
     - [General configuration](#general-configuration)
     - [VSCode debug configuration](#vscode-debug-configuration)
@@ -544,6 +546,38 @@ Read also more on the **Event Sourcing** and **CQRS** topics in my [blog](https:
 1. Simple Event Sourcing sample: [samples/simple](./samples/simple).
 2. Basic CQRS with Event Sourcing and projections building read models: [samples/webinar](./samples/webinar).
 3. From CRUD to Event Sourcing: [samples/from_crud_to_eventsourcing](./samples/from_crud_to_eventsourcing).
+## Self-paced training Kit Introduction to Event Sourcing
+
+Event Sourcing is perceived as a complex pattern. Some believe that it's like Nessie, everyone's heard about it, but rarely seen it. In fact, Event Sourcing is a pretty practical and straightforward concept. It helps build predictable applications closer to business. Nowadays, storage is cheap, and information is priceless. In Event Sourcing, no data is lost.
+
+The workshop aims to build the knowledge of the general concept and its related patterns for the participants. The acquired knowledge will allow for the conscious design of architectural solutions and the analysis of associated risks.
+
+You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like EventStoreDB.
+
+**If you'd like to get full coverage with all nuances of the private workshop, check [training page on my blog for more details](https://event-driven.io/en/training/) feel free to contact me via [email](mailto:oskar.dudycz@gmail.com).**
+
+Read also more in my article [Introduction to Event Sourcing - Self Paced Kit](https://event-driven.io/en/introduction_to_event_sourcing/?utm_source=event_sourcing_nodejs).
+
+## Exercises
+
+Follow the instructions in exercises folders.
+
+1. [Events definition](./workshops/src/01_events_definition/).
+2. [Getting State from events](./workshops/src/02_getting_state_from_events/).
+3. Appending Events:
+   - [EventStoreDB](./workshops/src/03_appending_events_eventstoredb/)
+4. Getting State from events
+   - [EventStoreDB](./workshops/src/04_getting_state_from_events_eventstoredb/)
+5. Business logic:
+   - [General](./workshops/src/05_business_logic/)
+   - [EventStoreDB](./workshops/src/06_business_logic_eventstoredb/)
+6. Optimistic Concurrency:
+   - [EventStoreDB](./workshops/src/07_optimistic_concurrency_eventstoredb/)
+7. Projections:
+   - [General](./src/workshops/08_projections_single_stream/)
+   - [Idempotency](./workshops/src/09_projections_single_stream_idempotency/)
+   - [Eventual Consistency](./workshops/src/10_projections_single_stream_eventual_consistency/)
+
 
 ## Node.js project configuration
 

@@ -1,25 +1,16 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/oskar_at_net?style=social)](https://twitter.com/oskar_at_net) [![Github Sponsors](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/oskardudycz/)](https://github.com/sponsors/oskardudycz/) [![blog](https://img.shields.io/badge/blog-event--driven.io-brightgreen)](https://event-driven.io/?utm_source=event_sourcing_jvm) [![blog](https://img.shields.io/badge/%F0%9F%9A%80-Architecture%20Weekly-important)](https://www.architecture-weekly.com/?utm_source=event_sourcing_net)
 
-# Introduction to Event Sourcing Workshop
+# Introduction to Event Sourcing Self-Paced Kit
 
 Event Sourcing is perceived as a complex pattern. Some believe that it's like Nessie, everyone's heard about it, but rarely seen it. In fact, Event Sourcing is a pretty practical and straightforward concept. It helps build predictable applications closer to business. Nowadays, storage is cheap, and information is priceless. In Event Sourcing, no data is lost.
 
 The workshop aims to build the knowledge of the general concept and its related patterns for the participants. The acquired knowledge will allow for the conscious design of architectural solutions and the analysis of associated risks.
 
-The emphasis will be on a pragmatic understanding of architectures and applying it in practice using Marten and EventStoreDB.
+The emphasis will be on a pragmatic understanding of architectures and applying it in practice using EventStoreDB.
 
-1. Introduction to Event-Driven Architectures. Differences from the classical approach are foundations and terminology (event, event streams, command, query).
-2. What is Event Sourcing, and how is it different from Event Streaming. Advantages and disadvantages.
-3. Write model, data consistency guarantees on examples from Marten and EventStoreDB.
-4. Various ways of handling business logic: Aggregates, Command Handlers, functional approach.
-5. Projections, best practices and concerns for building read models from events on the examples from Marten and EventStoreDB.
-6. Challenges in Event Sourcing and EDA: deliverability guarantees, sequence of event handling, idempotency, etc.
-7. Saga, Choreography, Process Manager, distributed processes in practice.
-8. Event Sourcing in the context of application architecture, integration with other approaches (CQRS, microservices, messaging, etc.).
-9. Good and bad practices in event modelling.
-10. Event Sourcing on production, evolution, events' schema versioning, etc.
+You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like EventStoreDB.
 
-You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like Marten and EventStoreDB. If you'd like to get full coverage with all nuances of the private workshop, feel free to contact me via [email](mailto:oskar.dudycz@gmail.com).
+**If you'd like to get full coverage with all nuances of the private workshop, check [training page on my blog for more details](https://event-driven.io/en/training/) feel free to contact me via [email](mailto:oskar.dudycz@gmail.com).**
 
 Read also more in my article [Introduction to Event Sourcing - Self Paced Kit](https://event-driven.io/en/introduction_to_event_sourcing/?utm_source=event_sourcing_nodejs).
 
