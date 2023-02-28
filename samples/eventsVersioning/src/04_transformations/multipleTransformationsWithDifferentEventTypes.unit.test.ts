@@ -1,7 +1,7 @@
 import { Event } from '#core/event';
 import { ShoppingCartOpened as ShoppingCartOpenedV1 } from 'src/events/events.v1';
 import { v4 as uuid } from 'uuid';
-import { JSONParser, Mapper, MapperArgs } from '#core/jsonParser';
+import { JSONParser } from '#core/jsonParser';
 
 export type Client = {
   id: string;
@@ -9,7 +9,7 @@ export type Client = {
 };
 
 export type ShoppingCartOpened = Event<
-  'ShoppingCartOpened',
+  'ShoppingCartOpened.v2',
   {
     //renamed property
     shoppingCartId: string;
@@ -25,7 +25,7 @@ enum ShoppingCartStatus {
 }
 
 export type ShoppingCartOpenedWithStatus = Event<
-  'ShoppingCartOpened',
+  'ShoppingCartOpened.v3',
   {
     shoppingCartId: string;
     client: Client;
@@ -34,75 +34,56 @@ export type ShoppingCartOpenedWithStatus = Event<
   }
 >;
 
-export type ShoppingCartOpenedAllVersions =
+export type ShoppingCartOpenedObsoleteVersions =
   | ShoppingCartOpenedV1
-  | ShoppingCartOpened
-  | ShoppingCartOpenedWithStatus;
+  | ShoppingCartOpened;
 
-export const upcastV1 = ({
+export type ShoppingCartOpenedAllVersions = Omit<ShoppingCartOpenedV1, 'type'> &
+  Omit<ShoppingCartOpened, 'type'> &
+  ShoppingCartOpenedWithStatus;
+
+export const upcastShoppingCartOpened = ({
+  type,
   data,
-}: ShoppingCartOpenedV1): ShoppingCartOpenedWithStatus => {
-  return {
-    type: 'ShoppingCartOpened',
-    data: {
-      shoppingCartId: data.shoppingCartId,
-      client: { id: data.clientId, name: 'Unknown' },
-      status: ShoppingCartStatus.Opened,
-    },
-  };
-};
-
-export const upcastV2 = ({
-  data,
-}: ShoppingCartOpened): ShoppingCartOpenedWithStatus => {
-  return {
-    type: 'ShoppingCartOpened',
-    data: {
-      ...data,
-      status: ShoppingCartStatus.Opened,
-    },
-  };
-};
-
-export type EventTypeName = string | { version: string; name: string };
-
-export class EventTypeMapping {
-  #fromMappings = new Map<string, string>();
-  #toMappings = new Map<string, EventTypeName>();
-
-  public register = {
-    from: (...fromTypes: EventTypeName[]) => {
+}: ShoppingCartOpenedObsoleteVersions): ShoppingCartOpenedWithStatus => {
+  switch (type) {
+    case 'ShoppingCartOpened': {
       return {
-        to: (to: string) => {
-          for (const from of fromTypes) {
-            this.#fromMappings.set(EventTypeParser.stringify(from), to);
-          }
-          this.#toMappings.set(to, fromTypes[fromTypes.length - 1]);
+        type: 'ShoppingCartOpened.v3',
+        data: {
+          shoppingCartId: data.shoppingCartId,
+          client: { id: data.clientId, name: 'Unknown' },
+          status: ShoppingCartStatus.Opened,
         },
       };
+    }
+    case 'ShoppingCartOpened.v2': {
+      return {
+        type: 'ShoppingCartOpened.v3',
+        data: {
+          ...data,
+          status: ShoppingCartStatus.Opened,
+        },
+      };
+    }
+    default: {
+      const _: never = data;
+      return data;
+    }
+  }
+};
+
+export const downcastShoppingCartOpened = ({
+  type,
+  data,
+}: ShoppingCartOpenedWithStatus): ShoppingCartOpenedAllVersions => {
+  return {
+    type,
+    data: {
+      ...data,
+      clientId: data.client.id,
     },
   };
-
-  public map = {
-    from: (from: EventTypeName): string | undefined =>
-      this.#fromMappings.get(EventTypeParser.stringify(from)),
-    to: (to: string): EventTypeName | undefined => this.#toMappings.get(to),
-  };
-}
-
-export const EventTypeParser = {
-  parse: (eventTypeName: string): EventTypeName => {
-    if (eventTypeName.indexOf('__') === -1) return eventTypeName;
-
-    const [version, name] = eventTypeName.split('__');
-
-    return { version, name };
-  },
-  stringify: (eventTypeName: EventTypeName) => {
-    return typeof eventTypeName === 'string'
-      ? eventTypeName
-      : `${eventTypeName.version}__${eventTypeName.name}`;
-  },
 };
 
 export class EventTransformations {
@@ -111,47 +92,27 @@ export class EventTransformations {
 
   public register = {
     upcaster: <From extends Event, To extends Event = From>(
-      typeName: EventTypeName,
-      upcaster: Mapper<From, To>
+      eventType: string,
+      upcaster: (event: From) => To
     ) => {
-      this.#upcasters.set(EventTypeParser.stringify(typeName), (event) =>
-        upcaster(event as MapperArgs<From, To>)
-      );
+      this.#upcasters.set(eventType, (event) => upcaster(event as From));
 
       return this.register;
     },
     downcaster: <From extends Event, To extends Event = From>(
-      typeName: EventTypeName,
-      upcaster: Mapper<From, To>
+      eventType: string,
+      downcaster: (event: From) => To
     ) => {
-      this.#downcasters.set(EventTypeParser.stringify(typeName), (event) =>
-        upcaster(event as MapperArgs<From, To>)
-      );
+      this.#downcasters.set(eventType, (event) => downcaster(event as From));
 
       return this.register;
     },
   };
 
-  public tryUpcast = <From extends Event = Event, To extends Event = From>(
-    typeName: EventTypeName,
-    event: Event
-  ): To | null => {
-    const eventTypeName = EventTypeParser.stringify(typeName);
+  public get = {
+    upcaster: (eventType: string) => this.#upcasters.get(eventType),
 
-    const upcast = this.#upcasters.get(eventTypeName);
-
-    return upcast ? (upcast(event) as To) : null;
-  };
-
-  public tryDowncast = <From extends Event = Event, To extends Event = From>(
-    typeName: EventTypeName,
-    event: Event
-  ): To | null => {
-    const eventTypeName = EventTypeParser.stringify(typeName);
-
-    const downcast = this.#downcasters.get(eventTypeName);
-
-    return downcast ? (downcast(event) as To) : null;
+    downcaster: (eventType: string) => this.#downcasters.get(eventType),
   };
 }
 
@@ -161,18 +122,97 @@ export type StoredEvent = {
 };
 
 export class EventParser {
-  constructor(
-    private eventTypeMapping: EventTypeMapping,
-    private eventTransformations: EventTransformations
-  ) {}
+  constructor(private eventTransformations: EventTransformations) {}
 
-  public parse<E extends Event = Event>(storedEvent: StoredEvent) {
-    const eventType = EventTypeParser.parse(storedEvent.type);
+  public parse<E extends Event = Event>({ type, payload }: StoredEvent) {
+    const upcaster = this.eventTransformations.get.upcaster(type);
 
-    const upcastResult = this.eventTransformations.tryUpcast<E>(
-      storedEvent.type
-    );
+    const result = JSONParser.parse(payload, upcaster ? { map: upcaster } : {});
+
+    return result as E;
   }
 
-  public stringify(storedEvent: StoredEvent): StoredEvent {}
+  public stringify<E extends Event = Event>(event: E): StoredEvent {
+    const downcaster = this.eventTransformations.get.downcaster(event.type);
+
+    return {
+      type: event.type,
+      payload: JSONParser.stringify(
+        event,
+        downcaster ? { map: downcaster } : {}
+      ),
+    };
+  }
 }
+
+describe('Multiple transformations with different event types', () => {
+  it('upcast should be forward compatible', () => {
+    const eventTransformations = new EventTransformations();
+    eventTransformations.register
+      .upcaster('ShoppingCartOpened', upcastShoppingCartOpened)
+      .upcaster('ShoppingCartOpened.v2', upcastShoppingCartOpened)
+      .downcaster('ShoppingCartOpened.v3', downcastShoppingCartOpened);
+
+    const parser = new EventParser(eventTransformations);
+
+    const eventV1: ShoppingCartOpenedV1 = {
+      type: 'ShoppingCartOpened',
+      data: {
+        clientId: uuid(),
+        shoppingCartId: uuid(),
+      },
+    };
+
+    const eventV2: ShoppingCartOpened = {
+      type: 'ShoppingCartOpened.v2',
+      data: {
+        client: { id: uuid(), name: 'Oscar the Grouch' },
+        shoppingCartId: uuid(),
+      },
+    };
+
+    const eventV3: ShoppingCartOpenedWithStatus = {
+      type: 'ShoppingCartOpened.v3',
+      data: {
+        client: { id: uuid(), name: 'Big Bird' },
+        shoppingCartId: uuid(),
+        status: ShoppingCartStatus.Pending,
+      },
+    };
+
+    const events = [eventV1, eventV2, eventV3];
+
+    // Given
+    const serializedEvents = events.map((e) => {
+      return {
+        type: e.type,
+        payload: JSON.stringify(e),
+      };
+    });
+
+    // When
+    const deserializedEvents = serializedEvents.map((e) =>
+      parser.parse<ShoppingCartOpenedWithStatus>(e)
+    );
+
+    expect(deserializedEvents).toEqual([
+      {
+        type: 'ShoppingCartOpened.v3',
+        data: {
+          client: { id: eventV1.data.clientId, name: 'Unknown' },
+          shoppingCartId: eventV1.data.shoppingCartId,
+          status: ShoppingCartStatus.Opened,
+        },
+      },
+      {
+        type: 'ShoppingCartOpened.v3',
+        data: {
+          client: eventV2.data.client,
+          shoppingCartId: eventV2.data.shoppingCartId,
+          status: ShoppingCartStatus.Opened,
+        },
+      },
+      eventV3,
+    ]);
+  });
+});
