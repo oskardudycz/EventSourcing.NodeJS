@@ -3,13 +3,6 @@ import { ShoppingCartOpened as ShoppingCartOpenedV1 } from 'src/events/events.v1
 import { v4 as uuid } from 'uuid';
 import { JSONParser } from '#core/jsonParser';
 
-enum ShoppingCartStatus {
-  Pending = 'Pending',
-  Opened = 'Opened',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
-
 export type ShoppingCartOpened = Event<
   'ShoppingCartOpened',
   {

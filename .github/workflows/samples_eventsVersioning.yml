@@ -1,0 +1,45 @@
+name: Samples - Events Versioning
+
+on:
+  # run it on push to the default repository branch
+  push:
+    branches: [main]
+    paths:
+      - "samples/eventsVersioning/**"
+  # run it during pull request
+  pull_request:
+    paths:
+      - "samples/eventsVersioning/**"
+
+defaults:
+  run:
+    # relative path to the place where source code (with package.json) is located
+    working-directory: samples/eventsVersioning
+
+jobs:
+  build-and-test-code:
+    name: Build application code
+    # use system defined below in the tests matrix
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # define the test matrix
+      matrix:
+        # selected operation systems to run CI
+        os: [ubuntu-latest] #, windows-latest, macos-latest]
+        # selected node version to run CI
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          # use the node version defined in matrix above
+          node-version: ${{ matrix.node-version }}
+      # install dependencies
+      - run: npm ci
+      # run linting (ESlint and Prettier)
+      - run: npm run lint
+      # run build
+      - run: npm run build:ts
