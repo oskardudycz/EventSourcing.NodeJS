@@ -45,14 +45,11 @@ describe('Downcasting events', () => {
         },
       },
     };
-    const json = JSONParser.stringify(oldEvent);
-
-    const event = JSONParser.parse<
-      ShoppingCartOpenedV1,
-      ShoppingCartOpened & ShoppingCartOpenedV1
-    >(json, {
+    const json = JSONParser.stringify(oldEvent, {
       map: downcast,
     });
+
+    const event = JSONParser.parse<ShoppingCartOpenedV1>(json);
 
     expect(event).toEqual({
       type: 'ShoppingCartOpened',
@@ -79,14 +76,11 @@ describe('Downcasting events', () => {
         client: { id: clientId, name },
       },
     };
-    const json = JSONParser.stringify(event);
-
-    const parsedEvent = JSONParser.parse<
-      ShoppingCartOpened | ShoppingCartOpenedV1,
-      ShoppingCartOpened & ShoppingCartOpenedV1
-    >(json, {
+    const json = JSONParser.stringify(event, {
       map: downcast,
     });
+
+    const parsedEvent = JSONParser.parse(json);
 
     expect(parsedEvent).toEqual({
       type: 'ShoppingCartOpened',
