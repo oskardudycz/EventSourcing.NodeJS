@@ -17,41 +17,42 @@ export type ShoppingCartOpened = Event<
   }
 >;
 
-const upcast = ({
+const downcast = ({
   data,
-}: ShoppingCartOpenedV1 | ShoppingCartOpened): ShoppingCartOpened => {
-  const client =
-    'client' in data ? data.client : { id: data.clientId, name: 'Unknown' };
-
+}: ShoppingCartOpened): ShoppingCartOpenedV1 & ShoppingCartOpened => {
   return {
     type: 'ShoppingCartOpened',
     data: {
-      shoppingCartId: data.shoppingCartId,
-      client,
+      ...data,
+      clientId: data.client.id,
     },
   };
 };
 
-describe('Upcasting events', () => {
-  it('for changed structure should be forward compatible', () => {
+describe('Downcasting events', () => {
+  it('for changed structure should be backward compatible', () => {
     const shoppingCartId = uuid();
     const clientId = uuid();
+    const name = 'Test';
 
-    const oldEvent: ShoppingCartOpenedV1 = {
+    const oldEvent: ShoppingCartOpened = {
       type: 'ShoppingCartOpened',
       data: {
         shoppingCartId,
-        clientId,
+        client: {
+          id: clientId,
+          name,
+        },
       },
     };
     const json = JSONParser.stringify(oldEvent);
 
-    const event = JSONParser.parse<ShoppingCartOpenedV1, ShoppingCartOpened>(
-      json,
-      {
-        map: upcast,
-      }
-    );
+    const event = JSONParser.parse<
+      ShoppingCartOpenedV1,
+      ShoppingCartOpened & ShoppingCartOpenedV1
+    >(json, {
+      map: downcast,
+    });
 
     expect(event).toEqual({
       type: 'ShoppingCartOpened',
@@ -59,8 +60,9 @@ describe('Upcasting events', () => {
         shoppingCartId,
         client: {
           id: clientId,
-          name: 'Unknown',
+          name,
         },
+        clientId,
       },
     });
   });
@@ -81,15 +83,16 @@ describe('Upcasting events', () => {
 
     const parsedEvent = JSONParser.parse<
       ShoppingCartOpened | ShoppingCartOpenedV1,
-      ShoppingCartOpened
+      ShoppingCartOpened & ShoppingCartOpenedV1
     >(json, {
-      map: upcast,
+      map: downcast,
     });
 
     expect(parsedEvent).toEqual({
       type: 'ShoppingCartOpened',
       data: {
         shoppingCartId,
+        clientId,
         client: {
           id: clientId,
           name,
