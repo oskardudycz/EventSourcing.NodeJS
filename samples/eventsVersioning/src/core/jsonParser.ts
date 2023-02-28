@@ -4,23 +4,39 @@ export class ParseError extends Error {
   }
 }
 
-export type ParserMapper<From, To = From> =
-  | ((value: unknown) => To | undefined)
-  | ((value: Partial<From>) => To | undefined)
-  | ((value: From) => To | undefined)
-  | ((value: Partial<To>) => To | undefined)
-  | ((value: To) => To | undefined)
-  | ((value: Partial<To | From>) => To | undefined)
-  | ((value: To | From) => To | undefined);
+export type Mapper<From, To = From> =
+  | ((value: unknown) => To)
+  | ((value: Partial<From>) => To)
+  | ((value: From) => To)
+  | ((value: Partial<To>) => To)
+  | ((value: To) => To)
+  | ((value: Partial<To | From>) => To)
+  | ((value: To | From) => To);
+
+export type MapperArgs<From, To = From> = Partial<From> &
+  From &
+  Partial<To> &
+  To;
 
 export type ParseOptions<From, To = From> = {
   reviver?: (key: string, value: unknown) => unknown;
-  map?: ParserMapper<From, To>;
+  map?: Mapper<From, To>;
   typeCheck?: <To>(value: unknown) => value is To;
 };
 
+export type StringifyOptions<From, To = From> = {
+  map?: Mapper<From, To>;
+};
+
 export const JSONParser = {
-  stringify: (value: unknown) => JSON.stringify(value),
+  stringify: <From, To = From>(
+    value: From,
+    options?: StringifyOptions<From, To>
+  ) => {
+    return JSON.stringify(
+      options?.map ? options.map(value as MapperArgs<From, To>) : value
+    );
+  },
   parse: <From, To = From>(
     text: string,
     options?: ParseOptions<From, To>
@@ -31,8 +47,7 @@ export const JSONParser = {
       throw new ParseError(text);
 
     return options?.map
-      ? // Yeah, Partial<From> & From & Partial<To> & To is crazy, but well...
-        options.map(parsed as Partial<From> & From & Partial<To> & To)
+      ? options.map(parsed as MapperArgs<From, To>)
       : (parsed as To | undefined);
   },
 };

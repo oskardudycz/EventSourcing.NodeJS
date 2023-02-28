@@ -55,9 +55,3 @@ export type ShoppingCartEvent =
   | ProductItemRemovedFromShoppingCart
   | ShoppingCartConfirmed
   | ShoppingCartCanceled;
-
-enum ShoppingCartStatus {
-  Pending = 'Pending',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
