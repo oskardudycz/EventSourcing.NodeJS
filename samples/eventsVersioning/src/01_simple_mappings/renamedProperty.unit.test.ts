@@ -45,7 +45,7 @@ describe('Renamed property', () => {
     });
   });
 
-  it('JSON.parse with additional mapper should be backward compatible', () => {
+  it('JSON.parse with additional mapper should be forward compatible', () => {
     const shoppingCartId = uuid();
     const clientId = uuid();
 
@@ -113,6 +113,63 @@ describe('Renamed property', () => {
     expect(oldEvent).toEqual({
       type: 'ShoppingCartOpened',
       data: {
+        cartId: shoppingCartId,
+        clientId,
+      },
+    });
+  });
+
+  it('should be backward compatible with additional mapper', () => {
+    const shoppingCartId = uuid();
+    const clientId = uuid();
+
+    const event: ShoppingCartOpened = {
+      type: 'ShoppingCartOpened',
+      data: {
+        cartId: shoppingCartId,
+        clientId,
+      },
+    };
+    const json = JSON.stringify(event);
+
+    const oldEvent = JSONParser.parse<
+      ShoppingCartOpened,
+      ShoppingCartOpened | ShoppingCartOpenedV1
+    >(json, {
+      map: (
+        value: ShoppingCartOpened
+      ): ShoppingCartOpened & ShoppingCartOpenedV1 => {
+        return {
+          ...value,
+          data: {
+            ...value.data,
+            cartId: value.data.cartId,
+            shoppingCartId: value.data.cartId,
+          },
+        };
+      },
+    });
+
+    expect(oldEvent).not.toEqual({
+      type: 'ShoppingCartOpened',
+      data: {
+        cartId: shoppingCartId,
+        clientId,
+      },
+    });
+
+    expect(oldEvent).not.toEqual({
+      type: 'ShoppingCartOpened',
+      data: {
+        shoppingCartId,
+        clientId,
+      },
+    });
+
+    expect(oldEvent).toEqual({
+      type: 'ShoppingCartOpened',
+      data: {
+        shoppingCartId,
         cartId: shoppingCartId,
         clientId,
       },
