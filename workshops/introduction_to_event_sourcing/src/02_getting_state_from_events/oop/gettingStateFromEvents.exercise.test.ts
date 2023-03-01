@@ -173,14 +173,19 @@ describe('Events definition', () => {
 
     const shoppingCart = getShoppingCart(events);
 
-    expect(shoppingCart).toBe({
-      id: shoppingCartId,
-      clientId,
-      status: ShoppingCartStatus.Canceled,
-      productItems: [pairOfShoes, tShirt],
-      openedAt,
-      confirmedAt,
-      canceledAt,
-    });
+    expect(shoppingCart).toBeInstanceOf(ShoppingCart);
+    expect(JSON.stringify(shoppingCart)).toBe(
+      JSON.stringify(
+        new ShoppingCart(
+          shoppingCartId,
+          clientId,
+          ShoppingCartStatus.Canceled,
+          openedAt,
+          [pairOfShoes, tShirt],
+          confirmedAt,
+          canceledAt
+        )
+      )
+    );
   });
 });
