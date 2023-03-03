@@ -119,6 +119,6 @@ describe('Appending events', () => {
       events
     );
 
-    expect(appendedEventsCount).toBe(events.length - 1);
+    expect(appendedEventsCount).toBe(BigInt(events.length - 1));
   });
 });
