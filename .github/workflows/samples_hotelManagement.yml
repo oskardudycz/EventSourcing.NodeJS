@@ -5,16 +5,16 @@ on:
   push:
     branches: [main]
     paths:
-      - "samples/eventsVersioning/**"
+      - "samples/hotelManagement/**"
   # run it during pull request
   pull_request:
     paths:
-      - "samples/eventsVersioning/**"
+      - "samples/hotelManagement/**"
 
 defaults:
   run:
     # relative path to the place where source code (with package.json) is located
-    working-directory: samples/eventsVersioning
+    working-directory: samples/hotelManagement
 
 jobs:
   build-and-test-code:
