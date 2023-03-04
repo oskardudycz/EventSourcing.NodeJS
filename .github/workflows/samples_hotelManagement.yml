@@ -44,4 +44,4 @@ jobs:
       # run build
       - run: npm run build:ts
       # run build
-      - run: npm run build:test
+      - run: npm run test
