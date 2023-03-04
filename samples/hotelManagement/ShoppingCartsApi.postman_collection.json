@@ -1,0 +1,408 @@
+{
+  "info": {
+    "_postman_id": "28c2f632-4bb4-4886-900a-1c59809a725a",
+    "name": "Decider - ShoppingCarts",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "3390842"
+  },
+  "item": [
+    {
+      "name": "Open Shopping Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"id returned\", function () {\r",
+              "    var jsonData = pm.response.json();\r",
+              "    console.log(jsonData.id)\r",
+              "    pm.expect(jsonData.id).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"shoppingCartId\", jsonData.id);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});\r",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const timestamp = ((new Date().getTime() / 1000) | 0).toString(16);\r",
+              "const clientId = (\r",
+              "    timestamp +\r",
+              "    'xxxxxxxxxxxxxxxx'\r",
+              "      .replace(/[x]/g, function () {\r",
+              "        return ((Math.random() * 16) | 0).toString(16);\r",
+              "      })\r",
+              "      .toLowerCase()\r",
+              "  );\r",
+              "\r",
+              "pm.collectionVariables.set(\"clientId\", clientId);\r",
+              "\r",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "W/\"-1\"",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:5000/clients/{{clientId}}/shopping-carts/?",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["clients", "{{clientId}}", "shopping-carts", ""],
+          "query": [
+            {
+              "key": "",
+              "value": null
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Shopping Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "\r",
+              "\r",
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "localhost:5000/clients/{{clientId}}/shopping-carts/{{shoppingCartId}}",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "{{clientId}}",
+            "shopping-carts",
+            "{{shoppingCartId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Add Product Item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{ETag}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"productId\": \"123\",\r\n    \"quantity\": 2\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:5000/clients/{{clientId}}/shopping-carts/{{shoppingCartId}}/product-items",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "{{clientId}}",
+            "shopping-carts",
+            "{{shoppingCartId}}",
+            "product-items"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Shopping Cart With Product Price",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "\r",
+              "\r",
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "    const response = pm.response.json();\r",
+              "\r",
+              "    \r",
+              "    pm.expect(response.productItems).to.not.be.undefined;\r",
+              "    pm.expect(response.productItems.length).to.be.greaterThan(0);\r",
+              "\r",
+              "    pm.collectionVariables.set(\"price\", encodeURIComponent(response.productItems[0].price));\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "localhost:5000/clients/{{clientId}}/shopping-carts/{{shoppingCartId}}",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "{{clientId}}",
+            "shopping-carts",
+            "{{shoppingCartId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Product Item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{ETag}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "localhost:5000/clients/{{clientId}}/shopping-carts/{{shoppingCartId}}/product-items/?productId=123&quantity=1&price={{price}}",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "{{clientId}}",
+            "shopping-carts",
+            "{{shoppingCartId}}",
+            "product-items",
+            ""
+          ],
+          "query": [
+            {
+              "key": "productId",
+              "value": "123"
+            },
+            {
+              "key": "quantity",
+              "value": "1"
+            },
+            {
+              "key": "price",
+              "value": "{{price}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Confirm Shopping Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{ETag}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"productId\": \"shoes\",\r\n    \"quantity\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:5000/clients/{{clientId}}/shopping-carts/{{shoppingCartId}}/confirm",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "{{clientId}}",
+            "shopping-carts",
+            "{{shoppingCartId}}",
+            "confirm"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cancel Shopping Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"ETag returned\", function () {\r",
+              "    var ETag = pm.response.headers.get(\"ETag\");\r",
+              "    pm.expect(ETag).to.be.a('string').and.not.be.empty;\r",
+              "\r",
+              "\r",
+              "    pm.collectionVariables.set(\"ETag\", ETag);\r",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "If-Match",
+            "value": "{{ETag}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"productId\": \"shoes\",\r\n    \"quantity\": 1\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "localhost:5000/clients/{{clientId}}/shopping-carts/{{shoppingCartId}}/",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": [
+            "clients",
+            "{{clientId}}",
+            "shopping-carts",
+            "{{shoppingCartId}}",
+            ""
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "shoppingCartId",
+      "value": ""
+    },
+    {
+      "key": "ETag",
+      "value": ""
+    },
+    {
+      "key": "clientId",
+      "value": ""
+    },
+    {
+      "key": "price",
+      "value": ""
+    }
+  ]
+}
