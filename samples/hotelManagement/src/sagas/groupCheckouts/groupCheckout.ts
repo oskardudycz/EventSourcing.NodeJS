@@ -3,58 +3,72 @@
 ///////////////////////////////////////////
 
 import { Map } from 'immutable';
+import { Event } from '#core/event';
+import { Command } from '#core/command';
+
+export type GroupCheckoutInitiated = Event<
+  'GroupCheckoutInitiated',
+  {
+    groupCheckoutId: string;
+    clerkId: string;
+    guestStayAccountIds: string[];
+    initiatedAt: Date;
+  }
+>;
+
+export type GuestCheckoutsInitiated = Event<
+  'GuestCheckoutsInitiated',
+  {
+    groupCheckoutId: string;
+    initiatedGuestStayIds: string[];
+    initiatedAt: Date;
+  }
+>;
+
+export type GuestCheckoutCompleted = Event<
+  'GuestCheckoutCompleted',
+  {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    completedAt: Date;
+  }
+>;
+
+export type GuestCheckoutFailed = Event<
+  'GuestCheckoutFailed',
+  {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    failedAt: Date;
+  }
+>;
+
+export type GroupCheckoutCompleted = Event<
+  'GroupCheckoutCompleted',
+  {
+    groupCheckoutId: string;
+    completedCheckouts: string[];
+    completedAt: Date;
+  }
+>;
+
+export type GroupCheckoutFailed = Event<
+  'GroupCheckoutFailed',
+  {
+    groupCheckoutId: string;
+    completedCheckouts: string[];
+    failedCheckouts: string[];
+    failedAt: Date;
+  }
+>;
 
 export type GroupCheckoutEvent =
-  | {
-      type: 'GroupCheckoutInitiated';
-      data: {
-        groupCheckoutId: string;
-        clerkId: string;
-        guestStayAccountIds: string[];
-        initiatedAt: Date;
-      };
-    }
-  | {
-      type: 'GuestCheckoutsInitiated';
-      data: {
-        groupCheckoutId: string;
-        initiatedGuestStayIds: string[];
-        initiatedAt: Date;
-      };
-    }
-  | {
-      type: 'GuestCheckoutCompleted';
-      data: {
-        groupCheckoutId: string;
-        guestStayAccountId: string;
-        completedAt: Date;
-      };
-    }
-  | {
-      type: 'GuestCheckoutFailed';
-      data: {
-        groupCheckoutId: string;
-        guestStayAccountId: string;
-        failedAt: Date;
-      };
-    }
-  | {
-      type: 'GroupCheckoutCompleted';
-      data: {
-        groupCheckoutId: string;
-        completedCheckouts: string[];
-        completedAt: Date;
-      };
-    }
-  | {
-      type: 'GroupCheckoutFailed';
-      data: {
-        groupCheckoutId: string;
-        completedCheckouts: string[];
-        failedCheckouts: string[];
-        failedAt: Date;
-      };
-    };
+  | GroupCheckoutInitiated
+  | GuestCheckoutsInitiated
+  | GuestCheckoutCompleted
+  | GuestCheckoutFailed
+  | GroupCheckoutCompleted
+  | GroupCheckoutFailed;
 
 ////////////////////////////////////////////
 ////////// Entity
@@ -142,40 +156,48 @@ export const evolve = (
 ////////// Commands
 ///////////////////////////////////////////
 
+export type InitiateGroupCheckout = Command<
+  'InitiateGroupCheckout',
+  {
+    groupCheckoutId: string;
+    clerkId: string;
+    guestStayAccountIds: string[];
+    now: Date;
+  }
+>;
+
+export type RecordGuestCheckoutsInitiation = Command<
+  'RecordGuestCheckoutsInitiation',
+  {
+    groupCheckoutId: string;
+    initiatedGuestStayIds: string[];
+    now: Date;
+  }
+>;
+
+export type RecordGuestCheckoutCompletion = Command<
+  'RecordGuestCheckoutCompletion',
+  {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    now: Date;
+  }
+>;
+
+export type RecordGuestCheckoutFailure = Command<
+  'RecordGuestCheckoutFailure',
+  {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    now: Date;
+  }
+>;
+
 export type GroupCheckoutCommand =
-  | {
-      type: 'InitiateGroupCheckout';
-      data: {
-        groupCheckoutId: string;
-        clerkId: string;
-        guestStayAccountIds: string[];
-        now: Date;
-      };
-    }
-  | {
-      type: 'RecordGuestCheckoutsInitiation';
-      data: {
-        groupCheckoutId: string;
-        initiatedGuestStayIds: string[];
-        now: Date;
-      };
-    }
-  | {
-      type: 'RecordGuestCheckoutCompletion';
-      data: {
-        groupCheckoutId: string;
-        guestStayAccountId: string;
-        now: Date;
-      };
-    }
-  | {
-      type: 'RecordGuestCheckoutFailure';
-      data: {
-        groupCheckoutId: string;
-        guestStayAccountId: string;
-        now: Date;
-      };
-    };
+  | InitiateGroupCheckout
+  | RecordGuestCheckoutsInitiation
+  | RecordGuestCheckoutCompletion
+  | RecordGuestCheckoutFailure;
 
 export const decide = (
   { type, data: command }: GroupCheckoutCommand,
