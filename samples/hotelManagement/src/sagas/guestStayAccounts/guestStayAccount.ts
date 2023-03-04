@@ -1,48 +1,60 @@
+import { Command } from '#core/command';
+import { Event } from '#core/event';
+
 ////////////////////////////////////////////
 ////////// EVENTS
 ///////////////////////////////////////////
 
+export type GuestCheckedIn = Event<
+  'GuestCheckedIn',
+  {
+    guestStayAccountId: string;
+    checkedInAt: Date;
+  }
+>;
+
+export type ChargeRecorded = Event<
+  'ChargeRecorded',
+  {
+    guestStayAccountId: string;
+    amount: number;
+    recordedAt: Date;
+  }
+>;
+
+export type PaymentRecorded = Event<
+  'PaymentRecorded',
+  {
+    guestStayAccountId: string;
+    amount: number;
+    recordedAt: Date;
+  }
+>;
+export type GuestCheckedOut = Event<
+  'GuestCheckedOut',
+  {
+    guestStayAccountId: string;
+    checkedOutAt: Date;
+    groupCheckoutId?: string;
+  }
+>;
+
+export type GuestCheckoutFailed = Event<
+  'GuestCheckoutFailed',
+  {
+    guestStayAccountId: string;
+    reason: 'NotOpened' | 'BalanceNotSettled';
+    failedAt: Date;
+    groupCheckoutId?: string;
+  }
+>;
+
 export type GuestStayAccountEvent =
-  | {
-      type: 'GuestCheckedIn';
-      data: {
-        guestStayAccountId: string;
-        checkedInAt: Date;
-      };
-    }
-  | {
-      type: 'ChargeRecorded';
-      data: {
-        guestStayAccountId: string;
-        amount: number;
-        recordedAt: Date;
-      };
-    }
-  | {
-      type: 'PaymentRecorded';
-      data: {
-        guestStayAccountId: string;
-        amount: number;
-        recordedAt: Date;
-      };
-    }
-  | {
-      type: 'GuestCheckedOut';
-      data: {
-        guestStayAccountId: string;
-        checkedOutAt: Date;
-        groupCheckoutId?: string;
-      };
-    }
-  | {
-      type: 'GuestCheckoutFailed';
-      data: {
-        guestStayAccountId: string;
-        reason: 'NotOpened' | 'BalanceNotSettled';
-        failedAt: Date;
-        groupCheckOutId?: string;
-      };
-    };
+  | GuestCheckedIn
+  | ChargeRecorded
+  | PaymentRecorded
+  | GuestCheckedOut
+  | GuestCheckoutFailed;
 
 ////////////////////////////////////////////
 ////////// Entity
@@ -107,38 +119,43 @@ export const evolve = (
 ////////// Commands
 ///////////////////////////////////////////
 
+export type CheckIn = Command<
+  'CheckIn',
+  {
+    guestStayAccountId: string;
+    now: Date;
+  }
+>;
+export type RecordCharge = Command<
+  'RecordCharge',
+  {
+    guestStayAccountId: string;
+    amount: number;
+    now: Date;
+  }
+>;
+export type RecordPayment = Command<
+  'RecordPayment',
+  {
+    guestStayAccountId: string;
+    amount: number;
+    now: Date;
+  }
+>;
+export type CheckOut = Command<
+  'CheckOut',
+  {
+    guestStayAccountId: string;
+    now: Date;
+    groupCheckoutId?: string;
+  }
+>;
+
 export type GuestStayCommand =
-  | {
-      type: 'CheckIn';
-      data: {
-        guestStayAccountId: string;
-        now: Date;
-      };
-    }
-  | {
-      type: 'RecordCharge';
-      data: {
-        guestStayAccountId: string;
-        amount: number;
-        now: Date;
-      };
-    }
-  | {
-      type: 'RecordPayment';
-      data: {
-        guestStayAccountId: string;
-        amount: number;
-        now: Date;
-      };
-    }
-  | {
-      type: 'CheckOut';
-      data: {
-        guestStayAccountId: string;
-        now: Date;
-        groupCheckOutId?: string;
-      };
-    };
+  | CheckIn
+  | RecordCharge
+  | RecordPayment
+  | CheckOut;
 
 export const decide = (
   { type, data: command }: GuestStayCommand,
@@ -191,7 +208,7 @@ export const decide = (
           type: 'GuestCheckoutFailed',
           data: {
             guestStayAccountId,
-            groupCheckOutId: command.groupCheckOutId,
+            groupCheckoutId: command.groupCheckoutId,
             reason: 'NotOpened',
             failedAt: now,
           },
@@ -204,7 +221,7 @@ export const decide = (
           type: 'GuestCheckoutFailed',
           data: {
             guestStayAccountId,
-            groupCheckOutId: command.groupCheckOutId,
+            groupCheckoutId: command.groupCheckoutId,
             reason: 'BalanceNotSettled',
             failedAt: now,
           },
@@ -214,7 +231,7 @@ export const decide = (
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId,
-          groupCheckoutId: command.groupCheckOutId,
+          groupCheckoutId: command.groupCheckoutId,
           checkedOutAt: now,
         },
       };
