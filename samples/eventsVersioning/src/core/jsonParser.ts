@@ -1,3 +1,13 @@
+export type ParseOptions<From, To = From> = {
+  reviver?: (key: string, value: unknown) => unknown;
+  map?: Mapper<From, To>;
+  typeCheck?: <To>(value: unknown) => value is To;
+};
+
+export type StringifyOptions<From, To = From> = {
+  map?: Mapper<From, To>;
+  replacer?: (key: string, value: unknown) => unknown;
+};
 export class ParseError extends Error {
   constructor(text: string) {
     super(`Cannot parse! ${text}`);
@@ -18,23 +28,14 @@ export type MapperArgs<From, To = From> = Partial<From> &
   Partial<To> &
   To;
 
-export type ParseOptions<From, To = From> = {
-  reviver?: (key: string, value: unknown) => unknown;
-  map?: Mapper<From, To>;
-  typeCheck?: <To>(value: unknown) => value is To;
-};
-
-export type StringifyOptions<From, To = From> = {
-  map?: Mapper<From, To>;
-};
-
 export const JSONParser = {
   stringify: <From, To = From>(
     value: From,
     options?: StringifyOptions<From, To>
   ) => {
     return JSON.stringify(
-      options?.map ? options.map(value as MapperArgs<From, To>) : value
+      options?.map ? options.map(value as MapperArgs<From, To>) : value,
+      options?.replacer
     );
   },
   parse: <From, To = From>(

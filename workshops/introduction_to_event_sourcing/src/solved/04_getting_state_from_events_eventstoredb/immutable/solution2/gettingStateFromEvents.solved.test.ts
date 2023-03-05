@@ -312,22 +312,22 @@ export const ShoppingCartEventSerde = {
         };
       }
       case 'ProductItemAddedToShoppingCart': {
-        return jsonEvent({ type, data });
+        return { type, data };
       }
       case 'ProductItemRemovedFromShoppingCart': {
-        return jsonEvent({ type, data });
+        return { type, data };
       }
       case 'ShoppingCartConfirmed': {
-        return jsonEvent({
+        return {
           type,
           data: { ...data, confirmedAt: new Date(data.confirmedAt) },
-        });
+        };
       }
       case 'ShoppingCartCanceled': {
-        return jsonEvent({
+        return {
           type,
           data: { ...data, canceledAt: new Date(data.canceledAt) },
-        });
+        };
       }
     }
   },
