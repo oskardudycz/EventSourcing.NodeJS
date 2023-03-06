@@ -43,5 +43,5 @@ jobs:
       - run: npm run lint
       # run build
       - run: npm run build:ts
-      # run build
-      - run: npm run build:test
+      # run test
+      - run: npm run test
