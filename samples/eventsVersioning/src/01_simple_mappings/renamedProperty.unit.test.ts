@@ -54,12 +54,17 @@ describe('Renamed property', () => {
     const event = JSONParser.parse<ShoppingCartOpenedV1, ShoppingCartOpened>(
       json,
       {
-        map: (value: ShoppingCartOpenedV1): ShoppingCartOpened => {
+        map: (
+          value: ShoppingCartOpenedV1 | ShoppingCartOpened
+        ): ShoppingCartOpened => {
           return {
             ...value,
             data: {
               ...value.data,
-              cartId: value.data.shoppingCartId,
+              cartId:
+                'cartId' in value.data
+                  ? value.data.cartId
+                  : value.data.shoppingCartId,
             },
           };
         },
