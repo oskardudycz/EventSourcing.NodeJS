@@ -129,6 +129,7 @@ export type ShoppingCartCommand =
       data: {
         shoppingCartId: string;
         clientId: string;
+        now: Date;
       };
     }
   | {
@@ -149,12 +150,14 @@ export type ShoppingCartCommand =
       type: 'ConfirmShoppingCart';
       data: {
         shoppingCartId: string;
+        now: Date;
       };
     }
   | {
       type: 'CancelShoppingCart';
       data: {
         shoppingCartId: string;
+        now: Date;
       };
     };
 
@@ -176,7 +179,7 @@ const decide = (
         data: {
           shoppingCartId: command.shoppingCartId,
           clientId: command.clientId,
-          openedAt: new Date().toJSON(),
+          openedAt: command.now.toJSON(),
         },
       };
     }
@@ -219,7 +222,7 @@ const decide = (
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId: command.shoppingCartId,
-          confirmedAt: new Date().toJSON(),
+          confirmedAt: command.now.toJSON(),
         },
       };
     }
@@ -233,7 +236,7 @@ const decide = (
         type: 'ShoppingCartCanceled',
         data: {
           shoppingCartId: command.shoppingCartId,
-          canceledAt: new Date().toJSON(),
+          canceledAt: command.now.toJSON(),
         },
       };
     }
@@ -251,7 +254,7 @@ export const decider: Decider<
 > = {
   decide,
   evolve,
-  getInitialState: () => {
+  initialState: () => {
     return {
       status: 'Empty',
     };

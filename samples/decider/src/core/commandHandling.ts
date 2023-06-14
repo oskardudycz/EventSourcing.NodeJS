@@ -23,10 +23,7 @@ export const CommandHandler =
     const streamId = toStreamId(recordId);
     const events = await readStream<EventType>(eventStore, streamId);
 
-    const state = events.reduce<State>(
-      decider.evolve,
-      decider.getInitialState()
-    );
+    const state = events.reduce<State>(decider.evolve, decider.initialState());
 
     const newEvents = decider.decide(command, state);
 

@@ -42,6 +42,7 @@ router.post(
       data: {
         shoppingCartId,
         clientId: assertNotEmptyString(request.params.clientId),
+        now: new Date(),
       },
     });
   })
@@ -117,6 +118,7 @@ router.post(
       type: 'ConfirmShoppingCart',
       data: {
         shoppingCartId,
+        now: new Date(),
       },
     });
   })
@@ -134,6 +136,7 @@ router.delete(
       type: 'CancelShoppingCart',
       data: {
         shoppingCartId,
+        now: new Date(),
       },
     });
   })

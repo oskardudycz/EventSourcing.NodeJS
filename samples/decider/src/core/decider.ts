@@ -21,5 +21,5 @@ export type Decider<
 > = {
   decide: (command: CommandType, state: State) => EventType | EventType[];
   evolve: (currentState: State, event: EventType) => State;
-  getInitialState: () => State;
+  initialState: () => State;
 };
