@@ -3,14 +3,14 @@ import { v4 as uuid } from 'uuid';
 import { config } from '#config';
 // import { greaterOrEqual } from '#core/validation';
 import { TestResponse } from '#testing/api/testResponse';
-import initApp from 'src/unpeeled/ecommerce/app';
 import {
   MongoDBContainer,
   StartedMongoDBContainer,
 } from '#testing/api/mongoDB/mongoDBContainer';
 import { disconnectFromMongoDB } from '#core/mongodb';
 import { Application } from 'express';
-import { ShoppingCartStatus } from 'src/unpeeled/ecommerce/shoppingCarts/shoppingCart';
+import initApp from '../../ecommerce/app';
+import { ShoppingCartStatus } from '../../ecommerce/shoppingCarts/shoppingCart';
 
 describe('Full flow', () => {
   let app: Application;

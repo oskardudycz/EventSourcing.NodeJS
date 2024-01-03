@@ -1,7 +1,7 @@
 import { CommandHandler } from '#core/commands';
 import { OpenShoppingCart } from '../commands/shoppingCarts/openShoppingCart';
-import { ShoppingCart } from 'src/onion/ecommerce/domain/shoppingCarts';
-import { ShoppingCartRepository } from 'src/onion/ecommerce/infrastructure/shoppingCarts/shoppingCartRepository';
+import { ShoppingCart } from '../../../domain/shoppingCarts';
+import { ShoppingCartRepository } from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
 import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 import { EventBus } from '#core/events';
 

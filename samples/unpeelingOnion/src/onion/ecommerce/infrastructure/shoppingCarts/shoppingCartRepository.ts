@@ -1,6 +1,6 @@
 import { MongoDbRepository, Repository } from '#core/mongo/repository';
 import { MongoClient } from 'mongodb';
-import { ShoppingCartModel } from 'src/onion/ecommerce/models/shoppingCarts/shoppingCart';
+import { ShoppingCartModel } from '../../models/shoppingCarts/shoppingCart';
 
 export interface ShoppingCartRepository extends Repository<ShoppingCartModel> {
   findAllByCustomerId(customerId: string): Promise<ShoppingCartModel[]>;

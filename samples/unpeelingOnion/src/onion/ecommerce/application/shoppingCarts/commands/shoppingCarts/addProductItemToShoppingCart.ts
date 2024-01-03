@@ -1,5 +1,5 @@
 import { Command } from '#core/commands';
-import { ProductItem } from 'src/onion/ecommerce/common/shoppingCarts/productItem';
+import { ProductItem } from '../../../../common/shoppingCarts/productItem';
 
 export class AddProductItemToShoppingCart extends Command {
   constructor(
