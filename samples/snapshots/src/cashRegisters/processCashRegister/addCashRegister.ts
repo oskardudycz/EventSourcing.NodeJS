@@ -12,7 +12,7 @@ import {
 export async function addCashRegister<Command, TError = never>(
   streamName: string,
   command: Command,
-  handle: (command: Command) => Result<CashRegisterEvent, TError>
+  handle: (command: Command) => Result<CashRegisterEvent, TError>,
 ): Promise<
   Result<
     boolean,
@@ -27,10 +27,10 @@ export async function addCashRegister<Command, TError = never>(
     (...args) =>
       appendEventAndSnapshotToStreamWithPrefix(
         (options) => buildSnapshot(options),
-        ...args
+        ...args,
       ),
     getEventStore(),
     streamName,
-    command
+    command,
   );
 }

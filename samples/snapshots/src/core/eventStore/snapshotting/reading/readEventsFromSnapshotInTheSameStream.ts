@@ -7,10 +7,10 @@ import { getLastSnapshotVersionFromStreamMetadata } from './';
 
 export async function readEventsFromSnapshotInTheSameStream<
   StreamEvent extends Event,
-  SnapshotStreamEvent extends SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent,
 >(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ): Promise<
   Result<
     ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
@@ -19,7 +19,7 @@ export async function readEventsFromSnapshotInTheSameStream<
 > {
   const lastSnapshotVersion = await getLastSnapshotVersionFromStreamMetadata(
     eventStore,
-    streamName
+    streamName,
   );
 
   if (lastSnapshotVersion.isError === true) {

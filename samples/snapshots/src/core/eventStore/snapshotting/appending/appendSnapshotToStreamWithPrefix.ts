@@ -5,12 +5,12 @@ import { addSnapshotPrefix } from '..';
 import { failure, Result } from '../../../primitives';
 
 export async function appendSnapshotToStreamWithPrefix<
-  SnapshotStreamEvent extends SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent,
 >(
   eventStore: EventStoreDBClient,
   snapshot: SnapshotStreamEvent,
   streamName: string,
-  lastSnapshotVersion?: bigint
+  lastSnapshotVersion?: bigint,
 ): Promise<Result<AppendResult, FAILED_TO_APPEND_SNAPSHOT>> {
   const snapshotStreamName = addSnapshotPrefix(streamName);
 

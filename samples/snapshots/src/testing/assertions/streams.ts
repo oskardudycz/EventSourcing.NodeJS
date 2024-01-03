@@ -2,7 +2,7 @@ import { ErrorType, EventStoreDBClient } from '@eventstore/db-client';
 
 export async function expectStreamToNotExist(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ) {
   try {
     await eventStore.readStream(streamName);
@@ -14,7 +14,7 @@ export async function expectStreamToNotExist(
 export async function expectStreamToHaveNumberOfEvents(
   eventStore: EventStoreDBClient,
   streamName: string,
-  expectedNumberOfEvents: number
+  expectedNumberOfEvents: number,
 ) {
   try {
     const events = await eventStore.readStream(streamName);

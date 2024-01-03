@@ -44,8 +44,8 @@ describe('EndShift command', () => {
       await addCashRegister(
         streamName,
         placeAtWorkStation,
-        handlePlaceAtWorkStation
-      )
+        handlePlaceAtWorkStation,
+      ),
     ).toBeTruthy();
 
     const startShift: StartShift = {
@@ -57,7 +57,7 @@ describe('EndShift command', () => {
     };
 
     expect(
-      await updateCashRegister(streamName, startShift, handleStartShift)
+      await updateCashRegister(streamName, startShift, handleStartShift),
     ).toBeTruthy();
 
     const registerTransaction: RegisterTransaction = {
@@ -72,8 +72,8 @@ describe('EndShift command', () => {
       await updateCashRegister(
         streamName,
         registerTransaction,
-        handleRegisterTransaction
-      )
+        handleRegisterTransaction,
+      ),
     ).toBeTruthy();
   });
 
@@ -92,7 +92,7 @@ describe('EndShift command', () => {
     const result = await updateCashRegister(
       streamName,
       command,
-      handleEndShift
+      handleEndShift,
     );
 
     expect(result).toBeTruthy();
@@ -101,7 +101,7 @@ describe('EndShift command', () => {
     await expectStreamToHaveNumberOfEvents(
       eventStore,
       addSnapshotPrefix(streamName),
-      1
+      1,
     );
   });
 });

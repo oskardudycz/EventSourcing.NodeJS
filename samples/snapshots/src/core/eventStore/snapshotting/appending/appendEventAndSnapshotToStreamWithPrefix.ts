@@ -12,7 +12,7 @@ import { appendSnapshotToStreamWithPrefix } from './appendSnapshotToStreamWithPr
 
 export async function appendEventAndSnapshotToStreamWithPrefix<
   StreamEvent extends Event = Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent,
 >(
   tryBuildSnapshot: (options: {
     newEvent: StreamEvent;
@@ -25,7 +25,7 @@ export async function appendEventAndSnapshotToStreamWithPrefix<
   streamName: string,
   currentEvents: StreamEvent[],
   event: StreamEvent,
-  lastSnapshotVersion?: bigint
+  lastSnapshotVersion?: bigint,
 ): Promise<
   Result<boolean, FAILED_TO_APPEND_EVENT | FAILED_TO_APPEND_SNAPSHOT>
 > {
@@ -36,6 +36,6 @@ export async function appendEventAndSnapshotToStreamWithPrefix<
     streamName,
     currentEvents,
     lastSnapshotVersion,
-    event
+    event,
   );
 }

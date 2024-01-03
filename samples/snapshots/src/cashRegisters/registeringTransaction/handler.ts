@@ -32,12 +32,12 @@ export type TransactionRegistered = Event<
 
 export function handleRegisterTransaction(
   events: CashRegisterEvent[],
-  command: RegisterTransaction
+  command: RegisterTransaction,
 ): Result<TransactionRegistered, SHIFT_NOT_STARTED> {
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
-    isCashRegister
+    isCashRegister,
   );
 
   if (cashRegister.currentCashierId === undefined) {

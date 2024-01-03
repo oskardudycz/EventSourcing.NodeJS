@@ -12,20 +12,20 @@ import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 
 export async function subscribeToStream<StreamEvent extends Event>(
   loadCheckpoint: (
-    subscriptionId: string
+    subscriptionId: string,
   ) => Promise<Result<Position | undefined>>,
   storeCheckpoint: (
     subscriptionId: string,
-    revision: bigint
+    revision: bigint,
   ) => Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>>,
   client: EventStoreDBClient,
   streamName: string,
   subscriptionId: string,
   handleEvent: (
     event: StreamEvent,
-    options: { revision: bigint; streamName: string }
+    options: { revision: bigint; streamName: string },
   ) => Promise<void>,
-  options?: SubscribeToStreamOptions
+  options?: SubscribeToStreamOptions,
 ): Promise<Result<StreamSubscription>> {
   return pipeResultAsync(loadCheckpoint, async (currentPosition) => {
     return success(
@@ -50,7 +50,7 @@ export async function subscribeToStream<StreamEvent extends Event>(
 
           //TODO: add here some retry logic
           await storeCheckpoint(subscriptionId, resolvedEvent.event.revision);
-        })
+        }),
     );
   })(subscriptionId);
 }

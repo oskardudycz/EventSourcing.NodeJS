@@ -15,19 +15,19 @@ import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 export async function subscribeToAll<StreamEvent extends Event, TError = never>(
   eventStore: EventStoreDBClient,
   loadCheckpoint: (
-    subscriptionId: string
+    subscriptionId: string,
   ) => Promise<Result<Position | undefined>>,
   storeCheckpoint: (
     subscriptionId: string,
-    position: bigint
+    position: bigint,
   ) => Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>>,
   handlers: ((
     event: StreamEvent,
-    options: { position: bigint; revision: bigint; streamName: string }
+    options: { position: bigint; revision: bigint; streamName: string },
   ) => Promise<Result<boolean, TError>>)[],
   subscriptionId: string,
   options?: SubscribeToAllOptions,
-  readableOptions?: ReadableOptions
+  readableOptions?: ReadableOptions,
 ): Promise<Result<boolean>> {
   return new Promise<Result<boolean>>(async (resolve, reject) => {
     try {
@@ -40,7 +40,7 @@ export async function subscribeToAll<StreamEvent extends Event, TError = never>(
                 filter: excludeSystemEvents(),
                 ...options,
               },
-              readableOptions
+              readableOptions,
             )
             .on('data', async function (resolvedEvent) {
               try {
@@ -71,11 +71,11 @@ export async function subscribeToAll<StreamEvent extends Event, TError = never>(
                 //TODO: add here some retry logic
                 await storeCheckpoint(
                   subscriptionId,
-                  resolvedEvent.event.position.commit
+                  resolvedEvent.event.position.commit,
                 );
               } catch (error) {
                 console.error(
-                  error ?? 'Error while processing subscription handler.'
+                  error ?? 'Error while processing subscription handler.',
                 );
                 throw error;
               }
@@ -91,12 +91,12 @@ export async function subscribeToAll<StreamEvent extends Event, TError = never>(
             .on('end', () => {
               console.info(`Received 'end' event. Stopping subscription.`);
               resolve(success(true));
-            })
+            }),
         );
       })(subscriptionId);
     } catch (error) {
       console.error(
-        `Received error while subscribing: ${error ?? 'UNEXPECTED ERROR'}.`
+        `Received error while subscribing: ${error ?? 'UNEXPECTED ERROR'}.`,
       );
       reject(error);
     }

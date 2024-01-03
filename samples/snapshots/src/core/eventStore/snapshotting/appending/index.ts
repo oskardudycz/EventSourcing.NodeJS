@@ -11,7 +11,7 @@ export type FAILED_TO_APPEND_SNAPSHOT = 'FAILED_TO_APPEND_SNAPSHOT';
 export type SNAPSHOT_CREATION_SKIPPED = 'SNAPSHOT_CREATION_SKIPPED';
 
 export async function ignoreSnapshotSkipped<T = never, E = never>(
-  result: Result<T, E | SNAPSHOT_CREATION_SKIPPED>
+  result: Result<T, E | SNAPSHOT_CREATION_SKIPPED>,
 ): Promise<Result<boolean, E>> {
   if (result.isError) {
     if (result.error === 'SNAPSHOT_CREATION_SKIPPED') return success(false);

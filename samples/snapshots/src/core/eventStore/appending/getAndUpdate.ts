@@ -9,28 +9,28 @@ export async function getAndUpdate<
   Command,
   StreamEvent extends Event,
   HANDLE_ERROR = never,
-  STORE_ERROR = never
+  STORE_ERROR = never,
 >(
   getEvents: (
     eventStore: EventStoreDBClient,
-    streamName: string
+    streamName: string,
   ) => Promise<
     Result<ReadFromStreamAndSnapshotsResult<StreamEvent>, STREAM_NOT_FOUND>
   >,
   handle: (
     currentEvents: StreamEvent[],
-    command: Command
+    command: Command,
   ) => Result<StreamEvent, HANDLE_ERROR>,
   store: (
     eventStore: EventStoreDBClient,
     streamName: string,
     currentEvents: StreamEvent[],
     newEvent: StreamEvent,
-    lastSnapshotVersion?: bigint | undefined
+    lastSnapshotVersion?: bigint | undefined,
   ) => Promise<Result<boolean, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
   eventStore: EventStoreDBClient,
   streamName: string,
-  command: Command
+  command: Command,
 ): Promise<
   Result<
     boolean,
@@ -54,6 +54,6 @@ export async function getAndUpdate<
     streamName,
     currentEvents,
     newEvent,
-    lastSnapshotVersion
+    lastSnapshotVersion,
   );
 }

@@ -16,12 +16,12 @@ import { pipeResultAsync } from '../../../primitives/pipe';
 
 export async function appendEventAndExternalSnapshot<
   StreamEvent extends Event = Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent,
 >(
   appendSnapshot: (
     snapshot: SnapshotStreamEvent,
     streamName: string,
-    lastSnapshotVersion: bigint | undefined
+    lastSnapshotVersion: bigint | undefined,
   ) => Promise<Result<AppendResult, FAILED_TO_APPEND_SNAPSHOT>>,
   tryBuildSnapshot: (options: {
     newEvent: StreamEvent;
@@ -34,7 +34,7 @@ export async function appendEventAndExternalSnapshot<
   streamName: string,
   currentEvents: StreamEvent[],
   lastSnapshotVersion: bigint | undefined,
-  event: StreamEvent
+  event: StreamEvent,
 ): Promise<
   Result<boolean, FAILED_TO_APPEND_EVENT | FAILED_TO_APPEND_SNAPSHOT>
 > {
@@ -52,7 +52,7 @@ export async function appendEventAndExternalSnapshot<
       async (snapshot) => {
         return appendSnapshot(snapshot, streamName, lastSnapshotVersion);
       },
-      async (_) => success(true)
-    )()
+      async (_) => success(true),
+    )(),
   );
 }

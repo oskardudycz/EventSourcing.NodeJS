@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 
 export async function setupStartedShift(
   app: Express.Application,
-  existingCashRegisterId: string
+  existingCashRegisterId: string,
 ): Promise<string> {
   let cashRegisterId: string = '';
   await request(app)

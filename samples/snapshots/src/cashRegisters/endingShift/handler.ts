@@ -29,12 +29,12 @@ export type ShiftEnded = Event<
 
 export function handleEndShift(
   events: CashRegisterEvent[],
-  _: EndShift
+  _: EndShift,
 ): Result<ShiftEnded, ShiftNotStarted> {
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
-    isCashRegister
+    isCashRegister,
   );
 
   if (cashRegister.currentCashierId === undefined) {

@@ -30,12 +30,12 @@ export type ShiftStarted = Event<
 
 export function handleStartShift(
   events: CashRegisterEvent[],
-  command: StartShift
+  command: StartShift,
 ): Result<ShiftStarted, SHIFT_ALREADY_STARTED> {
   const cashRegister = aggregateStream<CashRegister, CashRegisterEvent>(
     events,
     when,
-    isCashRegister
+    isCashRegister,
   );
 
   if (cashRegister.currentCashierId !== undefined) {

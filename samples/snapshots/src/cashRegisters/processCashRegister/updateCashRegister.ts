@@ -18,8 +18,8 @@ export async function updateCashRegister<Command, TError = never>(
   command: Command,
   handle: (
     currentEvents: CashRegisterEvent[],
-    command: Command
-  ) => Result<CashRegisterEvent, TError>
+    command: Command,
+  ) => Result<CashRegisterEvent, TError>,
 ): Promise<
   Result<
     boolean,
@@ -39,10 +39,10 @@ export async function updateCashRegister<Command, TError = never>(
     (...args) =>
       appendEventAndSnapshotToStreamWithPrefix(
         (options) => buildSnapshot(options),
-        ...args
+        ...args,
       ),
     getEventStore(),
     streamName,
-    command
+    command,
   );
 }

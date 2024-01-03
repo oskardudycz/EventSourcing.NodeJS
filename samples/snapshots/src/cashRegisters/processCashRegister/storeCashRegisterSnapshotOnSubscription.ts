@@ -8,7 +8,7 @@ import { snapshotOnSubscriptionToStreamWithPrefix } from '#core/eventStore/snaps
 
 export async function storeCashRegisterSnapshotOnSubscription(
   event: Event,
-  options: { position: bigint; revision: bigint; streamName: string }
+  options: { position: bigint; revision: bigint; streamName: string },
 ): Promise<Result<boolean, STREAM_NOT_FOUND | FAILED_TO_APPEND_SNAPSHOT>> {
   if (!isCashRegisterEvent(event)) return success(false);
 
@@ -16,6 +16,6 @@ export async function storeCashRegisterSnapshotOnSubscription(
     shouldDoSnapshot,
     buildSnapshot,
     event,
-    options
+    options,
   );
 }

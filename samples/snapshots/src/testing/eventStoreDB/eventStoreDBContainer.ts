@@ -16,7 +16,7 @@ export class EventStoreDBContainer extends GenericContainer {
     image = `${EVENTSTOREDB_IMAGE_NAME}:${EVENTSTOREDB_IMAGE_TAG}`,
     runProjections = true,
     isInsecure = true,
-    emptyDatabase = true
+    emptyDatabase = true,
   ) {
     super(image);
 
@@ -31,7 +31,7 @@ export class EventStoreDBContainer extends GenericContainer {
     if (!emptyDatabase) {
       this.withEnv('EVENTSTORE_MEM_DB', 'false').withEnv(
         'EVENTSTORE_DB',
-        '/data/integration-tests'
+        '/data/integration-tests',
       );
     }
 
@@ -57,14 +57,14 @@ export class StartedEventStoreDBContainer {
     options?: Partial<{
       timeout: number;
       removeVolumes: boolean;
-    }>
+    }>,
   ): Promise<StoppedTestContainer> {
     return this.container.stop(options);
   }
 
   getConnectionString(): string {
     return `esdb://${this.container.getHost()}:${this.container.getMappedPort(
-      2113
+      2113,
     )}?tls=false&throwOnAppendFailure=false`;
   }
 

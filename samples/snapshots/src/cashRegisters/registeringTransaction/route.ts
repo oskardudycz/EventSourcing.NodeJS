@@ -17,13 +17,13 @@ export const route = (router: Router) =>
         }
 
         const streamName = getCashRegisterStreamName(
-          command.data.cashRegisterId
+          command.data.cashRegisterId,
         );
 
         const result = await updateCashRegister(
           streamName,
           command,
-          handleRegisterTransaction
+          handleRegisterTransaction,
         );
 
         if (result.isError) {
@@ -42,11 +42,11 @@ export const route = (router: Router) =>
       } catch (error) {
         next(error);
       }
-    }
+    },
   );
 
 function mapRequestToCommand(
-  request: Request
+  request: Request,
 ): RegisterTransaction | 'MISSING_CASH_REGISTER_ID' | 'MISSING_AMOUNT' {
   if (typeof request.params.id !== 'string') {
     return 'MISSING_CASH_REGISTER_ID';
