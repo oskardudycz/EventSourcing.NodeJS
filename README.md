@@ -660,7 +660,7 @@ Follow the instructions in exercises folders.
    ```json
    {
      "env": {
-       "es2020": true,
+       "es2022": true,
        "node": true
      },
      "extends": ["standard"],
