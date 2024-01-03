@@ -36,7 +36,7 @@ router.post(
         {
           shoppingCartId,
           clientId: assertNotEmptyString(request.params.clientId),
-        }
+        },
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
@@ -44,7 +44,7 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // TODO: Add Pattern matching here
@@ -61,18 +61,18 @@ router.post(
   async (
     request: AddProductItemRequest,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const shoppingCartId = assertNotEmptyString(
-        request.params.shoppingCartId
+        request.params.shoppingCartId,
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromETag(request);
 
       const result = await update(
         getEventStore(),
-        addProductItemToShoppingCart
+        addProductItemToShoppingCart,
       )(
         streamName,
         {
@@ -82,7 +82,7 @@ router.post(
             quantity: assertPositiveNumber(request.body.quantity),
           },
         },
-        expectedRevision
+        expectedRevision,
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
@@ -90,7 +90,7 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Remove Product Item
@@ -99,14 +99,14 @@ router.delete(
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCartId = assertNotEmptyString(
-        request.params.shoppingCartId
+        request.params.shoppingCartId,
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromETag(request);
 
       const result = await update(
         getEventStore(),
-        removeProductItemFromShoppingCart
+        removeProductItemFromShoppingCart,
       )(
         streamName,
         {
@@ -116,7 +116,7 @@ router.delete(
             quantity: assertPositiveNumber(request.query.quantity),
           },
         },
-        expectedRevision
+        expectedRevision,
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
@@ -124,7 +124,7 @@ router.delete(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 // Confirm Shopping Cart
@@ -133,7 +133,7 @@ router.put(
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCartId = assertNotEmptyString(
-        request.params.shoppingCartId
+        request.params.shoppingCartId,
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromETag(request);
@@ -143,7 +143,7 @@ router.put(
         {
           shoppingCartId: assertNotEmptyString(request.params.shoppingCartId),
         },
-        expectedRevision
+        expectedRevision,
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
@@ -151,7 +151,7 @@ router.put(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 router.get(
@@ -174,5 +174,5 @@ router.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );

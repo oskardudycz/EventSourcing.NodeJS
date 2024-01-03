@@ -11,7 +11,7 @@ export interface ProductItem {
 
 export const addProductItem = (
   productItems: ProductItem[],
-  newProductItem: ProductItem
+  newProductItem: ProductItem,
 ): ProductItem[] => {
   const { productId, quantity } = newProductItem;
 
@@ -23,19 +23,19 @@ export const addProductItem = (
   const mergedProductItem = { productId, quantity: newQuantity };
 
   return productItems.map((pi) =>
-    pi.productId === productId ? mergedProductItem : pi
+    pi.productId === productId ? mergedProductItem : pi,
   );
 };
 
 export const removeProductItem = (
   productItems: ProductItem[],
-  newProductItem: ProductItem
+  newProductItem: ProductItem,
 ): ProductItem[] => {
   const { productId, quantity } = newProductItem;
 
   const currentProductItem = assertProductItemExists(
     productItems,
-    newProductItem
+    newProductItem,
   );
 
   const newQuantity = currentProductItem.quantity - quantity;
@@ -46,20 +46,20 @@ export const removeProductItem = (
   const mergedProductItem = { productId, quantity: newQuantity };
 
   return productItems.map((pi) =>
-    pi.productId === productId ? mergedProductItem : pi
+    pi.productId === productId ? mergedProductItem : pi,
   );
 };
 
 export const findProductItem = (
   productItems: ProductItem[],
-  productId: string
+  productId: string,
 ): ProductItem | undefined => {
   return productItems.find((pi) => pi.productId === productId);
 };
 
 export const assertProductItemExists = (
   productItems: ProductItem[],
-  { productId, quantity }: ProductItem
+  { productId, quantity }: ProductItem,
 ): ProductItem => {
   const current = findProductItem(productItems, productId);
 

@@ -34,7 +34,7 @@ type ShoppingCartDetails = Readonly<{
 }>;
 
 export const projectToShoppingCartItem = (
-  resolvedEvent: SubscriptionResolvedEvent
+  resolvedEvent: SubscriptionResolvedEvent,
 ): Promise<void> => {
   if (
     resolvedEvent.event === undefined ||
@@ -63,7 +63,7 @@ export const projectToShoppingCartItem = (
 
 export const projectShoppingCartOpened = async (
   event: ShoppingCartOpened,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<void> => {
   const shoppingCarts = await getShoppingCartsCollection();
 
@@ -80,7 +80,7 @@ export const projectShoppingCartOpened = async (
 
 export const projectProductItemAddedToShoppingCart = async (
   event: ProductItemAddedToShoppingCart,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<void> => {
   const shoppingCarts = await getShoppingCartsCollection();
   const lastRevision = streamRevision - 1;
@@ -93,8 +93,8 @@ export const projectProductItemAddedToShoppingCart = async (
       },
       {
         projection: { productItems: 1, revision: 1 },
-      }
-    )
+      },
+    ),
   );
 
   if (revision > lastRevision) {
@@ -113,14 +113,14 @@ export const projectProductItemAddedToShoppingCart = async (
           revision: streamRevision,
         },
       },
-      { upsert: false }
-    )
+      { upsert: false },
+    ),
   );
 };
 
 export const projectProductItemRemovedFromShoppingCart = async (
   event: ProductItemRemovedFromShoppingCart,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<void> => {
   const shoppingCarts = await getShoppingCartsCollection();
   const lastRevision = streamRevision - 1;
@@ -133,8 +133,8 @@ export const projectProductItemRemovedFromShoppingCart = async (
       },
       {
         projection: { productItems: 1, revision: 1 },
-      }
-    )
+      },
+    ),
   );
   if (revision > lastRevision) {
     return;
@@ -152,14 +152,14 @@ export const projectProductItemRemovedFromShoppingCart = async (
           revision: streamRevision,
         },
       },
-      { upsert: false }
-    )
+      { upsert: false },
+    ),
   );
 };
 
 export const projectShoppingCartConfirmed = async (
   event: ShoppingCartConfirmed,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<void> => {
   const shoppingCarts = await getShoppingCartsCollection();
 
@@ -171,8 +171,8 @@ export const projectShoppingCartConfirmed = async (
         _id: toObjectId(event.data.shoppingCartId),
         revision: { $gte: lastRevision },
       },
-      { projection: { revision: 1 } }
-    )
+      { projection: { revision: 1 } },
+    ),
   );
 
   if (revision > lastRevision) {
@@ -191,6 +191,6 @@ export const projectShoppingCartConfirmed = async (
         revision: streamRevision,
       },
     },
-    { upsert: false }
+    { upsert: false },
   );
 };

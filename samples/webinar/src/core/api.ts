@@ -9,7 +9,7 @@ export const startAPI = (router: Router) => {
   app.use(
     express.urlencoded({
       extended: true,
-    })
+    }),
   );
   app.use(router);
 

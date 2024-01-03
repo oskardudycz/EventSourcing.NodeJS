@@ -79,7 +79,7 @@ export interface ShoppingCart {
 }
 
 export const isCashierShoppingCartEvent = (
-  event: unknown
+  event: unknown,
 ): event is ShoppingCartEvent => {
   return (
     event != null &&
@@ -136,7 +136,7 @@ export const getShoppingCart = StreamAggregator<
         ...currentState,
         productItems: addProductItem(
           currentState.productItems,
-          event.data.productItem
+          event.data.productItem,
         ),
       };
     case 'product-item-removed-from-shopping-cart':
@@ -144,7 +144,7 @@ export const getShoppingCart = StreamAggregator<
         ...currentState,
         productItems: removeProductItem(
           currentState.productItems,
-          event.data.productItem
+          event.data.productItem,
         ),
       };
     case 'shopping-cart-confirmed':
@@ -194,7 +194,7 @@ export type AddProductItemToShoppingCart = {
 
 export const addProductItemToShoppingCart = async (
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId, productItem }: AddProductItemToShoppingCart
+  { shoppingCartId, productItem }: AddProductItemToShoppingCart,
 ): Promise<ProductItemAddedToShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
 
@@ -220,7 +220,7 @@ export type RemoveProductItemFromShoppingCart = {
 
 export const removeProductItemFromShoppingCart = async (
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart
+  { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart,
 ): Promise<ProductItemRemovedFromShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
 
@@ -247,7 +247,7 @@ export type ConfirmShoppingCart = {
 
 export const confirmShoppingCart = async (
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId }: ConfirmShoppingCart
+  { shoppingCartId }: ConfirmShoppingCart,
 ): Promise<ShoppingCartConfirmed> => {
   const shoppingCart = await getShoppingCart(events);
 
