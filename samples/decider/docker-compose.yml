@@ -7,7 +7,7 @@ services:
   eventstoredb:
     image: eventstore/eventstore:22.10.0-buster-slim
     # use this image if you're running ARM-based proc like Apple M1
-    # image: eventstore/eventstore:22.10.0-alpha-arm64v8
+    # image: eventstore/eventstore:23.10.0-alpha-arm64v8
     environment:
       - EVENTSTORE_CLUSTER_SIZE=1
       - EVENTSTORE_RUN_PROJECTIONS=All
