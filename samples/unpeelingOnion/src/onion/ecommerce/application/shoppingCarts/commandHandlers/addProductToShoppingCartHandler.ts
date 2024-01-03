@@ -10,7 +10,7 @@ export class AddProductItemToShoppingCartHandler
   constructor(
     private repository: ShoppingCartRepository,
     private mapper: ShoppingCartMapper,
-    private eventBus: EventBus
+    private eventBus: EventBus,
   ) {}
 
   async handle(command: AddProductItemToShoppingCart): Promise<void> {

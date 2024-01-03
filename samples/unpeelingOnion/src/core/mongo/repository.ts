@@ -15,7 +15,7 @@ export abstract class MongoDbRepository<T extends Document & { _id: ObjectId }>
   constructor(
     mongo: MongoClient,
     collectionName: string,
-    databaseName?: string | undefined
+    databaseName?: string | undefined,
   ) {
     this.collection = getCollection<T>(mongo, collectionName, databaseName);
   }
@@ -24,7 +24,7 @@ export abstract class MongoDbRepository<T extends Document & { _id: ObjectId }>
     await this.collection.updateOne(
       { _id: entity._id } as Filter<T>,
       { $set: entity },
-      { upsert: true }
+      { upsert: true },
     );
   }
 
@@ -32,7 +32,7 @@ export abstract class MongoDbRepository<T extends Document & { _id: ObjectId }>
     await this.collection.updateOne(
       { _id: entity._id } as Filter<T>,
       { $set: entity },
-      { upsert: false }
+      { upsert: false },
     );
   }
 
@@ -40,7 +40,7 @@ export abstract class MongoDbRepository<T extends Document & { _id: ObjectId }>
     await this.collection.updateOne(
       { _id: entity._id } as Filter<T>,
       { $set: entity },
-      { upsert: true }
+      { upsert: true },
     );
   }
 

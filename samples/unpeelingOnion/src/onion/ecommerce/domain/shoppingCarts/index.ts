@@ -14,7 +14,7 @@ export class ShoppingCart extends Aggregate {
     private _productItems: ProductItem[],
     private _openedAt: Date,
     private _confirmedAt: Date | undefined,
-    revision: number
+    revision: number,
   ) {
     super(id, revision);
   }
@@ -49,7 +49,7 @@ export class ShoppingCart extends Aggregate {
       [],
       openedAt,
       undefined,
-      0
+      0,
     );
 
     aggregate.enqueue(new ShoppingCartOpened(id, customerId, openedAt));
@@ -66,7 +66,7 @@ export class ShoppingCart extends Aggregate {
 
     const currentProductItem = this.findProductItem(
       this._productItems,
-      productId
+      productId,
     );
 
     if (!currentProductItem) {
@@ -76,12 +76,12 @@ export class ShoppingCart extends Aggregate {
       const mergedProductItem = { productId, quantity: newQuantity };
 
       this._productItems = this._productItems.map((pi) =>
-        pi.productId === productId ? mergedProductItem : pi
+        pi.productId === productId ? mergedProductItem : pi,
       );
     }
 
     this.enqueue(
-      new ProductItemAddedToShoppingCart(this._id, newProductItem, new Date())
+      new ProductItemAddedToShoppingCart(this._id, newProductItem, new Date()),
     );
   }
 
@@ -94,7 +94,7 @@ export class ShoppingCart extends Aggregate {
 
     const currentProductItem = this.findProductItem(
       this._productItems,
-      productId
+      productId,
     );
 
     const newQuantity = (currentProductItem?.quantity ?? 0) - quantity;
@@ -103,21 +103,21 @@ export class ShoppingCart extends Aggregate {
 
     if (newQuantity === 0) {
       this._productItems = this._productItems.filter(
-        (pi) => pi.productId !== productId
+        (pi) => pi.productId !== productId,
       );
     } else {
       const mergedProductItem = { productId, quantity: newQuantity };
 
       this._productItems = this._productItems.map((pi) =>
-        pi.productId === productId ? mergedProductItem : pi
+        pi.productId === productId ? mergedProductItem : pi,
       );
     }
     this.enqueue(
       new ProductItemRemovedFromShoppingCart(
         this._id,
         productItemToRemove,
-        new Date()
-      )
+        new Date(),
+      ),
     );
   }
 
@@ -133,7 +133,7 @@ export class ShoppingCart extends Aggregate {
 
   private findProductItem(
     productItems: ProductItem[],
-    productId: string
+    productId: string,
   ): ProductItem | undefined {
     return productItems.find((pi) => pi.productId === productId);
   }

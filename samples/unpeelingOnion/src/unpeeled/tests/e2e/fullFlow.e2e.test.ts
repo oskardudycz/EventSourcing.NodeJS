@@ -90,7 +90,7 @@ describe('Full flow', () => {
       };
       response = await request(app)
         .post(
-          `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items`
+          `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items`,
         )
         //.set('If-Match', currentRevision)
         .send(twoPairsOfShoes)
@@ -128,7 +128,7 @@ describe('Full flow', () => {
       };
       response = await request(app)
         .post(
-          `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items`
+          `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items`,
         )
         //.set('If-Match', currentRevision)
         .send(tShirt)
@@ -168,7 +168,7 @@ describe('Full flow', () => {
       };
       response = await request(app)
         .delete(
-          `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`
+          `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`,
         )
         //.set('If-Match', currentRevision)
         .expect(200);
@@ -209,7 +209,7 @@ describe('Full flow', () => {
 
       response = await request(app)
         .post(
-          `/customers/${customerId}/shopping-carts/${shoppingCartId}/confirm`
+          `/customers/${customerId}/shopping-carts/${shoppingCartId}/confirm`,
         )
         // .set('If-Match', currentRevision)
         .send(confirmedData)

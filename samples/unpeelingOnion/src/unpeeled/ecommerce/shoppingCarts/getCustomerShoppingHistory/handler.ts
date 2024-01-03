@@ -3,7 +3,7 @@ import { ShoppingCartModel } from '../storage/';
 
 export const findAllByCustomerId = async (
   carts: Collection<ShoppingCartModel>,
-  query: GetCustomerShoppingHistory
+  query: GetCustomerShoppingHistory,
 ): Promise<CustomerShoppingHistoryItem[]> => {
   const result = await carts.find({ customerId: query.customerId }).toArray();
 

@@ -14,7 +14,7 @@ export type ApiRequest = Request<
 //////////////////////////////////////
 
 type WeakETag = `W/${string}`;
-type ETag = WeakETag | string;
+type ETag = string;
 
 const enum HeaderNames {
   IF_MATCH = 'if-match',
@@ -45,7 +45,7 @@ export const toWeakETag = (value: number | bigint | string): WeakETag => {
 
 export const getETagFromHeader = (
   request: ApiRequest,
-  headerName: HeaderNames
+  headerName: HeaderNames,
 ): ETag | undefined => {
   const etag = request.headers[headerName];
 
@@ -58,7 +58,7 @@ export const getETagFromHeader = (
 
 export const getWeakETagValueFromHeader = (
   request: ApiRequest,
-  headerName: HeaderNames
+  headerName: HeaderNames,
 ): WeakETag | undefined => {
   const etag = getETagFromHeader(request, headerName);
 
@@ -75,7 +75,7 @@ export const getWeakETagValueFromHeader = (
 
 export const getExpectedRevision = (
   request: ApiRequest,
-  headerName: HeaderNames
+  headerName: HeaderNames,
 ): bigint | undefined => {
   const eTag = getWeakETagValueFromHeader(request, headerName);
 
@@ -97,7 +97,7 @@ export const getExpectedRevisionFromIfMatch = (request: ApiRequest): bigint => {
 };
 
 export const getExpectedRevisionFromIfNotMatch = (
-  request: ApiRequest
+  request: ApiRequest,
 ): bigint | undefined => getExpectedRevision(request, HeaderNames.IF_NOT_MATCH);
 
 //////////////////////////////////////
@@ -107,11 +107,11 @@ export const getExpectedRevisionFromIfNotMatch = (
 export const sendCreated = (
   response: Response,
   createdId: string,
-  urlPrefix?: string
+  urlPrefix?: string,
 ): void => {
   response.setHeader(
     'Location',
-    `${urlPrefix ?? response.req.url}/${createdId}`
+    `${urlPrefix ?? response.req.url}/${createdId}`,
   );
   response.status(201).json({ id: createdId });
 };

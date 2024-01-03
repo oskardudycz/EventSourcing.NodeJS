@@ -1,7 +1,7 @@
 import { OpenShoppingCart, ShoppingCartOpened } from '../shoppingCart';
 
 export const openShoppingCart = (
-  command: OpenShoppingCart
+  command: OpenShoppingCart,
 ): ShoppingCartOpened => {
   return {
     type: 'shopping-cart-opened',

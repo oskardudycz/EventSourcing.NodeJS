@@ -6,7 +6,7 @@ import {
 
 export const removeProductItemFromShoppingCart = (
   command: RemoveProductItemFromShoppingCart,
-  cart: ShoppingCart
+  cart: ShoppingCart,
 ): ProductItemRemovedFromShoppingCart => {
   if (cart.status !== ShoppingCartStatus.Opened) {
     throw Error('Cannot remove product from not opened shopping cart');

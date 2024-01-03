@@ -14,7 +14,7 @@ export class ShoppingCartMapper
       aggregate.productItems,
       aggregate.openedAt,
       aggregate.confirmedAt,
-      aggregate.revision
+      aggregate.revision,
     );
   }
   toAggregate(model: ShoppingCartModel): ShoppingCart {
@@ -25,7 +25,7 @@ export class ShoppingCartMapper
       model.productItems,
       model.openedAt,
       model.confirmedAt,
-      model.revision
+      model.revision,
     );
   }
 }

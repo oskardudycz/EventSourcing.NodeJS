@@ -6,7 +6,7 @@ import {
 
 export const addProductItemToShoppingCart = (
   command: AddProductItemToShoppingCart,
-  cart: ShoppingCart
+  cart: ShoppingCart,
 ): ProductItemAddedToShoppingCart => {
   if (cart.status !== ShoppingCartStatus.Opened) {
     throw Error('Cannot add product to not opened shopping cart');

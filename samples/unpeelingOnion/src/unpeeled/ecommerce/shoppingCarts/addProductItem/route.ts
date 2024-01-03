@@ -10,14 +10,14 @@ import { addProductItemToShoppingCart } from './handler';
 export const addProductItemToShoppingCartRoute = (
   carts: Collection<ShoppingCartModel>,
   eventBus: EventBus,
-  router: Router
+  router: Router,
 ) =>
   router.post(
     '/customers/:customerId/shopping-carts/:shoppingCartId/product-items',
     async (
       request: AddProductItemToShoppingCartRequest,
       response: Response,
-      next: NextFunction
+      next: NextFunction,
     ) => {
       try {
         const command = from(request);
@@ -33,7 +33,7 @@ export const addProductItemToShoppingCartRoute = (
         console.error(error);
         next(error);
       }
-    }
+    },
   );
 
 export type AddProductItemToShoppingCartRequest = Request<
@@ -43,7 +43,7 @@ export type AddProductItemToShoppingCartRequest = Request<
 >;
 
 const from = (
-  request: AddProductItemToShoppingCartRequest
+  request: AddProductItemToShoppingCartRequest,
 ): AddProductItemToShoppingCart => {
   return {
     type: 'add-product-item-to-shopping-cart',

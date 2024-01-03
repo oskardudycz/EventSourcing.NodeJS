@@ -12,12 +12,12 @@ import { ShoppingCartModel } from './storage/';
 
 export const configureShoppingCartsModule = (
   mongo: MongoClient,
-  eventBus: EventBus
+  eventBus: EventBus,
 ) => {
   const router = Router();
   const shoppingCartsCollection = getCollection<ShoppingCartModel>(
     mongo,
-    'shoppingCarts'
+    'shoppingCarts',
   );
 
   openShoppingCartRoute(shoppingCartsCollection, eventBus, router);
@@ -25,7 +25,7 @@ export const configureShoppingCartsModule = (
   removeProductItemFromShoppingCartRoute(
     shoppingCartsCollection,
     eventBus,
-    router
+    router,
   );
   confirmShoppingCartRoute(shoppingCartsCollection, eventBus, router);
   getShoppingCartByIdRoute(shoppingCartsCollection, router);

@@ -10,14 +10,14 @@ import { EventBus } from '#core/events';
 export const removeProductItemFromShoppingCartRoute = (
   carts: Collection<ShoppingCartModel>,
   eventBus: EventBus,
-  router: Router
+  router: Router,
 ) =>
   router.delete(
     '/customers/:customerId/shopping-carts/:shoppingCartId/product-items',
     async (
       request: RemoveProductItemFromShoppingCartRequest,
       response: Response,
-      next: NextFunction
+      next: NextFunction,
     ) => {
       try {
         const command = from(request);
@@ -33,7 +33,7 @@ export const removeProductItemFromShoppingCartRoute = (
         console.error(error);
         next(error);
       }
-    }
+    },
   );
 
 export type RemoveProductItemFromShoppingCartRequest = Request<
@@ -44,7 +44,7 @@ export type RemoveProductItemFromShoppingCartRequest = Request<
 >;
 
 const from = (
-  request: RemoveProductItemFromShoppingCartRequest
+  request: RemoveProductItemFromShoppingCartRequest,
 ): RemoveProductItemFromShoppingCart => {
   return {
     type: 'remove-product-item-from-shopping-cart',

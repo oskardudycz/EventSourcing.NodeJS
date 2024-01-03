@@ -6,7 +6,7 @@ import { findAllByCustomerId, GetCustomerShoppingHistory } from './handler';
 
 export const getCustomerShoppingHistoryRoute = (
   carts: Collection<ShoppingCartModel>,
-  router: Router
+  router: Router,
 ) =>
   router.get(
     '/customers/:customerId/shopping-carts/',
@@ -20,7 +20,7 @@ export const getCustomerShoppingHistoryRoute = (
         console.error(error);
         next(error);
       }
-    }
+    },
   );
 
 const from = (request: Request): GetCustomerShoppingHistory => {

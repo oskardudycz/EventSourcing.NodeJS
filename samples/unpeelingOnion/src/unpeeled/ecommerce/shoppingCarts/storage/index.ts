@@ -15,7 +15,7 @@ export type ShoppingCartModel = {
 
 export const getShoppingCart = async (
   carts: Collection<ShoppingCartModel>,
-  id: string
+  id: string,
 ): Promise<ShoppingCart> => {
   const model = await getById(carts, id);
 
@@ -23,7 +23,7 @@ export const getShoppingCart = async (
     id: model._id.toHexString(),
     status: model.status,
     productItems: new Map(
-      model.productItems.map((p) => [p.productId, p.quantity])
+      model.productItems.map((p) => [p.productId, p.quantity]),
     ),
     revision: model.revision,
   };
@@ -31,7 +31,7 @@ export const getShoppingCart = async (
 
 export const store = async (
   carts: Collection<ShoppingCartModel>,
-  event: ShoppingCartEvent
+  event: ShoppingCartEvent,
 ): Promise<void> => {
   switch (event.type) {
     case 'shopping-cart-opened': {
@@ -47,7 +47,7 @@ export const store = async (
             revision: 1,
           },
         },
-        { upsert: true }
+        { upsert: true },
       );
       return;
     }
@@ -64,7 +64,7 @@ export const store = async (
               quantity: 0,
             },
           },
-        }
+        },
       );
 
       await carts.updateOne(
@@ -85,7 +85,7 @@ export const store = async (
             },
           ],
           upsert: true,
-        }
+        },
       );
       return;
     }
@@ -101,7 +101,7 @@ export const store = async (
             revision: 1,
           },
         },
-        { upsert: false }
+        { upsert: false },
       );
       return;
     }
@@ -117,7 +117,7 @@ export const store = async (
             revision: 1,
           },
         },
-        { upsert: false }
+        { upsert: false },
       );
       return;
     }

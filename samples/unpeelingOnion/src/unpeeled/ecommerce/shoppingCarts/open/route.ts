@@ -12,14 +12,14 @@ import { EventBus } from '#core/events';
 export const openShoppingCartRoute = (
   carts: Collection<ShoppingCartModel>,
   eventBus: EventBus,
-  router: Router
+  router: Router,
 ) =>
   router.post(
     '/customers/:customerId/shopping-carts/',
     async (
       request: OpenShoppingCartRequest,
       response: Response,
-      next: NextFunction
+      next: NextFunction,
     ) => {
       try {
         const command: OpenShoppingCart = {
@@ -40,7 +40,7 @@ export const openShoppingCartRoute = (
         console.error(error);
         next(error);
       }
-    }
+    },
   );
 
 type OpenShoppingCartRequest = Request<Partial<{ customerId: string }>>;

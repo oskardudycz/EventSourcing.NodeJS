@@ -9,6 +9,6 @@ export class ShoppingCartModel {
     public productItems: ProductItem[],
     public openedAt: Date,
     public confirmedAt: Date | undefined,
-    public revision: number
+    public revision: number,
   ) {}
 }

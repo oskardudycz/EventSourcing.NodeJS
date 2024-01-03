@@ -13,7 +13,7 @@ export class CustomerShoppingHistoryMapper
       model.customerId,
       model._id.toHexString(),
       model.status,
-      model.productItems.length
+      model.productItems.length,
     );
   }
 }

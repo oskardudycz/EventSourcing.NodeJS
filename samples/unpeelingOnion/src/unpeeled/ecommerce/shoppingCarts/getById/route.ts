@@ -6,7 +6,7 @@ import { getById } from '#core/mongo';
 
 export const getShoppingCartByIdRoute = (
   carts: Collection<ShoppingCartModel>,
-  router: Router
+  router: Router,
 ) =>
   router.get(
     '/customers/:customerId/shopping-carts/:shoppingCartId/',
@@ -14,7 +14,7 @@ export const getShoppingCartByIdRoute = (
       try {
         const result = await getById(
           carts,
-          assertNotEmptyString(request.params.shoppingCartId)
+          assertNotEmptyString(request.params.shoppingCartId),
         );
 
         response.send(result);
@@ -22,5 +22,5 @@ export const getShoppingCartByIdRoute = (
         console.error(error);
         next(error);
       }
-    }
+    },
   );
