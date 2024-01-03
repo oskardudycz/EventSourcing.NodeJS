@@ -4,7 +4,7 @@ services:
   #  EventStoreDB - Event Store
   #######################################################
   mongo:
-    image: mongo:5
+    image: mongo:6.0.12
     ports:
       - '27017:27017'
     networks:

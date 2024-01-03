@@ -43,7 +43,7 @@ export const EventBusFactory = (): EventBus => {
 
 export const registerEventHandler = <C extends Event>(
   eventType: Constructor<C>,
-  eventHandler: EventHandler<C>
+  eventHandler: EventHandler<C>,
 ) => {
   return eventHandlers.push((event: Event) => {
     if (!(event instanceof eventType)) {

@@ -3,7 +3,7 @@ import { Collection, Document, Filter, MongoClient, ObjectId } from 'mongodb';
 export const getCollection = <T extends Document & { _id: ObjectId }>(
   mongo: MongoClient,
   collectionName: string,
-  databaseName?: string | undefined
+  databaseName?: string | undefined,
 ) => {
   const db = mongo.db(databaseName);
   return db.collection<T>(collectionName);
@@ -11,7 +11,7 @@ export const getCollection = <T extends Document & { _id: ObjectId }>(
 
 export const findById = async <T extends Document & { _id: ObjectId }>(
   collection: Collection<T>,
-  id: string
+  id: string,
 ): Promise<T | null> => {
   const result = await collection.findOne({
     _id: new ObjectId(id),
@@ -24,7 +24,7 @@ export const findById = async <T extends Document & { _id: ObjectId }>(
 
 export const getById = async <T extends Document & { _id: ObjectId }>(
   collection: Collection<T>,
-  id: string
+  id: string,
 ): Promise<T> => {
   const result = await findById(collection, id);
 

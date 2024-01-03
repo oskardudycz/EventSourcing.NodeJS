@@ -32,8 +32,8 @@ export const CommandBusFactory = (): CommandBus => {
         if (handler === undefined || !handler.canHandle) {
           return Promise.reject(
             new Error(
-              `Command handler for ${JSON.stringify(command)} not found!`
-            )
+              `Command handler for ${JSON.stringify(command)} not found!`,
+            ),
           );
         }
         return handler.handle(command);
@@ -46,7 +46,7 @@ export const CommandBusFactory = (): CommandBus => {
 
 export const registerCommandHandler = <C extends Command>(
   commandType: Constructor<C>,
-  commandHandler: CommandHandler<C>
+  commandHandler: CommandHandler<C>,
 ) => {
   return commandHandlers.push((command: Command) => {
     if (!(command instanceof commandType)) {

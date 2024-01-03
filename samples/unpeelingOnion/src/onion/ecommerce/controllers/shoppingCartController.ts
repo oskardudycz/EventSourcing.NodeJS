@@ -17,39 +17,42 @@ import { GetCustomerShoppingHistory } from '../application/shoppingCarts/queries
 export class ShoppingCartController {
   public router = Router();
 
-  constructor(private commandBus: CommandBus, private queryBus: QueryBus) {
+  constructor(
+    private commandBus: CommandBus,
+    private queryBus: QueryBus,
+  ) {
     this.router.post('/customers/:customerId/shopping-carts/', this.open);
     this.router.post(
       '/customers/:customerId/shopping-carts/:shoppingCartId/product-items',
-      this.addProductItem
+      this.addProductItem,
     );
     this.router.delete(
       '/customers/:customerId/shopping-carts/:shoppingCartId/product-items',
-      this.removeProductItem
+      this.removeProductItem,
     );
     this.router.post(
       '/customers/:customerId/shopping-carts/:shoppingCartId/confirm',
-      this.confirm
+      this.confirm,
     );
     this.router.get(
       '/customers/:customerId/shopping-carts/:shoppingCartId',
-      this.getById
+      this.getById,
     );
     this.router.get(
       '/customers/:customerId/shopping-carts/',
-      this.getCustomerShoppingHistory
+      this.getCustomerShoppingHistory,
     );
   }
 
   private open = async (
     request: Request,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const command = new OpenShoppingCart(
         mongoObjectId(),
-        assertNotEmptyString(request.params.customerId)
+        assertNotEmptyString(request.params.customerId),
       );
       await this.commandBus.send(command);
 
@@ -63,15 +66,15 @@ export class ShoppingCartController {
   private addProductItem = async (
     request: AddProductItemToShoppingCartRequest,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const command = new AddProductItemToShoppingCart(
         assertNotEmptyString(request.params.shoppingCartId),
         new ProductItem(
           assertNotEmptyString(request.body.productId),
-          assertPositiveNumber(request.body.quantity)
-        )
+          assertPositiveNumber(request.body.quantity),
+        ),
       );
       await this.commandBus.send(command);
 
@@ -85,15 +88,15 @@ export class ShoppingCartController {
   private removeProductItem = async (
     request: RemoveProductItemFromShoppingCartRequest,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const command = new RemoveProductItemFromShoppingCart(
         assertNotEmptyString(request.params.shoppingCartId),
         new ProductItem(
           assertNotEmptyString(request.query.productId),
-          assertPositiveNumber(Number(request.query.quantity))
-        )
+          assertPositiveNumber(Number(request.query.quantity)),
+        ),
       );
       await this.commandBus.send(command);
 
@@ -107,11 +110,11 @@ export class ShoppingCartController {
   private confirm = async (
     request: Request,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const command = new ConfirmShoppingCart(
-        assertNotEmptyString(request.params.shoppingCartId)
+        assertNotEmptyString(request.params.shoppingCartId),
       );
       await this.commandBus.send(command);
 
@@ -125,11 +128,11 @@ export class ShoppingCartController {
   private getById = async (
     request: Request,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const query = new GetShoppingCartById(
-        assertNotEmptyString(request.params.shoppingCartId)
+        assertNotEmptyString(request.params.shoppingCartId),
       );
       const result = await this.queryBus.query(query);
 
@@ -143,11 +146,11 @@ export class ShoppingCartController {
   private getCustomerShoppingHistory = async (
     request: Request,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const query = new GetCustomerShoppingHistory(
-        assertNotEmptyString(request.params.customerId)
+        assertNotEmptyString(request.params.customerId),
       );
       const result = await this.queryBus.query(query);
 

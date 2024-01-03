@@ -10,14 +10,14 @@ import { EventBus } from '#core/events';
 export const confirmShoppingCartRoute = (
   carts: Collection<ShoppingCartModel>,
   eventBus: EventBus,
-  router: Router
+  router: Router,
 ) =>
   router.post(
     '/customers/:customerId/shopping-carts/:shoppingCartId/confirm',
     async (
       request: ConfirmShoppingCartRequest,
       response: Response,
-      next: NextFunction
+      next: NextFunction,
     ) => {
       try {
         const command = from(request);
@@ -33,7 +33,7 @@ export const confirmShoppingCartRoute = (
         console.error(error);
         next(error);
       }
-    }
+    },
   );
 
 type ConfirmShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;

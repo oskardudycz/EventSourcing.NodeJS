@@ -3,7 +3,7 @@ import { ShoppingCartConfirmed, ConfirmShoppingCart } from '../shoppingCart';
 
 export const confirmShoppingCart = (
   _command: ConfirmShoppingCart,
-  cart: ShoppingCart
+  cart: ShoppingCart,
 ): ShoppingCartConfirmed => {
   if (cart.status !== ShoppingCartStatus.Opened) {
     throw Error('Cannot confirm to not opened shopping cart');

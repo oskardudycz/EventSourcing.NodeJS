@@ -11,13 +11,13 @@ export class OpenShoppingCartHandler
   constructor(
     private repository: ShoppingCartRepository,
     private mapper: ShoppingCartMapper,
-    private eventBus: EventBus
+    private eventBus: EventBus,
   ) {}
 
   async handle(command: OpenShoppingCart): Promise<void> {
     const aggregate = ShoppingCart.open(
       command.shoppingCartId,
-      command.customerId
+      command.customerId,
     );
 
     await this.repository.add(this.mapper.toModel(aggregate));

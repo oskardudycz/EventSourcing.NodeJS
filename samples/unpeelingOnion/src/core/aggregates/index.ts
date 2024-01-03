@@ -10,7 +10,10 @@ export abstract class Aggregate {
     return this._revision;
   }
 
-  constructor(protected _id: string, protected _revision: number) {}
+  constructor(
+    protected _id: string,
+    protected _revision: number,
+  ) {}
 
   public dequeueUncomittedEvents(): Event[] {
     const events = this.uncomittedEvents;

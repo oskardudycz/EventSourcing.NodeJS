@@ -31,7 +31,7 @@ export const QueryBusFactory = (): QueryBus => {
 
         if (handler === undefined || !handler.canHandle) {
           return Promise.reject(
-            new Error(`Query handler for ${JSON.stringify(query)} not found!`)
+            new Error(`Query handler for ${JSON.stringify(query)} not found!`),
           );
         }
         return (await handler.handle(query)) as Result;
@@ -44,7 +44,7 @@ export const QueryBusFactory = (): QueryBus => {
 
 export const registerQueryHandler = <C extends Query, Result>(
   queryType: Constructor<C>,
-  queryHandler: QueryHandler<C, Result>
+  queryHandler: QueryHandler<C, Result>,
 ) => {
   return queryHandlers.push((query: Query) => {
     if (!(query instanceof queryType)) {

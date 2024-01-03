@@ -27,35 +27,35 @@ const registerHandlers = (mongo: MongoClient) => {
 
   registerCommandHandler(
     OpenShoppingCart,
-    new OpenShoppingCartHandler(repository, shoppingCartMapper, eventBus)
+    new OpenShoppingCartHandler(repository, shoppingCartMapper, eventBus),
   );
   registerCommandHandler(
     AddProductItemToShoppingCart,
     new AddProductItemToShoppingCartHandler(
       repository,
       shoppingCartMapper,
-      eventBus
-    )
+      eventBus,
+    ),
   );
   registerCommandHandler(
     RemoveProductItemFromShoppingCart,
     new RemoveProductItemFromShoppingCartHandler(
       repository,
       shoppingCartMapper,
-      eventBus
-    )
+      eventBus,
+    ),
   );
   registerCommandHandler(
     ConfirmShoppingCart,
-    new ConfirmShoppingCartHandler(repository, shoppingCartMapper, eventBus)
+    new ConfirmShoppingCartHandler(repository, shoppingCartMapper, eventBus),
   );
   registerQueryHandler(
     GetShoppingCartById,
-    new GetShoppingCartByIdHandler(repository)
+    new GetShoppingCartByIdHandler(repository),
   );
   registerQueryHandler(
     GetCustomerShoppingHistory,
-    new GetCustomerShoppingHistoryHandler(repository, shoppingHistoryMapper)
+    new GetCustomerShoppingHistoryHandler(repository, shoppingHistoryMapper),
   );
 };
 

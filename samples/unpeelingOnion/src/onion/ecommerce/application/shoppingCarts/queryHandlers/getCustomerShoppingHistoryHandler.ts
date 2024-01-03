@@ -11,11 +11,11 @@ export class GetCustomerShoppingHistoryHandler
 {
   constructor(
     private repository: ShoppingCartRepository,
-    private mapper: Mapper<CustomerShoppingHistoryItem, ShoppingCartModel>
+    private mapper: Mapper<CustomerShoppingHistoryItem, ShoppingCartModel>,
   ) {}
 
   async handle(
-    query: GetCustomerShoppingHistory
+    query: GetCustomerShoppingHistory,
   ): Promise<CustomerShoppingHistoryItem[]> {
     const items = await this.repository.findAllByCustomerId(query.customerId);
 

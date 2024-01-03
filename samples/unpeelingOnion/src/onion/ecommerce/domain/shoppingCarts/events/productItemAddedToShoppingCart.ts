@@ -5,7 +5,7 @@ export class ProductItemAddedToShoppingCart extends Event {
   constructor(
     public readonly shoppingCartId: string,
     public readonly productItem: ProductItem,
-    public readonly addedAt: Date
+    public readonly addedAt: Date,
   ) {
     super();
   }
