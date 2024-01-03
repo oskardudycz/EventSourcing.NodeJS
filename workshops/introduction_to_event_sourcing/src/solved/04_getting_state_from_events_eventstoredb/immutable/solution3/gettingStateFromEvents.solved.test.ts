@@ -76,7 +76,7 @@ export const merge = <T>(
   item: T,
   where: (current: T) => boolean,
   onExisting: (current: T) => T,
-  onNotFound: () => T | undefined = () => undefined
+  onNotFound: () => T | undefined = () => undefined,
 ) => {
   let wasFound = false;
 
@@ -111,7 +111,7 @@ export const merge = <T>(
 
 export const evolve = (
   state: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':
@@ -140,7 +140,7 @@ export const evolve = (
               quantity: p.quantity + productItem.quantity,
             };
           },
-          () => productItem
+          () => productItem,
         ),
       };
     }
@@ -160,7 +160,7 @@ export const evolve = (
               ...p,
               quantity: p.quantity - productItem.quantity,
             };
-          }
+          },
         ),
       };
     }
@@ -185,7 +185,7 @@ export const evolve = (
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -195,11 +195,11 @@ export const StreamAggregator =
   <Entity, StreamEvent extends Event>(
     evolve: (currentState: Entity, event: StreamEvent) => Entity,
     getInitialState: () => Entity,
-    mapToStreamId: (id: string) => string
+    mapToStreamId: (id: string) => string,
   ) =>
   async (
     eventStore: EventStoreDBClient,
-    id: string
+    id: string,
   ): Promise<Entity | undefined> => {
     try {
       let currentState = getInitialState();
@@ -223,7 +223,7 @@ export const StreamAggregator =
 const appendToStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: StreamEvent[]
+  events: StreamEvent[],
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 
@@ -236,8 +236,8 @@ export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
 export const getShoppingCart = StreamAggregator(
   evolve,
-  () => ({} as ShoppingCart),
-  mapShoppingCartStreamId
+  () => ({}) as ShoppingCart,
+  mapShoppingCartStreamId,
 );
 
 describe('Events definition', () => {
@@ -322,7 +322,7 @@ describe('Events definition', () => {
     await appendToStream(
       eventStore,
       mapShoppingCartStreamId(shoppingCartId),
-      events
+      events,
     );
 
     const shoppingCart = await getShoppingCart(eventStore, shoppingCartId);

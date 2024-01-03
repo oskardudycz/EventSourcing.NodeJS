@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -89,7 +89,7 @@ export class ShoppingCartOOP {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {}
 
   get id() {

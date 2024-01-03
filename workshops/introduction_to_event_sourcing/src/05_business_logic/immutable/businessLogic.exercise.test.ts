@@ -58,7 +58,7 @@ export const merge = <T>(
   item: T,
   where: (current: T) => boolean,
   onExisting: (current: T) => T,
-  onNotFound: () => T | undefined = () => undefined
+  onNotFound: () => T | undefined = () => undefined,
 ) => {
   let wasFound = false;
 
@@ -103,7 +103,7 @@ export type ShoppingCart = Readonly<{
 
 export const evolve = (
   state: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':
@@ -132,7 +132,7 @@ export const evolve = (
               quantity: p.quantity + productItem.quantity,
             };
           },
-          () => productItem
+          () => productItem,
         ),
       };
     }
@@ -152,7 +152,7 @@ export const evolve = (
               ...p,
               quantity: p.quantity - productItem.quantity,
             };
-          }
+          },
         ),
       };
     }
@@ -178,7 +178,7 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;

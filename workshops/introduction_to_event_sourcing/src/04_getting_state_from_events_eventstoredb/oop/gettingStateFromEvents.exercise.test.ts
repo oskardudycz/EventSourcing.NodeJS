@@ -68,7 +68,7 @@ export class ShoppingCart {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {}
 
   get id() {
@@ -115,7 +115,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (currentProductItem) {
@@ -131,7 +131,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (!currentProductItem) {
@@ -143,7 +143,7 @@ export class ShoppingCart {
         if (currentProductItem.quantity <= 0) {
           this._productItems.splice(
             this._productItems.indexOf(currentProductItem),
-            1
+            1,
           );
         }
         return;
@@ -165,7 +165,7 @@ export class ShoppingCart {
 const appendToStream = async (
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: ShoppingCartEvent[]
+  events: ShoppingCartEvent[],
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 
@@ -176,7 +176,7 @@ const appendToStream = async (
 
 export const getShoppingCart = (
   _eventStore: EventStoreDBClient,
-  _streamName: string
+  _streamName: string,
 ): Promise<ShoppingCart> => {
   // 1. Add logic here
   return Promise.reject('Not implemented!');

@@ -69,11 +69,11 @@ export const enum ShoppingCartErrors {
 
 export const assertProductItemExists = (
   productItems: PricedProductItem[],
-  { productId, quantity, unitPrice }: PricedProductItem
+  { productId, quantity, unitPrice }: PricedProductItem,
 ): void => {
   const currentQuantity =
     productItems.find(
-      (p) => p.productId === productId && p.unitPrice == unitPrice
+      (p) => p.productId === productId && p.unitPrice == unitPrice,
     )?.quantity ?? 0;
 
   if (currentQuantity < quantity) {
@@ -83,7 +83,7 @@ export const assertProductItemExists = (
 
 export const decide = (
   { type, data: command }: ShoppingCartCommand,
-  shoppingCart: ShoppingCart
+  shoppingCart: ShoppingCart,
 ): ShoppingCartEvent | ShoppingCartEvent[] => {
   switch (type) {
     case 'OpenShoppingCart': {
@@ -166,7 +166,7 @@ export const decide = (
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -174,7 +174,7 @@ export type Event<
 
 export type Command<
   CommandType extends string = string,
-  CommandData extends Record<string, unknown> = Record<string, unknown>
+  CommandData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<CommandType>;
   data: Readonly<CommandData>;
@@ -183,7 +183,7 @@ export type Command<
 export type Decider<
   State,
   CommandType extends Command,
-  StreamEvent extends Event
+  StreamEvent extends Event,
 > = {
   decide: (command: CommandType, state: State) => StreamEvent | StreamEvent[];
   evolve: (currentState: State, event: StreamEvent) => State;
@@ -197,7 +197,7 @@ export const CommandHandler =
       evolve,
       getInitialState,
     }: Decider<State, CommandType, StreamEvent>,
-    mapToStreamId: (id: string) => string
+    mapToStreamId: (id: string) => string,
   ) =>
   async (eventStore: EventStoreDBClient, id: string, command: CommandType) => {
     const streamId = mapToStreamId(id);

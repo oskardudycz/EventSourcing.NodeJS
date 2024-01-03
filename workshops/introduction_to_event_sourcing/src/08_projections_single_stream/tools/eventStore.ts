@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -24,7 +24,7 @@ export interface EventStore {
 }
 
 export type EventHandler<E extends Event = Event> = (
-  eventEnvelope: EventEnvelope<E>
+  eventEnvelope: EventEnvelope<E>,
 ) => void;
 
 export const getEventStore = () => {
@@ -68,7 +68,7 @@ export const getEventStore = () => {
     },
     subscribe: <E extends Event>(eventHandler: EventHandler<E>): void => {
       handlers.push((eventEnvelope) =>
-        eventHandler(eventEnvelope as EventEnvelope<E>)
+        eventHandler(eventEnvelope as EventEnvelope<E>),
       );
     },
   };

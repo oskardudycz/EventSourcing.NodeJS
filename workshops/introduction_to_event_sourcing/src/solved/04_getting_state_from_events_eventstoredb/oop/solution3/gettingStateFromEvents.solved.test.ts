@@ -69,7 +69,7 @@ export class ShoppingCart {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {}
 
   get id() {
@@ -116,7 +116,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (currentProductItem) {
@@ -132,7 +132,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (!currentProductItem) {
@@ -144,7 +144,7 @@ export class ShoppingCart {
         if (currentProductItem.quantity <= 0) {
           this._productItems.splice(
             this._productItems.indexOf(currentProductItem),
-            1
+            1,
           );
         }
         return;
@@ -169,7 +169,7 @@ export class ShoppingCart {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -177,12 +177,12 @@ export type Event<
 
 export const readStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
-  streamId: string
+  streamId: string,
 ): Promise<StreamEvent[]> => {
   const events = [];
   try {
     for await (const { event } of eventStore.readStream<StreamEvent>(
-      streamId
+      streamId,
     )) {
       if (!event) continue;
 
@@ -204,7 +204,7 @@ export const readStream = async <StreamEvent extends Event>(
 const appendToStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: StreamEvent[]
+  events: StreamEvent[],
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 
@@ -223,20 +223,20 @@ export interface Repository<Entity> {
 
 export class EventStoreDBRepository<
   Entity extends Evolves<StreamEvent>,
-  StreamEvent extends Event
+  StreamEvent extends Event,
 > implements Repository<Entity>
 {
   constructor(
     private eventStore: EventStoreDBClient,
     private getInitialState: () => Entity,
-    private mapToStreamId: (id: string) => string
+    private mapToStreamId: (id: string) => string,
   ) {}
 
   find = async (id: string): Promise<Entity | undefined> => {
     try {
       const currentState = this.getInitialState();
       for await (const { event } of this.eventStore.readStream(
-        this.mapToStreamId(id)
+        this.mapToStreamId(id),
       )) {
         if (!event) continue;
         currentState.evolve(<StreamEvent>{
@@ -259,7 +259,7 @@ export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
 export const getShoppingCart = async (
   eventStore: EventStoreDBClient,
-  streamId: string
+  streamId: string,
 ): Promise<ShoppingCart | undefined> => {
   const repository = new EventStoreDBRepository(
     eventStore,
@@ -271,9 +271,9 @@ export const getShoppingCart = async (
         undefined!,
         undefined,
         undefined,
-        undefined
+        undefined,
       ),
-    mapShoppingCartStreamId
+    mapShoppingCartStreamId,
   );
 
   return repository.find(streamId);
@@ -361,7 +361,7 @@ describe('Events definition', () => {
     await appendToStream(
       eventStore,
       mapShoppingCartStreamId(shoppingCartId),
-      events
+      events,
     );
 
     const shoppingCart = await getShoppingCart(eventStore, shoppingCartId);
@@ -382,7 +382,7 @@ describe('Events definition', () => {
       openedAt,
       [pairOfShoes, tShirt],
       confirmedAt,
-      canceledAt
+      canceledAt,
     );
     expect(actual).toStrictEqual(Object.assign({}, expected));
   });

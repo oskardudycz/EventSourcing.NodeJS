@@ -11,7 +11,7 @@ export const getAndStore = <T>(
   collection: DocumentsCollection<T>,
   id: string,
   streamPosition: number,
-  update: (document: T) => T
+  update: (document: T) => T,
 ) => {
   const document = collection.get(id) ?? ({} as T);
 
@@ -19,7 +19,7 @@ export const getAndStore = <T>(
 };
 
 export const ShoppingCartDetailsProjection = (
-  collection: DocumentsCollection<ShoppingCartDetails>
+  collection: DocumentsCollection<ShoppingCartDetails>,
 ): EventHandler<ShoppingCartEvent> => {
   return ({ type, data: event, metadata: { streamPosition } }) => {
     switch (type) {
@@ -47,7 +47,7 @@ export const ShoppingCartDetailsProjection = (
             const existingProductItem = document.productItems.find(
               (p) =>
                 p.productId === productItem.productId &&
-                p.unitPrice === productItem.unitPrice
+                p.unitPrice === productItem.unitPrice,
             );
 
             if (existingProductItem == null) {
@@ -63,7 +63,7 @@ export const ShoppingCartDetailsProjection = (
             document.totalItemsCount += productItem.quantity;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -77,7 +77,7 @@ export const ShoppingCartDetailsProjection = (
             const existingProductItem = document.productItems.find(
               (p) =>
                 p.productId === productItem.productId &&
-                p.unitPrice === productItem.unitPrice
+                p.unitPrice === productItem.unitPrice,
             );
 
             if (existingProductItem == null) {
@@ -90,7 +90,7 @@ export const ShoppingCartDetailsProjection = (
             if (existingProductItem.quantity == 0) {
               document.productItems.splice(
                 document.productItems.indexOf(existingProductItem),
-                1
+                1,
               );
             }
 
@@ -99,7 +99,7 @@ export const ShoppingCartDetailsProjection = (
             document.totalItemsCount -= productItem.quantity;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -113,7 +113,7 @@ export const ShoppingCartDetailsProjection = (
             document.confirmedAt = event.confirmedAt;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -127,7 +127,7 @@ export const ShoppingCartDetailsProjection = (
             document.canceledAt = event.canceledAt;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -139,7 +139,7 @@ export const ShoppingCartDetailsProjection = (
 };
 
 export const ShoppingCartShortInfoProjection = (
-  collection: DocumentsCollection<ShoppingCartShortInfo>
+  collection: DocumentsCollection<ShoppingCartShortInfo>,
 ): EventHandler<ShoppingCartEvent> => {
   return ({ type, data: event, metadata: { streamPosition } }) => {
     switch (type) {
@@ -167,7 +167,7 @@ export const ShoppingCartShortInfoProjection = (
             document.totalItemsCount += productItem.quantity;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -184,7 +184,7 @@ export const ShoppingCartShortInfoProjection = (
             document.totalItemsCount -= productItem.quantity;
 
             return document;
-          }
+          },
         );
         return;
       }

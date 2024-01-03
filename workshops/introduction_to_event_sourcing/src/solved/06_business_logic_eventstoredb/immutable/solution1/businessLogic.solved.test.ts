@@ -79,7 +79,7 @@ export const merge = <T>(
   item: T,
   where: (current: T) => boolean,
   onExisting: (current: T) => T,
-  onNotFound: () => T | undefined = () => undefined
+  onNotFound: () => T | undefined = () => undefined,
 ) => {
   let wasFound = false;
 
@@ -124,7 +124,7 @@ export type ShoppingCart = Readonly<{
 
 export const evolve = (
   state: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':
@@ -153,7 +153,7 @@ export const evolve = (
               quantity: p.quantity + productItem.quantity,
             };
           },
-          () => productItem
+          () => productItem,
         ),
       };
     }
@@ -173,7 +173,7 @@ export const evolve = (
               ...p,
               quantity: p.quantity - productItem.quantity,
             };
-          }
+          },
         ),
       };
     }
@@ -203,7 +203,7 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -213,17 +213,17 @@ export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
 const handle = handleCommand(
   evolve,
-  () => ({} as ShoppingCart),
-  mapShoppingCartStreamId
+  () => ({}) as ShoppingCart,
+  mapShoppingCartStreamId,
 );
 
 export const readStream = async (
   eventStore: EventStoreDBClient,
-  shoppingCartId: string
+  shoppingCartId: string,
 ) => {
   try {
     const readResult = eventStore.readStream<ShoppingCartEvent>(
-      mapShoppingCartStreamId(shoppingCartId)
+      mapShoppingCartStreamId(shoppingCartId),
     );
 
     const events: ShoppingCartEvent[] = [];
@@ -279,7 +279,7 @@ describe('Getting state from events', () => {
     };
 
     await handle(eventStore, shoppingCartId, (_) =>
-      openShoppingCart({ clientId, shoppingCartId, now: openedAt })
+      openShoppingCart({ clientId, shoppingCartId, now: openedAt }),
     );
 
     await handle(eventStore, shoppingCartId, (state) =>
@@ -288,8 +288,8 @@ describe('Getting state from events', () => {
           shoppingCartId,
           productItem: twoPairsOfShoes,
         },
-        state
-      )
+        state,
+      ),
     );
 
     await handle(eventStore, shoppingCartId, (state) =>
@@ -298,8 +298,8 @@ describe('Getting state from events', () => {
           shoppingCartId,
           productItem: tShirt,
         },
-        state
-      )
+        state,
+      ),
     );
 
     await handle(eventStore, shoppingCartId, (state) =>
@@ -308,21 +308,21 @@ describe('Getting state from events', () => {
           shoppingCartId,
           productItem: pairOfShoes,
         },
-        state
-      )
+        state,
+      ),
     );
 
     await handle(eventStore, shoppingCartId, (state) =>
-      confirmShoppingCart({ shoppingCartId, now: confirmedAt }, state)
+      confirmShoppingCart({ shoppingCartId, now: confirmedAt }, state),
     );
 
     const cancel = () =>
       handle(eventStore, shoppingCartId, (state) =>
-        cancelShoppingCart({ shoppingCartId, now: canceledAt }, state)
+        cancelShoppingCart({ shoppingCartId, now: canceledAt }, state),
       );
 
     await expect(cancel).rejects.toThrow(
-      ShoppingCartErrors.CART_IS_ALREADY_CLOSED
+      ShoppingCartErrors.CART_IS_ALREADY_CLOSED,
     );
     const events = await readStream(eventStore, shoppingCartId);
 

@@ -71,7 +71,7 @@ export class ShoppingCartOOP {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {}
 
   get id() {

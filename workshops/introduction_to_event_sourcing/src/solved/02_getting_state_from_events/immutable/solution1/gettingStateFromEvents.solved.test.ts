@@ -55,12 +55,12 @@ enum ShoppingCartStatus {
 
 export const addProductItem = (
   productItems: PricedProductItem[],
-  newProductItem: PricedProductItem
+  newProductItem: PricedProductItem,
 ): PricedProductItem[] => {
   const { productId, quantity, unitPrice } = newProductItem;
 
   const currentProductItem = productItems.find(
-    (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+    (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
   );
 
   if (!currentProductItem) return [...productItems, newProductItem];
@@ -69,18 +69,18 @@ export const addProductItem = (
   const mergedProductItem = { productId, quantity: newQuantity, unitPrice };
 
   return productItems.map((pi) =>
-    pi.productId === productId ? mergedProductItem : pi
+    pi.productId === productId ? mergedProductItem : pi,
   );
 };
 
 export const removeProductItem = (
   productItems: PricedProductItem[],
-  newProductItem: PricedProductItem
+  newProductItem: PricedProductItem,
 ): PricedProductItem[] => {
   const { productId, quantity, unitPrice } = newProductItem;
 
   const currentProductItem = productItems.find(
-    (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+    (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
   );
 
   if (currentProductItem === undefined) return productItems;
@@ -93,7 +93,7 @@ export const removeProductItem = (
   const mergedProductItem = { productId, quantity: newQuantity, unitPrice };
 
   return productItems.map((pi) =>
-    pi.productId === productId ? mergedProductItem : pi
+    pi.productId === productId ? mergedProductItem : pi,
   );
 };
 
@@ -109,7 +109,7 @@ export type ShoppingCart = Readonly<{
 
 export const evolve = (
   state: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':

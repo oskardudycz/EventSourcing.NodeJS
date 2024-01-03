@@ -73,7 +73,7 @@ export type ShoppingCart = Readonly<{
 const appendToStream = async (
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: ShoppingCartEvent[]
+  events: ShoppingCartEvent[],
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 
@@ -84,7 +84,7 @@ const appendToStream = async (
 
 export const getShoppingCart = (
   _eventStore: EventStoreDBClient,
-  _streamName: string
+  _streamName: string,
 ): Promise<ShoppingCart> => {
   // 1. Add logic here
   return Promise.reject('Not implemented!');

@@ -57,7 +57,7 @@ export type ShoppingCartEvent =
 const appendToStream = async (
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: ShoppingCartEvent[]
+  events: ShoppingCartEvent[],
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 

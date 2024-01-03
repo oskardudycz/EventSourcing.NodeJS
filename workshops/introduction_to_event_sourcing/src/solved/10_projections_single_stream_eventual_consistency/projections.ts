@@ -38,7 +38,7 @@ export const ok = <T>(result: T): RetryResult<T> => {
 
 export const retry = async <T>(
   handle: () => RetryResult<T>,
-  { delay, maxRetries }: RetryOptions = defaultRetryOptions
+  { delay, maxRetries }: RetryOptions = defaultRetryOptions,
 ): Promise<T | undefined> => {
   let currentDelay = delay;
   let retryMade = 0;
@@ -60,7 +60,7 @@ export const retry = async <T>(
 export const getWithRetries = async <T extends VersionedDocument>(
   collection: DocumentsCollection<T>,
   id: string,
-  streamPosition: number
+  streamPosition: number,
 ) => {
   return retry((): RetryResult<{ isNewer: boolean; document: T }> => {
     const document = collection.get(id);
@@ -81,7 +81,7 @@ export const storeWithRetries = async <T extends VersionedDocument>(
   collection: DocumentsCollection<T>,
   id: string,
   document: T,
-  streamPosition: number
+  streamPosition: number,
 ) => {
   return retry(() => {
     const updated = collection.store(id, document, {
@@ -94,7 +94,7 @@ export const storeWithRetries = async <T extends VersionedDocument>(
 
 export const deleteWithRetries = async <T extends VersionedDocument>(
   collection: DocumentsCollection<T>,
-  id: string
+  id: string,
 ) => {
   return retry(() => {
     const updated = collection.delete(id);
@@ -107,7 +107,7 @@ export const getAndStore = async <T extends VersionedDocument>(
   collection: DocumentsCollection<T>,
   id: string,
   streamPosition: number,
-  update: (document: T) => T
+  update: (document: T) => T,
 ) => {
   const getResult = await getWithRetries(collection, id, streamPosition);
 
@@ -122,14 +122,14 @@ export const getAndStore = async <T extends VersionedDocument>(
     collection,
     id,
     updated,
-    streamPosition
+    streamPosition,
   );
 
   if (!updateResult) throw new Error('Failed to update');
 };
 
 export const ShoppingCartDetailsProjection = (
-  collection: DocumentsCollection<ShoppingCartDetails>
+  collection: DocumentsCollection<ShoppingCartDetails>,
 ): EventHandler<ShoppingCartEvent> => {
   return async ({ type, data: event, metadata: { streamPosition } }) => {
     switch (type) {
@@ -149,7 +149,7 @@ export const ShoppingCartDetailsProjection = (
               totalItemsCount: 0,
               lastProcessedPosition: streamPosition,
             };
-          }
+          },
         );
         return;
       }
@@ -163,7 +163,7 @@ export const ShoppingCartDetailsProjection = (
             const existingProductItem = document.productItems.find(
               (p) =>
                 p.productId === productItem.productId &&
-                p.unitPrice === productItem.unitPrice
+                p.unitPrice === productItem.unitPrice,
             );
 
             if (existingProductItem == null) {
@@ -179,7 +179,7 @@ export const ShoppingCartDetailsProjection = (
             document.totalItemsCount += productItem.quantity;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -193,7 +193,7 @@ export const ShoppingCartDetailsProjection = (
             const existingProductItem = document.productItems.find(
               (p) =>
                 p.productId === productItem.productId &&
-                p.unitPrice === productItem.unitPrice
+                p.unitPrice === productItem.unitPrice,
             );
 
             if (existingProductItem == null) {
@@ -206,7 +206,7 @@ export const ShoppingCartDetailsProjection = (
             if (existingProductItem.quantity == 0) {
               document.productItems.splice(
                 document.productItems.indexOf(existingProductItem),
-                1
+                1,
               );
             }
 
@@ -215,7 +215,7 @@ export const ShoppingCartDetailsProjection = (
             document.totalItemsCount -= productItem.quantity;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -229,7 +229,7 @@ export const ShoppingCartDetailsProjection = (
             document.confirmedAt = event.confirmedAt;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -243,7 +243,7 @@ export const ShoppingCartDetailsProjection = (
             document.canceledAt = event.canceledAt;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -255,7 +255,7 @@ export const ShoppingCartDetailsProjection = (
 };
 
 export const ShoppingCartShortInfoProjection = (
-  collection: DocumentsCollection<ShoppingCartShortInfo>
+  collection: DocumentsCollection<ShoppingCartShortInfo>,
 ): EventHandler<ShoppingCartEvent> => {
   return async ({ type, data: event, metadata: { streamPosition } }) => {
     switch (type) {
@@ -272,7 +272,7 @@ export const ShoppingCartShortInfoProjection = (
               totalItemsCount: 0,
               lastProcessedPosition: streamPosition,
             };
-          }
+          },
         );
         return;
       }
@@ -289,7 +289,7 @@ export const ShoppingCartShortInfoProjection = (
             document.totalItemsCount += productItem.quantity;
 
             return document;
-          }
+          },
         );
         return;
       }
@@ -306,7 +306,7 @@ export const ShoppingCartShortInfoProjection = (
             document.totalItemsCount -= productItem.quantity;
 
             return document;
-          }
+          },
         );
         return;
       }

@@ -85,7 +85,7 @@ export type ShoppingCartShortInfo = {
 const get = async <T extends VersionedDocument>(
   collection: DocumentsCollection<T>,
   id: string,
-  streamPosition: number
+  streamPosition: number,
 ) => (await getWithRetries(collection, id, streamPosition))?.document ?? null;
 
 describe('Getting state from events', () => {
@@ -193,7 +193,7 @@ describe('Getting state from events', () => {
           shoppingCartId,
           confirmedAt,
         },
-      }
+      },
     );
 
     // cancelled
@@ -220,7 +220,7 @@ describe('Getting state from events', () => {
           shoppingCartId: cancelledShoppingCartId,
           canceledAt,
         },
-      }
+      },
     );
 
     // confirmed but other client
@@ -247,7 +247,7 @@ describe('Getting state from events', () => {
           shoppingCartId: otherClientShoppingCartId,
           confirmedAt,
         },
-      }
+      },
     );
 
     // second confirmed
@@ -274,7 +274,7 @@ describe('Getting state from events', () => {
           shoppingCartId: otherConfirmedShoppingCartId,
           confirmedAt,
         },
-      }
+      },
     );
 
     // first pending
@@ -287,7 +287,7 @@ describe('Getting state from events', () => {
           clientId,
           openedAt,
         },
-      }
+      },
     );
 
     // first confirmed
@@ -327,7 +327,7 @@ describe('Getting state from events', () => {
     shoppingCartShortInfo = await get(
       shoppingCartInfos,
       cancelledShoppingCartId,
-      3
+      3,
     );
     expect(shoppingCartShortInfo).toBeNull();
 
@@ -348,7 +348,7 @@ describe('Getting state from events', () => {
     shoppingCartShortInfo = await get(
       shoppingCartInfos,
       otherClientShoppingCartId,
-      3
+      3,
     );
     expect(shoppingCartShortInfo).toBeNull();
 
@@ -369,7 +369,7 @@ describe('Getting state from events', () => {
     shoppingCartShortInfo = await get(
       shoppingCartInfos,
       otherConfirmedShoppingCartId,
-      3
+      3,
     );
     expect(shoppingCartShortInfo).toBeNull();
 
@@ -389,7 +389,7 @@ describe('Getting state from events', () => {
     shoppingCartShortInfo = await get(
       shoppingCartInfos,
       otherPendingShoppingCartId,
-      1
+      1,
     );
     expect(shoppingCartShortInfo).toStrictEqual({
       id: otherPendingShoppingCartId,

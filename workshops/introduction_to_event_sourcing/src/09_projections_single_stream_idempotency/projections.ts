@@ -10,7 +10,7 @@ import {
 export const getAndStore = <T>(
   collection: DocumentsCollection<T>,
   id: string,
-  update: (document: T) => T
+  update: (document: T) => T,
 ) => {
   const document = collection.get(id) ?? ({} as T);
 
@@ -18,7 +18,7 @@ export const getAndStore = <T>(
 };
 
 export const ShoppingCartDetailsProjection = (
-  collection: DocumentsCollection<ShoppingCartDetails>
+  collection: DocumentsCollection<ShoppingCartDetails>,
 ): EventHandler<ShoppingCartEvent> => {
   return ({ type, data: event }) => {
     switch (type) {
@@ -40,7 +40,7 @@ export const ShoppingCartDetailsProjection = (
           const existingProductItem = document.productItems.find(
             (p) =>
               p.productId === productItem.productId &&
-              p.unitPrice === productItem.unitPrice
+              p.unitPrice === productItem.unitPrice,
           );
 
           if (existingProductItem == null) {
@@ -64,7 +64,7 @@ export const ShoppingCartDetailsProjection = (
           const existingProductItem = document.productItems.find(
             (p) =>
               p.productId === productItem.productId &&
-              p.unitPrice === productItem.unitPrice
+              p.unitPrice === productItem.unitPrice,
           );
 
           if (existingProductItem == null) {
@@ -77,7 +77,7 @@ export const ShoppingCartDetailsProjection = (
           if (existingProductItem.quantity == 0) {
             document.productItems.splice(
               document.productItems.indexOf(existingProductItem),
-              1
+              1,
             );
           }
 
@@ -114,7 +114,7 @@ export const ShoppingCartDetailsProjection = (
 };
 
 export const ShoppingCartShortInfoProjection = (
-  collection: DocumentsCollection<ShoppingCartShortInfo>
+  collection: DocumentsCollection<ShoppingCartShortInfo>,
 ): EventHandler<ShoppingCartEvent> => {
   return ({ type, data: event }) => {
     switch (type) {

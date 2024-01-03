@@ -52,7 +52,7 @@ export type ShoppingCartEvent =
 const appendToStream = async (
   _eventStore: EventStoreDBClient,
   _streamName: string,
-  _events: ShoppingCartEvent[]
+  _events: ShoppingCartEvent[],
 ): Promise<bigint> => {
   // TODO: Fill append events logic here.
   return Promise.reject('Not implemented!');
@@ -116,7 +116,7 @@ describe('Appending events', () => {
     const appendedEventsCount = await appendToStream(
       eventStore,
       streamName,
-      events
+      events,
     );
 
     expect(appendedEventsCount).toBe(BigInt(events.length - 1));

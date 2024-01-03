@@ -185,7 +185,7 @@ describe('Getting state from events', () => {
           shoppingCartId,
           confirmedAt,
         },
-      }
+      },
     );
 
     // cancelled
@@ -212,7 +212,7 @@ describe('Getting state from events', () => {
           shoppingCartId: cancelledShoppingCartId,
           canceledAt,
         },
-      }
+      },
     );
 
     // confirmed but other client
@@ -239,7 +239,7 @@ describe('Getting state from events', () => {
           shoppingCartId: otherClientShoppingCartId,
           confirmedAt,
         },
-      }
+      },
     );
 
     // second confirmed
@@ -266,7 +266,7 @@ describe('Getting state from events', () => {
           shoppingCartId: otherConfirmedShoppingCartId,
           confirmedAt,
         },
-      }
+      },
     );
 
     // first pending
