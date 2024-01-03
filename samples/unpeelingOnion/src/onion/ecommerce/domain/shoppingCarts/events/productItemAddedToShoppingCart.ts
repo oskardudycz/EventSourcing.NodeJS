@@ -1,5 +1,5 @@
 import { Event } from '#core/events';
-import { ProductItem } from 'src/onion/ecommerce/common/shoppingCarts/productItem';
+import { ProductItem } from '../../../common/shoppingCarts/productItem';
 
 export class ProductItemAddedToShoppingCart extends Event {
   constructor(
