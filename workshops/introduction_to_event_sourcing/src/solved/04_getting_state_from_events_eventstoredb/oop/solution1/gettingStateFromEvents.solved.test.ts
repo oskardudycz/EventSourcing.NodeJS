@@ -69,7 +69,7 @@ export class ShoppingCart {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {}
 
   get id() {
@@ -116,7 +116,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (currentProductItem) {
@@ -132,7 +132,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (!currentProductItem) {
@@ -144,7 +144,7 @@ export class ShoppingCart {
         if (currentProductItem.quantity <= 0) {
           this._productItems.splice(
             this._productItems.indexOf(currentProductItem),
-            1
+            1,
           );
         }
         return;
@@ -169,7 +169,7 @@ export class ShoppingCart {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -177,12 +177,12 @@ export type Event<
 
 export const readStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
-  streamId: string
+  streamId: string,
 ): Promise<StreamEvent[]> => {
   const events = [];
   try {
     for await (const { event } of eventStore.readStream<StreamEvent>(
-      streamId
+      streamId,
     )) {
       if (!event) continue;
 
@@ -204,7 +204,7 @@ export const readStream = async <StreamEvent extends Event>(
 const appendToStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: StreamEvent[]
+  events: StreamEvent[],
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 
@@ -215,16 +215,27 @@ const appendToStream = async <StreamEvent extends Event>(
 
 export const getShoppingCart = async (
   eventStore: EventStoreDBClient,
-  streamId: string
+  streamId: string,
 ): Promise<ShoppingCart> => {
   const events = await readStream<ShoppingCartEvent>(eventStore, streamId);
 
   if (events.length === 0) throw new Error('Shopping Cart was not found!');
 
-  return events.reduce<ShoppingCart>((state, event) => {
-    state.evolve(event);
-    return state;
-  }, new ShoppingCart(undefined!, undefined!, undefined!, undefined!, undefined, undefined, undefined));
+  return events.reduce<ShoppingCart>(
+    (state, event) => {
+      state.evolve(event);
+      return state;
+    },
+    new ShoppingCart(
+      undefined!,
+      undefined!,
+      undefined!,
+      undefined!,
+      undefined,
+      undefined,
+      undefined,
+    ),
+  );
 };
 
 describe('Events definition', () => {
@@ -324,7 +335,7 @@ describe('Events definition', () => {
       openedAt,
       [pairOfShoes, tShirt],
       confirmedAt,
-      canceledAt
+      canceledAt,
     );
     expect(actual).toStrictEqual(Object.assign({}, expected));
   });

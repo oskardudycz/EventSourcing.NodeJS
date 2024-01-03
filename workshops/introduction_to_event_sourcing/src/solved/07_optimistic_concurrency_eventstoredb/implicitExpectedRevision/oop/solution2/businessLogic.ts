@@ -34,11 +34,11 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
     private eventStore: EventStoreDBClient,
     private getInitialState: () => Entity,
     private evolve: (state: Entity, event: StreamEvent) => Entity,
-    private mapToStreamId: (id: string) => string
+    private mapToStreamId: (id: string) => string,
   ) {}
 
   find = async (
-    id: string
+    id: string,
   ): Promise<{ entity: Entity; revision: bigint | 'no_stream' }> => {
     const state = this.getInitialState();
 
@@ -46,7 +46,7 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
 
     try {
       const readResult = this.eventStore.readStream<StreamEvent>(
-        this.mapToStreamId(id)
+        this.mapToStreamId(id),
       );
 
       for await (const { event } of readResult) {
@@ -78,7 +78,7 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
       events.map(jsonEvent),
       {
         expectedRevision,
-      }
+      },
     );
   };
 }
@@ -88,7 +88,7 @@ export abstract class ApplicationService<Entity, StreamEvent extends Event> {
 
   protected on = async (
     id: string,
-    handle: (state: Entity) => StreamEvent | StreamEvent[]
+    handle: (state: Entity) => StreamEvent | StreamEvent[],
   ) => {
     const { entity: aggregate, revision: expectedRevision } =
       await this.repository.find(id);
@@ -98,7 +98,7 @@ export abstract class ApplicationService<Entity, StreamEvent extends Event> {
     return this.repository.store(
       id,
       expectedRevision,
-      ...(Array.isArray(result) ? result : [result])
+      ...(Array.isArray(result) ? result : [result]),
     );
   };
 }
@@ -111,7 +111,7 @@ export class ShoppingCart {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {}
 
   get id() {
@@ -150,13 +150,13 @@ export class ShoppingCart {
       undefined!,
       undefined,
       undefined,
-      undefined
+      undefined,
     );
 
   public open = (
     shoppingCartId: string,
     clientId: string,
-    now: Date
+    now: Date,
   ): ShoppingCartOpened => {
     return {
       type: 'ShoppingCartOpened',
@@ -165,7 +165,7 @@ export class ShoppingCart {
   };
 
   public addProductItem = (
-    productItem: PricedProductItem
+    productItem: PricedProductItem,
   ): ProductItemAddedToShoppingCart => {
     this.assertIsPending();
 
@@ -176,7 +176,7 @@ export class ShoppingCart {
   };
 
   public removeProductItem = (
-    productItem: PricedProductItem
+    productItem: PricedProductItem,
   ): ProductItemRemovedFromShoppingCart => {
     this.assertIsPending();
     this.assertProductItemExists(productItem);
@@ -208,7 +208,7 @@ export class ShoppingCart {
 
   public static evolve = (
     state: ShoppingCart,
-    { type, data: event }: ShoppingCartEvent
+    { type, data: event }: ShoppingCartEvent,
   ): ShoppingCart => {
     switch (type) {
       case 'ShoppingCartOpened': {
@@ -225,7 +225,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = state._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (currentProductItem) {
@@ -241,7 +241,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = state._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (!currentProductItem) {
@@ -253,7 +253,7 @@ export class ShoppingCart {
         if (currentProductItem.quantity <= 0) {
           state._productItems.splice(
             state._productItems.indexOf(currentProductItem),
-            1
+            1,
           );
         }
         return state;
@@ -288,7 +288,7 @@ export class ShoppingCart {
   }: PricedProductItem): void => {
     const currentQuantity =
       this.productItems.find(
-        (p) => p.productId === productId && p.unitPrice == unitPrice
+        (p) => p.productId === productId && p.unitPrice == unitPrice,
       )?.quantity ?? 0;
 
     if (currentQuantity < quantity) {
@@ -349,14 +349,14 @@ export class ShoppingCartService extends ApplicationService<
   ShoppingCartEvent
 > {
   constructor(
-    protected repository: Repository<ShoppingCart, ShoppingCartEvent>
+    protected repository: Repository<ShoppingCart, ShoppingCartEvent>,
   ) {
     super(repository);
   }
 
   public open = ({ shoppingCartId, clientId, now }: OpenShoppingCart) =>
     this.on(shoppingCartId, (shoppingCart) =>
-      shoppingCart.open(shoppingCartId, clientId, now)
+      shoppingCart.open(shoppingCartId, clientId, now),
     );
 
   public addProductItem = ({
@@ -364,7 +364,7 @@ export class ShoppingCartService extends ApplicationService<
     productItem,
   }: AddProductItemToShoppingCart) =>
     this.on(shoppingCartId, (shoppingCart) =>
-      shoppingCart.addProductItem(productItem)
+      shoppingCart.addProductItem(productItem),
     );
 
   public removeProductItem = ({
@@ -372,7 +372,7 @@ export class ShoppingCartService extends ApplicationService<
     productItem,
   }: RemoveProductItemFromShoppingCart) =>
     this.on(shoppingCartId, (shoppingCart) =>
-      shoppingCart.removeProductItem(productItem)
+      shoppingCart.removeProductItem(productItem),
     );
 
   public confirm = ({ shoppingCartId, now }: ConfirmShoppingCart) =>

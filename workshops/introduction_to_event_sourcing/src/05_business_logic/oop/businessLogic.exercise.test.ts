@@ -11,7 +11,7 @@ export type PricedProductItem = ProductItem & {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -79,7 +79,7 @@ export class ShoppingCart {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {}
 
   get id() {
@@ -126,7 +126,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (currentProductItem) {
@@ -142,7 +142,7 @@ export class ShoppingCart {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (!currentProductItem) {
@@ -154,7 +154,7 @@ export class ShoppingCart {
         if (currentProductItem.quantity <= 0) {
           this._productItems.splice(
             this._productItems.indexOf(currentProductItem),
-            1
+            1,
           );
         }
         return;
@@ -174,10 +174,21 @@ export class ShoppingCart {
 }
 
 export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  return events.reduce<ShoppingCart>((state, event) => {
-    state.evolve(event);
-    return state;
-  }, new ShoppingCart(undefined!, undefined!, undefined!, undefined!, undefined, undefined, undefined));
+  return events.reduce<ShoppingCart>(
+    (state, event) => {
+      state.evolve(event);
+      return state;
+    },
+    new ShoppingCart(
+      undefined!,
+      undefined!,
+      undefined!,
+      undefined!,
+      undefined,
+      undefined,
+      undefined,
+    ),
+  );
 };
 
 export interface EventStore {
@@ -290,9 +301,9 @@ describe('Getting state from events', () => {
           ShoppingCartStatus.Confirmed,
           openedAt,
           [pairOfShoes, tShirt],
-          confirmedAt
-        )
-      )
+          confirmedAt,
+        ),
+      ),
     );
   });
 });

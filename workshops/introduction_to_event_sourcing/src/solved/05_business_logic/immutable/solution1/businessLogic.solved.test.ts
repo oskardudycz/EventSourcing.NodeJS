@@ -77,7 +77,7 @@ export const merge = <T>(
   item: T,
   where: (current: T) => boolean,
   onExisting: (current: T) => T,
-  onNotFound: () => T | undefined = () => undefined
+  onNotFound: () => T | undefined = () => undefined,
 ) => {
   let wasFound = false;
 
@@ -122,7 +122,7 @@ export type ShoppingCart = Readonly<{
 
 export const evolve = (
   state: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':
@@ -151,7 +151,7 @@ export const evolve = (
               quantity: p.quantity + productItem.quantity,
             };
           },
-          () => productItem
+          () => productItem,
         ),
       };
     }
@@ -171,7 +171,7 @@ export const evolve = (
               ...p,
               quantity: p.quantity - productItem.quantity,
             };
-          }
+          },
         ),
       };
     }
@@ -201,7 +201,7 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -227,7 +227,7 @@ export const getEventStore = () => {
   };
 };
 
-const handle = handleCommand(evolve, () => ({} as ShoppingCart));
+const handle = handleCommand(evolve, () => ({}) as ShoppingCart);
 
 describe('Getting state from events', () => {
   it('Should return the state from the sequence of events', () => {
@@ -260,7 +260,7 @@ describe('Getting state from events', () => {
     };
 
     handle(eventStore, shoppingCartId, (_) =>
-      openShoppingCart({ clientId, shoppingCartId, now: openedAt })
+      openShoppingCart({ clientId, shoppingCartId, now: openedAt }),
     );
 
     handle(eventStore, shoppingCartId, (state) =>
@@ -269,8 +269,8 @@ describe('Getting state from events', () => {
           shoppingCartId,
           productItem: twoPairsOfShoes,
         },
-        state
-      )
+        state,
+      ),
     );
 
     handle(eventStore, shoppingCartId, (state) =>
@@ -279,8 +279,8 @@ describe('Getting state from events', () => {
           shoppingCartId,
           productItem: tShirt,
         },
-        state
-      )
+        state,
+      ),
     );
 
     handle(eventStore, shoppingCartId, (state) =>
@@ -289,17 +289,17 @@ describe('Getting state from events', () => {
           shoppingCartId,
           productItem: pairOfShoes,
         },
-        state
-      )
+        state,
+      ),
     );
 
     handle(eventStore, shoppingCartId, (state) =>
-      confirmShoppingCart({ shoppingCartId, now: confirmedAt }, state)
+      confirmShoppingCart({ shoppingCartId, now: confirmedAt }, state),
     );
 
     const cancel = () =>
       handle(eventStore, shoppingCartId, (state) =>
-        cancelShoppingCart({ shoppingCartId, now: canceledAt }, state)
+        cancelShoppingCart({ shoppingCartId, now: canceledAt }, state),
       );
 
     expect(cancel).toThrowError(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);

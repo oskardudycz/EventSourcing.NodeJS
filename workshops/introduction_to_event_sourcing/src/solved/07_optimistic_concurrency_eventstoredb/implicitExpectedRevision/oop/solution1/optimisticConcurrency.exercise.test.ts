@@ -19,7 +19,7 @@ export type PricedProductItem = ProductItem & {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -90,11 +90,11 @@ export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
 export const readStream = async (
   eventStore: EventStoreDBClient,
-  shoppingCartId: string
+  shoppingCartId: string,
 ) => {
   try {
     const readResult = eventStore.readStream<ShoppingCartEvent>(
-      mapShoppingCartStreamId(shoppingCartId)
+      mapShoppingCartStreamId(shoppingCartId),
     );
 
     const events: ShoppingCartEvent[] = [];
@@ -190,14 +190,14 @@ describe('Getting state from events', () => {
       });
 
     await expect(tryToConfirmCardAgain).rejects.toThrow(
-      ShoppingCartErrors.CART_IS_ALREADY_CLOSED
+      ShoppingCartErrors.CART_IS_ALREADY_CLOSED,
     );
 
     const cancel = () =>
       shoppingCartService.cancel({ shoppingCartId, now: canceledAt });
 
     await expect(cancel).rejects.toThrow(
-      ShoppingCartErrors.CART_IS_ALREADY_CLOSED
+      ShoppingCartErrors.CART_IS_ALREADY_CLOSED,
     );
 
     const events = await readStream(eventStore, shoppingCartId);

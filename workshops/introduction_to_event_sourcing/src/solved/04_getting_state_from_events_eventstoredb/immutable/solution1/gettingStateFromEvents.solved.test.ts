@@ -76,7 +76,7 @@ export const merge = <T>(
   item: T,
   where: (current: T) => boolean,
   onExisting: (current: T) => T,
-  onNotFound: () => T | undefined = () => undefined
+  onNotFound: () => T | undefined = () => undefined,
 ) => {
   let wasFound = false;
 
@@ -111,7 +111,7 @@ export const merge = <T>(
 
 export const evolve = (
   state: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':
@@ -140,7 +140,7 @@ export const evolve = (
               quantity: p.quantity + productItem.quantity,
             };
           },
-          () => productItem
+          () => productItem,
         ),
       };
     }
@@ -160,7 +160,7 @@ export const evolve = (
               ...p,
               quantity: p.quantity - productItem.quantity,
             };
-          }
+          },
         ),
       };
     }
@@ -185,7 +185,7 @@ export const evolve = (
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -193,12 +193,12 @@ export type Event<
 
 export const readStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
-  streamId: string
+  streamId: string,
 ): Promise<StreamEvent[]> => {
   const events = [];
   try {
     for await (const { event } of eventStore.readStream<StreamEvent>(
-      streamId
+      streamId,
     )) {
       if (!event) continue;
 
@@ -220,7 +220,7 @@ export const readStream = async <StreamEvent extends Event>(
 const appendToStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  events: StreamEvent[]
+  events: StreamEvent[],
 ): Promise<AppendResult> => {
   const serializedEvents = events.map(jsonEvent);
 
@@ -231,7 +231,7 @@ const appendToStream = async <StreamEvent extends Event>(
 
 export const getShoppingCart = async (
   eventStore: EventStoreDBClient,
-  streamId: string
+  streamId: string,
 ): Promise<ShoppingCart> => {
   const events = await readStream<ShoppingCartEvent>(eventStore, streamId);
 

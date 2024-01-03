@@ -24,7 +24,7 @@ export type PricedProductItem = ProductItem & {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -87,7 +87,7 @@ export enum ShoppingCartStatus {
 export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
   return events.reduce<ShoppingCart>(
     ShoppingCart.evolve,
-    ShoppingCart.default()
+    ShoppingCart.default(),
   );
 };
 
@@ -95,11 +95,11 @@ export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
 export const readStream = async (
   eventStore: EventStoreDBClient,
-  shoppingCartId: string
+  shoppingCartId: string,
 ) => {
   try {
     const readResult = eventStore.readStream<ShoppingCartEvent>(
-      mapShoppingCartStreamId(shoppingCartId)
+      mapShoppingCartStreamId(shoppingCartId),
     );
 
     const events: ShoppingCartEvent[] = [];
@@ -161,7 +161,7 @@ describe('Getting state from events', () => {
       eventStore,
       ShoppingCart.default,
       ShoppingCart.evolve,
-      mapShoppingCartStreamId
+      mapShoppingCartStreamId,
     );
 
     const shoppingCartService = new ShoppingCartService(repository);
@@ -172,7 +172,7 @@ describe('Getting state from events', () => {
         clientId,
         now: openedAt,
       },
-      NO_STREAM
+      NO_STREAM,
     );
 
     appendResult = await shoppingCartService.addProductItem(
@@ -180,7 +180,7 @@ describe('Getting state from events', () => {
         shoppingCartId,
         productItem: twoPairsOfShoes,
       },
-      appendResult.nextExpectedRevision
+      appendResult.nextExpectedRevision,
     );
 
     appendResult = await shoppingCartService.addProductItem(
@@ -188,7 +188,7 @@ describe('Getting state from events', () => {
         shoppingCartId,
         productItem: tShirt,
       },
-      appendResult.nextExpectedRevision
+      appendResult.nextExpectedRevision,
     );
 
     appendResult = await shoppingCartService.removeProductItem(
@@ -196,7 +196,7 @@ describe('Getting state from events', () => {
         shoppingCartId,
         productItem: pairOfShoes,
       },
-      appendResult.nextExpectedRevision
+      appendResult.nextExpectedRevision,
     );
 
     appendResult = await shoppingCartService.confirm(
@@ -204,7 +204,7 @@ describe('Getting state from events', () => {
         shoppingCartId,
         now: confirmedAt,
       },
-      appendResult.nextExpectedRevision
+      appendResult.nextExpectedRevision,
     );
 
     // Let's check also negative scenario
@@ -217,21 +217,21 @@ describe('Getting state from events', () => {
           shoppingCartId,
           now: confirmedAt,
         },
-        tooOldExpectedRevision
+        tooOldExpectedRevision,
       );
 
     await expect(updateWithTooOldExpectedRevision).rejects.toThrow(
-      WrongExpectedVersionError
+      WrongExpectedVersionError,
     );
 
     const cancel = () =>
       shoppingCartService.cancel(
         { shoppingCartId, now: canceledAt },
-        appendResult.nextExpectedRevision
+        appendResult.nextExpectedRevision,
       );
 
     await expect(cancel).rejects.toThrow(
-      ShoppingCartErrors.CART_IS_ALREADY_CLOSED
+      ShoppingCartErrors.CART_IS_ALREADY_CLOSED,
     );
     const events = await readStream(eventStore, shoppingCartId);
 

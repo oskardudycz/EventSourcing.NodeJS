@@ -61,7 +61,7 @@ export class ShoppingCart {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {}
 
   get id() {
@@ -183,9 +183,9 @@ describe('Events definition', () => {
           openedAt,
           [pairOfShoes, tShirt],
           confirmedAt,
-          canceledAt
-        )
-      )
+          canceledAt,
+        ),
+      ),
     );
   });
 });

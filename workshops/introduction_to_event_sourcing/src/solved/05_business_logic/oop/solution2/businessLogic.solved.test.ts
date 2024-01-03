@@ -17,7 +17,7 @@ export type PricedProductItem = ProductItem & {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -80,7 +80,7 @@ export enum ShoppingCartStatus {
 export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
   return events.reduce<ShoppingCart>(
     ShoppingCart.evolve,
-    ShoppingCart.default()
+    ShoppingCart.default(),
   );
 };
 

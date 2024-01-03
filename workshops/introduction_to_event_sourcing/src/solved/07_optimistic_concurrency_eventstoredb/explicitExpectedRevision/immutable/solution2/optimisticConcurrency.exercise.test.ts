@@ -72,7 +72,7 @@ export const merge = <T>(
   item: T,
   where: (current: T) => boolean,
   onExisting: (current: T) => T,
-  onNotFound: () => T | undefined = () => undefined
+  onNotFound: () => T | undefined = () => undefined,
 ) => {
   let wasFound = false;
 
@@ -117,7 +117,7 @@ export type ShoppingCart = Readonly<{
 
 export const evolve = (
   state: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':
@@ -146,7 +146,7 @@ export const evolve = (
               quantity: p.quantity + productItem.quantity,
             };
           },
-          () => productItem
+          () => productItem,
         ),
       };
     }
@@ -166,7 +166,7 @@ export const evolve = (
               ...p,
               quantity: p.quantity - productItem.quantity,
             };
-          }
+          },
         ),
       };
     }
@@ -196,7 +196,7 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -205,7 +205,7 @@ export type Event<
 const decider: Decider<ShoppingCart, ShoppingCartCommand, ShoppingCartEvent> = {
   decide,
   evolve,
-  getInitialState: () => ({} as ShoppingCart),
+  getInitialState: () => ({}) as ShoppingCart,
 };
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
@@ -214,11 +214,11 @@ export const handle = CommandHandler(decider, mapShoppingCartStreamId);
 
 export const readStream = async (
   eventStore: EventStoreDBClient,
-  shoppingCartId: string
+  shoppingCartId: string,
 ) => {
   try {
     const readResult = eventStore.readStream<ShoppingCartEvent>(
-      mapShoppingCartStreamId(shoppingCartId)
+      mapShoppingCartStreamId(shoppingCartId),
     );
 
     const events: ShoppingCartEvent[] = [];
@@ -280,7 +280,7 @@ describe('Getting state from events', () => {
         type: 'OpenShoppingCart',
         data: { clientId, shoppingCartId, now: openedAt },
       },
-      NO_STREAM
+      NO_STREAM,
     );
 
     appendResult = await handle(
@@ -290,7 +290,7 @@ describe('Getting state from events', () => {
         type: 'AddProductItemToShoppingCart',
         data: { shoppingCartId, productItem: twoPairsOfShoes },
       },
-      appendResult.nextExpectedRevision
+      appendResult.nextExpectedRevision,
     );
 
     appendResult = await handle(
@@ -300,7 +300,7 @@ describe('Getting state from events', () => {
         type: 'AddProductItemToShoppingCart',
         data: { shoppingCartId, productItem: tShirt },
       },
-      appendResult.nextExpectedRevision
+      appendResult.nextExpectedRevision,
     );
 
     appendResult = await handle(
@@ -310,7 +310,7 @@ describe('Getting state from events', () => {
         type: 'RemoveProductItemFromShoppingCart',
         data: { shoppingCartId, productItem: pairOfShoes },
       },
-      appendResult.nextExpectedRevision
+      appendResult.nextExpectedRevision,
     );
 
     // Let's check also negative scenario
@@ -325,11 +325,11 @@ describe('Getting state from events', () => {
           type: 'ConfirmShoppingCart',
           data: { shoppingCartId, now: confirmedAt },
         },
-        tooOldExpectedRevision
+        tooOldExpectedRevision,
       );
 
     await expect(updateWithTooOldExpectedRevision).rejects.toThrow(
-      WrongExpectedVersionError
+      WrongExpectedVersionError,
     );
 
     appendResult = await handle(
@@ -339,7 +339,7 @@ describe('Getting state from events', () => {
         type: 'ConfirmShoppingCart',
         data: { shoppingCartId, now: confirmedAt },
       },
-      appendResult.nextExpectedRevision
+      appendResult.nextExpectedRevision,
     );
 
     const cancel = () =>
@@ -350,11 +350,11 @@ describe('Getting state from events', () => {
           type: 'CancelShoppingCart',
           data: { shoppingCartId, now: canceledAt },
         },
-        appendResult.nextExpectedRevision
+        appendResult.nextExpectedRevision,
       );
 
     await expect(cancel).rejects.toThrow(
-      ShoppingCartErrors.CART_IS_ALREADY_CLOSED
+      ShoppingCartErrors.CART_IS_ALREADY_CLOSED,
     );
     const events = await readStream(eventStore, shoppingCartId);
 

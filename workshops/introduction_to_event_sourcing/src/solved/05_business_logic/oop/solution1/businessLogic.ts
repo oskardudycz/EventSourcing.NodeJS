@@ -30,12 +30,12 @@ export interface Repository<Entity> {
 
 export class EventStoreRepository<
   Entity extends Aggregate<StreamEvent>,
-  StreamEvent extends Event
+  StreamEvent extends Event,
 > implements Repository<Entity>
 {
   constructor(
     private eventStore: EventStore,
-    private getInitialState: () => Entity
+    private getInitialState: () => Entity,
   ) {}
 
   find = (id: string): Entity => {
@@ -79,7 +79,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
     private _openedAt: Date,
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
-    private _canceledAt?: Date
+    private _canceledAt?: Date,
   ) {
     super();
   }
@@ -120,7 +120,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
       undefined!,
       undefined,
       undefined,
-      undefined
+      undefined,
     );
 
   public open = (shoppingCartId: string, clientId: string, now: Date) => {
@@ -184,7 +184,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (currentProductItem) {
@@ -200,7 +200,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
         } = event;
 
         const currentProductItem = this._productItems.find(
-          (pi) => pi.productId === productId && pi.unitPrice === unitPrice
+          (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (!currentProductItem) {
@@ -212,7 +212,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
         if (currentProductItem.quantity <= 0) {
           this._productItems.splice(
             this._productItems.indexOf(currentProductItem),
-            1
+            1,
           );
         }
         return;
@@ -247,7 +247,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
   }: PricedProductItem): void => {
     const currentQuantity =
       this.productItems.find(
-        (p) => p.productId === productId && p.unitPrice == unitPrice
+        (p) => p.productId === productId && p.unitPrice == unitPrice,
       )?.quantity ?? 0;
 
     if (currentQuantity < quantity) {
@@ -310,7 +310,7 @@ export class ShoppingCartService extends ApplicationService<ShoppingCart> {
 
   public open = ({ shoppingCartId, clientId, now }: OpenShoppingCart) =>
     this.on(shoppingCartId, (shoppingCart) =>
-      shoppingCart.open(shoppingCartId, clientId, now)
+      shoppingCart.open(shoppingCartId, clientId, now),
     );
 
   public addProductItem = ({
@@ -318,7 +318,7 @@ export class ShoppingCartService extends ApplicationService<ShoppingCart> {
     productItem,
   }: AddProductItemToShoppingCart) =>
     this.on(shoppingCartId, (shoppingCart) =>
-      shoppingCart.addProductItem(productItem)
+      shoppingCart.addProductItem(productItem),
     );
 
   public removeProductItem = ({
@@ -326,7 +326,7 @@ export class ShoppingCartService extends ApplicationService<ShoppingCart> {
     productItem,
   }: RemoveProductItemFromShoppingCart) =>
     this.on(shoppingCartId, (shoppingCart) =>
-      shoppingCart.removeProductItem(productItem)
+      shoppingCart.removeProductItem(productItem),
     );
 
   public confirm = ({ shoppingCartId, now }: ConfirmShoppingCart) =>
