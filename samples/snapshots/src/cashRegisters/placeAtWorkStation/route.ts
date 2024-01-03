@@ -20,7 +20,7 @@ export const route = (router: Router) =>
         }
 
         const streamName = getCashRegisterStreamName(
-          command.data.cashRegisterId
+          command.data.cashRegisterId,
         );
 
         await addCashRegister(streamName, command, handlePlaceAtWorkStation);
@@ -29,11 +29,11 @@ export const route = (router: Router) =>
       } catch (error) {
         next(error);
       }
-    }
+    },
   );
 
 function mapRequestToCommand(
-  request: Request
+  request: Request,
 ): PlaceAtWorkStation | 'MISSING_WORKSTATION' {
   if (typeof request.body.workstation !== 'string') {
     return 'MISSING_WORKSTATION';

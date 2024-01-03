@@ -6,11 +6,11 @@ import { SnapshotMetadata } from '../snapshotEvent';
 
 export async function getLastSnapshotVersionFromStreamMetadata(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ): Promise<Result<bigint | undefined, STREAM_NOT_FOUND>> {
   const streamMetadata = await readStreamMetadata<SnapshotMetadata>(
     eventStore,
-    streamName
+    streamName,
   );
 
   if (streamMetadata.isError === true) {

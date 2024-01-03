@@ -20,7 +20,7 @@ export type PlacedAtWorkStation = Event<
 >;
 
 export function handlePlaceAtWorkStation(
-  command: PlaceAtWorkStation
+  command: PlaceAtWorkStation,
 ): Result<PlacedAtWorkStation> {
   return success({
     type: 'placed-at-workstation',

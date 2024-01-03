@@ -1,7 +1,7 @@
 import request from 'supertest';
 
 export async function setupCashRegister(
-  app: Express.Application
+  app: Express.Application,
 ): Promise<string> {
   let cashRegisterId: string = '';
   await request(app)

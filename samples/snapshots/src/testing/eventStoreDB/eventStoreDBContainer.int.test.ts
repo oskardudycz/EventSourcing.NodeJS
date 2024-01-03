@@ -20,7 +20,7 @@ describe('EventStoreDBContainer', () => {
 
     const result = await client.appendToStream(
       `test-${uuid()}`,
-      jsonEvent({ type: 'test-event', data: { test: 'test' } })
+      jsonEvent({ type: 'test-event', data: { test: 'test' } }),
     );
 
     expect(result.success).toBeTruthy();

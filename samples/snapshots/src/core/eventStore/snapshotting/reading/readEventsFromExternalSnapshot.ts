@@ -14,14 +14,14 @@ import {
 
 export async function readEventsFromExternalSnapshot<
   StreamEvent extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent,
 >(
   getLastSnapshot: (
-    streamName: string
+    streamName: string,
   ) => Promise<Result<SnapshotStreamEvent, NO_SHAPSHOT_FOUND>>,
   eventStore: EventStoreDBClient,
   streamName: string,
-  readEventsOptions?: ReadFromStreamOptions
+  readEventsOptions?: ReadFromStreamOptions,
 ): Promise<
   Result<
     ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
@@ -36,7 +36,7 @@ export async function readEventsFromExternalSnapshot<
   if (snapshot.isError === false) {
     snapshotEvent = snapshot.value;
     lastSnapshotVersion = BigInt(
-      snapshotEvent.metadata.snapshottedStreamVersion
+      snapshotEvent.metadata.snapshottedStreamVersion,
     );
   }
 

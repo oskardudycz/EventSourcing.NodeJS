@@ -38,7 +38,7 @@ export type CashRegisterEvent =
 
 export function when(
   currentState: Partial<CashRegister>,
-  event: CashRegisterEvent
+  event: CashRegisterEvent,
 ): Partial<CashRegister> {
   switch (event.type) {
     case 'placed-at-workstation':
@@ -83,7 +83,7 @@ function isPositiveNumber(value: any): boolean {
 }
 
 export function isCashRegister(
-  cashRegister: any
+  cashRegister: any,
 ): cashRegister is CashRegister {
   return (
     cashRegister !== undefined &&

@@ -43,7 +43,7 @@ describe('PlaceAtWorkStation command', () => {
     const result = await addCashRegister(
       streamName,
       command,
-      handlePlaceAtWorkStation
+      handlePlaceAtWorkStation,
     );
 
     expect(result).toBeTruthy();

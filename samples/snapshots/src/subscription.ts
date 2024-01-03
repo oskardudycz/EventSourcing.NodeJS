@@ -16,11 +16,12 @@ async function subscribe(): Promise<void> {
     (subscriptionId, position) =>
       storeCheckpoint(eventStore, subscriptionId, position),
     [storeCashRegisterSnapshotOnSubscription],
-    'cash_register_subscription'
+    'cash_register_subscription',
   );
 }
 
 async function reconnect(): Promise<void> {
+  let maxReconnectionCount = 10;
   do {
     try {
       console.info('Starting reconnection');
@@ -28,16 +29,14 @@ async function reconnect(): Promise<void> {
 
       await subscribe();
     } catch (error) {
-      console.error(
-        `Received error while reconnecting: ${
-          error ?? 'UNEXPECTED ERROR'
-        }. Reconnecting.`
-      );
+      console.error('Received error while reconnectin.');
+      console.error(error);
     }
-  } while (true);
+  } while (--maxReconnectionCount > 0);
 }
 
 (async () => {
+  // eslint-disable-next-line no-async-promise-executor
   return new Promise<void>(async (resolve) => {
     try {
       await subscribe();
@@ -47,4 +46,4 @@ async function reconnect(): Promise<void> {
       resolve();
     }
   });
-})();
+})().catch(console.error);

@@ -26,7 +26,7 @@ export async function appendToStream<StreamEvent extends Event>(
   client: EventStoreDBClient,
   streamName: string,
   events: StreamEvent[],
-  options?: AppendToStreamOptions
+  options?: AppendToStreamOptions,
 ): Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT>> {
   try {
     const jsonEvents: EventData[] = events.map((event) =>
@@ -34,7 +34,7 @@ export async function appendToStream<StreamEvent extends Event>(
         type: event.type,
         data: event.data,
         metadata: event.metadata,
-      })
+      }),
     );
 
     const {

@@ -9,11 +9,11 @@ import {
 } from '../../appending/appendToStream';
 
 export async function appendSnapshotToTheSameStream<
-  SnapshotStreamEvent extends SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent,
 >(
   eventStore: EventStoreDBClient,
   snapshot: SnapshotStreamEvent,
-  streamName: string
+  streamName: string,
 ): Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT>> {
   return pipeResultAsync(
     () => appendToStream(eventStore, streamName, [snapshot]),
@@ -23,6 +23,6 @@ export async function appendSnapshotToTheSameStream<
         lastSnapshotVersion,
       });
       return success(result);
-    }
+    },
   )();
 }

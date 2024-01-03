@@ -8,12 +8,12 @@ import { readSnapshotFromSeparateStream } from './readSnapshotFromSeparateStream
 
 export async function readEventsFromSnapshotInSeparateStream<
   StreamEvent extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent,
 >(
   eventStore: EventStoreDBClient,
   streamName: string,
   readEventsOptions?: ReadFromStreamOptions,
-  buildSnapshotStreamName?: (streamName: string) => string
+  buildSnapshotStreamName?: (streamName: string) => string,
 ): Promise<
   Result<
     ReadFromStreamAndSnapshotsResult<StreamEvent | SnapshotStreamEvent>,
@@ -25,10 +25,10 @@ export async function readEventsFromSnapshotInSeparateStream<
       readSnapshotFromSeparateStream(
         eventStore,
         streamName,
-        buildSnapshotStreamName
+        buildSnapshotStreamName,
       ),
     eventStore,
     streamName,
-    readEventsOptions
+    readEventsOptions,
   );
 }

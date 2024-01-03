@@ -12,7 +12,7 @@ export type ReadFromStreamOptions = {
 export async function readFromStream<StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  options?: ReadFromStreamOptions
+  options?: ReadFromStreamOptions,
 ): Promise<Result<StreamEvent[], STREAM_NOT_FOUND>> {
   try {
     const events = await eventStore.readStream(streamName, options);
@@ -25,7 +25,7 @@ export async function readFromStream<StreamEvent extends Event>(
           (resolvedEvent) =>
             !!resolvedEvent.event &&
             (toPosition === undefined ||
-              (resolvedEvent.commitPosition ?? 0) < toPosition)
+              (resolvedEvent.commitPosition ?? 0) < toPosition),
         )
         .map((resolvedEvent) => {
           return <StreamEvent>{
@@ -33,7 +33,7 @@ export async function readFromStream<StreamEvent extends Event>(
             data: resolvedEvent.event!.data,
             metadata: resolvedEvent.event?.metadata,
           };
-        })
+        }),
     );
   } catch (error) {
     if (error.type == ErrorType.STREAM_NOT_FOUND) {

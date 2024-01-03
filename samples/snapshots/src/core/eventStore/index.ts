@@ -7,6 +7,6 @@ export function getEventStore(): EventStoreDBClient {
   }
 
   return EventStoreDBClient.connectionString(
-    config.eventStoreDB.connectionString
+    config.eventStoreDB.connectionString,
   );
 }
