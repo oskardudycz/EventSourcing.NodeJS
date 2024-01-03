@@ -12,15 +12,15 @@ import {
 
 export type ApplyEvent<Entity, E extends EventType> = (
   currentState: Entity | undefined,
-  event: RecordedEvent<E>
+  event: RecordedEvent<E>,
 ) => Entity;
 
 export const StreamAggregator =
   <Entity, StreamEvents extends EventType>(
-    when: ApplyEvent<Entity, StreamEvents>
+    when: ApplyEvent<Entity, StreamEvents>,
   ) =>
   async (
-    eventStream: StreamingRead<ResolvedEvent<StreamEvents>>
+    eventStream: StreamingRead<ResolvedEvent<StreamEvents>>,
   ): Promise<Entity> => {
     let currentState: Entity | undefined = undefined;
     for await (const { event } of eventStream) {
@@ -40,7 +40,7 @@ let eventStore: EventStoreDBClient;
 export const getEventStore = (connectionString?: string) => {
   if (!eventStore) {
     eventStore = EventStoreDBClient.connectionString(
-      connectionString ?? 'esdb://localhost:2113?tls=false'
+      connectionString ?? 'esdb://localhost:2113?tls=false',
     );
   }
 

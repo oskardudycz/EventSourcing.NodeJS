@@ -60,11 +60,11 @@ export const getExpectedRevisionFromETag = (request: Request): bigint =>
 export const sendCreated = (
   response: Response,
   createdId: string,
-  urlPrefix?: string
+  urlPrefix?: string,
 ): void => {
   response.setHeader(
     'Location',
-    `${urlPrefix ?? response.req.url}/${createdId}`
+    `${urlPrefix ?? response.req.url}/${createdId}`,
   );
   response.status(201).json({ id: createdId });
 };

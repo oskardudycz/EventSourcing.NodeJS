@@ -20,7 +20,7 @@ export const sleep = async (timeout: number): Promise<void> => {
 
 export const retryPromise = async <T = never>(
   callback: () => Promise<T>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<T> => {
   let retryCount = 0;
   const { maxRetries, delay, shouldRetry } = {
@@ -34,7 +34,9 @@ export const retryPromise = async <T = never>(
     } catch (error) {
       if (!shouldRetry(error) || retryCount == maxRetries) {
         console.error(
-          `[retry] Exceeded max retry count, throwing: ${JSON.stringify(error)}`
+          `[retry] Exceeded max retry count, throwing: ${JSON.stringify(
+            error,
+          )}`,
         );
         throw error;
       }
@@ -44,7 +46,7 @@ export const retryPromise = async <T = never>(
       console.warn(
         `[retry] Retrying (number: ${
           retryCount + 1
-        }, delay: ${sleepTime}): ${JSON.stringify(error)}`
+        }, delay: ${sleepTime}): ${JSON.stringify(error)}`,
       );
 
       await sleep(sleepTime);

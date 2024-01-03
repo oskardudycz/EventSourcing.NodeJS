@@ -17,7 +17,7 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 export const SubscriptionToAll =
   (
     eventStore: EventStoreDBClient,
-    loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>
+    loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
     const currentPosition = await loadCheckpoint(subscriptionId);
@@ -42,7 +42,7 @@ export const SubscriptionToAll =
           return;
         }
         console.error(`Received error: ${JSON.stringify(error)}.`);
-      }
+      },
     );
     return subscription;
   };

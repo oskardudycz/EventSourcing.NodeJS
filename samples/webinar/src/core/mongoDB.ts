@@ -21,11 +21,11 @@ import {
 let mongoClient: MongoClient;
 
 export const getMongoDB = async (
-  connectionString?: string
+  connectionString?: string,
 ): Promise<MongoClient> => {
   if (!mongoClient) {
     mongoClient = new MongoClient(
-      connectionString ?? 'mongodb://localhost:27017/'
+      connectionString ?? 'mongodb://localhost:27017/',
     );
     await mongoClient.connect();
   }
@@ -41,7 +41,7 @@ export type ExecuteOnMongoDBOptions =
   | string;
 
 export const getMongoCollection = async <Doc extends Document>(
-  options: ExecuteOnMongoDBOptions
+  options: ExecuteOnMongoDBOptions,
 ): Promise<Collection<Doc>> => {
   const mongo = await getMongoDB();
 
@@ -62,7 +62,7 @@ export const enum MongoDBErrors {
 }
 
 export const assertUpdated = async (
-  update: () => Promise<UpdateResult>
+  update: () => Promise<UpdateResult>,
 ): Promise<UpdateResult> => {
   const result = await update();
 
@@ -74,7 +74,7 @@ export const assertUpdated = async (
 };
 
 export const assertFound = async <T>(
-  find: () => Promise<T | null>
+  find: () => Promise<T | null>,
 ): Promise<T> => {
   const result = await find();
 
@@ -91,14 +91,14 @@ export const assertFound = async <T>(
 
 export const retryIfNotFound = <T>(
   find: () => Promise<T | null>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<T> => {
   return retryPromise(() => assertFound(find), options);
 };
 
 export const retryIfNotUpdated = (
   update: () => Promise<UpdateResult>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<UpdateResult> => {
   return retryPromise(() => assertUpdated(update), options);
 };
@@ -136,11 +136,11 @@ export const storeCheckpointInCollection =
       },
       {
         upsert: true,
-      }
+      },
     );
   };
 
 export const SubscriptionToAllWithMongoCheckpoints = SubscriptionToAll(
   getEventStore(),
-  loadCheckPointFromCollection
+  loadCheckPointFromCollection,
 );
