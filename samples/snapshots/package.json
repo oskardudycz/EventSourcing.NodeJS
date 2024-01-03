@@ -4,6 +4,7 @@
   "description": "Samples of Event Sourcing in JavaScript and TypeScript",
   "main": "index.js",
   "scripts": {
+    "setup": "cat .nvmrc | nvm install; nvm use",
     "build": "npm run build:ts",
     "build:ts": "tsc",
     "build:ts:watch": "tsc  --watch",
