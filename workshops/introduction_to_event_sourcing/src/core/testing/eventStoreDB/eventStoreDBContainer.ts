@@ -10,7 +10,7 @@ const EVENTSTOREDB_PORT = 2113;
 const EVENTSTOREDB_TCP_PORT = 1113;
 const EVENTSTOREDB_TCP_PORTS = [EVENTSTOREDB_TCP_PORT, EVENTSTOREDB_PORT];
 const EVENTSTOREDB_IMAGE_NAME = 'eventstore/eventstore';
-const EVENTSTOREDB_IMAGE_TAG = '22.10.1-buster-slim';
+const EVENTSTOREDB_IMAGE_TAG = '23.10.0-bookworm-slim';
 
 export class EventStoreDBContainer extends GenericContainer {
   private readonly tcpPorts = EVENTSTOREDB_TCP_PORTS;

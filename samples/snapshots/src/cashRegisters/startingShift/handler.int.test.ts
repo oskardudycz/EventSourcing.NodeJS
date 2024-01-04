@@ -27,7 +27,7 @@ describe('EndShift command', () => {
   const streamName = getCashRegisterStreamName(cashRegisterId);
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
     eventStore = esdbContainer.getClient();

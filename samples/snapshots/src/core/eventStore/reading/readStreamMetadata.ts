@@ -1,4 +1,8 @@
-import { ErrorType, EventStoreDBClient } from '@eventstore/db-client';
+import {
+  ErrorType,
+  EventStoreDBClient,
+  StreamNotFoundError,
+} from '@eventstore/db-client';
 import { GetStreamMetadataOptions } from '@eventstore/db-client/dist/streams';
 import { STREAM_NOT_FOUND, METADATA_NOT_FOUND } from './';
 import { failure, Result, success } from '../../primitives';
@@ -20,7 +24,7 @@ export async function readStreamMetadata<
 
     return success(result.metadata);
   } catch (error) {
-    if (error.type == ErrorType.STREAM_NOT_FOUND) {
+    if (error instanceof StreamNotFoundError) {
       return failure('STREAM_NOT_FOUND');
     }
 

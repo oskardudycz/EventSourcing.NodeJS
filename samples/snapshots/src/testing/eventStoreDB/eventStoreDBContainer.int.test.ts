@@ -11,7 +11,7 @@ describe('EventStoreDBContainer', () => {
   let container: StartedEventStoreDBContainer;
 
   beforeAll(async () => {
-    container = await new EventStoreDBContainer().startContainer();
+    container = await new EventStoreDBContainer().start();
   });
 
   it('should connect to EventStoreDB and append new event', async () => {
