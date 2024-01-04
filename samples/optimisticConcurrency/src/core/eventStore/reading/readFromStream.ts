@@ -13,7 +13,7 @@ export type ReadFromStreamOptions = {
 export async function readFromStream<StreamEventType extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  options?: ReadFromStreamOptions
+  options?: ReadFromStreamOptions,
 ): Promise<Result<StreamEvent<StreamEventType>[], STREAM_NOT_FOUND>> {
   try {
     const toPosition = options?.toPosition;
@@ -22,7 +22,7 @@ export async function readFromStream<StreamEventType extends Event>(
 
     for await (const resolvedEvent of eventStore.readStream(
       streamName,
-      options
+      options,
     )) {
       if (resolvedEvent.event === undefined) continue;
 

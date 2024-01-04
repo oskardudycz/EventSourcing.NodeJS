@@ -12,16 +12,16 @@ export type GetShoppingCartDetails = Query<
 >;
 
 export async function getShoppingCartDetails(
-  query: GetShoppingCartDetails
+  query: GetShoppingCartDetails,
 ): Promise<Result<ShoppingCartDetails, SHIFT_DOES_NOT_EXIST>> {
   const collection = await getMongoCollection<ShoppingCartDetails>(
-    SHOPPING_CART_DETAILS
+    SHOPPING_CART_DETAILS,
   );
 
   const result = await retryIfNotFound(() =>
     collection.findOne({
       shoppingCartId: query.data.shoppingCartId,
-    })
+    }),
   ).withTimeout(1000);
 
   if (result === null) {

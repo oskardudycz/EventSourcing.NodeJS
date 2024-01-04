@@ -32,11 +32,11 @@ export const route = (router: Router) =>
       } catch (error) {
         next(error);
       }
-    }
+    },
   );
 
 function mapRequestToQuery(
-  request: Request
+  request: Request,
 ): GetShoppingCartDetails | ValidationError {
   if (!isNotEmptyString(request.params.shoppingCartId)) {
     return 'MISSING_SHOPPING_CARD_ID';

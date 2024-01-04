@@ -10,7 +10,7 @@ export function getEventStore(): EventStoreDBClient {
 
   if (!eventStore) {
     eventStore = EventStoreDBClient.connectionString(
-      config.eventStoreDB.connectionString
+      config.eventStoreDB.connectionString,
     );
   }
 

@@ -5,7 +5,7 @@ export function handleErrors(
   err: unknown,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) {
   return res.status(mapStatus(err)).json({
     status: 'error',

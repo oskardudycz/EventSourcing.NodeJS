@@ -17,16 +17,16 @@ import { Subscription } from './subscription';
 export function getSubscriptionToAll<TError = never>(
   eventStore: EventStoreDBClient,
   loadCheckpoint: (
-    subscriptionId: string
+    subscriptionId: string,
   ) => Promise<Result<Position | undefined>>,
   storeCheckpoint: (
     subscriptionId: string,
-    position: bigint
+    position: bigint,
   ) => Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>>,
   handlers: ((event: StreamEvent) => Promise<Result<boolean, TError>>)[],
   subscriptionId: string = uuid(),
   options?: SubscribeToAllOptions,
-  readableOptions?: ReadableOptions
+  readableOptions?: ReadableOptions,
 ): Result<Subscription> {
   return success(
     new Subscription(async () => {
@@ -45,24 +45,24 @@ export function getSubscriptionToAll<TError = never>(
             filter: excludeSystemEvents(),
             ...options,
           },
-          readableOptions
+          readableOptions,
         );
 
         subscription.on(
           'data',
           handleEvent<TError>(subscription, handlers, (position) =>
-            storeCheckpoint(subscriptionId, position)
-          )
+            storeCheckpoint(subscriptionId, position),
+          ),
         );
 
         return success(subscription);
       } catch (error) {
         console.error(
-          `Received error while subscribing: ${JSON.stringify(error)}.`
+          `Received error while subscribing: ${JSON.stringify(error)}.`,
         );
         throw error;
       }
-    })
+    }),
   );
 }
 
@@ -74,11 +74,11 @@ function handleEvent<TError = never>(
       position: bigint;
       revision: bigint;
       streamName: string;
-    }
+    },
   ) => Promise<Result<boolean, TError>>)[],
   storeCheckpoint: (
-    position: bigint
-  ) => Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>>
+    position: bigint,
+  ) => Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>>,
 ) {
   return async function (resolvedEvent: AllStreamResolvedEvent) {
     try {

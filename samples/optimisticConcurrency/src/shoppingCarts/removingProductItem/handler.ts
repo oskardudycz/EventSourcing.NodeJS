@@ -25,7 +25,7 @@ export type NOT_ENOUGH_PRODUCT_IN_SHOPPING_CART =
 
 export function handleRemovingProductItemFromShoppingCart(
   events: StreamEvent<ShoppingCartEvent>[],
-  command: RemoveProductItemFromShoppingCart
+  command: RemoveProductItemFromShoppingCart,
 ): Result<
   ProductItemRemovedFromShoppingCart,
   SHOPPING_CARD_CLOSED | NOT_ENOUGH_PRODUCT_IN_SHOPPING_CART
@@ -43,7 +43,7 @@ export function handleRemovingProductItemFromShoppingCart(
 
   const currentProductItem = findProductItem(
     shoppingCart.productItems,
-    productId
+    productId,
   );
 
   if (

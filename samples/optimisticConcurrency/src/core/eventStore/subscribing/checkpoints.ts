@@ -28,7 +28,7 @@ export function getCheckpointStreamPrefix(subscriptionId: string) {
 export async function storeCheckpoint(
   eventStore: EventStoreDBClient,
   subscriptionId: string,
-  position: bigint
+  position: bigint,
 ): Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>> {
   const streamName = getCheckpointStreamPrefix(subscriptionId);
 
@@ -68,13 +68,13 @@ export async function storeCheckpoint(
 
 export async function loadCheckpoint(
   eventStore: EventStoreDBClient,
-  subscriptionId: string
+  subscriptionId: string,
 ): Promise<Result<Position | undefined>> {
   const streamName = getCheckpointStreamPrefix(subscriptionId);
 
   const result = await readLastEventFromStream<CheckPointEvent>(
     eventStore,
-    streamName
+    streamName,
   );
 
   if (result.isError === true) return success(undefined);

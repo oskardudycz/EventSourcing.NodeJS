@@ -21,7 +21,7 @@ export const route = (router: Router) =>
         }
 
         const streamName = getShoppingCartStreamName(
-          command.data.shoppingCartId
+          command.data.shoppingCartId,
         );
 
         const result = await add(openShoppingCart, streamName, command);
@@ -40,11 +40,11 @@ export const route = (router: Router) =>
       } catch (error) {
         next(error);
       }
-    }
+    },
   );
 
 function mapRequestToCommand(
-  request: Request
+  request: Request,
 ): OpenShoppingCart | ValidationError {
   if (!isNotEmptyString(request.params.clientId)) {
     return 'MISSING_CLIENT_ID';

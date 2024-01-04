@@ -7,7 +7,7 @@ export const isErrorWithType = (error: unknown): error is ErrorWithType => {
 };
 
 export const isErrorWithStatusAndMessage = (
-  error: unknown
+  error: unknown,
 ): error is ErrorWithStatusAndMessage => {
   return (
     typeof error === 'object' &&

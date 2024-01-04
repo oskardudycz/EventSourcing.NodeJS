@@ -35,7 +35,7 @@ export function toWeakETag(value: number | bigint | string): WeakETag {
 }
 
 export function getETagFromIfMatch(
-  request: ApiRequest
+  request: ApiRequest,
 ): Result<ETag, MISSING_IF_MATCH_HEADER> {
   const etag = request.headers['if-match'];
 
@@ -46,7 +46,7 @@ export function getETagFromIfMatch(
 }
 
 export function getWeakETagValueFromIfMatch(
-  request: ApiRequest
+  request: ApiRequest,
 ): Result<string, WRONG_WEAK_ETAG_FORMAT | MISSING_IF_MATCH_HEADER> {
   const etag = getETagFromIfMatch(request);
 

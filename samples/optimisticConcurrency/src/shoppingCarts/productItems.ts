@@ -5,14 +5,14 @@ export type ProductItem = Readonly<{
 
 export function findProductItem(
   productItems: ProductItem[],
-  productId: string
+  productId: string,
 ): ProductItem | undefined {
   return productItems.find((pi) => pi.productId === productId);
 }
 
 export function addProductItem(
   productItems: ProductItem[],
-  newProductItem: ProductItem
+  newProductItem: ProductItem,
 ): ProductItem[] {
   const { productId, quantity } = newProductItem;
 
@@ -24,13 +24,13 @@ export function addProductItem(
   const mergedProductItem = { productId, quantity: newQuantity };
 
   return productItems.map((pi) =>
-    pi.productId === productId ? mergedProductItem : pi
+    pi.productId === productId ? mergedProductItem : pi,
   );
 }
 
 export function removeProductItem(
   productItems: ProductItem[],
-  newProductItem: ProductItem
+  newProductItem: ProductItem,
 ): ProductItem[] {
   const { productId, quantity } = newProductItem;
 
@@ -46,6 +46,6 @@ export function removeProductItem(
   const mergedProductItem = { productId, quantity: newQuantity };
 
   return productItems.map((pi) =>
-    pi.productId === productId ? mergedProductItem : pi
+    pi.productId === productId ? mergedProductItem : pi,
   );
 }

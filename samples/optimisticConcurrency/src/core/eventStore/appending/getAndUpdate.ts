@@ -9,14 +9,14 @@ import { getEventStore } from '..';
 export async function getAndUpdate<
   CommandType extends Command,
   StreamEventType extends Event,
-  HANDLE_ERROR = never
+  HANDLE_ERROR = never,
 >(
   handle: (
     currentEvents: StreamEvent<StreamEventType>[],
-    command: CommandType
+    command: CommandType,
   ) => Result<StreamEventType, HANDLE_ERROR>,
   streamName: string,
-  command: CommandType
+  command: CommandType,
 ): Promise<
   Result<AppendResult, STREAM_NOT_FOUND | FAILED_TO_APPEND_EVENT | HANDLE_ERROR>
 > {

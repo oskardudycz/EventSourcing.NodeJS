@@ -72,7 +72,7 @@ describe('Full flow', () => {
 
       expect(response.headers['location']).toBeDefined();
       expect(response.headers['location']).toBe(
-        `/clients/${clientId}/shopping-carts/${response.body.id}`
+        `/clients/${clientId}/shopping-carts/${response.body.id}`,
       );
 
       currentRevision = response.headers['etag'];
@@ -85,7 +85,7 @@ describe('Full flow', () => {
 
       response = await request(app)
         .post(
-          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
         )
         .set('If-Match', currentRevision)
         .send({ productId: firstProductId, quantity: 10 })
@@ -99,7 +99,7 @@ describe('Full flow', () => {
 
       response = await request(app)
         .delete(
-          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${firstProductId}&quantity=${5}`
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${firstProductId}&quantity=${5}`,
         )
         .set('If-Match', currentRevision)
         .send()
