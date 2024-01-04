@@ -39,13 +39,13 @@ describe('invoice', () => {
     };
 
     // 1. 2. Get all events and sort them in the order of appearance
-    var events = [invoiceInitiated, invoiceIssued, invoiceSent];
+    const events = [invoiceInitiated, invoiceIssued, invoiceSent];
 
     // 3. Apply each event on the entity.
     const invoice = aggregateStream<Invoice, InvoiceEvent>(
       events,
       when,
-      isInvoice
+      isInvoice,
     );
 
     expect(invoice).toMatchObject({
