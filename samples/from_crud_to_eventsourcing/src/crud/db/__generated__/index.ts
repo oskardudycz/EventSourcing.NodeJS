@@ -20,7 +20,7 @@ export default DatabaseSchema;
 function serializeValue(
   _tableName: string,
   _columnName: string,
-  value: unknown
+  value: unknown,
 ): unknown {
   return value;
 }

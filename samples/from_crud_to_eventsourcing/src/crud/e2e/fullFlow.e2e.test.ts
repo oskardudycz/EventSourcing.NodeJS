@@ -7,7 +7,7 @@ import request from 'supertest';
 import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
-} from 'testcontainers';
+} from '@testcontainers/postgresql';
 import { v4 as uuid } from 'uuid';
 import { router } from '../shoppingCarts/routes';
 import { CartDetails, ShoppingCartStatus } from '../shoppingCarts/shoppingCart';
@@ -170,7 +170,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
       });
       expect(
-        greaterOrEqual(updatedCart.updatedAt, current.updatedAt)
+        greaterOrEqual(updatedCart.updatedAt, current.updatedAt),
       ).toBeTruthy();
 
       current = response.body as CartDetails;
@@ -220,7 +220,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
       });
       expect(
-        greaterOrEqual(updatedCart.updatedAt, current.updatedAt)
+        greaterOrEqual(updatedCart.updatedAt, current.updatedAt),
       ).toBeTruthy();
 
       ///////////////////////////////////////////////////

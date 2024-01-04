@@ -71,7 +71,7 @@ export type ShoppingCartEvent =
   | ShoppingCartConfirmed;
 
 export const isCashierShoppingCartEvent = (
-  event: RecordedEvent | null
+  event: RecordedEvent | null,
 ): event is ShoppingCartEvent & JSONRecordedEvent => {
   return (
     event != null &&
@@ -144,7 +144,7 @@ export const getShoppingCart = StreamAggregator<
         ...currentState,
         productItems: addProductItem(
           currentState.productItems,
-          event.data.productItem
+          event.data.productItem,
         ),
       };
     case 'product-item-removed-from-shopping-cart':
@@ -152,7 +152,7 @@ export const getShoppingCart = StreamAggregator<
         ...currentState,
         productItems: removeProductItem(
           currentState.productItems,
-          event.data.productItem
+          event.data.productItem,
         ),
       };
     case 'shopping-cart-confirmed':
@@ -200,7 +200,7 @@ export type AddProductItemToShoppingCart = {
 export const addProductItemToShoppingCart = async (
   getPricedProduct: (productItem: ProductItem) => Promise<PricedProductItem>,
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId, productItem }: AddProductItemToShoppingCart
+  { shoppingCartId, productItem }: AddProductItemToShoppingCart,
 ): Promise<ProductItemAddedToShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
 
@@ -229,7 +229,7 @@ export type RemoveProductItemFromShoppingCart = {
 
 export const removeProductItemFromShoppingCart = async (
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart
+  { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart,
 ): Promise<ProductItemRemovedFromShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
 
@@ -237,7 +237,7 @@ export const removeProductItemFromShoppingCart = async (
 
   const current = assertProductItemExists(
     shoppingCart.productItems,
-    productItem
+    productItem,
   );
 
   return {
@@ -267,7 +267,7 @@ export type ConfirmShoppingCart = {
 export const confirmShoppingCart = async (
   getUserData: (userId: number) => Promise<User | undefined>,
   events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId, additionalInfo, userId }: ConfirmShoppingCart
+  { shoppingCartId, additionalInfo, userId }: ConfirmShoppingCart,
 ): Promise<ShoppingCartConfirmed> => {
   const shoppingCart = await getShoppingCart(events);
 

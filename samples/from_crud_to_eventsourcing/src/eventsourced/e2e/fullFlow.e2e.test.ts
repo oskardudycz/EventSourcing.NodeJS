@@ -14,7 +14,7 @@ import request from 'supertest';
 import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
-} from 'testcontainers';
+} from '@testcontainers/postgresql';
 import { disconnectFromEventStore } from '../core/streams';
 import { router } from '../shoppingCarts/routes';
 import { ShoppingCartStatus } from '../shoppingCarts/shoppingCart';
@@ -88,7 +88,7 @@ describe('Full flow', () => {
 
       expect(response.headers['location']).toBeDefined();
       expect(response.headers['location']).toBe(
-        `/v2/shopping-carts/${current.id}`
+        `/v2/shopping-carts/${current.id}`,
       );
 
       currentRevision = response.headers['etag'];
@@ -216,7 +216,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
       });
       expect(
-        greaterOrEqual(response.body.updatedAt, current.updatedAt)
+        greaterOrEqual(response.body.updatedAt, current.updatedAt),
       ).toBeTruthy();
       current = response.body as CartDetails;
 
@@ -229,7 +229,7 @@ describe('Full flow', () => {
       };
       response = await request(app)
         .delete(
-          `/v2/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`
+          `/v2/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`,
         )
         .set('If-Match', currentRevision)
         .expect(200);
@@ -266,7 +266,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
       });
       expect(
-        greaterOrEqual(response.body.updatedAt, current.updatedAt)
+        greaterOrEqual(response.body.updatedAt, current.updatedAt),
       ).toBeTruthy();
       current = response.body as CartDetails;
 
@@ -307,7 +307,7 @@ describe('Full flow', () => {
         ...confirmedData,
       });
       expect(
-        greaterOrEqual(response.body.updatedAt, current.updatedAt)
+        greaterOrEqual(response.body.updatedAt, current.updatedAt),
       ).toBeTruthy();
       current = response.body as CartDetails;
 

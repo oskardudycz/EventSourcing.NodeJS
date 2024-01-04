@@ -1,12 +1,12 @@
 version: '3'
 services:
   #######################################################
-  #  EventStoreDB - Event Store
+  #  EventStoreDB
   #######################################################
-  eventstore.db:
-    image: eventstore/eventstore:21.10.8-buster-slim
+  eventstoredb:
+    image: eventstore/eventstore:23.10.0-bookworm-slim
     # use this image if you're running ARM-based proc like Apple M1
-    # image: ghcr.io/eventstore/eventstore:21.10.0-alpha-arm64v8
+    # image: eventstore/eventstore:23.10.0-alpha-arm64v8
     environment:
       - EVENTSTORE_CLUSTER_SIZE=1
       - EVENTSTORE_RUN_PROJECTIONS=All
@@ -27,18 +27,18 @@ services:
         source: eventstore-volume-logs
         target: /var/log/eventstore
     networks:
-      - eventstore.db
+      - esdb_network
 
   #######################################################
   #  Postgres
   #######################################################
   postgres:
-    image: clkao/postgres-plv8
-    container_name: postgres
-    environment:
-      POSTGRES_PASSWORD: Password12!
+    image: postgres:15.1-alpine
     ports:
       - '5432:5432'
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=postgres
     networks:
       - postgres
 
