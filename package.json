@@ -4,13 +4,7 @@
   "description": "Samples of Event Sourcing in JavaScript and TypeScript",
   "scripts": {
     "lint": "npm run lint:samples:simple",
-    "lint:samples:simple": "cd ./samples/simple/ && npm run lint",
-    "prepare": "husky install"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run lint"
-    }
+    "lint:samples:simple": "cd ./samples/simple/ && npm run lint"
   },
   "repository": {
     "type": "git",
@@ -24,8 +18,5 @@
   "bugs": {
     "url": "https://github.com/oskardudycz/EventSourcing.NodeJS/issues"
   },
-  "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
-  "devDependencies": {
-    "husky": "^4.3.8"
-  }
+  "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme"
 }
