@@ -28,7 +28,7 @@ export type InvoiceEvent = InvoiceInitiated | InvoiceIssued | InvoiceSent;
 
 export function when(
   currentState: Partial<Invoice>,
-  event: InvoiceEvent
+  event: InvoiceEvent,
 ): Partial<Invoice> {
   switch (event.type) {
     case 'invoice-initiated':
