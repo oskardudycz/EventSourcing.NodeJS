@@ -34,7 +34,7 @@ export const assertPositiveNumber = (value: unknown): number => {
 };
 
 export const assertPositiveNumberOrUndefined = (
-  value: unknown
+  value: unknown,
 ): number | undefined => {
   return value != null ? assertPositiveNumber(value) : value ?? undefined;
 };
@@ -71,7 +71,7 @@ export const assertArrayOrUndefined = (value: unknown): [] | undefined => {
 
 export const greaterOrEqual = (
   first: Date | null | undefined,
-  second: Date | null | undefined
+  second: Date | null | undefined,
 ): boolean => {
   if (!first) return false;
 

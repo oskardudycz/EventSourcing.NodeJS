@@ -47,7 +47,7 @@ router.post(
   async (
     request: CartUpsertRequest,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const { items, id, sessionId, ...cart } =
@@ -70,13 +70,13 @@ router.post(
               anyOf([
                 ShoppingCartStatus.Confirmed,
                 ShoppingCartStatus.Cancelled,
-              ])
+              ]),
             ),
           },
           {
             ...cart,
             updatedAt: new Date(),
-          }
+          },
         );
       }
 
@@ -116,7 +116,7 @@ router.post(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 const getShoppingCartFromRequest = (request: CartUpsertRequest): CartUpsert => {
@@ -158,7 +158,7 @@ const getShoppingCartFromRequest = (request: CartUpsertRequest): CartUpsert => {
           quantity: assertPositiveNumber(item.quantity),
           sku: assertNotEmptyString(item.sku),
         };
-      }
+      },
     ),
     createdAt: assertDateOrUndefined(request.body.createdAt) ?? new Date(),
   };
@@ -173,7 +173,7 @@ router.get(
   async (
     request: Request,
     response: Response<CartDetails>,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const shoppingCarts = carts(getPostgres());
@@ -201,5 +201,5 @@ router.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );

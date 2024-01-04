@@ -15,7 +15,7 @@ import {
 export const create =
   <Command, StreamEvent extends JSONEventType>(
     eventStore: EventStoreDBClient,
-    handle: (command: Command) => StreamEvent
+    handle: (command: Command) => StreamEvent,
   ) =>
   (streamName: string, command: Command): Promise<AppendResult> => {
     const event = handle(command);
@@ -30,13 +30,13 @@ export const update =
     eventStore: EventStoreDBClient,
     handle: (
       events: StreamingRead<ResolvedEvent<StreamEvent>>,
-      command: Command
-    ) => Promise<StreamEvent>
+      command: Command,
+    ) => Promise<StreamEvent>,
   ) =>
   async (
     streamName: string,
     command: Command,
-    expectedRevision: bigint
+    expectedRevision: bigint,
   ): Promise<AppendResult> => {
     const readStream = eventStore.readStream(streamName);
 

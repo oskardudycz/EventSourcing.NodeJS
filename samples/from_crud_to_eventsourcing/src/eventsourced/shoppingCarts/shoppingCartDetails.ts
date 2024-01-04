@@ -21,7 +21,7 @@ export const getShoppingCartItemss = () => cartItems(getPostgres());
 
 export const projectToShoppingCartItem = (
   db: Transaction,
-  resolvedEvent: SubscriptionResolvedEvent
+  resolvedEvent: SubscriptionResolvedEvent,
 ): Promise<void> => {
   if (
     resolvedEvent.event === undefined ||
@@ -41,7 +41,7 @@ export const projectToShoppingCartItem = (
       return projectProductItemRemovedFromShoppingCart(
         db,
         event,
-        streamRevision
+        streamRevision,
       );
     case 'shopping-cart-confirmed':
       return projectShoppingCartConfirmed(db, event, streamRevision);
@@ -55,7 +55,7 @@ export const projectToShoppingCartItem = (
 export const projectShoppingCartOpened = async (
   db: Transaction,
   event: ShoppingCartOpened,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<void> => {
   const shoppingCarts = carts(db);
 
@@ -70,7 +70,7 @@ export const projectShoppingCartOpened = async (
 export const projectProductItemAddedToShoppingCart = async (
   db: Transaction,
   event: ProductItemAddedToShoppingCart,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<void> => {
   const {
     shoppingCartId,
@@ -82,7 +82,7 @@ export const projectProductItemAddedToShoppingCart = async (
     db,
     shoppingCartId,
     new Date(addedAt),
-    streamRevision
+    streamRevision,
   );
 
   if (wasApplied) return;
@@ -94,14 +94,14 @@ export const projectProductItemAddedToShoppingCart = async (
     INSERT INTO ${shoppingCartsItems.tableId} as ci ("cartId", "productId", "sku", "price", "discount", "quantity", "createdAt")
     VALUES (${cartId}, ${productId}, ${sku}, ${price}, ${discount}, ${quantity}, ${addedAt})
     ON CONFLICT ("cartId", "productId") DO UPDATE SET "quantity" = EXCLUDED."quantity" + ci."quantity", "updatedAt" = ${addedAt};
-    `
+    `,
   );
 };
 
 export const projectProductItemRemovedFromShoppingCart = async (
   db: Transaction,
   event: ProductItemRemovedFromShoppingCart,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<void> => {
   const {
     shoppingCartId,
@@ -113,7 +113,7 @@ export const projectProductItemRemovedFromShoppingCart = async (
     db,
     shoppingCartId,
     new Date(removedAt),
-    streamRevision
+    streamRevision,
   );
 
   if (wasApplied) return;
@@ -128,14 +128,14 @@ export const projectProductItemRemovedFromShoppingCart = async (
     
     DELETE FROM ${shoppingCartsItems.tableId}
     WHERE "cartId" = ${cartId} AND "productId" = ${productId} AND "quantity" = 0;
-    `
+    `,
   );
 };
 
 export const projectShoppingCartConfirmed = async (
   db: Transaction,
   event: ShoppingCartConfirmed,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<void> => {
   const shoppingCarts = carts(db);
 
@@ -168,7 +168,7 @@ export const projectShoppingCartConfirmed = async (
       ...address,
       status: ShoppingCartStatus.Confirmed,
       updatedAt: new Date(confirmedAt),
-    }
+    },
   );
 };
 
@@ -176,7 +176,7 @@ const wasAlreadyApplied = async (
   db: Transaction,
   shoppingCartId: string,
   updatedAt: Date,
-  streamRevision: number
+  streamRevision: number,
 ) => {
   const shoppingCarts = carts(db);
   const result = await shoppingCarts.update(
@@ -184,7 +184,7 @@ const wasAlreadyApplied = async (
     {
       revision: streamRevision,
       updatedAt,
-    }
+    },
   );
 
   return {

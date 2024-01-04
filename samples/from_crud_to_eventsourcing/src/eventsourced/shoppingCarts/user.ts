@@ -21,14 +21,14 @@ export const getUserData = (userId: number) => {
   if (!fakeUsers.has(userId)) {
     fakeUsers.set(userId, {
       id: userId,
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
       email: faker.internet.email(),
-      mobile: faker.phone.phoneNumber(),
+      mobile: faker.phone.number(),
       address: {
-        city: faker.address.city(),
-        province: faker.address.state(),
-        country: faker.address.country(),
+        city: faker.location.city(),
+        province: faker.location.state(),
+        country: faker.location.country(),
       },
     });
   }

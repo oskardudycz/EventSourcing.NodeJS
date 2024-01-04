@@ -13,13 +13,13 @@ export const getPostgres = (): ConnectionPool => {
   if (!db) {
     if (!config.postgres.connectionString) {
       throw new Error(
-        'Postgres connection string not set. Please define "DATABASE_URL" environment variable'
+        'Postgres connection string not set. Please define "DATABASE_URL" environment variable',
       );
     }
 
     if (!config.postgres.schemaName) {
       throw new Error(
-        'Postgres schema name string not set. Please define "DATABASE_SCHEMA" environment variable'
+        'Postgres schema name string not set. Please define "DATABASE_SCHEMA" environment variable',
       );
     }
 
@@ -54,7 +54,7 @@ export const runPostgresMigration = ({
   execSync(
     `npx node_modules/@databases/pg-migrations apply --database ${connectionString} --directory ${migrationsPath} ${
       ignoreEdditedMigrationFile ? '--ignore-error migration_file_edited' : ''
-    }`
+    }`,
   );
 };
 
@@ -64,7 +64,7 @@ export const enum PostgresErrors {
 }
 
 export const assertUpdated = async <T>(
-  update: () => Promise<T[]>
+  update: () => Promise<T[]>,
 ): Promise<T[]> => {
   const result = await update();
 
@@ -76,7 +76,7 @@ export const assertUpdated = async <T>(
 };
 
 export const assertFound = async <T>(
-  find: () => Promise<T | null>
+  find: () => Promise<T | null>,
 ): Promise<T> => {
   const result = await find();
 
@@ -93,14 +93,14 @@ export const assertFound = async <T>(
 
 export const retryIfNotFound = <T>(
   find: () => Promise<T | null>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<T> => {
   return retryPromise(() => assertFound(find), options);
 };
 
 export const retryIfNotUpdated = <T>(
   update: () => Promise<T[]>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<T[]> => {
   return retryPromise(() => assertUpdated(update), options);
 };

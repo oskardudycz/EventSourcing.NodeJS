@@ -21,7 +21,7 @@ const convictConfig = convict({
   postgres: {
     connectionString: {
       format: String,
-      default: 'postgres://postgres:Password12!@localhost:5432/postgres',
+      default: 'postgres://postgres:postgres@localhost:5432/postgres',
       arg: 'DATABASE_URL',
       env: 'DATABASE_URL',
     },

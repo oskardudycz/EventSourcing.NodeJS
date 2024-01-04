@@ -51,7 +51,7 @@ router.post(
         streamName,
         {
           shoppingCartId,
-        }
+        },
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
@@ -60,7 +60,7 @@ router.post(
       console.error(error);
       next(error);
     }
-  }
+  },
 );
 
 ///////////////////////////////
@@ -76,11 +76,11 @@ router.post(
   async (
     request: AddProductItemRequest,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const shoppingCartId = assertNotEmptyString(
-        request.params.shoppingCartId
+        request.params.shoppingCartId,
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromIfMatch(request);
@@ -89,7 +89,7 @@ router.post(
         AddProductItemToShoppingCart,
         ShoppingCartEvent
       >(getEventStore(), (events, command) =>
-        addProductItemToShoppingCart(getPricedProductItem, events, command)
+        addProductItemToShoppingCart(getPricedProductItem, events, command),
       )(
         streamName,
         {
@@ -99,7 +99,7 @@ router.post(
             quantity: assertPositiveNumber(request.body.quantity),
           },
         },
-        expectedRevision
+        expectedRevision,
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
@@ -108,7 +108,7 @@ router.post(
       console.error(error);
       next(error);
     }
-  }
+  },
 );
 
 ///////////////////////////////
@@ -126,18 +126,18 @@ router.delete(
   async (
     request: RemoveProductItemRequest,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const shoppingCartId = assertNotEmptyString(
-        request.params.shoppingCartId
+        request.params.shoppingCartId,
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromIfMatch(request);
 
       const result = await update(
         getEventStore(),
-        removeProductItemFromShoppingCart
+        removeProductItemFromShoppingCart,
       )(
         streamName,
         {
@@ -147,7 +147,7 @@ router.delete(
             quantity: assertPositiveNumber(Number(request.query.quantity)),
           },
         },
-        expectedRevision
+        expectedRevision,
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
@@ -156,7 +156,7 @@ router.delete(
       console.error(error);
       next(error);
     }
-  }
+  },
 );
 
 ///////////////////////////////
@@ -174,18 +174,18 @@ router.put(
   async (
     request: ConfirmProductItemRequest,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     try {
       const shoppingCartId = assertNotEmptyString(
-        request.params.shoppingCartId
+        request.params.shoppingCartId,
       );
       const streamName = toShoppingCartStreamName(shoppingCartId);
       const expectedRevision = getExpectedRevisionFromIfMatch(request);
 
       const result = await update<ConfirmShoppingCart, ShoppingCartEvent>(
         getEventStore(),
-        (events, command) => confirmShoppingCart(getUserData, events, command)
+        (events, command) => confirmShoppingCart(getUserData, events, command),
       )(
         streamName,
         {
@@ -197,7 +197,7 @@ router.put(
             line2: assertStringOrUndefined(request.body.line2),
           },
         },
-        expectedRevision
+        expectedRevision,
       );
 
       response.set('ETag', toWeakETag(result.nextExpectedRevision));
@@ -206,7 +206,7 @@ router.put(
       console.error(error);
       next(error);
     }
-  }
+  },
 );
 
 ///////////////////////////////
@@ -248,12 +248,12 @@ router.get(
       response.send({
         ...result,
         items: items.sort(
-          (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+          (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
         ),
       });
     } catch (error) {
       console.error(error);
       next(error);
     }
-  }
+  },
 );

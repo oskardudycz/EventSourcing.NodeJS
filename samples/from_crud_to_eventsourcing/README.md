@@ -51,7 +51,7 @@ The assumption to have such a generic approach was that we're using a rich front
    - Postgres DB
    - PG Admin - IDE for postgres. Available at: http://localhost:5050.
      - Login: `admin@pgadmin.org`, Password: `admin`
-     - To connect to server click right mouse on Servers, then Register Server and use host: `postgres`, user: `postgres`, password: `Password12!`
+     - To connect to server click right mouse on Servers, then Register Server and use host: `postgres`, user: `postgres`, password: `postgres`
    - EventStoreDB UI: http://localhost:2113/
 
 ### CRUD

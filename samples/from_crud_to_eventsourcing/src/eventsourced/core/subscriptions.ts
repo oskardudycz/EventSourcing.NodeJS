@@ -22,7 +22,7 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 export const SubscriptionToAll =
   (
     getEventStore: () => EventStoreDBClient,
-    loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>
+    loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
     return retryPromise(async () => {
@@ -43,7 +43,7 @@ export const SubscriptionToAll =
             for (const handler of handlers) {
               await handler({ ...resolvedEvent, subscriptionId });
             }
-          }
+          },
         ) as Readable,
         (error) => {
           if (!error) {
@@ -52,10 +52,10 @@ export const SubscriptionToAll =
           }
           console.error(
             `Received error: %s. Retrying.`,
-            error ?? 'UNEXPECTED ERROR'
+            error ?? 'UNEXPECTED ERROR',
           );
           throw error;
-        }
+        },
       );
       console.info('Subscription is running');
 
@@ -81,7 +81,7 @@ export const loadCheckPointFromPostgres = async (subscriptionId: string) => {
 
 export type PostgresEventHandler = (
   db: Transaction,
-  event: SubscriptionResolvedEvent
+  event: SubscriptionResolvedEvent,
 ) => Promise<void>;
 
 const storeCheckpointInPostgres = async (event: SubscriptionResolvedEvent) => {
@@ -108,5 +108,5 @@ export const handleEventInPostgresTransactionScope =
 
 export const SubscriptionToAllWithPostgresCheckpoints = SubscriptionToAll(
   getEventStore,
-  loadCheckPointFromPostgres
+  loadCheckPointFromPostgres,
 );
