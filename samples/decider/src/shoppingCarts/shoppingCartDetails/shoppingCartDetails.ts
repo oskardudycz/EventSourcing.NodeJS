@@ -34,7 +34,7 @@ export const getShoppingCartsCollection = (mongo: MongoClient) =>
 const project = async (
   carts: Collection<ShoppingCartDetails>,
   event: ShoppingCartEvent,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<UpdateResult> => {
   const expectedRevision = streamRevision - 1;
   switch (event.type) {
@@ -50,7 +50,7 @@ const project = async (
             revision: streamRevision,
           },
         },
-        { upsert: true }
+        { upsert: true },
       );
     }
     case 'ProductItemAddedToShoppingCart': {
@@ -72,7 +72,7 @@ const project = async (
         },
         {
           upsert: false,
-        }
+        },
       );
 
       return carts.updateOne(
@@ -95,7 +95,7 @@ const project = async (
             },
           ],
           upsert: false,
-        }
+        },
       );
     }
     case 'ProductItemRemovedFromShoppingCart': {
@@ -111,7 +111,7 @@ const project = async (
             revision: 1,
           },
         },
-        { upsert: false }
+        { upsert: false },
       );
     }
     case 'ShoppingCartConfirmed': {
@@ -129,7 +129,7 @@ const project = async (
             revision: 1,
           },
         },
-        { upsert: false }
+        { upsert: false },
       );
     }
     case 'ShoppingCartCanceled': {
@@ -147,7 +147,7 @@ const project = async (
             revision: 1,
           },
         },
-        { upsert: false }
+        { upsert: false },
       );
     }
     default: {

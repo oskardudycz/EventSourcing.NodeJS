@@ -24,7 +24,7 @@ let mongoClient: MongoClient;
 let isOpened = false;
 
 export const getMongoDB = async (
-  connectionString?: string
+  connectionString?: string,
 ): Promise<MongoClient> => {
   if (!connectionString && !config.mongoDB.connectionString) {
     throw 'MongoDB connection string not set. Please define "MONGODB_CONNECTION_STRING" environment variable';
@@ -32,7 +32,7 @@ export const getMongoDB = async (
 
   if (!mongoClient) {
     mongoClient = new MongoClient(
-      connectionString ?? config.mongoDB.connectionString
+      connectionString ?? config.mongoDB.connectionString,
     );
     await mongoClient.connect();
     isOpened = true;
@@ -57,7 +57,7 @@ export type ExecuteOnMongoDBOptions =
 
 export function getMongoCollection<Doc extends Document>(
   mongo: MongoClient,
-  options: ExecuteOnMongoDBOptions
+  options: ExecuteOnMongoDBOptions,
 ): Collection<Doc> {
   const { databaseName, collectionName } =
     typeof options !== 'string'
@@ -84,7 +84,7 @@ export const enum MongoDBErrors {
 }
 
 export const assertUpdated = async (
-  update: () => Promise<UpdateResult>
+  update: () => Promise<UpdateResult>,
 ): Promise<UpdateResult> => {
   const result = await update();
 
@@ -96,7 +96,7 @@ export const assertUpdated = async (
 };
 
 export const assertFound = async <T>(
-  find: () => Promise<T | null>
+  find: () => Promise<T | null>,
 ): Promise<T> => {
   const result = await find();
 
@@ -113,14 +113,14 @@ export const assertFound = async <T>(
 
 export const retryIfNotFound = <T>(
   find: () => Promise<T | null>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<T> => {
   return retryPromise(() => assertFound(find), options);
 };
 
 export const retryIfNotUpdated = (
   update: () => Promise<UpdateResult>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<UpdateResult> => {
   return retryPromise(() => assertUpdated(update), options);
 };
@@ -158,7 +158,7 @@ export const storeCheckpointInCollection =
       },
       {
         upsert: true,
-      }
+      },
     );
   };
 
@@ -176,10 +176,10 @@ export const mongoObjectId = () => {
 
 export const SubscriptionToAllWithMongoCheckpoints = (
   eventStore: EventStoreDBClient,
-  mongo: MongoClient
+  mongo: MongoClient,
 ) =>
   SubscriptionToAll(
     eventStore,
     loadCheckPointFromCollection(mongo),
-    storeCheckpointInCollection(mongo)
+    storeCheckpointInCollection(mongo),
   );

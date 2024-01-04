@@ -46,7 +46,7 @@ describe('ShoppingCart', () => {
           },
         })
         .thenThrows(
-          (error: unknown) => error === ShoppingCartErrors.CART_ALREADY_EXISTS
+          (error: unknown) => error === ShoppingCartErrors.CART_ALREADY_EXISTS,
         );
     });
   });

@@ -20,7 +20,7 @@ export const sleep = async (timeout: number): Promise<void> => {
 
 export const retryPromise = async <T = never>(
   callback: () => Promise<T>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<T> => {
   let retryCount = 0;
   const { maxRetries, delay, shouldRetry } = {
@@ -41,7 +41,7 @@ export const retryPromise = async <T = never>(
       const sleepTime = Math.pow(2, retryCount) * delay + Math.random() * delay;
 
       console.warn(
-        `[retry] Retrying (number: ${retryCount + 1}, delay: ${sleepTime})`
+        `[retry] Retrying (number: ${retryCount + 1}, delay: ${sleepTime})`,
       );
       console.warn(error);
 

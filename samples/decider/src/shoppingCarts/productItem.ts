@@ -18,19 +18,19 @@ export type ProductItems = Map<string, Map<number, number>>;
 
 export const addProductItem = (
   productItems: ProductItems,
-  { productId, quantity, price }: PricedProductItem
+  { productId, quantity, price }: PricedProductItem,
 ): ProductItems => {
   return productItems.update(productId, (productWithPrice) =>
     (productWithPrice ?? Map<number, number>()).update(
       price,
-      (currentQuantity) => (currentQuantity ?? 0) + quantity
-    )
+      (currentQuantity) => (currentQuantity ?? 0) + quantity,
+    ),
   );
 };
 
 export const removeProductItem = (
   productItems: ProductItems,
-  { productId, quantity, price }: PricedProductItem
+  { productId, quantity, price }: PricedProductItem,
 ): ProductItems => {
   return productItems.update(productId, (productWithPrice) =>
     (productWithPrice ?? Map<number, number>()).update(
@@ -40,14 +40,14 @@ export const removeProductItem = (
           throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
         }
         return currentQuantity - quantity;
-      }
-    )
+      },
+    ),
   );
 };
 
 export const assertProductItemExists = (
   productItems: ProductItems,
-  { productId, quantity, price }: PricedProductItem
+  { productId, quantity, price }: PricedProductItem,
 ): void => {
   const currentQuantity = productItems.get(productId)?.get(price) ?? 0;
 

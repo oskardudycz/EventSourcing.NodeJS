@@ -18,7 +18,10 @@ export const SubscriptionToAll =
   (
     eventStore: EventStoreDBClient,
     loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
-    storeCheckpoint: (subscriptionId: string, position: bigint) => Promise<void>
+    storeCheckpoint: (
+      subscriptionId: string,
+      position: bigint,
+    ) => Promise<void>,
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
     const currentPosition = await loadCheckpoint(subscriptionId);
@@ -39,7 +42,7 @@ export const SubscriptionToAll =
         }
         await storeCheckpoint(
           subscriptionId,
-          resolvedEvent.event?.position.commit
+          resolvedEvent.event?.position.commit,
         );
       }) as Readable,
       (error) => {
@@ -49,7 +52,7 @@ export const SubscriptionToAll =
         }
         console.error('Received error');
         console.error(error);
-      }
+      },
     );
     return subscription;
   };

@@ -33,6 +33,6 @@ startAPI(router);
       async (event) => {
         await projectToClientShoppingHistory(mongo)(event);
       },
-    ]
+    ],
   );
 })().catch(console.error);

@@ -18,7 +18,7 @@ type EventWithMetadata<E> = { event: E; revision?: bigint; position?: bigint };
 
 export type Spec<
   E extends Event,
-  Doc extends DocumentWithRevisionOrPosition = DocumentWithRevisionOrPosition
+  Doc extends DocumentWithRevisionOrPosition = DocumentWithRevisionOrPosition,
 > = (...givenEvents: (E | EventWithMetadata<E>)[]) => {
   when: (...events: (E | EventWithMetadata<E>)[]) => {
     then: (id: string, expected: Doc) => Promise<void>;
@@ -30,10 +30,10 @@ export type Spec<
 export const Spec = {
   for: <
     E extends Event,
-    Doc extends DocumentWithRevisionOrPosition = DocumentWithRevisionOrPosition
+    Doc extends DocumentWithRevisionOrPosition = DocumentWithRevisionOrPosition,
   >(
     collection: Collection<Doc>,
-    project: (event: SubscriptionResolvedEvent) => Promise<UpdateResult>
+    project: (event: SubscriptionResolvedEvent) => Promise<UpdateResult>,
   ): Spec<E, Doc> => {
     {
       return (...givenEvents: (E | EventWithMetadata<E>)[]) => {
@@ -60,7 +60,7 @@ export const Spec = {
 
                 const projectedEvent = toSubscriptionEvent(
                   'event' in event ? event.event : event,
-                  options
+                  options,
                 );
 
                 const result = await project(projectedEvent);
@@ -103,7 +103,7 @@ export const Spec = {
 const assertUpdated = async <Doc extends DocumentWithRevisionOrPosition>(
   collection: Collection<Doc>,
   id: string,
-  expected: Doc
+  expected: Doc,
 ) => {
   const objectId = new ObjectId(id);
 
@@ -127,7 +127,7 @@ const assertUpdated = async <Doc extends DocumentWithRevisionOrPosition>(
 
 const toSubscriptionEvent = <E extends Event>(
   event: E,
-  options: { position: bigint; revision: bigint }
+  options: { position: bigint; revision: bigint },
 ): SubscriptionResolvedEvent => {
   return {
     subscriptionId: mongoObjectId(),

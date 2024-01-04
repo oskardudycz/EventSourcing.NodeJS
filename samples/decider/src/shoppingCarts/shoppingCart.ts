@@ -76,7 +76,7 @@ export type ShoppingCart =
 
 export const evolve = (
   cart: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':
@@ -167,7 +167,7 @@ export type ShoppingCartCommand =
 
 const decide = (
   { type, data: command }: ShoppingCartCommand,
-  shoppingCart: ShoppingCart
+  shoppingCart: ShoppingCart,
 ): ShoppingCartEvent | ShoppingCartEvent[] => {
   switch (type) {
     case 'OpenShoppingCart': {
@@ -266,7 +266,7 @@ export const decider: Decider<
 //////////////////////////////////////
 
 export const isCashierShoppingCartEvent = (
-  event: null | { type: string }
+  event: null | { type: string },
 ): event is ShoppingCartEvent => {
   return (
     event != null &&
