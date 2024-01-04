@@ -1,7 +1,7 @@
 import assert from 'assert';
 
 export type CommandHandlerSpecfication<Command, Event> = (
-  givenEvents: Event | Event[]
+  givenEvents: Event | Event[],
 ) => {
   when: (command: Command) => {
     then: (expectedEvents: Event | Event[]) => void;
@@ -26,7 +26,7 @@ export const CommandHandlerSpecification = {
 
               const currentState = existingEvents.reduce<State>(
                 decider.evolve,
-                decider.initialState()
+                decider.initialState(),
               );
 
               return decider.decide(command, currentState);

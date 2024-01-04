@@ -16,7 +16,7 @@ export const assertNotEmptyString = (value: unknown): string => {
 };
 
 export const assertPositiveNumber = (
-  value: string | number | undefined
+  value: string | number | undefined,
 ): number => {
   if (value === undefined) throw ValidationErrors.NOT_A_POSITIVE_NUMBER;
 

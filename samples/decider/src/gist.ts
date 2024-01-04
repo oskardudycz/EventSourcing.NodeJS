@@ -146,19 +146,19 @@ export type ProductItems = Map<string, Map<number, number>>;
 
 export const addProductItem = (
   productItems: ProductItems,
-  { productId, quantity, price }: PricedProductItem
+  { productId, quantity, price }: PricedProductItem,
 ): ProductItems => {
   return productItems.update(productId, (productWithPrice) =>
     (productWithPrice ?? Map<number, number>()).update(
       price,
-      (currentQuantity) => (currentQuantity ?? 0) + quantity
-    )
+      (currentQuantity) => (currentQuantity ?? 0) + quantity,
+    ),
   );
 };
 
 export const removeProductItem = (
   productItems: ProductItems,
-  { productId, quantity, price }: PricedProductItem
+  { productId, quantity, price }: PricedProductItem,
 ): ProductItems => {
   return productItems.update(productId, (productWithPrice) =>
     (productWithPrice ?? Map<number, number>()).update(
@@ -168,8 +168,8 @@ export const removeProductItem = (
           throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
         }
         return currentQuantity - quantity;
-      }
-    )
+      },
+    ),
   );
 };
 
@@ -179,7 +179,7 @@ export const removeProductItem = (
 
 export const evolve = (
   cart: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent
+  { type, data: event }: ShoppingCartEvent,
 ): ShoppingCart => {
   switch (type) {
     case 'ShoppingCartOpened':
@@ -228,7 +228,7 @@ export const evolve = (
 
 const decide = (
   { type, data: command }: ShoppingCartCommand,
-  shoppingCart: ShoppingCart
+  shoppingCart: ShoppingCart,
 ): ShoppingCartEvent | ShoppingCartEvent[] => {
   switch (type) {
     case 'OpenShoppingCart': {
@@ -310,7 +310,7 @@ const decide = (
 
 export const assertProductItemExists = (
   productItems: ProductItems,
-  { productId, quantity, price }: PricedProductItem
+  { productId, quantity, price }: PricedProductItem,
 ): void => {
   const currentQuantity = productItems.get(productId)?.get(price) ?? 0;
 
@@ -338,7 +338,7 @@ export const decider: Decider<
 //////////////////////////////////////
 
 export const isCashierShoppingCartEvent = (
-  event: null | { type: string }
+  event: null | { type: string },
 ): event is ShoppingCartEvent => {
   return (
     event != null &&
@@ -367,7 +367,7 @@ export const toShoppingCartStreamId = (shoppingCartId: string) =>
 
 export type Event<
   EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>
+  EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -375,7 +375,7 @@ export type Event<
 
 export type Command<
   CommandType extends string = string,
-  CommandData extends Record<string, unknown> = Record<string, unknown>
+  CommandData extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<CommandType>;
   data: Readonly<CommandData>;
@@ -384,7 +384,7 @@ export type Command<
 export type Decider<
   State,
   CommandType extends Command,
-  EventType extends Event
+  EventType extends Event,
 > = {
   decide: (command: CommandType, state: State) => EventType | EventType[];
   evolve: (currentState: State, event: EventType) => State;
@@ -400,7 +400,7 @@ let eventStore: EventStoreDBClient;
 export const getEventStore = (connectionString?: string) => {
   if (!eventStore) {
     eventStore = EventStoreDBClient.connectionString(
-      connectionString ?? 'esdb://localhost:2113?tls=false'
+      connectionString ?? 'esdb://localhost:2113?tls=false',
     );
   }
 
@@ -409,7 +409,7 @@ export const getEventStore = (connectionString?: string) => {
 
 export const readStream = async <EventType extends Event>(
   eventStore: EventStoreDBClient,
-  streamId: string
+  streamId: string,
 ): Promise<EventType[]> => {
   const events = [];
   try {
@@ -450,7 +450,7 @@ export const appendToStream = async (
       events.map(jsonEvent),
       {
         expectedRevision: eTag ? getExpectedRevisionFromETag(eTag) : NO_STREAM,
-      }
+      },
     );
 
     return {
@@ -474,7 +474,7 @@ export const appendToStream = async (
 //////////////////////////////////////
 
 export type WeakETag = `W/${string}`;
-export type ETag = WeakETag | string;
+export type ETag = string;
 
 export const WeakETagRegex = /W\/"(-?\d+.*)"/;
 
@@ -500,7 +500,7 @@ export const toWeakETag = (value: number | bigint | string): WeakETag => {
 };
 
 export const getExpectedRevisionFromETag = (
-  eTag: ETag
+  eTag: ETag,
 ): bigint | 'no_stream' => {
   const revision = assertBigInt(getWeakETagValue(eTag));
 
@@ -537,7 +537,7 @@ export const assertNotEmptyString = (value: unknown): string => {
 };
 
 export const assertPositiveNumber = (
-  value: string | number | undefined
+  value: string | number | undefined,
 ): number => {
   if (value === undefined) throw ValidationErrors.NOT_A_POSITIVE_NUMBER;
 
@@ -569,12 +569,12 @@ export const CommandHandler =
   <State, CommandType extends Command, EventType extends Event>(
     getEventStore: () => EventStoreDBClient,
     toStreamId: (recordId: string) => string,
-    decider: Decider<State, CommandType, EventType>
+    decider: Decider<State, CommandType, EventType>,
   ) =>
   async (
     recordId: string,
     command: CommandType,
-    eTag: ETag | undefined = undefined
+    eTag: ETag | undefined = undefined,
   ): Promise<AppendResult> => {
     const eventStore = getEventStore();
 
@@ -583,7 +583,7 @@ export const CommandHandler =
 
     const state = events.reduce<State>(
       decider.evolve,
-      decider.getInitialState()
+      decider.getInitialState(),
     );
 
     const newEvents = decider.decide(command, state);
@@ -602,14 +602,14 @@ export const HTTPHandler =
     handleCommand: (
       recordId: string,
       command: Command,
-      eTag?: ETag
-    ) => Promise<AppendResult>
+      eTag?: ETag,
+    ) => Promise<AppendResult>,
   ) =>
   (
     mapRequest: (
       request: RequestType,
-      handler: (recordId: string, command: Command) => Promise<void>
-    ) => Promise<void>
+      handler: (recordId: string, command: Command) => Promise<void>,
+    ) => Promise<void>,
   ) =>
   async (request: RequestType, response: Response, next: NextFunction) => {
     try {
@@ -617,7 +617,7 @@ export const HTTPHandler =
         const result = await handleCommand(
           recordId,
           command,
-          getETagFromIfMatch(request)
+          getETagFromIfMatch(request),
         );
 
         return mapToResponse(response, recordId, result);
@@ -654,7 +654,7 @@ router.post(
         clientId: assertNotEmptyString(request.params.clientId),
       },
     });
-  })
+  }),
 );
 
 type AddProductItemToShoppingCartRequest = Request<
@@ -685,7 +685,7 @@ router.post(
         },
       },
     });
-  })
+  }),
 );
 
 export const getProductPrice = (_productId: string): Promise<number> => {
@@ -717,7 +717,7 @@ router.delete(
         },
       },
     });
-  })
+  }),
 );
 
 type ConfirmShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
@@ -734,7 +734,7 @@ router.post(
         shoppingCartId,
       },
     });
-  })
+  }),
 );
 
 type CancelShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
@@ -751,7 +751,7 @@ router.delete(
         shoppingCartId,
       },
     });
-  })
+  }),
 );
 
 router.get(
@@ -774,7 +774,7 @@ router.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );
 
 export type SubscriptionResolvedEvent = AllStreamResolvedEvent & {
@@ -788,7 +788,7 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 export const SubscriptionToAll =
   (
     eventStore: EventStoreDBClient,
-    loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>
+    loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
     const currentPosition = await loadCheckpoint(subscriptionId);
@@ -814,7 +814,7 @@ export const SubscriptionToAll =
         }
         console.error('Received error');
         console.error(error);
-      }
+      },
     );
     return subscription;
   };
@@ -826,11 +826,11 @@ export const SubscriptionToAll =
 const sendCreated = (
   response: Response,
   createdId: string,
-  urlPrefix?: string
+  urlPrefix?: string,
 ): void => {
   response.setHeader(
     'Location',
-    `${urlPrefix ?? response.req.url}/${createdId}`
+    `${urlPrefix ?? response.req.url}/${createdId}`,
   );
   response.status(201).json({ id: createdId });
 };
@@ -839,7 +839,7 @@ const mapToResponse = (
   response: Response,
   recordId: string,
   result: AppendResult,
-  urlPrefix?: string
+  urlPrefix?: string,
 ): void => {
   if (!result.successful) {
     response.sendStatus(412);
@@ -863,11 +863,11 @@ const mapToResponse = (
 let mongoClient: MongoClient;
 
 export const getMongoDB = async (
-  connectionString?: string
+  connectionString?: string,
 ): Promise<MongoClient> => {
   if (!mongoClient) {
     mongoClient = new MongoClient(
-      connectionString ?? 'mongodb://localhost:27017/'
+      connectionString ?? 'mongodb://localhost:27017/',
     );
     await mongoClient.connect();
   }
@@ -883,7 +883,7 @@ export type ExecuteOnMongoDBOptions =
   | string;
 
 export async function getMongoCollection<Doc extends Document>(
-  options: ExecuteOnMongoDBOptions
+  options: ExecuteOnMongoDBOptions,
 ): Promise<Collection<Doc>> {
   const mongo = await getMongoDB();
 
@@ -904,7 +904,7 @@ export const enum MongoDBErrors {
 }
 
 export const assertUpdated = async (
-  update: () => Promise<UpdateResult>
+  update: () => Promise<UpdateResult>,
 ): Promise<UpdateResult> => {
   const result = await update();
 
@@ -916,7 +916,7 @@ export const assertUpdated = async (
 };
 
 export const assertFound = async <T>(
-  find: () => Promise<T | null>
+  find: () => Promise<T | null>,
 ): Promise<T> => {
   const result = await find();
 
@@ -933,14 +933,14 @@ export const assertFound = async <T>(
 
 export const retryIfNotFound = <T>(
   find: () => Promise<T | null>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<T> => {
   return retryPromise(() => assertFound(find), options);
 };
 
 export const retryIfNotUpdated = (
   update: () => Promise<UpdateResult>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<UpdateResult> => {
   return retryPromise(() => assertUpdated(update), options);
 };
@@ -982,7 +982,7 @@ export const storeCheckpointInCollection =
       },
       {
         upsert: true,
-      }
+      },
     );
   };
 
@@ -1000,7 +1000,7 @@ export const mongoObjectId = () => {
 
 export const SubscriptionToAllWithMongoCheckpoints = SubscriptionToAll(
   getEventStore(),
-  loadCheckPointFromCollection
+  loadCheckPointFromCollection,
 );
 
 ////////////////////////
@@ -1030,7 +1030,7 @@ export const getShoppingCartsCollection = () =>
 export const projectShoppingCartDetails = async (
   carts: Collection<ShoppingCartDetails>,
   event: ShoppingCartEvent,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<UpdateResult> => {
   const expectedRevision = streamRevision - 1;
   switch (event.type) {
@@ -1047,7 +1047,7 @@ export const projectShoppingCartDetails = async (
             revision: streamRevision,
           },
         },
-        { upsert: true }
+        { upsert: true },
       );
     }
     case 'ProductItemAddedToShoppingCart': {
@@ -1065,7 +1065,7 @@ export const projectShoppingCartDetails = async (
               price: event.data.productItem.price,
             },
           },
-        }
+        },
       );
 
       return carts.updateOne(
@@ -1088,7 +1088,7 @@ export const projectShoppingCartDetails = async (
             },
           ],
           upsert: true,
-        }
+        },
       );
     }
     case 'ProductItemRemovedFromShoppingCart': {
@@ -1104,7 +1104,7 @@ export const projectShoppingCartDetails = async (
             revision: 1,
           },
         },
-        { upsert: false }
+        { upsert: false },
       );
     }
     case 'ShoppingCartConfirmed': {
@@ -1122,7 +1122,7 @@ export const projectShoppingCartDetails = async (
             revision: 1,
           },
         },
-        { upsert: false }
+        { upsert: false },
       );
     }
     case 'ShoppingCartCanceled': {
@@ -1140,7 +1140,7 @@ export const projectShoppingCartDetails = async (
             revision: 1,
           },
         },
-        { upsert: false }
+        { upsert: false },
       );
     }
     default: {
@@ -1151,7 +1151,7 @@ export const projectShoppingCartDetails = async (
 };
 
 export const projectToShoppingCartDetails = async (
-  resolvedEvent: SubscriptionResolvedEvent
+  resolvedEvent: SubscriptionResolvedEvent,
 ): Promise<void> => {
   if (
     resolvedEvent.event === undefined ||
@@ -1186,7 +1186,7 @@ export const getClientShoppingHistoryCollection = () =>
 export const project = async (
   clientShoppingHistory: Collection<ClientShoppingHistory>,
   { type, data: event }: ShoppingCartEvent,
-  eventPosition: Long
+  eventPosition: Long,
 ): Promise<void> => {
   switch (type) {
     case 'ShoppingCartOpened': {
@@ -1200,7 +1200,7 @@ export const project = async (
             position: Long.fromNumber(0),
           },
         },
-        { upsert: true }
+        { upsert: true },
       );
 
       await clientShoppingHistory.updateOne(
@@ -1214,7 +1214,7 @@ export const project = async (
               isDeleted: false,
             },
           },
-        }
+        },
       );
       break;
     }
@@ -1233,7 +1233,7 @@ export const project = async (
           $set: {
             position: eventPosition,
           },
-        }
+        },
       );
       break;
     }
@@ -1252,7 +1252,7 @@ export const project = async (
           $set: {
             position: eventPosition,
           },
-        }
+        },
       );
       break;
     }
@@ -1267,8 +1267,8 @@ export const project = async (
             projection: {
               'pending.$': 1,
             },
-          }
-        )
+          },
+        ),
       ).catch(console.warn);
 
       if (!history || history.pending.length === 0) return;
@@ -1306,7 +1306,7 @@ export const project = async (
               },
             },
           },
-        ]
+        ],
       );
       break;
     }
@@ -1322,7 +1322,7 @@ export const project = async (
               shoppingCartId: event.shoppingCartId,
             },
           },
-        }
+        },
       );
       break;
     }
@@ -1334,7 +1334,7 @@ export const project = async (
 };
 
 export const projectToClientShoppingHistory = async (
-  resolvedEvent: SubscriptionResolvedEvent
+  resolvedEvent: SubscriptionResolvedEvent,
 ): Promise<void> => {
   const event = resolvedEvent.event;
   if (event === undefined) return Promise.resolve();
@@ -1359,7 +1359,7 @@ app.use(express.json());
 app.use(
   express.urlencoded({
     extended: true,
-  })
+  }),
 );
 app.use(router);
 
@@ -1371,7 +1371,7 @@ server.listen(5000);
   await SubscriptionToAllWithMongoCheckpoints('sub_shopping_carts', [
     storeCheckpointInCollection(
       projectToShoppingCartDetails,
-      projectToClientShoppingHistory
+      projectToClientShoppingHistory,
     ),
   ]);
 })().catch(console.error);

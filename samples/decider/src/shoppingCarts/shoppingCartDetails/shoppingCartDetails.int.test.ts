@@ -22,7 +22,7 @@ describe('Shopping Cart details', () => {
 
     given = Spec.for(
       getShoppingCartsCollection(mongo),
-      projectToShoppingCartDetails(mongo)
+      projectToShoppingCartDetails(mongo),
     );
   });
 
@@ -141,7 +141,7 @@ describe('Shopping Cart details', () => {
           productId,
           quantity: initialQuantity,
           price,
-        })
+        }),
       )
         .when({
           type: 'ProductItemRemovedFromShoppingCart',
@@ -196,7 +196,7 @@ describe('Shopping Cart details', () => {
           quantity: initialQuantity,
           price,
         }),
-        productItemRemoved
+        productItemRemoved,
       )
         .when({ event: productItemRemoved, revision: 2n })
         .thenNotUpdated();
@@ -225,7 +225,7 @@ const opened = ({
 
 const productItemAdded = (
   shoppingCartId: string,
-  productItem: PricedProductItem
+  productItem: PricedProductItem,
 ): ShoppingCartEvent => {
   return {
     type: 'ProductItemAddedToShoppingCart',

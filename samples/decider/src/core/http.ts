@@ -25,14 +25,14 @@ export const HTTPHandler =
     handleCommand: (
       recordId: string,
       command: Command,
-      eTag?: ETag
-    ) => Promise<AppendResult>
+      eTag?: ETag,
+    ) => Promise<AppendResult>,
   ) =>
   (
     mapRequest: (
       request: RequestType,
-      handler: (recordId: string, command: Command) => Promise<void>
-    ) => Promise<void>
+      handler: (recordId: string, command: Command) => Promise<void>,
+    ) => Promise<void>,
   ) =>
   async (request: RequestType, response: Response, next: NextFunction) => {
     try {
@@ -40,7 +40,7 @@ export const HTTPHandler =
         const result = await handleCommand(
           recordId,
           command,
-          getETagFromIfMatch(request)
+          getETagFromIfMatch(request),
         );
 
         return mapToResponse(response, recordId, result);
@@ -53,11 +53,11 @@ export const HTTPHandler =
 export const sendCreated = (
   response: Response,
   createdId: string,
-  urlPrefix?: string
+  urlPrefix?: string,
 ): void => {
   response.setHeader(
     'Location',
-    `${urlPrefix ?? response.req.url}/${createdId}`
+    `${urlPrefix ?? response.req.url}/${createdId}`,
   );
   response.status(201).json({ id: createdId });
 };
@@ -66,7 +66,7 @@ export const mapToResponse = (
   response: Response,
   recordId: string,
   result: AppendResult,
-  urlPrefix?: string
+  urlPrefix?: string,
 ): void => {
   if (!result.successful) {
     response.sendStatus(412);

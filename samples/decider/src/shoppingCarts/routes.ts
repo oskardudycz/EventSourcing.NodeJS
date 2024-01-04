@@ -45,7 +45,7 @@ router.post(
         now: new Date(),
       },
     });
-  })
+  }),
 );
 
 type AddProductItemToShoppingCartRequest = Request<
@@ -76,7 +76,7 @@ router.post(
         },
       },
     });
-  })
+  }),
 );
 
 export type RemoveProductItemFromShoppingCartRequest = Request<
@@ -103,7 +103,7 @@ router.delete(
         },
       },
     });
-  })
+  }),
 );
 
 type ConfirmShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
@@ -121,7 +121,7 @@ router.post(
         now: new Date(),
       },
     });
-  })
+  }),
 );
 
 type CancelShoppingCartRequest = Request<Partial<{ shoppingCartId: string }>>;
@@ -139,7 +139,7 @@ router.delete(
         now: new Date(),
       },
     });
-  })
+  }),
 );
 
 router.get(
@@ -162,5 +162,5 @@ router.get(
     } catch (error) {
       next(error);
     }
-  }
+  },
 );

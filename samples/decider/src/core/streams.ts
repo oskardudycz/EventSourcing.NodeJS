@@ -22,7 +22,7 @@ let eventStore: EventStoreDBClient;
 export const getEventStore = (connectionString?: string) => {
   if (!eventStore) {
     eventStore = EventStoreDBClient.connectionString(
-      connectionString ?? 'esdb://localhost:2113?tls=false'
+      connectionString ?? 'esdb://localhost:2113?tls=false',
     );
   }
 
@@ -31,7 +31,7 @@ export const getEventStore = (connectionString?: string) => {
 
 export const readStream = async <EventType extends Event>(
   eventStore: EventStoreDBClient,
-  streamId: string
+  streamId: string,
 ): Promise<EventType[]> => {
   const events = [];
   try {
@@ -72,7 +72,7 @@ export const appendToStream = async (
       events.map(jsonEvent),
       {
         expectedRevision: eTag ? getExpectedRevisionFromETag(eTag) : NO_STREAM,
-      }
+      },
     );
 
     return {
@@ -92,7 +92,7 @@ export const appendToStream = async (
 };
 
 export const getExpectedRevisionFromETag = (
-  eTag: ETag
+  eTag: ETag,
 ): bigint | 'no_stream' => {
   const revision = assertBigInt(getWeakETagValue(eTag));
 

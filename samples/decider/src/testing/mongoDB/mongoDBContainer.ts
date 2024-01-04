@@ -1,9 +1,12 @@
 import { MongoClient } from 'mongodb';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
-import { AbstractStartedContainer } from 'testcontainers/dist/modules/abstract-started-container';
+import {
+  GenericContainer,
+  StartedTestContainer,
+  AbstractStartedContainer,
+} from 'testcontainers';
 
 const MONGODB_IMAGE_NAME = 'mongo';
-const MONGODB_IMAGE_TAG = '6.0.4';
+const MONGODB_IMAGE_TAG = '6.0.12';
 const MONGODB_PORT = 27017;
 
 // See more in https://hub.docker.com/_/mongo
@@ -40,7 +43,7 @@ export class StartedMongoDBContainer extends AbstractStartedContainer {
 
   getConnectionString(): string {
     return `mongodb://${this.getHost()}:${this.getMappedPort(
-      MONGODB_PORT
+      MONGODB_PORT,
     )}/test`;
   }
 

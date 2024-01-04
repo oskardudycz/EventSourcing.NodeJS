@@ -21,7 +21,7 @@ describe('Client Shopping History', () => {
 
     given = Spec.for(
       getClientShoppingHistoryCollection(mongo),
-      projectToClientShoppingHistory(mongo)
+      projectToClientShoppingHistory(mongo),
     );
   });
 
@@ -157,7 +157,7 @@ describe('Client Shopping History', () => {
           productId,
           quantity: initialQuantity,
           price,
-        })
+        }),
       )
         .when({
           type: 'ProductItemAddedToShoppingCart',
@@ -199,7 +199,7 @@ describe('Client Shopping History', () => {
           productId,
           quantity: initialQuantity,
           price,
-        })
+        }),
       )
         .when({
           type: 'ProductItemRemovedFromShoppingCart',
@@ -254,7 +254,7 @@ describe('Client Shopping History', () => {
           quantity: initialQuantity,
           price,
         }),
-        productItemRemoved
+        productItemRemoved,
       )
         .when({ event: productItemRemoved, position: 2n })
         .thenNotUpdated();
@@ -276,7 +276,7 @@ describe('Client Shopping History', () => {
           productId,
           quantity,
           price,
-        })
+        }),
       )
         .when({
           type: 'ShoppingCartConfirmed',
@@ -308,7 +308,7 @@ describe('Client Shopping History', () => {
       await given(
         opened({ shoppingCartId, clientId }),
         productItemAdded(shoppingCartId),
-        shoppingCartConfirmed
+        shoppingCartConfirmed,
       )
         .when({ event: shoppingCartConfirmed, position: 2n })
         .thenNotUpdated();
@@ -330,7 +330,7 @@ describe('Client Shopping History', () => {
           productId,
           quantity,
           price,
-        })
+        }),
       )
         .when({
           type: 'ShoppingCartCanceled',
@@ -362,7 +362,7 @@ describe('Client Shopping History', () => {
       await given(
         opened({ shoppingCartId, clientId }),
         productItemAdded(shoppingCartId),
-        shoppingCartCanceled
+        shoppingCartCanceled,
       )
         .when({ event: shoppingCartCanceled, position: 2n })
         .thenNotUpdated();
@@ -391,7 +391,7 @@ const opened = ({
 
 const productItemAdded = (
   shoppingCartId: string,
-  productItem?: PricedProductItem
+  productItem?: PricedProductItem,
 ): ShoppingCartEvent => {
   return {
     type: 'ProductItemAddedToShoppingCart',

@@ -30,7 +30,7 @@ export const getClientShoppingHistoryCollection = (mongo: MongoClient) =>
 const project = async (
   clientShoppingHistory: Collection<ClientShoppingHistory>,
   { type, data: event }: ShoppingCartEvent,
-  eventPosition: Long
+  eventPosition: Long,
 ): Promise<UpdateResult> => {
   switch (type) {
     case 'ShoppingCartOpened': {
@@ -44,7 +44,7 @@ const project = async (
             position: Long.fromNumber(-1),
           },
         },
-        { upsert: true }
+        { upsert: true },
       );
 
       return clientShoppingHistory.updateOne(
@@ -60,7 +60,7 @@ const project = async (
               totalQuantity: 0,
             },
           },
-        }
+        },
       );
     }
     case 'ProductItemAddedToShoppingCart': {
@@ -78,7 +78,7 @@ const project = async (
           $set: {
             position: eventPosition,
           },
-        }
+        },
       );
     }
     case 'ProductItemRemovedFromShoppingCart': {
@@ -96,7 +96,7 @@ const project = async (
           $set: {
             position: eventPosition,
           },
-        }
+        },
       );
     }
     case 'ShoppingCartConfirmed': {
@@ -110,8 +110,8 @@ const project = async (
             projection: {
               'pending.$': 1,
             },
-          }
-        )
+          },
+        ),
       ).catch(console.warn);
 
       if (!history || history.pending.length === 0) return EmptyUpdateResult;
@@ -150,7 +150,7 @@ const project = async (
               },
             },
           },
-        ]
+        ],
       );
     }
     case 'ShoppingCartCanceled': {
@@ -168,7 +168,7 @@ const project = async (
           $set: {
             position: eventPosition,
           },
-        }
+        },
       );
     }
     default: {

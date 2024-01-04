@@ -11,12 +11,12 @@ export const CommandHandler =
   <State, CommandType extends Command, EventType extends Event>(
     getEventStore: () => EventStoreDBClient,
     toStreamId: (recordId: string) => string,
-    decider: Decider<State, CommandType, EventType>
+    decider: Decider<State, CommandType, EventType>,
   ) =>
   async (
     recordId: string,
     command: CommandType,
-    eTag: ETag | undefined = undefined
+    eTag: ETag | undefined = undefined,
   ): Promise<AppendResult> => {
     const eventStore = getEventStore();
 
