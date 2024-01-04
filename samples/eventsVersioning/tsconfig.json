@@ -24,7 +24,7 @@
     // "noEmit": true,                              /* Do not emit outputs. */
     // "importHelpers": true,                       /* Import emit helpers from 'tslib'. */
     // "downlevelIteration": true,                  /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
-    // "isolatedModules": true /* Transpile each file as a separate module (similar to 'ts.transpileModule'). */,
+    "isolatedModules": true /* Transpile each file as a separate module (similar to 'ts.transpileModule'). */,
 
     /* Strict Type-Checking Options */
     "strict": true /* Enable all strict type-checking options. */,
@@ -49,6 +49,7 @@
     "baseUrl": "./" /* Base directory to resolve non-absolute module names. */,
     "paths": {
       "#core/*": ["./src/core/*"],
+      "#config": ["./config.ts"],
       "#testing/*": ["./src/testing/*"]
     } /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */,
     // "rootDirs": [],                              /* List of root folders whose combined content represents the structure of the project at runtime. */
@@ -59,6 +60,7 @@
     // "preserveSymlinks": true,                    /* Do not resolve the real path of symlinks. */
     // "allowUmdGlobalAccess": true,                /* Allow accessing UMD globals from modules. */
     "resolveJsonModule": true /* Enable importing .json files */,
+
     /* Source Map Options */
     // "sourceRoot": "",                            /* Specify the location where debugger should locate TypeScript files instead of source locations. */
     // "mapRoot": "",                               /* Specify the location where debugger should locate map files instead of generated locations. */
@@ -73,5 +75,5 @@
     "skipLibCheck": true /* Skip type checking of declaration files. */,
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
   },
-  "include": ["./src/**/*"]
+  "include": ["./src"]
 }

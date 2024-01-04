@@ -50,7 +50,7 @@ describe('Upcasting events', () => {
       json,
       {
         map: upcast,
-      }
+      },
     );
 
     expect(event).toEqual({
