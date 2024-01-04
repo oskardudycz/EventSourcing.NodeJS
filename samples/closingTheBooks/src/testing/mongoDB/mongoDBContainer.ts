@@ -2,48 +2,48 @@ import { MongoClient } from 'mongodb';
 import {
   GenericContainer,
   StartedTestContainer,
-  StoppedTestContainer,
+  AbstractStartedContainer,
 } from 'testcontainers';
 
 const MONGODB_IMAGE_NAME = 'mongo';
-const MONGODB_IMAGE_TAG = '5';
+const MONGODB_IMAGE_TAG = '6.0.12';
 const MONGODB_PORT = 27017;
 
 // See more in https://hub.docker.com/_/mongo
 export class MongoDBContainer extends GenericContainer {
-  constructor(
-    image = `${MONGODB_IMAGE_NAME}:${MONGODB_IMAGE_TAG}`,
-    databaseName: string | undefined = undefined
-  ) {
-    super(image);
+  constructor({
+    image,
+    databaseName,
+    withoutReuse,
+  }: {
+    image?: string;
+    databaseName?: string;
+    withoutReuse?: boolean;
+  } = {}) {
+    super(image ?? `${MONGODB_IMAGE_NAME}:${MONGODB_IMAGE_TAG}`);
 
     if (databaseName) {
-      this.withEnv('MONGO_INITDB_DATABASE', databaseName);
+      this.withEnvironment({ MONGO_INITDB_DATABASE: databaseName });
     }
 
     this.withExposedPorts(MONGODB_PORT);
+
+    if (!withoutReuse) this.withReuse();
   }
 
-  async startContainer(): Promise<StartedMongoDBContainer> {
+  async start(): Promise<StartedMongoDBContainer> {
     return new StartedMongoDBContainer(await super.start());
   }
 }
 
-export class StartedMongoDBContainer {
-  constructor(private container: StartedTestContainer) {}
-
-  stop(
-    options?: Partial<{
-      timeout: number;
-      removeVolumes: boolean;
-    }>
-  ): Promise<StoppedTestContainer> {
-    return this.container.stop(options);
+export class StartedMongoDBContainer extends AbstractStartedContainer {
+  constructor(container: StartedTestContainer) {
+    super(container);
   }
 
   getConnectionString(): string {
-    return `mongodb://${this.container.getHost()}:${this.container.getMappedPort(
-      MONGODB_PORT
+    return `mongodb://${this.getHost()}:${this.getMappedPort(
+      MONGODB_PORT,
     )}/test`;
   }
 

@@ -10,7 +10,7 @@ export async function setupOpenedCashierShift(
     cashierId?: string;
     declaredStartAmount?: number;
     shiftNumber?: number;
-  } = {}
+  } = {},
 ): Promise<AppendResult> {
   await setupInitiatedCashierShift(eventStore, cashRegisterId);
 

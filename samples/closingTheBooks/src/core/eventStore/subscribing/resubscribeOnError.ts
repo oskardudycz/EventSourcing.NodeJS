@@ -1,7 +1,7 @@
 import { sleep } from '#core/primitives';
 
 export async function resubscribeOnError<T>(
-  subscribe: () => Promise<T>
+  subscribe: () => Promise<T>,
 ): Promise<T> {
   try {
     return await subscribe();
@@ -22,7 +22,7 @@ async function resubscribe<T>(subscribe: () => Promise<T>): Promise<T> {
       console.error(
         `Received error while reconnecting: ${
           error ?? 'UNEXPECTED ERROR'
-        }. Reconnecting.`
+        }. Reconnecting.`,
       );
     }
   } while (!result);

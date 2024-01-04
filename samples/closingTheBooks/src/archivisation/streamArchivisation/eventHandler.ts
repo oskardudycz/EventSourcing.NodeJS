@@ -13,7 +13,7 @@ import { isStreamBatchArchivisationScheduled } from '../schedulingArchivisation/
 import { getEventStore } from '#core/eventStore';
 
 export async function handleStreamBatchArchivisationScheduled(
-  streamEvent: StreamEvent
+  streamEvent: StreamEvent,
 ): Promise<
   Result<boolean, FAILED_TO_APPEND_EVENT | STREAM_NOT_FOUND | NO_EVENTS_FOUND>
 > {

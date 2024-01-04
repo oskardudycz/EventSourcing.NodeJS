@@ -36,11 +36,11 @@ export const route = (router: Router) =>
       } catch (error) {
         next(error);
       }
-    }
+    },
   );
 
 function mapRequestToQuery(
-  request: Request
+  request: Request,
 ): GetCurrentCashierShiftDetails | 'MISSING_CASH_REGISTER_ID' {
   if (!isNotEmptyString(request.params.cashRegisterId)) {
     return 'MISSING_CASH_REGISTER_ID';

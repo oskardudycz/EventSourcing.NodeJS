@@ -27,14 +27,14 @@ describe('StreamArchivisationScheduled event', () => {
   let archiveBeforeRevision: string;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
     eventStore = esdbContainer.getClient();
 
     const result = await setupOpenedCashierShiftWithPreviousClosed(
       eventStore,
-      cashRegisterId
+      cashRegisterId,
     );
 
     archiveBeforeRevision = result.nextExpectedRevision.toString();
@@ -70,7 +70,7 @@ describe('StreamArchivisationScheduled event', () => {
     await expectStreamToHaveNumberOfEvents(
       eventStore,
       getArchivisationForStreamName(currentCashierShiftStreamName),
-      1
+      1,
     );
   });
 });

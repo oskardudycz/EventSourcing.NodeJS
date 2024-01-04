@@ -20,13 +20,13 @@ export type PlacedAtWorkStation = Event<
 >;
 
 export function isPlacedAtWorkStation(
-  event: Event
+  event: Event,
 ): event is PlacedAtWorkStation {
   return event.type === 'placed-at-workstation';
 }
 
 export function handlePlaceAtWorkStation(
-  command: PlaceAtWorkStation
+  command: PlaceAtWorkStation,
 ): Result<PlacedAtWorkStation> {
   return success({
     type: 'placed-at-workstation',

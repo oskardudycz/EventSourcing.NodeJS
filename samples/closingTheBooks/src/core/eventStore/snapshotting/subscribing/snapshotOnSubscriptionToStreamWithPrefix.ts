@@ -13,7 +13,7 @@ import { appendSnapshotToStreamWithPrefix } from '../appending';
 
 export async function snapshotOnSubscriptionToStreamWithPrefix<
   StreamEventType extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEventType & SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEventType & SnapshotEvent,
 >(
   shouldDoSnapshot: (options: {
     newEvent: StreamEventType;
@@ -28,7 +28,7 @@ export async function snapshotOnSubscriptionToStreamWithPrefix<
     streamName: string;
   }) => Result<SnapshotStreamEvent, SNAPSHOT_CREATION_SKIPPED>,
   newEvent: StreamEventType,
-  options: { position: bigint; revision: bigint; streamName: string }
+  options: { position: bigint; revision: bigint; streamName: string },
 ): Promise<Result<boolean, STREAM_NOT_FOUND | FAILED_TO_APPEND_SNAPSHOT>> {
   const eventStore = getEventStore();
   return snapshotOnSubscription<StreamEventType, SnapshotStreamEvent>(
@@ -42,6 +42,6 @@ export async function snapshotOnSubscriptionToStreamWithPrefix<
     buildSnapshot,
     eventStore,
     newEvent,
-    options
+    options,
   );
 }

@@ -1,4 +1,8 @@
-import { ErrorType, EventStoreDBClient } from '@eventstore/db-client';
+import {
+  ErrorType,
+  EventStoreDBClient,
+  StreamNotFoundError,
+} from '@eventstore/db-client';
 import { ReadStreamOptions } from '@eventstore/db-client/dist/streams';
 import { STREAM_NOT_FOUND } from '.';
 
@@ -12,7 +16,7 @@ export type ReadFromStreamOptions = {
 export async function readFromStream<StreamEventType extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  options?: ReadFromStreamOptions
+  options?: ReadFromStreamOptions,
 ): Promise<Result<StreamEvent<StreamEventType>[], STREAM_NOT_FOUND>> {
   try {
     const toPosition = options?.toPosition;
@@ -21,7 +25,7 @@ export async function readFromStream<StreamEventType extends Event>(
 
     for await (const resolvedEvent of eventStore.readStream(
       streamName,
-      options
+      options,
     )) {
       if (resolvedEvent.event === undefined) continue;
 
@@ -32,11 +36,11 @@ export async function readFromStream<StreamEventType extends Event>(
         break;
 
       events.push({
-        streamRevision: resolvedEvent.event!.revision,
-        streamName: resolvedEvent.event!.streamId,
+        streamRevision: resolvedEvent.event.revision,
+        streamName: resolvedEvent.event.streamId,
         event: <StreamEventType>{
-          type: resolvedEvent.event!.type,
-          data: resolvedEvent.event!.data,
+          type: resolvedEvent.event.type,
+          data: resolvedEvent.event.data,
           metadata: resolvedEvent.event?.metadata,
         },
       });
@@ -44,7 +48,7 @@ export async function readFromStream<StreamEventType extends Event>(
 
     return success(events);
   } catch (error) {
-    if (error.type == ErrorType.STREAM_NOT_FOUND) {
+    if (error instanceof StreamNotFoundError) {
       return failure('STREAM_NOT_FOUND');
     }
 

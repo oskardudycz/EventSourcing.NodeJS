@@ -27,16 +27,16 @@ export type StreamBatchArchivisationScheduled = Event<
 >;
 
 export function isStreamBatchArchivisationScheduled(
-  event: Event
+  event: Event,
 ): event is StreamBatchArchivisationScheduled {
   return event.type === 'stream-batch-archivisation-scheduled';
 }
 
 export async function handleScheduleStreamBatchArchivisation(
   getStreamRevisionOfTheFirstEvent: (
-    streamName: string
+    streamName: string,
   ) => Promise<Result<bigint, STREAM_NOT_FOUND | NO_EVENTS_FOUND>>,
-  command: ScheduleStreamBatchArchivisation
+  command: ScheduleStreamBatchArchivisation,
 ): Promise<
   Result<
     StreamBatchArchivisationScheduled[],
@@ -51,7 +51,7 @@ export async function handleScheduleStreamBatchArchivisation(
 
   const events: StreamBatchArchivisationScheduled[] = getNumberRanges(
     fromRevision.value,
-    archiveBeforeRevision
+    archiveBeforeRevision,
   ).map(({ from, to }) => {
     return {
       type: 'stream-batch-archivisation-scheduled',

@@ -7,7 +7,7 @@ export * from './getLastSnapshotVersionFromStreamMetadata';
 import { Event, StreamEvent } from '../../../events';
 
 export type ReadFromStreamAndSnapshotsResult<
-  StreamEventType extends Event = Event
+  StreamEventType extends Event = Event,
 > = {
   events: StreamEvent<StreamEventType>[];
   lastSnapshotVersion?: bigint;

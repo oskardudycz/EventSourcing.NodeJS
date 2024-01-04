@@ -7,7 +7,7 @@ export type SnapshotEvent<
   EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>,
   EventMetadata extends SnapshotMetadata &
-    Record<string, unknown> = SnapshotMetadata & Record<string, unknown>
+    Record<string, unknown> = SnapshotMetadata & Record<string, unknown>,
 > = Event<EventType, EventData, EventMetadata> &
   Readonly<{
     metadata: Readonly<EventMetadata>;

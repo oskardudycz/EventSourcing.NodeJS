@@ -73,7 +73,7 @@ export type CashierShiftEvent =
 
 export function when(
   currentState: Partial<InitiatedCashierShift | CashierShift>,
-  streamEvent: StreamEvent<CashierShiftEvent>
+  streamEvent: StreamEvent<CashierShiftEvent>,
 ): Partial<InitiatedCashierShift | CashierShift> {
   const { event, streamRevision } = streamEvent;
   switch (event.type) {
@@ -121,7 +121,7 @@ export function when(
 }
 
 export function isCashierShift(
-  cashierShift: Partial<CashierShift | InitiatedCashierShift>
+  cashierShift: Partial<CashierShift | InitiatedCashierShift>,
 ): cashierShift is CashierShift {
   return (
     cashierShift !== undefined &&
@@ -136,7 +136,7 @@ export function isCashierShift(
 }
 
 export function isInitiatedCashierShift(
-  cashierShift: Partial<CashierShift | InitiatedCashierShift>
+  cashierShift: Partial<CashierShift | InitiatedCashierShift>,
 ): cashierShift is InitiatedCashierShift {
   return (
     cashierShift !== undefined &&
@@ -159,7 +159,7 @@ export function isCashierShiftEvent(event: any): event is CashierShiftEvent {
 
 export function getCashierShiftStreamName(
   cashRegisterId: string,
-  cashierShiftId: string
+  cashierShiftId: string,
 ) {
   return `cashiershift-cr_${cashRegisterId}_cs_${cashierShiftId}`;
 }
@@ -169,13 +169,13 @@ export function getCurrentCashierShiftStreamName(cashRegisterId: string) {
 }
 
 export function getCashierShiftFrom(
-  events: StreamEvent<CashierShiftEvent>[]
+  events: StreamEvent<CashierShiftEvent>[],
 ): CashierShift | InitiatedCashierShift {
   return aggregateStream(
     events,
     when,
     (state): state is CashierShift | InitiatedCashierShift =>
-      isInitiatedCashierShift(state) || isCashierShift(state)
+      isInitiatedCashierShift(state) || isCashierShift(state),
   );
 }
 

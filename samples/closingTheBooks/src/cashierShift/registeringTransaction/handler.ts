@@ -31,7 +31,7 @@ export type TransactionRegistered = Event<
 
 export function handleRegisterTransaction(
   events: StreamEvent<CashierShiftEvent>[],
-  command: RegisterTransaction
+  command: RegisterTransaction,
 ): Result<TransactionRegistered, SHIFT_NOT_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
 

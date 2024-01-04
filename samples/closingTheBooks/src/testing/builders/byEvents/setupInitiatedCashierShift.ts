@@ -8,7 +8,7 @@ import {
 
 export async function setupInitiatedCashierShift(
   eventStore: EventStoreDBClient,
-  cashRegisterId: string
+  cashRegisterId: string,
 ): Promise<AppendResult> {
   const result = await appendToStream<CashierShiftEvent>(
     eventStore,
@@ -21,7 +21,7 @@ export async function setupInitiatedCashierShift(
           initializedAt: getCurrentTime(),
         },
       },
-    ]
+    ],
   );
   expect(result.isError).toBeFalsy();
 

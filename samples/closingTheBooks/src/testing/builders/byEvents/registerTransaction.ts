@@ -11,7 +11,7 @@ export async function registerTransaction(
   eventStore: EventStoreDBClient,
   cashRegisterId: string,
   shiftNumber: number,
-  options: { amount?: number; transactionId?: string } = {}
+  options: { amount?: number; transactionId?: string } = {},
 ): Promise<AppendResult> {
   const { amount, transactionId } = options;
 
@@ -29,7 +29,7 @@ export async function registerTransaction(
           registeredAt: getCurrentTime(),
         },
       },
-    ]
+    ],
   );
   expect(result.isError).toBeFalsy();
 

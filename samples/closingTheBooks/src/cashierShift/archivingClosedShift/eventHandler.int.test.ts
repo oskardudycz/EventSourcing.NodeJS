@@ -18,7 +18,7 @@ describe('ShiftOpened event', () => {
   const cashRegisterId = uuid();
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
     eventStore = esdbContainer.getClient();
@@ -59,7 +59,7 @@ describe('ShiftOpened event', () => {
     await expectStreamToHaveNumberOfEvents(
       eventStore,
       archivisationScheduleStreamName,
-      1
+      1,
     );
   });
 });

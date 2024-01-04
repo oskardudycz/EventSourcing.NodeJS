@@ -12,7 +12,7 @@ export type ArchiveClosedCashierShift = Command<
 >;
 
 export function handleArchiveClosedCashierShift(
-  command: ArchiveClosedCashierShift
+  command: ArchiveClosedCashierShift,
 ): Result<StreamArchivisationScheduled> {
   return success({
     type: 'stream-archivisation-scheduled',

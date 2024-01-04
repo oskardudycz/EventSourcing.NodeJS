@@ -35,7 +35,7 @@ export type ShiftClosed = Event<
 
 export function handleCloseShift(
   events: StreamEvent<CashierShiftEvent>[],
-  command: CloseShift
+  command: CloseShift,
 ): Result<ShiftClosed, SHIFT_ALREADY_CLOSED | SHIFT_NOT_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
 

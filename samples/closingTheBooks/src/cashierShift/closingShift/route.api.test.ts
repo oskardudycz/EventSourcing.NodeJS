@@ -18,7 +18,7 @@ describe('DELETE /cash-registers/:cashRegisterId/shifts/current', () => {
   let eventStore: EventStoreDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
     console.log(config.eventStoreDB.connectionString);
 
@@ -38,7 +38,7 @@ describe('DELETE /cash-registers/:cashRegisterId/shifts/current', () => {
 
       const result = await setupInitiatedCashierShift(
         eventStore,
-        existingCashRegisterId
+        existingCashRegisterId,
       );
       currentRevision = toWeakETag(result.nextExpectedRevision);
     });
@@ -55,7 +55,7 @@ describe('DELETE /cash-registers/:cashRegisterId/shifts/current', () => {
       beforeEach(async () => {
         const result = await setupOpenedCashierShift(
           eventStore,
-          existingCashRegisterId
+          existingCashRegisterId,
         );
         currentRevision = toWeakETag(result.nextExpectedRevision);
       });

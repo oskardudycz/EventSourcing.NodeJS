@@ -12,12 +12,12 @@ import {
 
 export async function snapshotOnSubscription<
   StreamEventType extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEventType & SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEventType & SnapshotEvent,
 >(
   getEvents: (
     eventStore: EventStoreDBClient,
     streamName: string,
-    readEventsOptions?: ReadFromStreamOptions
+    readEventsOptions?: ReadFromStreamOptions,
   ) => Promise<
     Result<
       ReadFromStreamAndSnapshotsResult<StreamEventType | SnapshotStreamEvent>,
@@ -27,7 +27,7 @@ export async function snapshotOnSubscription<
   appendSnapshot: (
     snapshot: SnapshotStreamEvent,
     streamName: string,
-    lastSnapshotVersion: bigint | undefined
+    lastSnapshotVersion: bigint | undefined,
   ) => Promise<Result<AppendResult, FAILED_TO_APPEND_SNAPSHOT>>,
   shouldDoSnapshot: (options: {
     newEvent: StreamEventType;
@@ -47,7 +47,7 @@ export async function snapshotOnSubscription<
     position,
     revision,
     streamName,
-  }: { position: bigint; revision: bigint; streamName: string }
+  }: { position: bigint; revision: bigint; streamName: string },
 ): Promise<Result<boolean, STREAM_NOT_FOUND | FAILED_TO_APPEND_SNAPSHOT>> {
   if (
     !shouldDoSnapshot({ newEvent, currentStreamVersion: revision, streamName })
@@ -75,7 +75,7 @@ export async function snapshotOnSubscription<
   const result = await appendSnapshot(
     snapshot.value,
     streamName,
-    lastSnapshotVersion
+    lastSnapshotVersion,
   );
 
   if (result.isError) return success(false);

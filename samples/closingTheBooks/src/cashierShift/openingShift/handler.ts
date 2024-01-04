@@ -35,7 +35,7 @@ export function isShiftOpened(event: Event): event is ShiftOpened {
 
 export function handleOpenShift(
   events: StreamEvent<CashierShiftEvent>[],
-  command: OpenShift
+  command: OpenShift,
 ): Result<ShiftOpened, SHIFT_ALREADY_OPENED> {
   const cashierShift = getCashierShiftFrom(events);
 

@@ -1,7 +1,7 @@
 export type Event<
   EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>,
-  EventMetadata extends Record<string, unknown> = Record<string, unknown>
+  EventMetadata extends Record<string, unknown> = Record<string, unknown>,
 > = Readonly<{
   type: Readonly<EventType>;
   data: Readonly<EventData>;
@@ -17,7 +17,15 @@ export type StreamEvent<EventType = Event> = Readonly<{
 export function isEvent<
   EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>,
-  EventMetadata extends Record<string, unknown> = Record<string, unknown>
->(event: any): event is Event<EventType, EventData, EventMetadata> {
-  return typeof event.type !== 'undefined' && typeof event.data !== 'undefined';
+  EventMetadata extends Record<string, unknown> = Record<string, unknown>,
+>(event: unknown): event is Event<EventType, EventData, EventMetadata> {
+  return (
+    typeof event === 'object' &&
+    event !== null &&
+    'type' in event &&
+    typeof event.type === 'string' &&
+    'data' in event &&
+    typeof event.data === 'object' &&
+    event.data !== null
+  );
 }
