@@ -11,7 +11,7 @@ export const DefaultChunkSize = 100;
 export function getNumberRanges(
   from: bigint,
   to: bigint,
-  chunkSize: number = DefaultChunkSize
+  chunkSize: number = DefaultChunkSize,
 ): Range[] {
   const difference = to - from;
 

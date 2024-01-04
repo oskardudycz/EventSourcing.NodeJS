@@ -22,10 +22,10 @@ describe('Full flow', () => {
   let subscription: Subscription;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
-    mongodbContainer = await new MongoDBContainer().startContainer();
+    mongodbContainer = await new MongoDBContainer().start();
     config.mongoDB.connectionString = mongodbContainer.getConnectionString();
     console.log(config.mongoDB.connectionString);
 
@@ -60,14 +60,14 @@ describe('Full flow', () => {
           .send({ cashierId: uuid(), float: 0 })
           .set('If-Match', toWeakETag(0))
           .expect(200)
-          .expect('Content-Type', /plain/)
+          .expect('Content-Type', /plain/),
       );
 
       await retry(() =>
         request(app)
           .get(`/cash-registers/${existingCashRegisterId}/shifts/current/`)
           .expect(200)
-          .expect('Content-Type', /json/)
+          .expect('Content-Type', /json/),
       );
     });
   });

@@ -17,7 +17,7 @@ export async function setupClosedCashierShiftWithTransactions(
     declaredStartAmount?: number;
     shiftNumber?: number;
     numberOfTransactions?: number;
-  } = {}
+  } = {},
 ): Promise<AppendResult> {
   const { cashierId, declaredStartAmount, shiftNumber, numberOfTransactions } =
     {
@@ -62,7 +62,7 @@ export async function setupClosedCashierShiftWithTransactions(
           closedAt: getCurrentTime(),
         },
       },
-    ]
+    ],
   );
   expect(result.isError).toBeFalsy();
 

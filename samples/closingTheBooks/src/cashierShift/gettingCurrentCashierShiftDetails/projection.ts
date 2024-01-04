@@ -8,7 +8,7 @@ import { ShiftClosed } from '../closingShift';
 import { CurrentCashierShiftDetails } from './currentCashierShiftDetails';
 
 export async function projectShiftOpened(
-  event: ShiftOpened
+  event: ShiftOpened,
 ): Promise<Result<true>> {
   await executeOnMongoDB<CurrentCashierShiftDetails>(
     { collectionName: 'currentCashierShiftDetails' },
@@ -23,14 +23,14 @@ export async function projectShiftOpened(
         revision: '1', // TODO: use the real stream revision
         startedAt: event.data.startedAt,
       });
-    }
+    },
   );
 
   return success(true);
 }
 
 export async function projectTransactionRegistered(
-  event: TransactionRegistered
+  event: TransactionRegistered,
 ): Promise<Result<true>> {
   await executeOnMongoDB<CurrentCashierShiftDetails>(
     { collectionName: 'currentCashierShiftDetails' },
@@ -39,16 +39,16 @@ export async function projectTransactionRegistered(
         {
           cashRegisterId: event.data.cashRegisterId,
         },
-        { $inc: { float: event.data.amount } }
+        { $inc: { float: event.data.amount } },
       );
-    }
+    },
   );
 
   return success(true);
 }
 
 export async function projectShiftClosed(
-  event: ShiftClosed
+  event: ShiftClosed,
 ): Promise<Result<true>> {
   await executeOnMongoDB<CurrentCashierShiftDetails>(
     { collectionName: 'currentCashierShiftDetails' },
@@ -65,9 +65,9 @@ export async function projectShiftClosed(
             overageAmount: event.data.overageAmount,
             shortageAmount: event.data.shortageAmount,
           },
-        }
+        },
       );
-    }
+    },
   );
 
   return success(true);
@@ -79,7 +79,7 @@ type CashierShiftDetailsEvent =
   | ShiftClosed;
 
 function isCashierShiftDetailsEvent(
-  event: Event
+  event: Event,
 ): event is CashierShiftDetailsEvent {
   const eventType = (event as CashierShiftDetailsEvent).type;
 
@@ -91,7 +91,7 @@ function isCashierShiftDetailsEvent(
 }
 
 export async function projectToCurrentCashierShiftDetails(
-  streamEvent: StreamEvent
+  streamEvent: StreamEvent,
 ): Promise<Result<boolean>> {
   const { event } = streamEvent;
 

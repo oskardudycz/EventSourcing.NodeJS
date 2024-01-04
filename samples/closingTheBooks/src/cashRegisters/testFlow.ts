@@ -9,6 +9,7 @@ import {
   Position,
   ResolvedEvent,
   START,
+  StreamNotFoundError,
 } from '@eventstore/db-client';
 import {
   AppendToStreamOptions,
@@ -22,22 +23,22 @@ import {
 
 export type Event<
   EventType extends string = string,
-  EventData extends object = object,
-  EventMetadata extends object = object
-> = {
-  type: EventType;
-  data: EventData;
-  metadata?: EventMetadata;
-};
+  EventData extends Record<string, unknown> = Record<string, unknown>,
+  EventMetadata extends Record<string, unknown> = Record<string, unknown>,
+> = Readonly<{
+  type: Readonly<EventType>;
+  data: Readonly<EventData>;
+  metadata?: Readonly<EventMetadata>;
+}>;
 
-type SnapshotMetadata = {
-  snapshottedStreamRevision: string;
-};
+type SnapshotMetadata = Readonly<{
+  snapshottedStreamVersion: string;
+}>;
 
 type SnapshotEvent<
   EventType extends string = string,
-  EventData extends object = object,
-  EventMetadata extends SnapshotMetadata = SnapshotMetadata
+  EventData extends Record<string, unknown> = Record<string, unknown>,
+  EventMetadata extends SnapshotMetadata = SnapshotMetadata,
 > = Event<EventType, EventData, EventMetadata> & {
   metadata: Readonly<EventMetadata>;
 };
@@ -49,7 +50,7 @@ type SnapshotEvent<
 export type Command<
   CommandType extends string = string,
   CommandData extends Record<string, unknown> = Record<string, unknown>,
-  CommandMetadata extends Record<string, unknown> = Record<string, unknown>
+  CommandMetadata extends Record<string, unknown> = Record<string, unknown>,
 > = {
   readonly type: CommandType;
   readonly data: CommandData;
@@ -65,36 +66,35 @@ type STREAM_NOT_FOUND = 'STREAM_NOT_FOUND';
 async function readFromStream<StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  options?: ReadStreamOptions
+  options?: ReadStreamOptions,
 ): Promise<StreamEvent[] | STREAM_NOT_FOUND> {
+  const events = [];
   try {
-    const events: StreamEvent[] = [];
-
-    for await (const resolvedEvent of eventStore.readStream(
+    for await (const { event } of eventStore.readStream<StreamEvent>(
       streamName,
-      options
+      options,
     )) {
-      if (!resolvedEvent.event) continue;
+      if (!event) continue;
 
       events.push(<StreamEvent>{
-        type: resolvedEvent.event!.type,
-        data: resolvedEvent.event!.data,
-        metadata: resolvedEvent.event?.metadata,
+        type: event.type,
+        data: event.data,
+        metadata: event.metadata,
       });
     }
-
     return events;
   } catch (error) {
-    if (error.type == ErrorType.STREAM_NOT_FOUND) {
+    if (error instanceof StreamNotFoundError) {
       return 'STREAM_NOT_FOUND';
     }
+
     throw error;
   }
 }
 
 async function readLastEventFromStream<StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ): Promise<StreamEvent | STREAM_NOT_FOUND> {
   const events = await readFromStream<StreamEvent>(eventStore, streamName, {
     maxCount: 1,
@@ -117,13 +117,13 @@ async function readLastEventFromStream<StreamEvent extends Event>(
 
 async function readEventsFromExternalSnapshot<
   StreamEvent extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent,
 >(
   getLastSnapshot: (
-    streamName: string
+    streamName: string,
   ) => Promise<SnapshotStreamEvent | undefined>,
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ): Promise<{
   events: (StreamEvent | SnapshotStreamEvent)[];
   lastSnapshotRevision?: bigint;
@@ -131,7 +131,7 @@ async function readEventsFromExternalSnapshot<
   const snapshot = await getLastSnapshot(streamName);
 
   const lastSnapshotRevision = snapshot
-    ? BigInt(snapshot.metadata.snapshottedStreamRevision)
+    ? BigInt(snapshot.metadata.snapshottedStreamVersion)
     : undefined;
 
   const streamEvents = await readFromStream<StreamEvent>(
@@ -139,7 +139,7 @@ async function readEventsFromExternalSnapshot<
     streamName,
     {
       fromRevision: lastSnapshotRevision,
-    }
+    },
   );
 
   if (streamEvents === 'STREAM_NOT_FOUND') throw 'STREAM_NOT_FOUND';
@@ -159,31 +159,31 @@ function addSnapshotPrefix(streamName: string): string {
 }
 
 async function readSnapshotFromSeparateStream<
-  SnapshotStreamEvent extends SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent,
 >(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ): Promise<SnapshotStreamEvent | undefined> {
   const snapshotStreamName = addSnapshotPrefix(streamName);
 
   const snapshot = await readLastEventFromStream<SnapshotStreamEvent>(
     eventStore,
-    snapshotStreamName
+    snapshotStreamName,
   );
 
   return snapshot !== 'STREAM_NOT_FOUND' ? snapshot : undefined;
 }
 
 async function readStreamMetadata<
-  StreamMetadata extends Record<string, unknown>
+  StreamMetadata extends Record<string, unknown>,
 >(
   eventStore: EventStoreDBClient,
   streamName: string,
-  options?: GetStreamMetadataOptions
+  options?: GetStreamMetadataOptions,
 ): Promise<StreamMetadata | undefined> {
   const result = await eventStore.getStreamMetadata<StreamMetadata>(
     streamName,
-    options
+    options,
   );
 
   return result.metadata;
@@ -191,28 +191,28 @@ async function readStreamMetadata<
 
 async function getLastSnapshotRevisionFromStreamMetadata(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ): Promise<bigint | undefined> {
   const streamMetadata = await readStreamMetadata<SnapshotMetadata>(
     eventStore,
-    streamName
+    streamName,
   );
 
   return streamMetadata
-    ? BigInt(streamMetadata.snapshottedStreamRevision)
+    ? BigInt(streamMetadata.snapshottedStreamVersion)
     : undefined;
 }
 
 async function readEventsFromSnapshotInTheSameStream<
   StreamEvent extends Event,
-  SnapshotStreamEvent extends SnapshotEvent = SnapshotEvent & StreamEvent
+  SnapshotStreamEvent extends SnapshotEvent = SnapshotEvent & StreamEvent,
 >(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ): Promise<(StreamEvent | SnapshotStreamEvent)[]> {
   const lastSnapshotRevision = await getLastSnapshotRevisionFromStreamMetadata(
     eventStore,
-    streamName
+    streamName,
   );
 
   const events = await readFromStream<StreamEvent>(eventStore, streamName, {
@@ -228,14 +228,14 @@ export function appendToStream<StreamEvent extends Event>(
   client: EventStoreDBClient,
   streamName: string,
   events: StreamEvent[],
-  options?: AppendToStreamOptions
+  options?: AppendToStreamOptions,
 ): Promise<AppendResult> {
   const jsonEvents: EventData[] = events.map((event) =>
     jsonEvent({
       type: event.type,
       data: event.data as Record<string, unknown>,
       metadata: event.metadata,
-    })
+    }),
   );
 
   return client.appendToStream(streamName, jsonEvents, options);
@@ -246,30 +246,30 @@ export function appendToStream<StreamEvent extends Event>(
 async function appendEventAndExternalSnapshot<
   State extends object = object,
   StreamEvent extends Event = Event,
-  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent = StreamEvent & SnapshotEvent,
 >(
   tryBuildSnapshot: (
     newEvent: StreamEvent,
     currentState: State,
-    newStreamRevision: bigint
+    newStreamRevision: bigint,
   ) => SnapshotStreamEvent | undefined,
   appendSnapshot: (
     snapshot: SnapshotStreamEvent,
     streamName: string,
-    lastSnapshotRevision?: bigint
+    lastSnapshotRevision?: bigint,
   ) => Promise<AppendResult>,
   eventStore: EventStoreDBClient,
   streamName: string,
   newEvent: StreamEvent,
   currentState: State,
-  lastSnapshotRevision?: bigint
+  lastSnapshotRevision?: bigint,
 ): Promise<AppendResult> {
   const appendResult = await appendToStream(eventStore, streamName, [newEvent]);
 
   const snapshot = tryBuildSnapshot(
     newEvent,
     currentState,
-    appendResult.nextExpectedRevision
+    appendResult.nextExpectedRevision,
   );
 
   if (snapshot) {
@@ -280,12 +280,12 @@ async function appendEventAndExternalSnapshot<
 }
 
 function appendSnapshotToSeparateStream<
-  SnapshotStreamEvent extends SnapshotEvent
+  SnapshotStreamEvent extends SnapshotEvent,
 >(
   eventStore: EventStoreDBClient,
   snapshot: SnapshotStreamEvent,
   streamName: string,
-  lastSnapshotRevision?: bigint
+  lastSnapshotRevision?: bigint,
 ): Promise<AppendResult> {
   const snapshotStreamName = addSnapshotPrefix(streamName);
 
@@ -301,16 +301,16 @@ function appendSnapshotToSeparateStream<
 
 async function appendEventAndSnapshotToTheSameStream<
   State extends object = object,
-  StreamEvent extends Event = Event
+  StreamEvent extends Event = Event,
 >(
   tryBuildSnapshot: (
     newEvent: StreamEvent,
-    currentState: State
+    currentState: State,
   ) => StreamEvent | undefined,
   eventStore: EventStoreDBClient,
   streamName: string,
   newEvent: StreamEvent,
-  currentState: State
+  currentState: State,
 ): Promise<AppendResult> {
   const snapshot = tryBuildSnapshot(newEvent, currentState);
 
@@ -319,14 +319,13 @@ async function appendEventAndSnapshotToTheSameStream<
   const appendResult = await appendToStream(
     eventStore,
     streamName,
-    eventsToAppend
+    eventsToAppend,
   );
 
-  const snapshottedStreamRevision =
-    appendResult.nextExpectedRevision.toString();
+  const snapshottedStreamVersion = appendResult.nextExpectedRevision.toString();
 
   await eventStore.setStreamMetadata<SnapshotMetadata>(streamName, {
-    snapshottedStreamRevision,
+    snapshottedStreamVersion,
   });
 
   return appendResult;
@@ -336,9 +335,9 @@ export function aggregateStream<Aggregate, StreamEvent extends Event>(
   events: StreamEvent[],
   when: (
     currentState: Partial<Aggregate>,
-    event: StreamEvent
+    event: StreamEvent,
   ) => Partial<Aggregate>,
-  check: (state: Partial<Aggregate>) => state is Aggregate
+  check: (state: Partial<Aggregate>) => state is Aggregate,
 ): Aggregate {
   const state = events.reduce<Partial<Aggregate>>(when, {});
 
@@ -350,16 +349,16 @@ function applyEvent<Aggregate, StreamEvent extends Event>(
   event: StreamEvent,
   when: (
     currentState: Partial<Aggregate>,
-    event: StreamEvent
+    event: StreamEvent,
   ) => Partial<Aggregate>,
-  check: (state: Partial<Aggregate>) => state is Aggregate
+  check: (state: Partial<Aggregate>) => state is Aggregate,
 ): Aggregate {
   return assertStateIsValid(when(currentState, event), check);
 }
 
 export function assertStateIsValid<Aggregate>(
   state: Partial<Aggregate>,
-  check: (state: Partial<Aggregate>) => state is Aggregate
+  check: (state: Partial<Aggregate>) => state is Aggregate,
 ) {
   if (!check(state)) throw 'Aggregate state is not valid';
 
@@ -434,7 +433,7 @@ type CashRegisterEvent =
 
 function when(
   currentState: Partial<CashRegister>,
-  event: CashRegisterEvent
+  event: CashRegisterEvent,
 ): Partial<CashRegister> {
   switch (event.type) {
     case 'placed-at-workstation':
@@ -479,7 +478,7 @@ function isPositiveNumber(value: any): boolean {
 }
 
 export function isCashRegister(
-  cashRegister: any
+  cashRegister: any,
 ): cashRegister is CashRegister {
   return (
     cashRegister !== undefined &&
@@ -497,19 +496,19 @@ function shouldDoSnapshot(newEvent: CashRegisterEvent): boolean {
 
 function buildCashRegisterSnapshot(
   currentState: CashRegister,
-  newStreamRevision: bigint
+  newStreamRevision: bigint,
 ): CashRegisterSnapshoted {
   return {
     type: 'cash-register-snapshoted',
     data: currentState,
-    metadata: { snapshottedStreamRevision: newStreamRevision.toString() },
+    metadata: { snapshottedStreamVersion: newStreamRevision.toString() },
   };
 }
 
 function tryBuildCashRegisterSnapshot(
   newEvent: CashRegisterEvent,
   currentState: CashRegister,
-  newStreamRevision: bigint
+  newStreamRevision: bigint,
 ): CashRegisterSnapshoted | undefined {
   if (shouldDoSnapshot(newEvent)) return undefined;
 
@@ -518,7 +517,7 @@ function tryBuildCashRegisterSnapshot(
 
 function tryBuildCashRegisterSnapshotNoMetadata(
   newEvent: CashRegisterEvent,
-  currentState: CashRegister
+  currentState: CashRegister,
 ): CashRegisterSnapshoted | undefined {
   // perform the check if snapshot should be made
   if (newEvent.type !== 'shift-closed') return undefined;
@@ -526,13 +525,13 @@ function tryBuildCashRegisterSnapshotNoMetadata(
   return {
     type: 'cash-register-snapshoted',
     data: currentState,
-    metadata: { snapshottedStreamRevision: undefined! },
+    metadata: { snapshottedStreamVersion: undefined! },
   };
 }
 
 function CloseShift(
   events: CashRegisterEvent[],
-  command: CloseShift
+  command: CloseShift,
 ): {
   newState: CashRegister;
   newEvent: ShiftEnded;
@@ -563,12 +562,12 @@ function CloseShift(
 
 async function readCashRegisterEvents(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ) {
   return readEventsFromExternalSnapshot<CashRegisterEvent>(
     (streamName) => readSnapshotFromSeparateStream(eventStore, streamName),
     eventStore,
-    streamName
+    streamName,
   );
 }
 
@@ -577,7 +576,7 @@ async function storeCashRegister(
   streamName: string,
   newEvent: ShiftEnded,
   newState: CashRegister,
-  lastSnapshotRevision?: bigint
+  lastSnapshotRevision?: bigint,
 ) {
   return appendEventAndExternalSnapshot(
     tryBuildCashRegisterSnapshot,
@@ -586,19 +585,19 @@ async function storeCashRegister(
         eventStore,
         snapshot,
         streamName,
-        lastSnapshotRevision
+        lastSnapshotRevision,
       ),
     eventStore,
     streamName,
     newEvent,
     newState,
-    lastSnapshotRevision
+    lastSnapshotRevision,
   );
 }
 
 export async function handleCloseShift(command: CloseShift): Promise<void> {
   const eventStore = EventStoreDBClient.connectionString(
-    `esdb://localhost:2113?tls=false`
+    `esdb://localhost:2113?tls=false`,
   );
 
   const streamName = `cashregister-${command.data.cashRegisterId}`;
@@ -606,7 +605,7 @@ export async function handleCloseShift(command: CloseShift): Promise<void> {
   // 1. Read events and snapshot from the separate stream
   const { events, lastSnapshotRevision } = await readCashRegisterEvents(
     eventStore,
-    streamName
+    streamName,
   );
 
   // 2. Perform business logic handling the command
@@ -618,7 +617,7 @@ export async function handleCloseShift(command: CloseShift): Promise<void> {
     streamName,
     newEvent,
     newState,
-    lastSnapshotRevision
+    lastSnapshotRevision,
   );
 }
 
@@ -628,11 +627,11 @@ export async function handleCloseShift(command: CloseShift): Promise<void> {
 
 async function readCashRegisterEventsSameSnapshotStream(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ) {
   return readEventsFromSnapshotInTheSameStream<CashRegisterEvent>(
     eventStore,
-    streamName
+    streamName,
   );
 }
 
@@ -640,22 +639,22 @@ async function storeCashRegisterSameSnapshotStream(
   eventStore: EventStoreDBClient,
   streamName: string,
   newEvent: ShiftEnded,
-  newState: CashRegister
+  newState: CashRegister,
 ) {
   return appendEventAndSnapshotToTheSameStream<CashRegister, CashRegisterEvent>(
     tryBuildCashRegisterSnapshotNoMetadata,
     eventStore,
     streamName,
     newEvent,
-    newState
+    newState,
   );
 }
 
 export async function handleCloseShiftSameSnapshotStream(
-  command: CloseShift
+  command: CloseShift,
 ): Promise<void> {
   const eventStore = EventStoreDBClient.connectionString(
-    `esdb://localhost:2113?tls=false`
+    `esdb://localhost:2113?tls=false`,
   );
 
   const streamName = `cashregister-${command.data.cashRegisterId}`;
@@ -663,7 +662,7 @@ export async function handleCloseShiftSameSnapshotStream(
   // 1. Read events and snapshot from the separate stream
   const events = await readCashRegisterEventsSameSnapshotStream(
     eventStore,
-    streamName
+    streamName,
   );
 
   // 2. Perform business logic handling the command
@@ -674,7 +673,7 @@ export async function handleCloseShiftSameSnapshotStream(
     eventStore,
     streamName,
     newEvent,
-    newState
+    newState,
   );
 }
 
@@ -688,14 +687,14 @@ function loadCheckPoint(subscriptionId: string): Promise<Position | undefined> {
 
 function tryDoSnapshot(
   eventStore: EventStoreDBClient,
-  resolvedEvent: ResolvedEvent
+  resolvedEvent: ResolvedEvent,
 ): Promise<void> {
   throw new Error('Function not implemented.');
 }
 
 function storeCheckpoint(
   subscriptionId: string,
-  position: Position
+  position: Position,
 ): Promise<void> {
   throw new Error('Function not implemented.');
 }
@@ -707,7 +706,7 @@ function storeCheckpoint(
       const subscriptionId = 'SnapshottingSubscriptionToAll';
 
       const eventStore = EventStoreDBClient.connectionString(
-        `esdb://localhost:2113?tls=false`
+        `esdb://localhost:2113?tls=false`,
       );
 
       // 2. Read checkpoint - last processed event position.
@@ -752,12 +751,12 @@ function storeCheckpoint(
 
 async function subscribeToAll(
   reject: (error: any) => void,
-  resolve: () => void
+  resolve: () => void,
 ) {
   const subscriptionId = 'SnapshottingSubscriptionToAll';
 
   const eventStore = EventStoreDBClient.connectionString(
-    `esdb://localhost:2113?tls=false`
+    `esdb://localhost:2113?tls=false`,
   );
 
   // 2. Read checkpoint - last processed event position.
@@ -787,7 +786,7 @@ async function subscribeToAll(
 
 export async function snapshotCashRegisterOnSubscription(
   eventStore: EventStoreDBClient,
-  resolvedEvent: ResolvedEvent
+  resolvedEvent: ResolvedEvent,
 ): Promise<void> {
   const event = {
     type: resolvedEvent.event!.type,
@@ -803,7 +802,7 @@ export async function snapshotCashRegisterOnSubscription(
   // 2. Read stream events
   const { events, lastSnapshotRevision } = await readCashRegisterEvents(
     eventStore,
-    streamName
+    streamName,
   );
 
   // 3. Build the current stream state
@@ -812,7 +811,7 @@ export async function snapshotCashRegisterOnSubscription(
   // 4. Create snapshot
   const snapshot = buildCashRegisterSnapshot(
     currentState,
-    resolvedEvent.event!.revision
+    resolvedEvent.event!.revision,
   );
 
   // 5. Append the new event and snapshot
@@ -820,7 +819,7 @@ export async function snapshotCashRegisterOnSubscription(
     eventStore,
     snapshot,
     streamName,
-    lastSnapshotRevision
+    lastSnapshotRevision,
   );
 }
 

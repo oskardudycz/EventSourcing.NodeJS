@@ -1,7 +1,7 @@
 export type Query<
   QueryType extends string = string,
   QueryData extends Record<string, unknown> = Record<string, unknown>,
-  QueryMetadata extends Record<string, unknown> = Record<string, unknown>
+  QueryMetadata extends Record<string, unknown> = Record<string, unknown>,
 > = {
   readonly type: QueryType;
   readonly data: QueryData;
@@ -11,7 +11,7 @@ export type Query<
 export function isQuery<
   QueryType extends string = string,
   QueryData extends Record<string, unknown> = Record<string, unknown>,
-  QueryMetadata extends Record<string, unknown> = Record<string, unknown>
+  QueryMetadata extends Record<string, unknown> = Record<string, unknown>,
 >(event: any): event is Query<QueryType, QueryData, QueryMetadata> {
   return typeof event.type !== 'undefined' && typeof event.data !== 'undefined';
 }

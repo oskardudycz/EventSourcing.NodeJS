@@ -26,13 +26,13 @@ export type StreamArchivisationScheduled = Event<
 >;
 
 export function isStreamArchivisationScheduled(
-  event: Event
+  event: Event,
 ): event is StreamArchivisationScheduled {
   return event.type === 'stream-archivisation-scheduled';
 }
 
 export async function handleStreamArchivisationScheduled(
-  streamEvent: StreamEvent
+  streamEvent: StreamEvent,
 ): Promise<
   Result<boolean, FAILED_TO_APPEND_EVENT | STREAM_NOT_FOUND | NO_EVENTS_FOUND>
 > {
@@ -57,7 +57,7 @@ export async function handleStreamArchivisationScheduled(
   const archivingScheduled = await handleScheduleStreamBatchArchivisation(
     (streamName) =>
       getStreamRevisionOfTheFirstEventToArchive(eventStore, streamName),
-    command
+    command,
   );
 
   if (archivingScheduled.isError) {
@@ -67,7 +67,7 @@ export async function handleStreamArchivisationScheduled(
   const result = await appendToStream(
     eventStore,
     getArchivisationForStreamName(streamName),
-    archivingScheduled.value
+    archivingScheduled.value,
   );
 
   if (result.isError) {

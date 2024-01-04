@@ -22,7 +22,7 @@ describe('OpenShift command', () => {
   const streamName = getCurrentCashierShiftStreamName(cashRegisterId);
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
     eventStore = esdbContainer.getClient();
@@ -38,7 +38,7 @@ describe('OpenShift command', () => {
             initializedAt: getCurrentTime(),
           },
         },
-      ]
+      ],
     );
     expect(result.isError).toBeFalsy();
   });
@@ -60,7 +60,7 @@ describe('OpenShift command', () => {
     const result = await updateCashierShift(
       streamName,
       command,
-      handleOpenShift
+      handleOpenShift,
     );
 
     expect(result.isError).toBeFalsy();

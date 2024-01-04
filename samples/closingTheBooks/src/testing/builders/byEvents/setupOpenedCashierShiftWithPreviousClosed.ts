@@ -10,7 +10,7 @@ export async function setupOpenedCashierShiftWithPreviousClosed(
     cashierId?: string;
     declaredStartAmount?: number;
     numberOfTransactionsInPreviousShift?: number;
-  } = {}
+  } = {},
 ): Promise<AppendResult> {
   const {
     cashierId,

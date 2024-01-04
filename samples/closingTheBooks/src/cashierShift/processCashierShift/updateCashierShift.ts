@@ -14,14 +14,14 @@ import { CashierShiftEvent } from '../cashierShift';
 
 export async function updateCashierShift<
   TCommand extends Command,
-  TError = never
+  TError = never,
 >(
   streamName: string,
   command: TCommand,
   handle: (
     currentEvents: StreamEvent<CashierShiftEvent>[],
-    command: TCommand
-  ) => Result<CashierShiftEvent, TError>
+    command: TCommand,
+  ) => Result<CashierShiftEvent, TError>,
 ): Promise<
   Result<
     AppendResult,
@@ -35,7 +35,7 @@ export async function updateCashierShift<
     async (eventStore, streamName) => {
       const result = await readFromStream<CashierShiftEvent>(
         eventStore,
-        streamName
+        streamName,
       );
 
       if (result.isError) return result;
@@ -48,7 +48,7 @@ export async function updateCashierShift<
       streamName,
       _currentEvents,
       newEvent,
-      _lastSnapshotVersion
+      _lastSnapshotVersion,
     ) => {
       const expectedRevision = command.metadata?.$expectedRevision
         ? BigInt(command.metadata?.$expectedRevision)
@@ -60,6 +60,6 @@ export async function updateCashierShift<
     },
     getEventStore(),
     streamName,
-    command
+    command,
   );
 }

@@ -18,7 +18,7 @@ describe('PlacedAtWorkStation event', () => {
   const cashRegisterId = uuid();
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
     eventStore = esdbContainer.getClient();
@@ -57,7 +57,7 @@ describe('PlacedAtWorkStation event', () => {
     await expectStreamToHaveNumberOfEvents(
       eventStore,
       currentCashierShiftStreamName,
-      1
+      1,
     );
   });
 });

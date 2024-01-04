@@ -14,14 +14,14 @@ import { Command } from '#core/commands';
 
 export async function updateCashRegister<
   TCommand extends Command,
-  TError = never
+  TError = never,
 >(
   streamName: string,
   command: TCommand,
   handle: (
     currentEvents: StreamEvent<CashRegisterEvent>[],
-    command: TCommand
-  ) => Result<CashRegisterEvent, TError>
+    command: TCommand,
+  ) => Result<CashRegisterEvent, TError>,
 ): Promise<
   Result<
     AppendResult,
@@ -35,7 +35,7 @@ export async function updateCashRegister<
     async (eventStore, streamName) => {
       const result = await readFromStream<CashRegisterEvent>(
         eventStore,
-        streamName
+        streamName,
       );
 
       if (result.isError) return result;
@@ -48,7 +48,7 @@ export async function updateCashRegister<
       streamName,
       _currentEvents,
       newEvent,
-      _lastSnapshotVersion
+      _lastSnapshotVersion,
     ) => {
       const expectedRevision = command.metadata?.$expectedRevision
         ? BigInt(command.metadata?.$expectedRevision)
@@ -60,6 +60,6 @@ export async function updateCashRegister<
     },
     getEventStore(),
     streamName,
-    command
+    command,
   );
 }

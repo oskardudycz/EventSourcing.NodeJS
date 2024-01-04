@@ -13,7 +13,7 @@ import { addCashierShift } from '../processCashierShift';
 import { FAILED_TO_APPEND_EVENT } from '#core/eventStore/appending';
 
 export async function handleCashRegisterPlacedAtWorkStation(
-  streamEvent: StreamEvent
+  streamEvent: StreamEvent,
 ): Promise<
   Result<boolean, SHIFT_ALREADY_INITIALIZED | FAILED_TO_APPEND_EVENT>
 > {
@@ -31,13 +31,13 @@ export async function handleCashRegisterPlacedAtWorkStation(
   };
 
   const streamName = getCurrentCashierShiftStreamName(
-    command.data.cashRegisterId
+    command.data.cashRegisterId,
   );
 
   const result = await addCashierShift(
     streamName,
     command,
-    handleInitializeCashRegisterShift
+    handleInitializeCashRegisterShift,
   );
 
   if (result.isError) {

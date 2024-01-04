@@ -15,7 +15,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current', () => {
   let eventStore: EventStoreDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
     console.log(config.eventStoreDB.connectionString);
 
@@ -35,7 +35,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current', () => {
 
       const result = await setupInitiatedCashierShift(
         eventStore,
-        existingCashRegisterId
+        existingCashRegisterId,
       );
       currentRevision = toWeakETag(result.nextExpectedRevision);
     });

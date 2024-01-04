@@ -33,7 +33,7 @@ export type CashRegisterEvent = PlacedAtWorkStation;
 
 export function when(
   currentState: Partial<CashRegister>,
-  streamEvent: StreamEvent<CashRegisterEvent>
+  streamEvent: StreamEvent<CashRegisterEvent>,
 ): Partial<CashRegister> {
   const { event, streamRevision } = streamEvent;
   switch (event.type) {
@@ -53,7 +53,7 @@ export function when(
 }
 
 export function isCashRegister(
-  cashRegister: any
+  cashRegister: any,
 ): cashRegister is CashRegister {
   return (
     cashRegister !== undefined &&
@@ -79,7 +79,7 @@ export function getCashRegisterStreamName(cashRegisterId: string) {
 }
 
 export function getCashRegisterFrom(
-  events: StreamEvent<CashRegisterEvent>[]
+  events: StreamEvent<CashRegisterEvent>[],
 ): CashRegister {
   return aggregateStream(events, when, isCashRegister);
 }

@@ -23,7 +23,7 @@ describe('ClosingShift command', () => {
   const streamName = getCurrentCashierShiftStreamName(cashRegisterId);
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
     eventStore = esdbContainer.getClient();
@@ -49,7 +49,7 @@ describe('ClosingShift command', () => {
             startedAt: getCurrentTime(),
           },
         },
-      ]
+      ],
     );
     expect(result.isError).toBeFalsy();
   });
@@ -71,7 +71,7 @@ describe('ClosingShift command', () => {
     const result = await updateCashierShift(
       streamName,
       command,
-      handleCloseShift
+      handleCloseShift,
     );
 
     expect(result.isError).toBeFalsy();

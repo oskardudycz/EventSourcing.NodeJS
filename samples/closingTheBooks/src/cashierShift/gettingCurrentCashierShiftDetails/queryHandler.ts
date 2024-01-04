@@ -12,18 +12,18 @@ export type GetCurrentCashierShiftDetails = Query<
 >;
 
 export async function handleGetCashierShift(
-  query: GetCurrentCashierShiftDetails
+  query: GetCurrentCashierShiftDetails,
 ): Promise<Result<CurrentCashierShiftDetails, SHIFT_DOES_NOT_EXIST>> {
   const result = await executeOnMongoDB<
     CurrentCashierShiftDetails,
-    CurrentCashierShiftDetails | undefined
+    CurrentCashierShiftDetails | null
   >({ collectionName: 'currentCashierShiftDetails' }, (currentCashierShifts) =>
     currentCashierShifts.findOne({
       cashRegisterId: query.data.cashRegisterId,
-    })
+    }),
   );
 
-  if (result === undefined) {
+  if (result === null) {
     return failure('SHIFT_DOES_NOT_EXIST');
   }
 

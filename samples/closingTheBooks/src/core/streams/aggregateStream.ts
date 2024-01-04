@@ -6,9 +6,9 @@ export function aggregateStream<Aggregate, StreamEvents extends StreamEvent>(
     currentState: Partial<Aggregate>,
     event: StreamEvents,
     currentIndex: number,
-    allEvents: StreamEvents[]
+    allEvents: StreamEvents[],
   ) => Partial<Aggregate>,
-  check?: (state: Partial<Aggregate>) => state is Aggregate
+  check?: (state: Partial<Aggregate>) => state is Aggregate,
 ): Aggregate {
   const state = events.reduce<Partial<Aggregate>>(when, {});
 

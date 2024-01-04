@@ -21,7 +21,7 @@ export function toWeakETag(value: any): WeakETag {
 }
 
 export function getETagFromIfMatch(
-  request: Request
+  request: Request,
 ): Result<WeakETag, MISSING_IF_MATCH_HEADER> {
   const etag = request.headers['if-match'];
 
@@ -32,7 +32,7 @@ export function getETagFromIfMatch(
 }
 
 export function getWeakETagFromIfMatch(
-  request: Request
+  request: Request,
 ): Result<WeakETag, WRONG_WEAK_ETAG_FORMAT | MISSING_IF_MATCH_HEADER> {
   const etag = getETagFromIfMatch(request);
 

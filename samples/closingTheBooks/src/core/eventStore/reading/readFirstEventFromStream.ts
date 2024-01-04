@@ -10,7 +10,7 @@ export type NO_EVENTS_FOUND = 'NO_EVENTS_FOUND';
 export async function readFirstEventFromStream<StreamEventType extends Event>(
   eventStore: EventStoreDBClient,
   streamName: string,
-  options?: ReadStreamOptions
+  options?: ReadStreamOptions,
 ): Promise<
   Result<StreamEvent<StreamEventType>, STREAM_NOT_FOUND | NO_EVENTS_FOUND>
 > {

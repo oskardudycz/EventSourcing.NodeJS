@@ -18,7 +18,7 @@ export type CashRegisterShiftInitialized = Event<
 >;
 
 export function handleInitializeCashRegisterShift(
-  command: InitializeCashRegisterShift
+  command: InitializeCashRegisterShift,
 ): Result<CashRegisterShiftInitialized> {
   return success({
     type: 'cash-register-shift-initialized',

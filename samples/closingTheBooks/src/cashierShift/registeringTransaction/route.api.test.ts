@@ -18,7 +18,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
   let eventStore: EventStoreDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
     console.log(config.eventStoreDB.connectionString);
 
@@ -38,7 +38,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
 
       const result = await setupInitiatedCashierShift(
         eventStore,
-        existingCashRegisterId
+        existingCashRegisterId,
       );
       currentRevision = toWeakETag(result.nextExpectedRevision);
     });
@@ -47,7 +47,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
       beforeEach(async () => {
         const result = await setupOpenedCashierShift(
           eventStore,
-          existingCashRegisterId
+          existingCashRegisterId,
         );
         currentRevision = toWeakETag(result.nextExpectedRevision);
       });
@@ -55,7 +55,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
       it('should register single transaction', async () => {
         await request(app)
           .post(
-            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`
+            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`,
           )
           .send({ amount: 123 })
           .set('If-Match', currentRevision)
@@ -66,7 +66,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
       it('should register multiple transactions', async () => {
         await request(app)
           .post(
-            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`
+            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`,
           )
           .send({ amount: 123 })
           .set('If-Match', currentRevision)
@@ -78,7 +78,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
 
         await request(app)
           .post(
-            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`
+            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`,
           )
           .send({ amount: 123 })
           .expect(200)
@@ -89,7 +89,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
       it('should fail to register transaction if current revision is not sent in If-Match', async () => {
         await request(app)
           .post(
-            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`
+            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`,
           )
           .send({ amount: 123 })
           .expect(400)
@@ -99,7 +99,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
       it('should fail to register multiple transactions with the same revision', async () => {
         await request(app)
           .post(
-            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`
+            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`,
           )
           .send({ amount: 123 })
           .set('If-Match', currentRevision)
@@ -108,7 +108,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
 
         await request(app)
           .post(
-            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`
+            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`,
           )
           .send({ amount: 123 })
           .expect(412)
@@ -121,7 +121,7 @@ describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () 
       it('should fail to register transaction', async () => {
         await request(app)
           .post(
-            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`
+            `/cash-registers/${existingCashRegisterId}/shifts/current/transactions`,
           )
           .send({ amount: 123 })
           .set('If-Match', currentRevision)

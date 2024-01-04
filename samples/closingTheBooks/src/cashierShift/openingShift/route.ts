@@ -24,13 +24,13 @@ export const route = (router: Router) =>
         }
 
         const streamName = getCurrentCashierShiftStreamName(
-          command.data.cashRegisterId
+          command.data.cashRegisterId,
         );
 
         const result = await updateCashierShift(
           streamName,
           command,
-          handleOpenShift
+          handleOpenShift,
         );
 
         if (result.isError) {
@@ -51,11 +51,11 @@ export const route = (router: Router) =>
       } catch (error) {
         next(error);
       }
-    }
+    },
   );
 
 function mapRequestToCommand(
-  request: Request
+  request: Request,
 ):
   | OpenShift
   | 'MISSING_CASH_REGISTER_ID'

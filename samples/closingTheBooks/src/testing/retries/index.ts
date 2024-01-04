@@ -4,7 +4,7 @@ import { sleep } from '#core/primitives';
 export async function retry(
   test: () => request.Test,
   retriesLeft: number = 5,
-  delay: number = 1000
+  delay: number = 1000,
 ) {
   try {
     await test();
