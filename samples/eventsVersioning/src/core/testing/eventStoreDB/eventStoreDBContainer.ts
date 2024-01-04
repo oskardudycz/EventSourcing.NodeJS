@@ -1,7 +1,10 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
-import { Environment } from 'testcontainers/dist/docker/types';
-import { AbstractStartedContainer } from 'testcontainers/dist/modules/abstract-started-container';
+import {
+  AbstractStartedContainer,
+  GenericContainer,
+  StartedTestContainer,
+} from 'testcontainers';
+import { Environment } from 'testcontainers/build/types';
 
 const EVENTSTOREDB_PORT = 2113;
 const EVENTSTOREDB_TCP_PORT = 1113;
@@ -17,7 +20,7 @@ export class EventStoreDBContainer extends GenericContainer {
     runProjections = true,
     isInsecure = true,
     emptyDatabase = true,
-    withoutReuse = false
+    withoutReuse = false,
   ) {
     super(image);
 
@@ -63,7 +66,7 @@ export class StartedEventStoreDBContainer extends AbstractStartedContainer {
 
   getConnectionString(): string {
     return `esdb://${this.getHost()}:${this.getMappedPort(
-      2113
+      2113,
     )}?tls=false&throwOnAppendFailure=false`;
   }
 

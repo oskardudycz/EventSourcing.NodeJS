@@ -93,7 +93,7 @@ export class EventTransformations {
   public register = {
     upcaster: <From extends Event, To extends Event = From>(
       eventType: string,
-      upcaster: (event: From) => To
+      upcaster: (event: From) => To,
     ) => {
       this.#upcasters.set(eventType, (event) => upcaster(event as From));
 
@@ -101,7 +101,7 @@ export class EventTransformations {
     },
     downcaster: <From extends Event, To extends Event = From>(
       eventType: string,
-      downcaster: (event: From) => To
+      downcaster: (event: From) => To,
     ) => {
       this.#downcasters.set(eventType, (event) => downcaster(event as From));
 
@@ -139,7 +139,7 @@ export class EventParser {
       type: event.type,
       payload: JSONParser.stringify(
         event,
-        downcaster ? { map: downcaster } : {}
+        downcaster ? { map: downcaster } : {},
       ),
     };
   }
@@ -192,7 +192,7 @@ describe('Multiple transformations with different event types', () => {
 
     // When
     const deserializedEvents = serializedEvents.map((e) =>
-      parser.parse<ShoppingCartOpenedWithStatus>(e)
+      parser.parse<ShoppingCartOpenedWithStatus>(e),
     );
 
     expect(deserializedEvents).toEqual([

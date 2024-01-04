@@ -71,7 +71,7 @@ describe('New required property', () => {
             },
           };
         },
-      }
+      },
     );
 
     expect(event).toEqual({

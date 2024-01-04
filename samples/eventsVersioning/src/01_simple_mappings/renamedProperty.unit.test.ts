@@ -55,7 +55,7 @@ describe('Renamed property', () => {
       json,
       {
         map: (
-          value: ShoppingCartOpenedV1 | ShoppingCartOpened
+          value: ShoppingCartOpenedV1 | ShoppingCartOpened,
         ): ShoppingCartOpened => {
           return {
             ...value,
@@ -68,7 +68,7 @@ describe('Renamed property', () => {
             },
           };
         },
-      }
+      },
     );
 
     expect(event).toEqual({
@@ -135,7 +135,7 @@ describe('Renamed property', () => {
       ShoppingCartOpened | ShoppingCartOpenedV1
     >(json, {
       map: (
-        value: ShoppingCartOpened
+        value: ShoppingCartOpened,
       ): ShoppingCartOpened & ShoppingCartOpenedV1 => {
         return {
           ...value,
