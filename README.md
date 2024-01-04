@@ -1,4 +1,4 @@
-[![Github Sponsors](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/oskardudycz/)](https://github.com/sponsors/oskardudycz/) [![blog](https://img.shields.io/badge/blog-event--driven.io-brightgreen)](https://event-driven.io/?utm_source=event_sourcing_nodejs) [![blog](https://img.shields.io/badge/%F0%9F%9A%80-Architecture%20Weekly-important)](https://www.architecture-weekly.com/?utm_source=event_sourcing_nodejs) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/oskardudycz/)
+[<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" height="20px" />](https://www.linkedin.com/in/oskardudycz/) [![Subscribe](https://img.shields.io/badge/%F0%9F%9A%80-subscribe!-important)](https://www.architecture-weekly.com/?utm_source=github_architecture_weekly) [![Github Sponsors](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/oskardudycz/)](https://github.com/sponsors/oskardudycz/) [![blog](https://img.shields.io/badge/blog-event--driven.io-brightgreen)](https://event-driven.io/?utm_source=architecture_weekly) 
 
 # EventSourcing.NodeJS
 
@@ -1040,11 +1040,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 14.x
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20.10.x
+        uses: actions/setup-node@v4
         with:
-          node-version: 14.x
+          node-version: 20.10.x
       # install dependencies based on the package log
       - run: npm ci
       # run linting (ESlint and Prettier)
@@ -1083,12 +1083,12 @@ jobs:
         # selected operation systems to run Continuous Integration
         os: [windows-latest, ubuntu-latest, macos-latest]
         # selected node version to run Continuous Integration
-        node-version: [14.x, 15.x]
+        node-version: [18.x, 20.10.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           # use the node version defined in matrix above
           node-version: ${{ matrix.node-version }}
@@ -1315,12 +1315,12 @@ jobs:
         # selected operation systems to run CI
         os: [windows-latest, ubuntu-latest, macos-latest]
         # selected node version to run CI
-        node-version: [14.x, 15.x]
+        node-version: [18.x, 20.10.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           # use the node version defined in matrix above
           node-version: ${{ matrix.node-version }}
@@ -1340,7 +1340,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       # setup Docker buld action
       - name: Set up Docker Buildx

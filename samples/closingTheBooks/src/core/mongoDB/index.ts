@@ -6,7 +6,11 @@ export function getMongoDB(connectionString?: string): MongoClient {
     throw 'MongoDB connection string not set. Please define "MONGODB_CONNECTION_STRING" environment variable';
   }
 
-  return new MongoClient(connectionString ?? config.mongoDB.connectionString);
+  console.log(config.mongoDB.connectionString);
+
+  return new MongoClient(connectionString ?? config.mongoDB.connectionString, {
+    directConnection: true,
+  });
 }
 
 export type ExecuteOnMongoDBOptions = {

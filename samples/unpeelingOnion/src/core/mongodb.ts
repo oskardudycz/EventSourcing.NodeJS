@@ -19,6 +19,9 @@ export async function getMongoDB(
   if (!mongoClient) {
     mongoClient = new MongoClient(
       connectionString ?? config.mongoDB.connectionString,
+      {
+        directConnection: true,
+      },
     );
     await mongoClient.connect();
     isOpened = true;

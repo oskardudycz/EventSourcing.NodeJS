@@ -868,6 +868,9 @@ export const getMongoDB = async (
   if (!mongoClient) {
     mongoClient = new MongoClient(
       connectionString ?? 'mongodb://localhost:27017/',
+      {
+        directConnection: true,
+      },
     );
     await mongoClient.connect();
   }

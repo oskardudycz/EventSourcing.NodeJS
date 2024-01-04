@@ -9,7 +9,7 @@ import {
 import {
   MongoDBContainer,
   StartedMongoDBContainer,
-} from '#testing/mongoDB/mongoDBContainer';
+} from '@testcontainers/mongodb';
 import app from '../../app';
 import { getSubscription } from '../../getSubscription';
 import { disconnectFromMongoDB } from '#core/mongoDB';
@@ -25,7 +25,7 @@ describe('Full flow', () => {
     esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
 
-    mongodbContainer = await new MongoDBContainer().start();
+    mongodbContainer = await new MongoDBContainer('mongo:6.0.12').start();
     config.mongoDB.connectionString = mongodbContainer.getConnectionString();
     console.log(config.mongoDB.connectionString);
 
