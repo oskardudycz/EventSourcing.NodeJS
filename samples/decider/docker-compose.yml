@@ -4,7 +4,7 @@ services:
   #######################################################
   #  EventStoreDB
   #######################################################
-  eventstore.db:
+  eventstoredb:
     image: eventstore/eventstore:23.10.0-bookworm-slim
     # use this image if you're running ARM-based proc like Apple M1
     # image: eventstore/eventstore:23.10.0-alpha-arm64v8

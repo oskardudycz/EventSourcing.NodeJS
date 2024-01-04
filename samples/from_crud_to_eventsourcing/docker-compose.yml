@@ -57,7 +57,7 @@ services:
       - postgres
 
 networks:
-  eventstore.db:
+  eventstoredb:
     driver: bridge
   postgres:
     driver: bridge
