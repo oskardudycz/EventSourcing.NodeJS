@@ -1,14 +1,14 @@
 import { Event } from '../../events';
-export type SnapshotMetadata = {
+
+export type SnapshotMetadata = Readonly<{
   snapshottedStreamVersion: string;
-};
+}>;
 
 export type SnapshotEvent<
   EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>,
-  EventMetadata extends SnapshotMetadata &
-    Record<string, unknown> = SnapshotMetadata & Record<string, unknown>,
+  EventMetadata extends SnapshotMetadata = SnapshotMetadata,
 > = Event<EventType, EventData, EventMetadata> &
   Readonly<{
-    metadata: Readonly<EventMetadata>;
+    metadata: EventMetadata;
   }>;

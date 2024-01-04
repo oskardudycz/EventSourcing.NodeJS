@@ -12,7 +12,7 @@ describe('POST /cash-registers/:id/transactions', () => {
   let esdbContainer: StartedEventStoreDBContainer;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().startContainer();
+    esdbContainer = await new EventStoreDBContainer().start();
     config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
     console.log(config.eventStoreDB.connectionString);
   });

@@ -1,14 +1,24 @@
-import { ErrorType, EventStoreDBClient } from '@eventstore/db-client';
+import { EventStoreDBClient, StreamNotFoundError } from '@eventstore/db-client';
 
 export async function expectStreamToNotExist(
   eventStore: EventStoreDBClient,
   streamName: string,
 ) {
   try {
-    await eventStore.readStream(streamName);
+    const events = eventStore.readStream(streamName, { maxCount: 1 });
+
+    for await (const _ of events) {
+      /* empty */
+    }
   } catch (error) {
-    expect(error?.type).toBe(ErrorType.STREAM_NOT_FOUND);
+    if (error instanceof StreamNotFoundError) {
+      return;
+    }
+
+    expect(typeof error).toBe('StreamNotFoundError');
   }
+
+  expect(undefined).toBeDefined();
 }
 
 export async function expectStreamToHaveNumberOfEvents(
@@ -17,8 +27,15 @@ export async function expectStreamToHaveNumberOfEvents(
   expectedNumberOfEvents: number,
 ) {
   try {
-    const events = await eventStore.readStream(streamName);
-    expect(events).toHaveLength(expectedNumberOfEvents);
+    const eventStream = eventStore.readStream(streamName);
+
+    let eventsCount = 0;
+
+    for await (const _ of eventStream) {
+      eventsCount++;
+    }
+
+    expect(eventsCount).toBe(expectedNumberOfEvents);
   } catch (error) {
     expect(error).toBeUndefined();
   }

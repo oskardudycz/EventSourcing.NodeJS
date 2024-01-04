@@ -9,6 +9,7 @@ import {
   Position,
   ResolvedEvent,
   START,
+  StreamNotFoundError,
 } from '@eventstore/db-client';
 import {
   AppendToStreamOptions,
@@ -22,21 +23,21 @@ import {
 
 export type Event<
   EventType extends string = string,
-  EventData extends object = object,
-  EventMetadata extends object = object,
-> = {
-  type: EventType;
-  data: EventData;
-  metadata?: EventMetadata;
-};
+  EventData extends Record<string, unknown> = Record<string, unknown>,
+  EventMetadata extends Record<string, unknown> = Record<string, unknown>,
+> = Readonly<{
+  type: Readonly<EventType>;
+  data: Readonly<EventData>;
+  metadata?: Readonly<EventMetadata>;
+}>;
 
-type SnapshotMetadata = {
-  snapshottedStreamRevision: string;
-};
+type SnapshotMetadata = Readonly<{
+  snapshottedStreamVersion: string;
+}>;
 
 type SnapshotEvent<
   EventType extends string = string,
-  EventData extends object = object,
+  EventData extends Record<string, unknown> = Record<string, unknown>,
   EventMetadata extends SnapshotMetadata = SnapshotMetadata,
 > = Event<EventType, EventData, EventMetadata> & {
   metadata: Readonly<EventMetadata>;
@@ -51,8 +52,8 @@ export type Command<
   CommandData extends Record<string, unknown> = Record<string, unknown>,
   CommandMetadata extends Record<string, unknown> = Record<string, unknown>,
 > = {
-  readonly type: CommandType;
-  readonly data: CommandData;
+  type: Readonly<CommandType>;
+  data: Readonly<CommandData>;
   metadata?: Readonly<CommandMetadata>;
 };
 
@@ -67,22 +68,26 @@ async function readFromStream<StreamEvent extends Event>(
   streamName: string,
   options?: ReadStreamOptions,
 ): Promise<StreamEvent[] | STREAM_NOT_FOUND> {
+  const events = [];
   try {
-    const events = await eventStore.readStream(streamName, options);
+    for await (const { event } of eventStore.readStream<StreamEvent>(
+      streamName,
+      options,
+    )) {
+      if (!event) continue;
 
-    return events
-      .filter((resolvedEvent) => !!resolvedEvent.event)
-      .map((resolvedEvent) => {
-        return <StreamEvent>{
-          type: resolvedEvent.event!.type,
-          data: resolvedEvent.event!.data,
-          metadata: resolvedEvent.event!.metadata,
-        };
+      events.push(<StreamEvent>{
+        type: event.type,
+        data: event.data,
+        metadata: event.metadata,
       });
+    }
+    return events;
   } catch (error) {
-    if (error.type == ErrorType.STREAM_NOT_FOUND) {
+    if (error instanceof StreamNotFoundError) {
       return 'STREAM_NOT_FOUND';
     }
+
     throw error;
   }
 }
@@ -126,7 +131,7 @@ async function readEventsFromExternalSnapshot<
   const snapshot = await getLastSnapshot(streamName);
 
   const lastSnapshotRevision = snapshot
-    ? BigInt(snapshot.metadata.snapshottedStreamRevision)
+    ? BigInt(snapshot.metadata.snapshottedStreamVersion)
     : undefined;
 
   const streamEvents = await readFromStream<StreamEvent>(
@@ -194,7 +199,7 @@ async function getLastSnapshotRevisionFromStreamMetadata(
   );
 
   return streamMetadata
-    ? BigInt(streamMetadata.snapshottedStreamRevision)
+    ? BigInt(streamMetadata.snapshottedStreamVersion)
     : undefined;
 }
 
@@ -274,7 +279,7 @@ async function appendEventAndExternalSnapshot<
   return appendResult;
 }
 
-function appendSnapshotToSeparateStream<
+async function appendSnapshotToSeparateStream<
   SnapshotStreamEvent extends SnapshotEvent,
 >(
   eventStore: EventStoreDBClient,
@@ -288,7 +293,7 @@ function appendSnapshotToSeparateStream<
   // set snapshot stream metadata $maxCount to 1.
   // This will make sure that there is only one snapshot event.
   if (lastSnapshotRevision === undefined) {
-    eventStore.setStreamMetadata(snapshotStreamName, { maxCount: 1 });
+    await eventStore.setStreamMetadata(snapshotStreamName, { maxCount: 1 });
   }
 
   return appendToStream(eventStore, snapshotStreamName, [snapshot]);
@@ -317,11 +322,10 @@ async function appendEventAndSnapshotToTheSameStream<
     eventsToAppend,
   );
 
-  const snapshottedStreamRevision =
-    appendResult.nextExpectedRevision.toString();
+  const snapshottedStreamVersion = appendResult.nextExpectedRevision.toString();
 
   await eventStore.setStreamMetadata<SnapshotMetadata>(streamName, {
-    snapshottedStreamRevision,
+    snapshottedStreamVersion,
   });
 
   return appendResult;
@@ -497,7 +501,7 @@ function buildCashRegisterSnapshot(
   return {
     type: 'cash-register-snapshoted',
     data: currentState,
-    metadata: { snapshottedStreamRevision: newStreamRevision.toString() },
+    metadata: { snapshottedStreamVersion: newStreamRevision.toString() },
   };
 }
 
@@ -521,7 +525,7 @@ function tryBuildCashRegisterSnapshotNoMetadata(
   return {
     type: 'cash-register-snapshoted',
     data: currentState,
-    metadata: { snapshottedStreamRevision: undefined! },
+    metadata: { snapshottedStreamVersion: undefined! },
   };
 }
 
