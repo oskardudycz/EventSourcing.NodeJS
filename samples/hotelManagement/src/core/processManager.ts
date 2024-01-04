@@ -13,17 +13,17 @@ export type ScheduledCommand<CommandType extends Command> = Readonly<{
 
 export type ProcesssingResult<
   CommandType extends Command,
-  EventType extends Event
+  EventType extends Event,
 > = ScheduledCommand<CommandType> | EnqueuedEvent<EventType>;
 
 export const enqueue = <EventType extends Event>(
-  event: EventType
+  event: EventType,
 ): EnqueuedEvent<EventType> => {
   return { type: 'Event', data: event };
 };
 
 export const schedule = <CommandType extends Command>(
-  command: CommandType
+  command: CommandType,
 ): ScheduledCommand<CommandType> => {
   return { type: 'Command', data: command };
 };

@@ -31,15 +31,15 @@ export type StringifyOptions<From, To = From> = {
 export const JSONParser = {
   stringify: <From, To = From>(
     value: From,
-    options?: StringifyOptions<From, To>
+    options?: StringifyOptions<From, To>,
   ) => {
     return JSON.stringify(
-      options?.map ? options.map(value as MapperArgs<From, To>) : value
+      options?.map ? options.map(value as MapperArgs<From, To>) : value,
     );
   },
   parse: <From, To = From>(
     text: string,
-    options?: ParseOptions<From, To>
+    options?: ParseOptions<From, To>,
   ): To | undefined => {
     const parsed: unknown = JSON.parse(text, options?.reviver);
 

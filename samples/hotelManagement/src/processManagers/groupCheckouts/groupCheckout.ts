@@ -97,7 +97,7 @@ export type GroupCheckout =
 
 export const evolve = (
   state: GroupCheckout,
-  { type, data: event }: GroupCheckoutEvent
+  { type, data: event }: GroupCheckoutEvent,
 ): GroupCheckout => {
   switch (type) {
     case 'GroupCheckoutInitiated': {
@@ -107,7 +107,7 @@ export const evolve = (
         status: 'Pending',
         guestStayAccountIds: event.guestStayAccountIds.reduce(
           (map, id) => map.set(id, GuestStayStatus.Pending),
-          Map<string, GuestStayStatus>()
+          Map<string, GuestStayStatus>(),
         ),
       };
     }
@@ -118,7 +118,7 @@ export const evolve = (
         status: 'Pending',
         guestStayAccountIds: event.initiatedGuestStayIds.reduce(
           (map, id) => map.set(id, GuestStayStatus.Initiated),
-          state.guestStayAccountIds
+          state.guestStayAccountIds,
         ),
       };
     }
@@ -132,7 +132,7 @@ export const evolve = (
           event.guestStayAccountId,
           type === 'GuestCheckoutCompleted'
             ? GuestStayStatus.Completed
-            : GuestStayStatus.Failed
+            : GuestStayStatus.Failed,
         ),
       };
     }
