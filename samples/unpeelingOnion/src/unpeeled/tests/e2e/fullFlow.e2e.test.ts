@@ -6,21 +6,26 @@ import { TestResponse } from '#testing/api/testResponse';
 import {
   MongoDBContainer,
   StartedMongoDBContainer,
-} from '#testing/api/mongoDB/mongoDBContainer';
+} from '@testcontainers/mongodb';
 import { disconnectFromMongoDB } from '#core/mongodb';
 import { Application } from 'express';
 import initApp from '../../ecommerce/app';
 import { ShoppingCartStatus } from '../../ecommerce/shoppingCarts/shoppingCart';
+import { MongoClient } from 'mongodb';
 
 describe('Full flow', () => {
   let app: Application;
   let mongodbContainer: StartedMongoDBContainer;
 
   beforeAll(async () => {
-    mongodbContainer = await new MongoDBContainer().start();
+    mongodbContainer = await new MongoDBContainer('mongo:6.0.12').start();
     config.mongoDB.connectionString = mongodbContainer.getConnectionString();
     console.log(config.mongoDB.connectionString);
-    app = initApp(mongodbContainer.getClient());
+    app = initApp(
+      new MongoClient(mongodbContainer.getConnectionString(), {
+        directConnection: true,
+      }),
+    );
   });
 
   afterAll(async () => {

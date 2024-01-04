@@ -46,15 +46,16 @@
     "validator": "13.11.0"
   },
   "devDependencies": {
+    "@testcontainers/mongodb": "10.4.0",
     "@types/convict": "6.1.6",
     "@types/express": "4.17.21",
     "@types/jest": "29.5.11",
     "@types/node": "20.10.6",
     "@types/supertest": "6.0.2",
     "@types/uuid": "9.0.7",
+    "@types/validator": "13.11.7",
     "@typescript-eslint/eslint-plugin": "6.17.0",
     "@typescript-eslint/parser": "6.17.0",
-    "@types/validator": "13.11.7",
     "eslint": "8.56.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-prettier": "5.1.2",

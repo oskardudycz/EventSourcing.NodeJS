@@ -1,4 +1,4 @@
-import { MongoDBContainer, Spec } from '#testing/mongoDB';
+import { MongoDBContainer } from '@testcontainers/mongodb';
 import { MongoClient } from 'mongodb';
 import { mongoObjectId } from '#core/mongoDB';
 import {
@@ -9,15 +9,18 @@ import {
 } from './shoppingCartDetails';
 import { ShoppingCartEvent } from '../shoppingCart';
 import { PricedProductItem } from 'src/gist';
+import { Spec } from '#testing/mongoDB/mongoDbProjectionTests';
 
 describe('Shopping Cart details', () => {
   let mongo: MongoClient;
   let given: Spec<ShoppingCartEvent, ShoppingCartDetails>;
 
   beforeAll(async () => {
-    const mongoContainer = await new MongoDBContainer().start();
+    const mongoContainer = await new MongoDBContainer('mongo:6.0.12').start();
     console.log(mongoContainer.getConnectionString());
-    mongo = mongoContainer.getClient();
+    mongo = new MongoClient(mongoContainer.getConnectionString(), {
+      directConnection: true,
+    });
     await mongo.connect();
 
     given = Spec.for(
