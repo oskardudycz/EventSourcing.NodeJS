@@ -98,7 +98,7 @@ export type GroupCheckout =
 
 export const evolve = (
   state: GroupCheckout,
-  { type, data: event }: GroupCheckoutEvent
+  { type, data: event }: GroupCheckoutEvent,
 ): GroupCheckout => {
   switch (type) {
     case 'GroupCheckoutInitiated': {
@@ -108,7 +108,7 @@ export const evolve = (
         status: 'Pending',
         guestStayAccountIds: event.guestStayAccountIds.reduce(
           (map, id) => map.set(id, GuestStayStatus.Pending),
-          Map<string, GuestStayStatus>()
+          Map<string, GuestStayStatus>(),
         ),
       };
     }
@@ -119,7 +119,7 @@ export const evolve = (
         status: 'Pending',
         guestStayAccountIds: event.initiatedGuestStayIds.reduce(
           (map, id) => map.set(id, GuestStayStatus.Initiated),
-          state.guestStayAccountIds
+          state.guestStayAccountIds,
         ),
       };
     }
@@ -133,7 +133,7 @@ export const evolve = (
           event.guestStayAccountId,
           type === 'GuestCheckoutCompleted'
             ? GuestStayStatus.Completed
-            : GuestStayStatus.Failed
+            : GuestStayStatus.Failed,
         ),
       };
     }
@@ -201,7 +201,7 @@ export type GroupCheckoutCommand =
 
 export const decide = (
   { type, data: command }: GroupCheckoutCommand,
-  state: GroupCheckout
+  state: GroupCheckout,
 ): GroupCheckoutEvent | GroupCheckoutEvent[] | ProcessingResult => {
   const { groupCheckoutId, now } = command;
 
@@ -256,7 +256,7 @@ export const decide = (
         guestStayAccountId,
         type === 'RecordGuestCheckoutCompletion'
           ? GuestStayStatus.Completed
-          : GuestStayStatus.Failed
+          : GuestStayStatus.Failed,
       );
 
       const finished: GroupCheckoutEvent =
@@ -313,7 +313,7 @@ const ignore = (reason: IgnoredReason): ProcessingResult => {
 };
 
 const areAnyOngoingCheckouts = (
-  guestStayAccounts: Map<string, GuestStayStatus>
+  guestStayAccounts: Map<string, GuestStayStatus>,
 ) => guestStayAccounts.some((status) => !isAlreadyClosed(status));
 
 const areAllCompleted = (guestStayAccounts: Map<string, GuestStayStatus>) =>
@@ -321,14 +321,14 @@ const areAllCompleted = (guestStayAccounts: Map<string, GuestStayStatus>) =>
 
 const checkoutsWith = (
   guestStayAccounts: Map<string, GuestStayStatus>,
-  status: GuestStayStatus
+  status: GuestStayStatus,
 ): string[] =>
   Array.from(guestStayAccounts.filter((s) => s === status).values());
 
 const finish = (
   groupCheckoutId: string,
   guestStayAccounts: Map<string, GuestStayStatus>,
-  now: Date
+  now: Date,
 ): GroupCheckoutEvent => {
   return areAllCompleted(guestStayAccounts)
     ? {
@@ -345,11 +345,11 @@ const finish = (
           groupCheckoutId,
           completedCheckouts: checkoutsWith(
             guestStayAccounts,
-            GuestStayStatus.Completed
+            GuestStayStatus.Completed,
           ),
           failedCheckouts: checkoutsWith(
             guestStayAccounts,
-            GuestStayStatus.Failed
+            GuestStayStatus.Failed,
           ),
           failedAt: now,
         },

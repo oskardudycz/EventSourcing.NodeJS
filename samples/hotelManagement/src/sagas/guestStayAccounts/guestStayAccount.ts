@@ -74,7 +74,7 @@ export type GuestStayAccount =
 
 export const evolve = (
   state: GuestStayAccount,
-  { type, data: event }: GuestStayAccountEvent
+  { type, data: event }: GuestStayAccountEvent,
 ): GuestStayAccount => {
   switch (type) {
     case 'GuestCheckedIn': {
@@ -159,7 +159,7 @@ export type GuestStayCommand =
 
 export const decide = (
   { type, data: command }: GuestStayCommand,
-  state: GuestStayAccount
+  state: GuestStayAccount,
 ): GuestStayAccountEvent => {
   const { guestStayAccountId, now } = command;
 

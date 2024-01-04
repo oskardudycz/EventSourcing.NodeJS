@@ -36,7 +36,7 @@ export type InitiateGroupCheckout = Command<
 
 export const initiate = (
   { type, data: command }: InitiateGroupCheckout,
-  state: GroupCheckout
+  state: GroupCheckout,
 ): GroupCheckoutEvent | GroupCheckoutEvent[] | ProcessingResult => {
   const { groupCheckoutId, now } = command;
 
@@ -60,7 +60,7 @@ export const initiate = (
 
 export const GroupCheckoutProcessManager = (
   { type, data: event }: GroupCheckoutProcessManagerEvent,
-  state: GroupCheckout
+  state: GroupCheckout,
 ): GroupCheckoutProcessingResult | GroupCheckoutProcessingResult[] => {
   switch (type) {
     case 'GroupCheckoutInitiated': {
@@ -111,7 +111,7 @@ export const GroupCheckoutProcessManager = (
         guestStayAccountId,
         type === 'GuestCheckedOut'
           ? GuestStayStatus.Completed
-          : GuestStayStatus.Failed
+          : GuestStayStatus.Failed,
       );
 
       const now =
@@ -170,7 +170,7 @@ const ignore = (reason: IgnoredReason): ProcessingResult => {
 };
 
 const areAnyOngoingCheckouts = (
-  guestStayAccounts: Map<string, GuestStayStatus>
+  guestStayAccounts: Map<string, GuestStayStatus>,
 ) => guestStayAccounts.some((status) => !isAlreadyClosed(status));
 
 const areAllCompleted = (guestStayAccounts: Map<string, GuestStayStatus>) =>
@@ -178,14 +178,14 @@ const areAllCompleted = (guestStayAccounts: Map<string, GuestStayStatus>) =>
 
 const checkoutsWith = (
   guestStayAccounts: Map<string, GuestStayStatus>,
-  status: GuestStayStatus
+  status: GuestStayStatus,
 ): string[] =>
   Array.from(guestStayAccounts.filter((s) => s === status).values());
 
 const finish = (
   groupCheckoutId: string,
   guestStayAccounts: Map<string, GuestStayStatus>,
-  now: Date
+  now: Date,
 ): GroupCheckoutEvent => {
   return areAllCompleted(guestStayAccounts)
     ? {
@@ -202,11 +202,11 @@ const finish = (
           groupCheckoutId,
           completedCheckouts: checkoutsWith(
             guestStayAccounts,
-            GuestStayStatus.Completed
+            GuestStayStatus.Completed,
           ),
           failedCheckouts: checkoutsWith(
             guestStayAccounts,
-            GuestStayStatus.Failed
+            GuestStayStatus.Failed,
           ),
           failedAt: now,
         },

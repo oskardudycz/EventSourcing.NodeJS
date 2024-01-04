@@ -7,7 +7,7 @@ import {
 let esdbContainer: StartedEventStoreDBContainer;
 
 export const getEventStoreDBTestClient = async (
-  useTestContainers = false
+  useTestContainers = false,
 ): Promise<EventStoreDBClient> => {
   let connectionString;
 
