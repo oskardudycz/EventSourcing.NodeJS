@@ -67,7 +67,7 @@ export function getShoppingCartStreamName(shoppingCartId: string): string {
 
 export function when(
   currentState: ShoppingCart,
-  streamEvent: StreamEvent<ShoppingCartEvent>
+  streamEvent: StreamEvent<ShoppingCartEvent>,
 ): ShoppingCart {
   const { event } = streamEvent;
   switch (event.type) {
@@ -84,7 +84,7 @@ export function when(
         ...currentState,
         productItems: addProductItem(
           currentState.productItems,
-          event.data.productItem
+          event.data.productItem,
         ),
       };
     case 'product-item-removed-from-shopping-cart':
@@ -92,7 +92,7 @@ export function when(
         ...currentState,
         productItems: removeProductItem(
           currentState.productItems,
-          event.data.productItem
+          event.data.productItem,
         ),
       };
     case 'shopping-cart-confirmed':

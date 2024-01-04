@@ -1,13 +1,16 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { GenericContainer, StartedTestContainer } from 'testcontainers';
-import { Environment } from 'testcontainers/dist/docker/types';
-import { AbstractStartedContainer } from 'testcontainers/dist/modules/abstract-started-container';
+import {
+  AbstractStartedContainer,
+  GenericContainer,
+  StartedTestContainer,
+} from 'testcontainers';
+import { Environment } from 'testcontainers/build/types';
 
 const EVENTSTOREDB_PORT = 2113;
 const EVENTSTOREDB_TCP_PORT = 1113;
 const EVENTSTOREDB_TCP_PORTS = [EVENTSTOREDB_TCP_PORT, EVENTSTOREDB_PORT];
 const EVENTSTOREDB_IMAGE_NAME = 'eventstore/eventstore';
-const EVENTSTOREDB_IMAGE_TAG = '21.10.8-buster-slim';
+const EVENTSTOREDB_IMAGE_TAG = '23.10.0-bookworm-slim';
 
 export class EventStoreDBContainer extends GenericContainer {
   private readonly tcpPorts = EVENTSTOREDB_TCP_PORTS;
@@ -16,7 +19,8 @@ export class EventStoreDBContainer extends GenericContainer {
     image = `${EVENTSTOREDB_IMAGE_NAME}:${EVENTSTOREDB_IMAGE_TAG}`,
     runProjections = true,
     isInsecure = true,
-    emptyDatabase = true
+    emptyDatabase = true,
+    withoutReuse = false,
   ) {
     super(image);
 
@@ -46,6 +50,8 @@ export class EventStoreDBContainer extends GenericContainer {
     };
 
     this.withEnvironment(environment).withExposedPorts(...this.tcpPorts);
+
+    if (!withoutReuse) this.withReuse();
   }
 
   async start(): Promise<StartedEventStoreDBContainer> {
@@ -60,7 +66,7 @@ export class StartedEventStoreDBContainer extends AbstractStartedContainer {
 
   getConnectionString(): string {
     return `esdb://${this.getHost()}:${this.getMappedPort(
-      2113
+      2113,
     )}?tls=false&throwOnAppendFailure=false`;
   }
 

@@ -4,7 +4,7 @@ import { asyncSize, asyncIsEmpty } from 'iter-tools-es';
 
 export async function expectStreamToNotExist(
   eventStore: EventStoreDBClient,
-  streamName: string
+  streamName: string,
 ) {
   try {
     const isEmpty = await asyncIsEmpty(eventStore.readStream(streamName));
@@ -22,7 +22,7 @@ export async function expectStreamToNotExist(
 export async function expectStreamToHaveNumberOfEvents(
   eventStore: EventStoreDBClient,
   streamName: string,
-  expectedNumberOfEvents: number
+  expectedNumberOfEvents: number,
 ) {
   try {
     const events = eventStore.readStream(streamName);

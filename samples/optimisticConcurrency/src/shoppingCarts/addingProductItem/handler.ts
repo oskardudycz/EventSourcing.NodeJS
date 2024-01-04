@@ -22,7 +22,7 @@ export type AddProductItemToShoppingCart = Command<
 
 export function addProductItemToShoppingCart(
   events: StreamEvent<ShoppingCartEvent>[],
-  command: AddProductItemToShoppingCart
+  command: AddProductItemToShoppingCart,
 ): Result<ProductItemAddedToShoppingCart, SHOPPING_CARD_CLOSED> {
   const shoppingCart = aggregateStream<
     ShoppingCart,

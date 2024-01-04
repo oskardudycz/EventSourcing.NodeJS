@@ -13,7 +13,7 @@ export function getSubscriptionToAllWithESDBCheckpointing<TError = never>(
   handlers: ((event: StreamEvent) => Promise<Result<boolean, TError>>)[],
   subscriptionId: string = uuid(),
   options?: SubscribeToAllOptions,
-  readableOptions?: ReadableOptions
+  readableOptions?: ReadableOptions,
 ): Result<Subscription> {
   return getSubscriptionToAll(
     eventStore,
@@ -23,6 +23,6 @@ export function getSubscriptionToAllWithESDBCheckpointing<TError = never>(
     handlers,
     subscriptionId,
     options,
-    readableOptions
+    readableOptions,
   );
 }

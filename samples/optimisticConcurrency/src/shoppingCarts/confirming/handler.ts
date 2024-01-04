@@ -20,7 +20,7 @@ export type ConfirmShoppingCart = Command<
 
 export function confirmShoppingCart(
   events: StreamEvent<ShoppingCartEvent>[],
-  command: ConfirmShoppingCart
+  command: ConfirmShoppingCart,
 ): Result<ShoppingCartConfirmed, SHOPPING_CARD_CLOSED> {
   const shoppingCart = aggregateStream<
     ShoppingCart,

@@ -11,7 +11,7 @@ export type OpenShoppingCart = Command<
 >;
 
 export function openShoppingCart(
-  command: OpenShoppingCart
+  command: OpenShoppingCart,
 ): Result<ShoppingCartOpened> {
   return success({
     type: 'shopping-cart-opened',

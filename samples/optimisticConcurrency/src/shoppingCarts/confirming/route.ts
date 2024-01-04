@@ -24,13 +24,13 @@ export const route = (router: Router) =>
         }
 
         const streamName = getShoppingCartStreamName(
-          command.data.shoppingCartId
+          command.data.shoppingCartId,
         );
 
         const result = await getAndUpdate(
           confirmShoppingCart,
           streamName,
-          command
+          command,
         );
 
         if (result.isError) {
@@ -51,11 +51,11 @@ export const route = (router: Router) =>
       } catch (error) {
         next(error);
       }
-    }
+    },
   );
 
 function mapRequestToCommand(
-  request: Request
+  request: Request,
 ): ConfirmShoppingCart | ValidationError | WRONG_ETAG {
   if (!isNotEmptyString(request.params.shoppingCartId)) {
     return 'MISSING_SHOPPING_CARD_ID';

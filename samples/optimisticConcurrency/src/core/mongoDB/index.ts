@@ -10,7 +10,7 @@ let mongoClient: MongoClient;
 let isOpened = false;
 
 export async function getMongoDB(
-  connectionString?: string
+  connectionString?: string,
 ): Promise<MongoClient> {
   if (connectionString ?? !config.mongoDB.connectionString) {
     throw 'MongoDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
@@ -18,7 +18,7 @@ export async function getMongoDB(
 
   if (!mongoClient) {
     mongoClient = new MongoClient(
-      connectionString ?? config.mongoDB.connectionString
+      connectionString ?? config.mongoDB.connectionString,
     );
     await mongoClient.connect();
     isOpened = true;
@@ -42,7 +42,7 @@ export type ExecuteOnMongoDBOptions =
   | string;
 
 export async function getMongoCollection<Doc extends Document>(
-  options: ExecuteOnMongoDBOptions
+  options: ExecuteOnMongoDBOptions,
 ): Promise<Collection<Doc>> {
   const mongo = await getMongoDB();
 
@@ -58,7 +58,7 @@ export async function getMongoCollection<Doc extends Document>(
 export type FAILED_TO_UPDATE_DOCUMENT = 'FAILED_TO_UPDATE_DOCUMENT';
 
 export async function assertUpdated(
-  update: () => Promise<UpdateResult>
+  update: () => Promise<UpdateResult>,
 ): Promise<UpdateResult> {
   const result = await update();
 
@@ -71,7 +71,7 @@ export async function assertUpdated(
 
 export function retryIfNotUpdated(
   update: () => Promise<UpdateResult>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<UpdateResult> {
   return retryPromise(() => assertUpdated(update), options);
 }
@@ -79,7 +79,7 @@ export function retryIfNotUpdated(
 export type DOCUMENT_NOT_FOUND = 'DOCUMENT_NOT_FOUND';
 
 export async function assertFound<T>(
-  find: () => Promise<T | null>
+  find: () => Promise<T | null>,
 ): Promise<T> {
   const result = await find();
 
@@ -92,7 +92,7 @@ export async function assertFound<T>(
 
 export function retryIfNotFound<T>(
   find: () => Promise<T | null>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS
+  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
 ): Promise<T> {
   return retryPromise(() => assertFound(find), options);
 }

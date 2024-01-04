@@ -17,7 +17,7 @@ import { ShoppingCartDetails, SHOPPING_CART_DETAILS } from '.';
 import { addProductItem, removeProductItem } from '../productItems';
 
 export async function projectToShoppingCartDetails(
-  streamEvent: StreamEvent
+  streamEvent: StreamEvent,
 ): Promise<Result<boolean>> {
   const { event } = streamEvent;
   const streamRevision = Number(streamEvent.streamRevision);
@@ -42,7 +42,7 @@ export async function projectToShoppingCartDetails(
 
 export async function projectShoppingCartOpened(
   event: ShoppingCartOpened,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<Result<boolean>> {
   const shoppingCarts = await shoppingCartsCollection();
 
@@ -60,7 +60,7 @@ export async function projectShoppingCartOpened(
 
 export async function projectProductItemAddedToShoppingCart(
   event: ProductItemAddedToShoppingCart,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<Result<boolean>> {
   const shoppingCarts = await shoppingCartsCollection();
   const lastRevision = streamRevision - 1;
@@ -71,8 +71,8 @@ export async function projectProductItemAddedToShoppingCart(
         shoppingCartId: event.data.shoppingCartId,
         revision: { $gte: lastRevision },
       },
-      { projection: { productItems: 1, revision: 1 } }
-    )
+      { projection: { productItems: 1, revision: 1 } },
+    ),
   );
 
   if (revision > lastRevision) {
@@ -91,8 +91,8 @@ export async function projectProductItemAddedToShoppingCart(
           revision: streamRevision,
         },
       },
-      { upsert: false }
-    )
+      { upsert: false },
+    ),
   );
 
   return success(true);
@@ -100,7 +100,7 @@ export async function projectProductItemAddedToShoppingCart(
 
 export async function projectProductItemRemovedFromShoppingCart(
   event: ProductItemRemovedFromShoppingCart,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<Result<boolean>> {
   const shoppingCarts = await shoppingCartsCollection();
   const lastRevision = streamRevision - 1;
@@ -111,8 +111,8 @@ export async function projectProductItemRemovedFromShoppingCart(
         shoppingCartId: event.data.shoppingCartId,
         revision: { $gte: lastRevision },
       },
-      { projection: { productItems: 1, revision: 1 } }
-    )
+      { projection: { productItems: 1, revision: 1 } },
+    ),
   );
 
   if (revision > lastRevision) {
@@ -131,8 +131,8 @@ export async function projectProductItemRemovedFromShoppingCart(
           revision: streamRevision,
         },
       },
-      { upsert: false }
-    )
+      { upsert: false },
+    ),
   );
 
   return success(true);
@@ -140,7 +140,7 @@ export async function projectProductItemRemovedFromShoppingCart(
 
 export async function projectShoppingCartConfirmed(
   event: ShoppingCartConfirmed,
-  streamRevision: number
+  streamRevision: number,
 ): Promise<Result<boolean>> {
   const shoppingCarts = await shoppingCartsCollection();
 
@@ -152,8 +152,8 @@ export async function projectShoppingCartConfirmed(
         shoppingCartId: event.data.shoppingCartId,
         revision: { $gte: lastRevision },
       },
-      { projection: { revision: 1 } }
-    )
+      { projection: { revision: 1 } },
+    ),
   );
 
   if (revision > lastRevision) {
@@ -173,8 +173,8 @@ export async function projectShoppingCartConfirmed(
           revision: streamRevision,
         },
       },
-      { upsert: false }
-    )
+      { upsert: false },
+    ),
   );
 
   return success(true);
@@ -187,7 +187,7 @@ type ShoppingCartDetailsEvent =
   | ShoppingCartConfirmed;
 
 function isCashierShoppingCartDetailsEvent(
-  event: Event
+  event: Event,
 ): event is ShoppingCartDetailsEvent {
   const eventType = (event as ShoppingCartDetailsEvent).type;
 

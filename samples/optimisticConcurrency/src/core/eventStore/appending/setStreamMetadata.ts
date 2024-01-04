@@ -7,12 +7,12 @@ import { failure, Result, success } from '../../primitives';
 export type FAILED_TO_SET_STREAM_METADATA = 'FAILED_TO_SET_STREAM_METADATA';
 
 export async function setStreamMetadata<
-  StreamMetadata extends Record<string, unknown>
+  StreamMetadata extends Record<string, unknown>,
 >(
   client: EventStoreDBClient,
   streamName: string,
   metadata: StreamMetadata,
-  options?: AppendToStreamOptions
+  options?: AppendToStreamOptions,
 ): Promise<Result<AppendResult, FAILED_TO_SET_STREAM_METADATA>> {
   try {
     const {
@@ -22,7 +22,7 @@ export async function setStreamMetadata<
     } = await client.setStreamMetadata<StreamMetadata>(
       streamName,
       metadata,
-      options
+      options,
     );
 
     if (!wasAppended) return failure('FAILED_TO_SET_STREAM_METADATA');

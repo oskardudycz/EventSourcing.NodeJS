@@ -6,8 +6,8 @@ export function aggregateStream<Aggregate, StreamEvents extends StreamEvent>(
     currentState: Aggregate,
     event: StreamEvents,
     currentIndex: number,
-    allEvents: StreamEvents[]
-  ) => Aggregate
+    allEvents: StreamEvents[],
+  ) => Aggregate,
 ): Aggregate {
   const state = events.reduce(when, <Aggregate>{});
 
