@@ -660,13 +660,13 @@ Follow the instructions in exercises folders.
    ```json
    {
      "env": {
-       "es2022": true,
+       "es2023": true,
        "node": true
      },
      "extends": ["standard"],
      "parser": "@typescript-eslint/parser",
      "parserOptions": {
-       "ecmaVersion": 12,
+       "ecmaVersion": 2023,
        "sourceType": "module"
      },
      "plugins": ["@typescript-eslint"],
@@ -715,7 +715,7 @@ Follow the instructions in exercises folders.
        ],
        "parser": "@typescript-eslint/parser",
        "parserOptions": {
-           "ecmaVersion": 12,
+           "ecmaVersion": 2023,
            "sourceType": "module"
        },
        "plugins": [
