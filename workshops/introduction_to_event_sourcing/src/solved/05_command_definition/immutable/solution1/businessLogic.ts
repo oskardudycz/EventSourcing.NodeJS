@@ -10,29 +10,44 @@ import {
 //////////////////////////////////////
 
 export type OpenShoppingCart = {
-  shoppingCartId: string;
-  clientId: string;
-  now: Date;
+  type: 'OpenShoppingCart';
+  data: {
+    shoppingCartId: string;
+    clientId: string;
+    now: Date;
+  };
 };
 
 export type AddProductItemToShoppingCart = {
-  shoppingCartId: string;
-  productItem: PricedProductItem;
+  type: 'AddProductItemToShoppingCart';
+  data: {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  };
 };
 
 export type RemoveProductItemFromShoppingCart = {
-  shoppingCartId: string;
-  productItem: PricedProductItem;
+  type: 'RemoveProductItemFromShoppingCart';
+  data: {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  };
 };
 
 export type ConfirmShoppingCart = {
-  shoppingCartId: string;
-  now: Date;
+  type: 'ConfirmShoppingCart';
+  data: {
+    shoppingCartId: string;
+    now: Date;
+  };
 };
 
 export type CancelShoppingCart = {
-  shoppingCartId: string;
-  now: Date;
+  type: 'CancelShoppingCart';
+  data: {
+    shoppingCartId: string;
+    now: Date;
+  };
 };
 
 export type ShoppingCartCommand =
@@ -69,9 +84,9 @@ export const assertProductItemExists = (
   }
 };
 
-export const openShoppingCart = (
-  command: OpenShoppingCart,
-): ShoppingCartEvent => {
+export const openShoppingCart = ({
+  data: command,
+}: OpenShoppingCart): ShoppingCartEvent => {
   return {
     type: 'ShoppingCartOpened',
     data: {
@@ -83,7 +98,7 @@ export const openShoppingCart = (
 };
 
 export const addProductItemToShoppingCart = (
-  command: AddProductItemToShoppingCart,
+  { data: command }: AddProductItemToShoppingCart,
   shoppingCart: ShoppingCart,
 ): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
@@ -99,7 +114,7 @@ export const addProductItemToShoppingCart = (
 };
 
 export const removeProductItemFromShoppingCart = (
-  command: RemoveProductItemFromShoppingCart,
+  { data: command }: RemoveProductItemFromShoppingCart,
   shoppingCart: ShoppingCart,
 ): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
@@ -118,7 +133,7 @@ export const removeProductItemFromShoppingCart = (
 };
 
 export const confirmShoppingCart = (
-  command: ConfirmShoppingCart,
+  { data: command }: ConfirmShoppingCart,
   shoppingCart: ShoppingCart,
 ): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
@@ -139,7 +154,7 @@ export const confirmShoppingCart = (
 };
 
 export const cancelShoppingCart = (
-  command: CancelShoppingCart,
+  { data: command }: CancelShoppingCart,
   shoppingCart: ShoppingCart,
 ): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {

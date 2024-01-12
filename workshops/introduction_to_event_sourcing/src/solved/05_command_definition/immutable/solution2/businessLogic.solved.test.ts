@@ -64,7 +64,7 @@ describe('Business logic', () => {
     };
 
     let state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    result = [decide(addTwoPairsOfShoes, emptyShoppingCart)];
+    result = [decide(addTwoPairsOfShoes, state)];
 
     eventStore.appendToStream(shoppingCartId, ...result);
 
@@ -75,7 +75,7 @@ describe('Business logic', () => {
     };
 
     state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    result = [decide(addTShirt, emptyShoppingCart)];
+    result = [decide(addTShirt, state)];
     eventStore.appendToStream(shoppingCartId, ...result);
 
     // Remove pair of shoes
@@ -85,7 +85,7 @@ describe('Business logic', () => {
     };
 
     state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    result = [decide(removePairOfShoes, emptyShoppingCart)];
+    result = [decide(removePairOfShoes, state)];
     eventStore.appendToStream(shoppingCartId, ...result);
 
     // Confirm

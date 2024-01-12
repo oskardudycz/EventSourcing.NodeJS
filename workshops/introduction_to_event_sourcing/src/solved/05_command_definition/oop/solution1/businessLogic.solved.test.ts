@@ -47,12 +47,14 @@ describe('Business logic', () => {
     };
 
     // Open
-    const open: OpenShoppingCart = { shoppingCartId, clientId, now: openedAt };
-
+    const open: OpenShoppingCart = {
+      type: 'OpenShoppingCart',
+      data: { shoppingCartId, clientId, now: openedAt },
+    };
     let shoppingCart = ShoppingCart.open(
-      open.shoppingCartId,
-      open.clientId,
-      open.now,
+      open.data.shoppingCartId,
+      open.data.clientId,
+      open.data.now,
     );
     eventStore.appendToStream(
       shoppingCartId,
@@ -61,12 +63,12 @@ describe('Business logic', () => {
 
     // Add Two Pair of Shoes
     const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
-      shoppingCartId,
-      productItem: twoPairsOfShoes,
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: twoPairsOfShoes },
     };
 
     shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
-    shoppingCart.addProductItem(addTwoPairsOfShoes.productItem);
+    shoppingCart.addProductItem(addTwoPairsOfShoes.data.productItem);
 
     eventStore.appendToStream(
       shoppingCartId,
@@ -75,12 +77,12 @@ describe('Business logic', () => {
 
     // Add T-Shirt
     const addTShirt: AddProductItemToShoppingCart = {
-      shoppingCartId,
-      productItem: tShirt,
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: tShirt },
     };
 
     shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
-    shoppingCart.addProductItem(addTShirt.productItem);
+    shoppingCart.addProductItem(addTShirt.data.productItem);
 
     eventStore.appendToStream(
       shoppingCartId,
@@ -89,12 +91,12 @@ describe('Business logic', () => {
 
     // Remove pair of shoes
     const removePairOfShoes: RemoveProductItemFromShoppingCart = {
-      shoppingCartId,
-      productItem: pairOfShoes,
+      type: 'RemoveProductItemFromShoppingCart',
+      data: { shoppingCartId, productItem: pairOfShoes },
     };
 
     shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
-    shoppingCart.removeProductItem(removePairOfShoes.productItem);
+    shoppingCart.removeProductItem(removePairOfShoes.data.productItem);
 
     eventStore.appendToStream(
       shoppingCartId,
@@ -103,12 +105,12 @@ describe('Business logic', () => {
 
     // Confirm
     const confirm: ConfirmShoppingCart = {
-      shoppingCartId,
-      now: confirmedAt,
+      type: 'ConfirmShoppingCart',
+      data: { shoppingCartId, now: confirmedAt },
     };
 
     shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
-    shoppingCart.confirm(confirm.now);
+    shoppingCart.confirm(confirm.data.now);
 
     eventStore.appendToStream(
       shoppingCartId,
@@ -116,12 +118,12 @@ describe('Business logic', () => {
     );
 
     const cancel: CancelShoppingCart = {
-      shoppingCartId,
-      now: canceledAt,
+      type: 'CancelShoppingCart',
+      data: { shoppingCartId, now: canceledAt },
     };
     const onCancel = () => {
       shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
-      shoppingCart.cancel(cancel.now);
+      shoppingCart.cancel(cancel.data.now);
 
       eventStore.appendToStream(
         shoppingCartId,

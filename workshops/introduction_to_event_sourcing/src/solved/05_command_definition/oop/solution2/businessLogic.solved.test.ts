@@ -47,73 +47,79 @@ describe('Business logic', () => {
     };
 
     // Open
-    const open: OpenShoppingCart = { shoppingCartId, clientId, now: openedAt };
-
+    const open: OpenShoppingCart = {
+      type: 'OpenShoppingCart',
+      data: { shoppingCartId, clientId, now: openedAt },
+    };
     eventStore.appendToStream(
       shoppingCartId,
-      ShoppingCart.open(open.shoppingCartId, open.clientId, open.now),
+      ShoppingCart.open(
+        open.data.shoppingCartId,
+        open.data.clientId,
+        open.data.now,
+      ),
     );
 
     // Add Two Pair of Shoes
     const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
-      shoppingCartId,
-      productItem: twoPairsOfShoes,
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: twoPairsOfShoes },
     };
 
     let shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
 
     eventStore.appendToStream(
       shoppingCartId,
-      shoppingCart.addProductItem(addTwoPairsOfShoes.productItem),
+      shoppingCart.addProductItem(addTwoPairsOfShoes.data.productItem),
     );
 
     // Add T-Shirt
     const addTShirt: AddProductItemToShoppingCart = {
-      shoppingCartId,
-      productItem: tShirt,
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: tShirt },
     };
 
     shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
 
     eventStore.appendToStream(
       shoppingCartId,
-      shoppingCart.addProductItem(addTShirt.productItem),
+      shoppingCart.addProductItem(addTShirt.data.productItem),
     );
 
     // Remove pair of shoes
     const removePairOfShoes: RemoveProductItemFromShoppingCart = {
-      shoppingCartId,
-      productItem: pairOfShoes,
+      type: 'RemoveProductItemFromShoppingCart',
+      data: { shoppingCartId, productItem: pairOfShoes },
     };
 
     shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
     eventStore.appendToStream(
       shoppingCartId,
-      shoppingCart.removeProductItem(removePairOfShoes.productItem),
+      shoppingCart.removeProductItem(removePairOfShoes.data.productItem),
     );
 
     // Confirm
     const confirm: ConfirmShoppingCart = {
-      shoppingCartId,
-      now: confirmedAt,
+      type: 'ConfirmShoppingCart',
+      data: { shoppingCartId, now: confirmedAt },
     };
 
     shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
     eventStore.appendToStream(
       shoppingCartId,
-      shoppingCart.confirm(confirm.now),
+      shoppingCart.confirm(confirm.data.now),
     );
 
     // Try Cancel
     const cancel: CancelShoppingCart = {
-      shoppingCartId,
-      now: canceledAt,
+      type: 'CancelShoppingCart',
+      data: { shoppingCartId, now: canceledAt },
     };
     const onCancel = () => {
       shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
       eventStore.appendToStream(
         shoppingCartId,
-        shoppingCart.cancel(cancel.now),
+        shoppingCart.cancel(cancel.data.now),
       );
     };
 
