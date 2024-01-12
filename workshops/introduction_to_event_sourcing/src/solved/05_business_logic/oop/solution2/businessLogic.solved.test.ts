@@ -86,7 +86,7 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
 
 export interface EventStore {
   readStream<E extends Event>(streamId: string): E[];
-  appendToStream(streamId: string, events: Event[]): void;
+  appendToStream(streamId: string, ...events: Event[]): void;
 }
 
 export const getEventStore = () => {
@@ -96,7 +96,7 @@ export const getEventStore = () => {
     readStream: <E extends Event>(streamId: string): E[] => {
       return streams.get(streamId)?.map((e) => <E>e) ?? [];
     },
-    appendToStream: (streamId: string, events: Event[]): void => {
+    appendToStream: (streamId: string, ...events: Event[]): void => {
       const current = streams.get(streamId) ?? [];
 
       streams.set(streamId, [...current, ...events]);

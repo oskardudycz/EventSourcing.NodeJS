@@ -1,4 +1,3 @@
-import { Aggregate } from './core';
 import { Event } from './core';
 
 export interface ProductItem {
@@ -64,7 +63,7 @@ export enum ShoppingCartStatus {
   Canceled = 'Canceled',
 }
 
-export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
+export class ShoppingCart {
   private constructor(
     private _id: string,
     private _clientId: string,
@@ -73,9 +72,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
     private _productItems: PricedProductItem[] = [],
     private _confirmedAt?: Date,
     private _canceledAt?: Date,
-  ) {
-    super();
-  }
+  ) {}
 
   get id() {
     return this._id;
@@ -105,7 +102,7 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
     return this._canceledAt;
   }
 
-  public static default = (): ShoppingCart =>
+  public static default = () =>
     new ShoppingCart(
       undefined!,
       undefined!,
@@ -116,117 +113,120 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
       undefined,
     );
 
-  public static open = (
+  public open = (
     shoppingCartId: string,
     clientId: string,
     now: Date,
-  ) => {
-    const shoppingCart = ShoppingCart.default();
-
-    shoppingCart.enqueue({
+  ): ShoppingCartOpened => {
+    return {
       type: 'ShoppingCartOpened',
       data: { shoppingCartId, clientId, openedAt: now },
-    });
-
-    return shoppingCart;
+    };
   };
 
-  public addProductItem = (productItem: PricedProductItem): void => {
+  public addProductItem = (
+    productItem: PricedProductItem,
+  ): ProductItemAddedToShoppingCart => {
     this.assertIsPending();
 
-    this.enqueue({
+    return {
       type: 'ProductItemAddedToShoppingCart',
       data: { productItem, shoppingCartId: this._id },
-    });
+    };
   };
 
-  public removeProductItem = (productItem: PricedProductItem): void => {
+  public removeProductItem = (
+    productItem: PricedProductItem,
+  ): ProductItemRemovedFromShoppingCart => {
     this.assertIsPending();
     this.assertProductItemExists(productItem);
 
-    this.enqueue({
+    return {
       type: 'ProductItemRemovedFromShoppingCart',
       data: { productItem, shoppingCartId: this._id },
-    });
+    };
   };
 
-  public confirm = (now: Date): void => {
+  public confirm = (now: Date): ShoppingCartConfirmed => {
     this.assertIsPending();
     this.assertIsNotEmpty();
 
-    this.enqueue({
+    return {
       type: 'ShoppingCartConfirmed',
       data: { shoppingCartId: this._id, confirmedAt: now },
-    });
+    };
   };
 
-  public cancel = (now: Date): void => {
+  public cancel = (now: Date): ShoppingCartCanceled => {
     this.assertIsPending();
 
-    this.enqueue({
+    return {
       type: 'ShoppingCartCanceled',
       data: { shoppingCartId: this._id, canceledAt: now },
-    });
+    };
   };
 
-  public evolve = ({ type, data: event }: ShoppingCartEvent): void => {
+  public static evolve = (
+    state: ShoppingCart,
+    { type, data: event }: ShoppingCartEvent,
+  ): ShoppingCart => {
     switch (type) {
       case 'ShoppingCartOpened': {
-        this._id = event.shoppingCartId;
-        this._clientId = event.clientId;
-        this._status = ShoppingCartStatus.Pending;
-        this._openedAt = event.openedAt;
-        this._productItems = [];
-        return;
+        state._id = event.shoppingCartId;
+        state._clientId = event.clientId;
+        state._status = ShoppingCartStatus.Pending;
+        state._openedAt = event.openedAt;
+        state._productItems = [];
+        return state;
       }
       case 'ProductItemAddedToShoppingCart': {
         const {
           productItem: { productId, quantity, unitPrice },
         } = event;
 
-        const currentProductItem = this._productItems.find(
+        const currentProductItem = state._productItems.find(
           (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (currentProductItem) {
           currentProductItem.quantity += quantity;
         } else {
-          this._productItems.push({ ...event.productItem });
+          state._productItems.push({ ...event.productItem });
         }
-        return;
+        return state;
       }
       case 'ProductItemRemovedFromShoppingCart': {
         const {
           productItem: { productId, quantity, unitPrice },
         } = event;
 
-        const currentProductItem = this._productItems.find(
+        const currentProductItem = state._productItems.find(
           (pi) => pi.productId === productId && pi.unitPrice === unitPrice,
         );
 
         if (!currentProductItem) {
-          return;
+          return state;
         }
 
         currentProductItem.quantity -= quantity;
 
         if (currentProductItem.quantity <= 0) {
-          this._productItems.splice(
-            this._productItems.indexOf(currentProductItem),
+          state._productItems.splice(
+            state._productItems.indexOf(currentProductItem),
             1,
           );
         }
-        return;
+        return state;
       }
       case 'ShoppingCartConfirmed': {
-        this._status = ShoppingCartStatus.Confirmed;
-        this._confirmedAt = event.confirmedAt;
-        return;
+        state._status = ShoppingCartStatus.Confirmed;
+        state._confirmedAt = event.confirmedAt;
+        return state;
       }
       case 'ShoppingCartCanceled': {
-        this._status = ShoppingCartStatus.Canceled;
-        this._canceledAt = event.canceledAt;
-        return;
+        state._status = ShoppingCartStatus.Canceled;
+        state._canceledAt = event.canceledAt;
+        return state;
       }
       default: {
         const _: never = type;
@@ -272,8 +272,8 @@ export const enum ShoppingCartErrors {
 }
 
 export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  return events.reduce<ShoppingCart>((state, event) => {
-    state.evolve(event);
-    return state;
-  }, ShoppingCart.default());
+  return events.reduce<ShoppingCart>(
+    ShoppingCart.evolve,
+    ShoppingCart.default(),
+  );
 };

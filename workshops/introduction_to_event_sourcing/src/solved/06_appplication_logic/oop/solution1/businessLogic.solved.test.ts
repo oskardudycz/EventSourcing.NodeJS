@@ -1,8 +1,10 @@
 import { v4 as uuid } from 'uuid';
+import { EventStoreRepository, ShoppingCartService } from './businessLogic';
 import { getEventStore } from './core';
 import {
   PricedProductItem,
   ShoppingCart,
+  ShoppingCartErrors,
   ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
@@ -16,7 +18,7 @@ describe('Getting state from events', () => {
     const clientId = uuid();
     const openedAt = new Date();
     const confirmedAt = new Date();
-    // const canceledAt = new Date();
+    const canceledAt = new Date();
 
     const shoesId = uuid();
 
@@ -38,12 +40,32 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    // TODO: Fill the events store results of your business logic
-    // to be the same as events below
-    // e.g. eventStore.appendToStream(shoppingCartId, ShoppingCart.open(command));
-    //
-    // let shoppingCart = getShoppingCart(shoppingCartId);
-    // e.g. eventStore.appendToStream(shoppingCartId, shoppingCart.addProduct(command.productItem));
+    const repository = new EventStoreRepository<
+      ShoppingCart,
+      ShoppingCartEvent
+    >(eventStore, ShoppingCart.default);
+
+    const shoppingCartService = new ShoppingCartService(repository);
+
+    shoppingCartService.open({ shoppingCartId, clientId, now: openedAt });
+    shoppingCartService.addProductItem({
+      shoppingCartId,
+      productItem: twoPairsOfShoes,
+    });
+    shoppingCartService.addProductItem({
+      shoppingCartId,
+      productItem: tShirt,
+    });
+    shoppingCartService.removeProductItem({
+      shoppingCartId,
+      productItem: pairOfShoes,
+    });
+    shoppingCartService.confirm({ shoppingCartId, now: confirmedAt });
+
+    const cancel = () =>
+      shoppingCartService.cancel({ shoppingCartId, now: canceledAt });
+
+    expect(cancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
     const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
 
@@ -94,17 +116,22 @@ describe('Getting state from events', () => {
     const shoppingCart = getShoppingCart(events);
 
     expect(shoppingCart).toBeInstanceOf(ShoppingCart);
-    expect(JSON.stringify(shoppingCart)).toBe(
-      JSON.stringify(
-        new ShoppingCart(
-          shoppingCartId,
-          clientId,
-          ShoppingCartStatus.Confirmed,
-          openedAt,
-          [pairOfShoes, tShirt],
-          confirmedAt,
-        ),
-      ),
-    );
+    const actual = {
+      shoppingCartId: shoppingCart.id,
+      clientId: shoppingCart.clientId,
+      status: shoppingCart.status,
+      openedAt: shoppingCart.openedAt,
+      productItems: shoppingCart.productItems,
+      confirmedAt: shoppingCart.confirmedAt,
+    };
+
+    expect(actual).toEqual({
+      shoppingCartId,
+      clientId,
+      status: ShoppingCartStatus.Confirmed,
+      openedAt,
+      productItems: [pairOfShoes, tShirt],
+      confirmedAt,
+    });
   });
 });

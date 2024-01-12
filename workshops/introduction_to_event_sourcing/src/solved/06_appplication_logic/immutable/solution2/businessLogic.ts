@@ -1,14 +1,14 @@
-//////////////////////////////////////
-/// Commands
-//////////////////////////////////////
-
+import { Event, EventStore } from './core';
 import {
-  EventStore,
   PricedProductItem,
   ShoppingCart,
   ShoppingCartEvent,
   ShoppingCartStatus,
-} from './businessLogic.solved.test';
+} from './shoppingCart';
+
+//////////////////////////////////////
+/// Commands
+//////////////////////////////////////
 
 export type ShoppingCartCommand =
   | {
@@ -157,14 +157,6 @@ export const decide = (
     }
   }
 };
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
 
 export type Command<
   CommandType extends string = string,

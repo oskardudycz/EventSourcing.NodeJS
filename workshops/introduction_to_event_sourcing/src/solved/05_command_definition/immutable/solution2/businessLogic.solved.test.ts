@@ -1,28 +1,12 @@
 import { v4 as uuid } from 'uuid';
+import { decide, ShoppingCartErrors } from './businessLogic';
 import {
-  CommandHandler,
-  decide,
-  Decider,
-  ShoppingCartCommand,
-  ShoppingCartErrors,
-} from './businessLogic';
-import {
-  evolve,
   getShoppingCart,
   PricedProductItem,
-  ShoppingCart,
   ShoppingCartEvent,
   ShoppingCartStatus,
 } from './shoppingCart';
 import { getEventStore } from './core';
-
-const decider: Decider<ShoppingCart, ShoppingCartCommand, ShoppingCartEvent> = {
-  decide,
-  evolve,
-  getInitialState: () => ({}) as ShoppingCart,
-};
-
-export const handle = CommandHandler(decider);
 
 describe('Getting state from events', () => {
   it('Should return the state from the sequence of events', () => {
@@ -54,36 +38,72 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    handle(eventStore, shoppingCartId, {
-      type: 'OpenShoppingCart',
-      data: { clientId, shoppingCartId, now: openedAt },
-    });
+    eventStore.appendToStream(
+      shoppingCartId,
+      decide(
+        {
+          type: 'OpenShoppingCart',
+          data: { clientId, shoppingCartId, now: openedAt },
+        },
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
+      ),
+    );
 
-    handle(eventStore, shoppingCartId, {
-      type: 'AddProductItemToShoppingCart',
-      data: { shoppingCartId, productItem: twoPairsOfShoes },
-    });
+    eventStore.appendToStream(
+      shoppingCartId,
+      decide(
+        {
+          type: 'AddProductItemToShoppingCart',
+          data: { shoppingCartId, productItem: twoPairsOfShoes },
+        },
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
+      ),
+    );
 
-    handle(eventStore, shoppingCartId, {
-      type: 'AddProductItemToShoppingCart',
-      data: { shoppingCartId, productItem: tShirt },
-    });
+    eventStore.appendToStream(
+      shoppingCartId,
+      decide(
+        {
+          type: 'AddProductItemToShoppingCart',
+          data: { shoppingCartId, productItem: tShirt },
+        },
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
+      ),
+    );
 
-    handle(eventStore, shoppingCartId, {
-      type: 'RemoveProductItemFromShoppingCart',
-      data: { shoppingCartId, productItem: pairOfShoes },
-    });
+    eventStore.appendToStream(
+      shoppingCartId,
+      decide(
+        {
+          type: 'RemoveProductItemFromShoppingCart',
+          data: { shoppingCartId, productItem: pairOfShoes },
+        },
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
+      ),
+    );
 
-    handle(eventStore, shoppingCartId, {
-      type: 'ConfirmShoppingCart',
-      data: { shoppingCartId, now: confirmedAt },
-    });
+    eventStore.appendToStream(
+      shoppingCartId,
+      decide(
+        {
+          type: 'ConfirmShoppingCart',
+          data: { shoppingCartId, now: confirmedAt },
+        },
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
+      ),
+    );
 
     const cancel = () =>
-      handle(eventStore, shoppingCartId, {
-        type: 'CancelShoppingCart',
-        data: { shoppingCartId, now: canceledAt },
-      });
+      eventStore.appendToStream(
+        shoppingCartId,
+        decide(
+          {
+            type: 'CancelShoppingCart',
+            data: { shoppingCartId, now: canceledAt },
+          },
+          getShoppingCart(eventStore.readStream(shoppingCartId)),
+        ),
+      );
 
     expect(cancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 

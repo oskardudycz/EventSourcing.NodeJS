@@ -113,7 +113,7 @@ export class ShoppingCart {
       undefined,
     );
 
-  public open = (
+  public static open = (
     shoppingCartId: string,
     clientId: string,
     now: Date,

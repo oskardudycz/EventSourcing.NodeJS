@@ -20,7 +20,7 @@ export type EventEnvelope<E extends Event = Event> = E & {
 
 export interface EventStore {
   readStream<E extends Event>(streamId: string): E[];
-  appendToStream(streamId: string, events: Event[]): void;
+  appendToStream(streamId: string, ...events: Event[]): void;
 }
 
 export type EventHandler<E extends Event = Event> = (
