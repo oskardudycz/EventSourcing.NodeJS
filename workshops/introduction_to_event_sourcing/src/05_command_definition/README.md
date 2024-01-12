@@ -1,4 +1,4 @@
-# Exercise 07 - Business Logic
+# Exercise 05 - Business Logic
 
 Having the following shopping cart process:
 

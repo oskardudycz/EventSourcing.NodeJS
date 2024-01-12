@@ -47,18 +47,22 @@ describe('Business logic', () => {
       unitPrice: 5,
     };
 
-    const result: ShoppingCartEvent[] = [];
+    // eslint-disable-next-line prefer-const
+    let result: ShoppingCartEvent[] = [];
 
     // Open
-    const open: OpenShoppingCart = { shoppingCartId, clientId, now: openedAt };
+    const open: OpenShoppingCart = {
+      type: 'OpenShoppingCart',
+      data: { shoppingCartId, clientId, now: openedAt },
+    };
     // result = // run your business logic here
 
     eventStore.appendToStream(shoppingCartId, ...result);
 
     // Add Two Pair of Shoes
     const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
-      shoppingCartId,
-      productItem: twoPairsOfShoes,
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: twoPairsOfShoes },
     };
 
     let state = getShoppingCart(eventStore.readStream(shoppingCartId));
@@ -68,8 +72,8 @@ describe('Business logic', () => {
 
     // Add T-Shirt
     const addTShirt: AddProductItemToShoppingCart = {
-      shoppingCartId,
-      productItem: tShirt,
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: tShirt },
     };
 
     state = getShoppingCart(eventStore.readStream(shoppingCartId));
@@ -78,8 +82,8 @@ describe('Business logic', () => {
 
     // Remove pair of shoes
     const removePairOfShoes: RemoveProductItemFromShoppingCart = {
-      shoppingCartId,
-      productItem: pairOfShoes,
+      type: 'RemoveProductItemFromShoppingCart',
+      data: { shoppingCartId, productItem: pairOfShoes },
     };
 
     state = getShoppingCart(eventStore.readStream(shoppingCartId));
@@ -88,8 +92,8 @@ describe('Business logic', () => {
 
     // Confirm
     const confirm: ConfirmShoppingCart = {
-      shoppingCartId,
-      now: confirmedAt,
+      type: 'ConfirmShoppingCart',
+      data: { shoppingCartId, now: confirmedAt },
     };
 
     state = getShoppingCart(eventStore.readStream(shoppingCartId));
@@ -98,8 +102,8 @@ describe('Business logic', () => {
 
     // Try Cancel
     const cancel: CancelShoppingCart = {
-      shoppingCartId,
-      now: canceledAt,
+      type: 'CancelShoppingCart',
+      data: { shoppingCartId, now: canceledAt },
     };
     const onCancel = () => {
       state = getShoppingCart(eventStore.readStream(shoppingCartId));
