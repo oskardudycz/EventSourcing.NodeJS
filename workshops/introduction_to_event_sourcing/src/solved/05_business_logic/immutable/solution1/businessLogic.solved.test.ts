@@ -302,7 +302,7 @@ describe('Getting state from events', () => {
         cancelShoppingCart({ shoppingCartId, now: canceledAt }, state),
       );
 
-    expect(cancel).toThrowError(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
+    expect(cancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
     const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
 

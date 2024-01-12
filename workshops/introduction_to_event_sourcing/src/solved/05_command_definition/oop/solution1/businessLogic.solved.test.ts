@@ -1,108 +1,14 @@
 import { v4 as uuid } from 'uuid';
+import { EventStoreRepository, ShoppingCartService } from './businessLogic';
+import { getEventStore } from './core';
 import {
-  EventStoreRepository,
+  PricedProductItem,
   ShoppingCart,
   ShoppingCartErrors,
-  ShoppingCartService,
-} from './businessLogic';
-
-export interface ProductItem {
-  productId: string;
-  quantity: number;
-}
-
-export type PricedProductItem = ProductItem & {
-  unitPrice: number;
-};
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
-
-export type ShoppingCartOpened = Event<
-  'ShoppingCartOpened',
-  {
-    shoppingCartId: string;
-    clientId: string;
-    openedAt: Date;
-  }
->;
-
-export type ProductItemAddedToShoppingCart = Event<
-  'ProductItemAddedToShoppingCart',
-  {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
-  }
->;
-
-export type ProductItemRemovedFromShoppingCart = Event<
-  'ProductItemRemovedFromShoppingCart',
-  {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
-  }
->;
-
-export type ShoppingCartConfirmed = Event<
-  'ShoppingCartConfirmed',
-  {
-    shoppingCartId: string;
-    confirmedAt: Date;
-  }
->;
-
-export type ShoppingCartCanceled = Event<
-  'ShoppingCartCanceled',
-  {
-    shoppingCartId: string;
-    canceledAt: Date;
-  }
->;
-
-export type ShoppingCartEvent =
-  | ShoppingCartOpened
-  | ProductItemAddedToShoppingCart
-  | ProductItemRemovedFromShoppingCart
-  | ShoppingCartConfirmed
-  | ShoppingCartCanceled;
-
-export enum ShoppingCartStatus {
-  Pending = 'Pending',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
-
-export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  return events.reduce<ShoppingCart>((state, event) => {
-    state.evolve(event);
-    return state;
-  }, ShoppingCart.default());
-};
-
-export interface EventStore {
-  readStream<E extends Event>(streamId: string): E[];
-  appendToStream(streamId: string, events: Event[]): void;
-}
-
-export const getEventStore = () => {
-  const streams = new Map<string, Event[]>();
-
-  return {
-    readStream: <E extends Event>(streamId: string): E[] => {
-      return streams.get(streamId)?.map((e) => <E>e) ?? [];
-    },
-    appendToStream: (streamId: string, events: Event[]): void => {
-      const current = streams.get(streamId) ?? [];
-
-      streams.set(streamId, [...current, ...events]);
-    },
-  };
-};
+  ShoppingCartEvent,
+  ShoppingCartStatus,
+  getShoppingCart,
+} from './shoppingCart';
 
 describe('Getting state from events', () => {
   it('Should return the state from the sequence of events', () => {
