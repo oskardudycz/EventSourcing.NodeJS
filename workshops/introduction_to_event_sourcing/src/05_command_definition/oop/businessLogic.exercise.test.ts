@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { v4 as uuid } from 'uuid';
 import { getEventStore } from './core';
 import {
@@ -7,16 +8,24 @@ import {
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';
+import {
+  AddProductItemToShoppingCart,
+  CancelShoppingCart,
+  ConfirmShoppingCart,
+  OpenShoppingCart,
+  RemoveProductItemFromShoppingCart,
+  ShoppingCartErrors,
+} from './businessLogic';
 
-describe('Getting state from events', () => {
-  it('Should return the state from the sequence of events', () => {
+describe('Business logic', () => {
+  it('Should handle commands correctly', () => {
     const eventStore = getEventStore();
     const shoppingCartId = uuid();
 
     const clientId = uuid();
     const openedAt = new Date();
     const confirmedAt = new Date();
-    // const canceledAt = new Date();
+    const canceledAt = new Date();
 
     const shoesId = uuid();
 
@@ -38,12 +47,67 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    // TODO: Fill the events store results of your business logic
-    // to be the same as events below
-    // e.g. eventStore.appendToStream(shoppingCartId, ShoppingCart.open(command));
-    //
-    // let shoppingCart = getShoppingCart(shoppingCartId);
-    // e.g. eventStore.appendToStream(shoppingCartId, shoppingCart.addProduct(command.productItem));
+    const result: ShoppingCartEvent[] = [];
+
+    // Open
+    const open: OpenShoppingCart = { shoppingCartId, clientId, now: openedAt };
+    // result = // run your business logic here
+
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Add Two Pair of Shoes
+    const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
+      shoppingCartId,
+      productItem: twoPairsOfShoes,
+    };
+
+    let state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    // result = // run your business logic here based on command and state
+
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Add T-Shirt
+    const addTShirt: AddProductItemToShoppingCart = {
+      shoppingCartId,
+      productItem: tShirt,
+    };
+
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    // result = // run your business logic here based on command and state
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Remove pair of shoes
+    const removePairOfShoes: RemoveProductItemFromShoppingCart = {
+      shoppingCartId,
+      productItem: pairOfShoes,
+    };
+
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    // result = // run your business logic here based on command and state
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Confirm
+    const confirm: ConfirmShoppingCart = {
+      shoppingCartId,
+      now: confirmedAt,
+    };
+
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    // result = // run your business logic here based on command and state
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Try Cancel
+    const cancel: CancelShoppingCart = {
+      shoppingCartId,
+      now: canceledAt,
+    };
+    const onCancel = () => {
+      state = getShoppingCart(eventStore.readStream(shoppingCartId));
+      // result = // run your business logic here based on command and state
+      eventStore.appendToStream(shoppingCartId, ...result);
+    };
+
+    expect(onCancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
     const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
 

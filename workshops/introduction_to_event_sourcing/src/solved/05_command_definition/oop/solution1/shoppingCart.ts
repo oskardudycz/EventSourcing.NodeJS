@@ -1,3 +1,4 @@
+import { ShoppingCartErrors } from './businessLogic';
 import { Aggregate } from './core';
 import { Event } from './core';
 
@@ -261,14 +262,6 @@ export class ShoppingCart extends Aggregate<ShoppingCartEvent> {
       throw new Error(ShoppingCartErrors.CART_IS_EMPTY);
     }
   };
-}
-
-export const enum ShoppingCartErrors {
-  CART_IS_ALREADY_CLOSED = 'CART_IS_ALREADY_CLOSED',
-  PRODUCT_ITEM_NOT_FOUND = 'PRODUCT_ITEM_NOT_FOUND',
-  CART_IS_EMPTY = 'CART_IS_EMPTY',
-  UNKNOWN_EVENT_TYPE = 'UNKNOWN_EVENT_TYPE',
-  UNKNOWN_COMMAND_TYPE = 'UNKNOWN_COMMAND_TYPE',
 }
 
 export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {

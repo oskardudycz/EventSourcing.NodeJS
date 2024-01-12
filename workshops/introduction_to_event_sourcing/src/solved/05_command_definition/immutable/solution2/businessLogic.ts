@@ -9,43 +9,53 @@ import {
 /// Commands
 //////////////////////////////////////
 
+export type OpenShoppingCart = {
+  type: 'OpenShoppingCart';
+  data: {
+    shoppingCartId: string;
+    clientId: string;
+    now: Date;
+  };
+};
+
+export type AddProductItemToShoppingCart = {
+  type: 'AddProductItemToShoppingCart';
+  data: {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  };
+};
+
+export type RemoveProductItemFromShoppingCart = {
+  type: 'RemoveProductItemFromShoppingCart';
+  data: {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  };
+};
+
+export type ConfirmShoppingCart = {
+  type: 'ConfirmShoppingCart';
+  data: {
+    shoppingCartId: string;
+    now: Date;
+  };
+};
+
+export type CancelShoppingCart = {
+  type: 'CancelShoppingCart';
+  data: {
+    shoppingCartId: string;
+    now: Date;
+  };
+};
+
 export type ShoppingCartCommand =
-  | {
-      type: 'OpenShoppingCart';
-      data: {
-        shoppingCartId: string;
-        clientId: string;
-        now: Date;
-      };
-    }
-  | {
-      type: 'AddProductItemToShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'RemoveProductItemFromShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ConfirmShoppingCart';
-      data: {
-        shoppingCartId: string;
-        now: Date;
-      };
-    }
-  | {
-      type: 'CancelShoppingCart';
-      data: {
-        shoppingCartId: string;
-        now: Date;
-      };
-    };
+  | OpenShoppingCart
+  | AddProductItemToShoppingCart
+  | RemoveProductItemFromShoppingCart
+  | ConfirmShoppingCart
+  | CancelShoppingCart;
 
 //////////////////////////////////////
 /// Decide

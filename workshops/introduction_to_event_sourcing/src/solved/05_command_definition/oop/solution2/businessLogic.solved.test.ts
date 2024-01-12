@@ -5,19 +5,19 @@ import {
   ConfirmShoppingCart,
   OpenShoppingCart,
   RemoveProductItemFromShoppingCart,
+  ShoppingCartErrors,
 } from './businessLogic';
 import { getEventStore } from './core';
 import {
   PricedProductItem,
   ShoppingCart,
-  ShoppingCartErrors,
   ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';
 
-describe('Getting state from events', () => {
-  it('Should return the state from the sequence of events', () => {
+describe('Business logic', () => {
+  it('Should handle commands correctly', () => {
     const eventStore = getEventStore();
     const shoppingCartId = uuid();
 
@@ -104,6 +104,7 @@ describe('Getting state from events', () => {
       shoppingCart.confirm(confirm.now),
     );
 
+    // Try Cancel
     const cancel: CancelShoppingCart = {
       shoppingCartId,
       now: canceledAt,

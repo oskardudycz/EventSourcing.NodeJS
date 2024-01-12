@@ -9,7 +9,7 @@ Having the following shopping cart process:
 5. The customer may also cancel the shopping cart and reject all selected products.
 6. After shopping cart confirmation or cancellation, the product can no longer be added or removed from the cart.
 
-Write the code that fulfils this logic. Remember that in Event Sourcing each business operation has to result with a new business fact (so event). Use events and entities defined in previous exercises.
+Write the code that fulfils this logic. You can choose your prefered way to solve it, e.g.the Aggregate pattern, service, just pure functions or another way.Remember that in Event Sourcing each business operation has to result with a new business fact (so event). Use events and entities defined in previous exercises and new commands defined in `businessLogic.ts` file.
 
 ![events](./assets/events.jpg)
 

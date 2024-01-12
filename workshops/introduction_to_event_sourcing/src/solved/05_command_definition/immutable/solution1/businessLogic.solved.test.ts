@@ -6,6 +6,11 @@ import {
   removeProductItemFromShoppingCart,
   confirmShoppingCart,
   cancelShoppingCart,
+  OpenShoppingCart,
+  AddProductItemToShoppingCart,
+  RemoveProductItemFromShoppingCart,
+  ConfirmShoppingCart,
+  CancelShoppingCart,
 } from './businessLogic';
 import {
   PricedProductItem,
@@ -15,8 +20,8 @@ import {
 } from './shoppingCart';
 import { getEventStore } from './core';
 
-describe('Getting state from events', () => {
-  it('Should return the state from the sequence of events', () => {
+describe('Business logic', () => {
+  it('Should handle commands correctly', () => {
     const eventStore = getEventStore();
     const shoppingCartId = uuid();
 
@@ -45,62 +50,66 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    eventStore.appendToStream(
+    let result: ShoppingCartEvent[] = [];
+
+    // Open
+    const open: OpenShoppingCart = { shoppingCartId, clientId, now: openedAt };
+    result = [openShoppingCart(open)];
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Add Two Pair of Shoes
+    const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
       shoppingCartId,
-      openShoppingCart({ clientId, shoppingCartId, now: openedAt }),
-    );
+      productItem: twoPairsOfShoes,
+    };
 
-    eventStore.appendToStream(
+    let state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    result = [addProductItemToShoppingCart(addTwoPairsOfShoes, state)];
+
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Add T-Shirt
+    const addTShirt: AddProductItemToShoppingCart = {
       shoppingCartId,
-      addProductItemToShoppingCart(
-        {
-          shoppingCartId,
-          productItem: twoPairsOfShoes,
-        },
-        getShoppingCart(eventStore.readStream(shoppingCartId)),
-      ),
-    );
+      productItem: tShirt,
+    };
 
-    eventStore.appendToStream(
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    result = [addProductItemToShoppingCart(addTShirt, state)];
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Remove pair of shoes
+    const removePairOfShoes: RemoveProductItemFromShoppingCart = {
       shoppingCartId,
-      addProductItemToShoppingCart(
-        {
-          shoppingCartId,
-          productItem: tShirt,
-        },
-        getShoppingCart(eventStore.readStream(shoppingCartId)),
-      ),
-    );
+      productItem: pairOfShoes,
+    };
 
-    eventStore.appendToStream(
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    result = [removeProductItemFromShoppingCart(removePairOfShoes, state)];
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Confirm
+    const confirm: ConfirmShoppingCart = {
       shoppingCartId,
-      removeProductItemFromShoppingCart(
-        {
-          shoppingCartId,
-          productItem: pairOfShoes,
-        },
-        getShoppingCart(eventStore.readStream(shoppingCartId)),
-      ),
-    );
+      now: confirmedAt,
+    };
 
-    eventStore.appendToStream(
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    result = [confirmShoppingCart(confirm, state)];
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Try Cancel
+    const cancel: CancelShoppingCart = {
       shoppingCartId,
-      confirmShoppingCart(
-        { shoppingCartId, now: confirmedAt },
-        getShoppingCart(eventStore.readStream(shoppingCartId)),
-      ),
-    );
+      now: canceledAt,
+    };
+    const onCancel = () => {
+      state = getShoppingCart(eventStore.readStream(shoppingCartId));
+      result = [cancelShoppingCart(cancel, state)];
+      eventStore.appendToStream(shoppingCartId, ...result);
+    };
 
-    const cancel = () =>
-      eventStore.appendToStream(
-        shoppingCartId,
-        cancelShoppingCart(
-          { shoppingCartId, now: canceledAt },
-          getShoppingCart(eventStore.readStream(shoppingCartId)),
-        ),
-      );
-
-    expect(cancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
+    expect(onCancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
     const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
 

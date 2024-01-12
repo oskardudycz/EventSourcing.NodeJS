@@ -1,6 +1,42 @@
-// 1. Define the commands here
-// 2. Define the business logic based on the rules described in the README.
-// 3. You can update other files if needed.
+import { PricedProductItem } from './shoppingCart';
 
-// Note: You can choose to follow the Aggregate pattern, use service, just pure functions or another preferred way.
-// It should use input from commands, validate the preconditions based on the current state, and produce new events as a result.
+export type OpenShoppingCart = {
+  shoppingCartId: string;
+  clientId: string;
+  now: Date;
+};
+
+export type AddProductItemToShoppingCart = {
+  shoppingCartId: string;
+  productItem: PricedProductItem;
+};
+
+export type RemoveProductItemFromShoppingCart = {
+  shoppingCartId: string;
+  productItem: PricedProductItem;
+};
+
+export type ConfirmShoppingCart = {
+  shoppingCartId: string;
+  now: Date;
+};
+
+export type CancelShoppingCart = {
+  shoppingCartId: string;
+  now: Date;
+};
+
+export type ShoppingCartCommand =
+  | OpenShoppingCart
+  | AddProductItemToShoppingCart
+  | RemoveProductItemFromShoppingCart
+  | ConfirmShoppingCart
+  | CancelShoppingCart;
+
+export const enum ShoppingCartErrors {
+  CART_IS_ALREADY_CLOSED = 'CART_IS_ALREADY_CLOSED',
+  PRODUCT_ITEM_NOT_FOUND = 'PRODUCT_ITEM_NOT_FOUND',
+  CART_IS_EMPTY = 'CART_IS_EMPTY',
+  UNKNOWN_EVENT_TYPE = 'UNKNOWN_EVENT_TYPE',
+  UNKNOWN_COMMAND_TYPE = 'UNKNOWN_COMMAND_TYPE',
+}
