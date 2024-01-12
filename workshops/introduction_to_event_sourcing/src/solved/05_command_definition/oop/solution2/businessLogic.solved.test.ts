@@ -1,5 +1,11 @@
 import { v4 as uuid } from 'uuid';
-import { EventStoreRepository, ShoppingCartService } from './businessLogic';
+import {
+  AddProductItemToShoppingCart,
+  CancelShoppingCart,
+  ConfirmShoppingCart,
+  OpenShoppingCart,
+  RemoveProductItemFromShoppingCart,
+} from './businessLogic';
 import { getEventStore } from './core';
 import {
   PricedProductItem,
@@ -40,32 +46,77 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    const repository = new EventStoreRepository<
-      ShoppingCart,
-      ShoppingCartEvent
-    >(eventStore, ShoppingCart.default, ShoppingCart.evolve);
+    // Open
+    const open: OpenShoppingCart = { shoppingCartId, clientId, now: openedAt };
 
-    const shoppingCartService = new ShoppingCartService(repository);
+    eventStore.appendToStream(
+      shoppingCartId,
+      ShoppingCart.open(open.shoppingCartId, open.clientId, open.now),
+    );
 
-    shoppingCartService.open({ shoppingCartId, clientId, now: openedAt });
-    shoppingCartService.addProductItem({
+    // Add Two Pair of Shoes
+    const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
       shoppingCartId,
       productItem: twoPairsOfShoes,
-    });
-    shoppingCartService.addProductItem({
+    };
+
+    let shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+
+    eventStore.appendToStream(
+      shoppingCartId,
+      shoppingCart.addProductItem(addTwoPairsOfShoes.productItem),
+    );
+
+    // Add T-Shirt
+    const addTShirt: AddProductItemToShoppingCart = {
       shoppingCartId,
       productItem: tShirt,
-    });
-    shoppingCartService.removeProductItem({
+    };
+
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+
+    eventStore.appendToStream(
+      shoppingCartId,
+      shoppingCart.addProductItem(addTShirt.productItem),
+    );
+
+    // Remove pair of shoes
+    const removePairOfShoes: RemoveProductItemFromShoppingCart = {
       shoppingCartId,
       productItem: pairOfShoes,
-    });
-    shoppingCartService.confirm({ shoppingCartId, now: confirmedAt });
+    };
 
-    const cancel = () =>
-      shoppingCartService.cancel({ shoppingCartId, now: canceledAt });
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+    eventStore.appendToStream(
+      shoppingCartId,
+      shoppingCart.removeProductItem(removePairOfShoes.productItem),
+    );
 
-    expect(cancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
+    // Confirm
+    const confirm: ConfirmShoppingCart = {
+      shoppingCartId,
+      now: confirmedAt,
+    };
+
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+    eventStore.appendToStream(
+      shoppingCartId,
+      shoppingCart.confirm(confirm.now),
+    );
+
+    const cancel: CancelShoppingCart = {
+      shoppingCartId,
+      now: canceledAt,
+    };
+    const onCancel = () => {
+      shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+      eventStore.appendToStream(
+        shoppingCartId,
+        shoppingCart.cancel(cancel.now),
+      );
+    };
+
+    expect(onCancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
     const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
 
@@ -113,7 +164,7 @@ describe('Getting state from events', () => {
       // },
     ]);
 
-    const shoppingCart = getShoppingCart(events);
+    shoppingCart = getShoppingCart(events);
 
     expect(shoppingCart).toBeInstanceOf(ShoppingCart);
     const actual = {

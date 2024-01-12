@@ -48,41 +48,20 @@ export type ShoppingCartEvent =
     };
 
 export enum ShoppingCartStatus {
-  Empty = 'Empty',
   Pending = 'Pending',
   Confirmed = 'Confirmed',
   Canceled = 'Canceled',
 }
 
-export type Empty = { status: ShoppingCartStatus.Empty };
-
-export type Pending = {
-  status: ShoppingCartStatus.Pending;
+export type ShoppingCart = Readonly<{
   id: string;
   clientId: string;
+  status: ShoppingCartStatus;
   productItems: PricedProductItem[];
   openedAt: Date;
-};
-
-export type Confirmed = {
-  status: ShoppingCartStatus.Confirmed;
-  id: string;
-  clientId: string;
-  productItems: PricedProductItem[];
-  confirmedAt: Date;
-};
-
-export type Canceled = {
-  status: ShoppingCartStatus.Canceled;
-  id: string;
-  clientId: string;
-  productItems: PricedProductItem[];
-  canceledAt: Date;
-};
-
-export type ShoppingCart = Empty | Pending | Confirmed | Canceled;
-
-export const emptyShoppingCart: Empty = { status: ShoppingCartStatus.Empty };
+  confirmedAt?: Date;
+  canceledAt?: Date;
+}>;
 
 export const evolve = (
   state: ShoppingCart,
@@ -98,8 +77,6 @@ export const evolve = (
         status: ShoppingCartStatus.Pending,
       };
     case 'ProductItemAddedToShoppingCart': {
-      if (state.status !== ShoppingCartStatus.Pending) return state;
-
       const { productItems } = state;
       const { productItem } = event;
 
@@ -122,8 +99,6 @@ export const evolve = (
       };
     }
     case 'ProductItemRemovedFromShoppingCart': {
-      if (state.status !== ShoppingCartStatus.Pending) return state;
-
       const { productItems } = state;
       const { productItem } = event;
       return {
@@ -144,16 +119,12 @@ export const evolve = (
       };
     }
     case 'ShoppingCartConfirmed':
-      if (state.status !== ShoppingCartStatus.Pending) return state;
-
       return {
         ...state,
         status: ShoppingCartStatus.Confirmed,
         confirmedAt: event.confirmedAt,
       };
     case 'ShoppingCartCanceled':
-      if (state.status !== ShoppingCartStatus.Pending) return state;
-
       return {
         ...state,
         status: ShoppingCartStatus.Canceled,
@@ -163,5 +134,5 @@ export const evolve = (
 };
 
 export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  return events.reduce<ShoppingCart>(evolve, emptyShoppingCart);
+  return events.reduce<ShoppingCart>(evolve, {} as ShoppingCart);
 };

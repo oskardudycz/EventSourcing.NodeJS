@@ -1,4 +1,3 @@
-import { Event, EventStore } from './core';
 import {
   PricedProductItem,
   ShoppingCart,
@@ -155,22 +154,3 @@ export const cancelShoppingCart = (
     },
   };
 };
-
-export const handleCommand =
-  <State, StreamEvent extends Event>(
-    evolve: (state: State, event: StreamEvent) => State,
-    getInitialState: () => State,
-  ) =>
-  (
-    eventStore: EventStore,
-    id: string,
-    handle: (state: State) => StreamEvent | StreamEvent[],
-  ) => {
-    const events = eventStore.readStream<StreamEvent>(id);
-
-    const state = events.reduce<State>(evolve, getInitialState());
-
-    const result = handle(state);
-
-    eventStore.appendToStream(id, Array.isArray(result) ? result : [result]);
-  };

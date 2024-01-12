@@ -1,4 +1,3 @@
-import { Event, EventStore } from './core';
 import {
   PricedProductItem,
   ShoppingCart,
@@ -78,9 +77,12 @@ export const assertProductItemExists = (
 export const decide = (
   { type, data: command }: ShoppingCartCommand,
   shoppingCart: ShoppingCart,
-): ShoppingCartEvent | ShoppingCartEvent[] => {
+): ShoppingCartEvent => {
   switch (type) {
     case 'OpenShoppingCart': {
+      if (shoppingCart.status !== ShoppingCartStatus.Empty) {
+        throw new Error(ShoppingCartErrors.CART_ALREADY_EXISTS);
+      }
       return {
         type: 'ShoppingCartOpened',
         data: {
@@ -165,32 +167,3 @@ export type Command<
   type: Readonly<CommandType>;
   data: Readonly<CommandData>;
 }>;
-
-export type Decider<
-  State,
-  CommandType extends Command,
-  StreamEvent extends Event,
-> = {
-  decide: (command: CommandType, state: State) => StreamEvent | StreamEvent[];
-  evolve: (currentState: State, event: StreamEvent) => State;
-  getInitialState: () => State;
-};
-
-export const CommandHandler =
-  <State, CommandType extends Command, StreamEvent extends Event>({
-    decide,
-    evolve,
-    getInitialState,
-  }: Decider<State, CommandType, StreamEvent>) =>
-  (eventStore: EventStore, streamId: string, command: CommandType): void => {
-    const events = eventStore.readStream<StreamEvent>(streamId);
-
-    const state = events.reduce<State>(evolve, getInitialState());
-
-    const result = decide(command, state);
-
-    eventStore.appendToStream(
-      streamId,
-      Array.isArray(result) ? result : [result],
-    );
-  };

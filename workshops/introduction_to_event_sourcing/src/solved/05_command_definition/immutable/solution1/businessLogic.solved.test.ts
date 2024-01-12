@@ -6,19 +6,14 @@ import {
   removeProductItemFromShoppingCart,
   confirmShoppingCart,
   cancelShoppingCart,
-  handleCommand,
 } from './businessLogic';
 import {
   PricedProductItem,
-  ShoppingCart,
   ShoppingCartEvent,
   ShoppingCartStatus,
-  evolve,
   getShoppingCart,
 } from './shoppingCart';
 import { getEventStore } from './core';
-
-const handle = handleCommand(evolve, () => ({}) as ShoppingCart);
 
 describe('Getting state from events', () => {
   it('Should return the state from the sequence of events', () => {
@@ -50,47 +45,59 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    handle(eventStore, shoppingCartId, (_) =>
+    eventStore.appendToStream(
+      shoppingCartId,
       openShoppingCart({ clientId, shoppingCartId, now: openedAt }),
     );
 
-    handle(eventStore, shoppingCartId, (state) =>
+    eventStore.appendToStream(
+      shoppingCartId,
       addProductItemToShoppingCart(
         {
           shoppingCartId,
           productItem: twoPairsOfShoes,
         },
-        state,
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
       ),
     );
 
-    handle(eventStore, shoppingCartId, (state) =>
+    eventStore.appendToStream(
+      shoppingCartId,
       addProductItemToShoppingCart(
         {
           shoppingCartId,
           productItem: tShirt,
         },
-        state,
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
       ),
     );
 
-    handle(eventStore, shoppingCartId, (state) =>
+    eventStore.appendToStream(
+      shoppingCartId,
       removeProductItemFromShoppingCart(
         {
           shoppingCartId,
           productItem: pairOfShoes,
         },
-        state,
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
       ),
     );
 
-    handle(eventStore, shoppingCartId, (state) =>
-      confirmShoppingCart({ shoppingCartId, now: confirmedAt }, state),
+    eventStore.appendToStream(
+      shoppingCartId,
+      confirmShoppingCart(
+        { shoppingCartId, now: confirmedAt },
+        getShoppingCart(eventStore.readStream(shoppingCartId)),
+      ),
     );
 
     const cancel = () =>
-      handle(eventStore, shoppingCartId, (state) =>
-        cancelShoppingCart({ shoppingCartId, now: canceledAt }, state),
+      eventStore.appendToStream(
+        shoppingCartId,
+        cancelShoppingCart(
+          { shoppingCartId, now: canceledAt },
+          getShoppingCart(eventStore.readStream(shoppingCartId)),
+        ),
       );
 
     expect(cancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);

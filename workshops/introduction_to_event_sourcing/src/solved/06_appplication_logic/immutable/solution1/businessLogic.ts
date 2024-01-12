@@ -1,18 +1,14 @@
+import { Event, EventStore } from './core';
+import {
+  PricedProductItem,
+  ShoppingCart,
+  ShoppingCartStatus,
+  ShoppingCartEvent,
+} from './shoppingCart';
+
 //////////////////////////////////////
 /// Commands
 //////////////////////////////////////
-
-import {
-  EventStore,
-  PricedProductItem,
-  ProductItemAddedToShoppingCart,
-  ProductItemRemovedFromShoppingCart,
-  ShoppingCart,
-  ShoppingCartCanceled,
-  ShoppingCartConfirmed,
-  ShoppingCartOpened,
-  ShoppingCartStatus,
-} from './businessLogic.solved.test';
 
 export type OpenShoppingCart = {
   shoppingCartId: string;
@@ -76,7 +72,7 @@ export const assertProductItemExists = (
 
 export const openShoppingCart = (
   command: OpenShoppingCart,
-): ShoppingCartOpened => {
+): ShoppingCartEvent => {
   return {
     type: 'ShoppingCartOpened',
     data: {
@@ -90,7 +86,7 @@ export const openShoppingCart = (
 export const addProductItemToShoppingCart = (
   command: AddProductItemToShoppingCart,
   shoppingCart: ShoppingCart,
-): ProductItemAddedToShoppingCart => {
+): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
     throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
@@ -106,7 +102,7 @@ export const addProductItemToShoppingCart = (
 export const removeProductItemFromShoppingCart = (
   command: RemoveProductItemFromShoppingCart,
   shoppingCart: ShoppingCart,
-): ProductItemRemovedFromShoppingCart => {
+): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
     throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
@@ -125,7 +121,7 @@ export const removeProductItemFromShoppingCart = (
 export const confirmShoppingCart = (
   command: ConfirmShoppingCart,
   shoppingCart: ShoppingCart,
-): ShoppingCartConfirmed => {
+): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
     throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
@@ -146,7 +142,7 @@ export const confirmShoppingCart = (
 export const cancelShoppingCart = (
   command: CancelShoppingCart,
   shoppingCart: ShoppingCart,
-): ShoppingCartCanceled => {
+): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
     throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
@@ -159,14 +155,6 @@ export const cancelShoppingCart = (
     },
   };
 };
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
 
 export const handleCommand =
   <State, StreamEvent extends Event>(

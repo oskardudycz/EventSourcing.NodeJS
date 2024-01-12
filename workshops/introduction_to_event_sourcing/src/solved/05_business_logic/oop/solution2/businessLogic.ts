@@ -34,7 +34,7 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
   store = (id: string, ...events: StreamEvent[]): void => {
     if (events.length === 0) return;
 
-    this.eventStore.appendToStream(id, events);
+    this.eventStore.appendToStream(id, ...events);
   };
 }
 

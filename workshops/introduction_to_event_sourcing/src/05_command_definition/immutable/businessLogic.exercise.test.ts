@@ -39,9 +39,9 @@ describe('Getting state from events', () => {
 
     // TODO: Fill the events store results of your business logic
     // to be the same as events below
-    // e.g. eventStore.appendToStream(ShoppingCart.Open(command));
+    // e.g. eventStore.appendToStream(shoppingCartId, ShoppingCart.open(command));
     //
-    // let shoppingCart = getShoppingCart(shoppingCartId);
+    // let shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
     // e.g. eventStore.appendToStream(shoppingCart.addProduct(command.productItem));
 
     const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
