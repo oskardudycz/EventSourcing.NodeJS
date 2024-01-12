@@ -3,7 +3,6 @@ import { getEventStore } from './core';
 import {
   PricedProductItem,
   ShoppingCart,
-  ShoppingCartErrors,
   ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
@@ -14,10 +13,11 @@ import {
   ConfirmShoppingCart,
   OpenShoppingCart,
   RemoveProductItemFromShoppingCart,
+  ShoppingCartErrors,
 } from './businessLogic';
 
-describe('Getting state from events', () => {
-  it('Should return the state from the sequence of events', () => {
+describe('Business logic', () => {
+  it('Should handle commands correctly', () => {
     const eventStore = getEventStore();
     const shoppingCartId = uuid();
 
