@@ -1,4 +1,4 @@
-# Exercise 05 - Business Logic
+# Exercise 06 - Application Logic
 
 Having the following shopping cart process:
 
@@ -9,25 +9,22 @@ Having the following shopping cart process:
 5. The customer may also cancel the shopping cart and reject all selected products.
 6. After shopping cart confirmation or cancellation, the product can no longer be added or removed from the cart.
 
-Write the code that fulfils this logic. You can choose your prefered way to solve it, e.g.the Aggregate pattern, service, just pure functions or another way.Remember that in Event Sourcing each business operation has to result with a new business fact (so event). Use events and entities defined in previous exercises and new commands defined in `businessLogic.ts` file.
-
 ![events](./assets/events.jpg)
 
-There are two variations:
+And business logic implemented in the [previous exercise](../05_business_logic/) write the application code that will _glue_ the API defined in `api.ts` files with the domain code.
 
-- using mutable entities: [./oop/BusinessLogicTests.cs](./oop/businessLogic.exercise.test.ts),
-- using fully immutable structures: [./immutable/BusinessLogicTests.cs](./immutable/businessLogic.exercise.test.ts),
+This time you'll use EventStoreDB instead of the mocked one. Run `docker-compose up` before running test code to have database set up.
+
+There are four variations:
+
+1. Classical, mutable aggregates (rich domain model): [./oop/aggregate/applicationLogic.exercise.test.ts](./oop/aggregate/applicationLogic.exercise.test.ts),
+2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [./oop/aggregate_returning_events/applicationLogic.exercise.test.ts](./oop/aggregate_returning_events/applicationLogic.exercise.test.ts),
+3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/functions/applicationLogic.exercise.test.ts](./immutable/functions/applicationLogic.exercise.test.ts),
+4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/businessLogic.exercise.test.ts](./immutable/businessLogic.exercise.test.ts),
 
 Select your preferred approach (or both) to solve this use case.
 
-## Solution
-
-1. Classical, mutable aggregates (rich domain model): [oop/solution1/businessLogic.solved.test.ts](./oop/solution1/businessLogic.solved.test.ts).
-2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [oop/solution2/businessLogic.solved.test.ts](./oop/solution2/businessLogic.solved.test.ts).
-3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/solution1/businessLogic.solved.test.ts](./immutable/solution1/businessLogic.solved.test.ts).
-4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/solution2/businessLogic.solved.test.ts](./immutable/solution2/businessLogic.solved.test.ts).
-
-Read also my articles:
+Read also my articles on business logic composition:
 
 - [Straightforward Event Sourcing with TypeScript and NodeJS](https://event-driven.io/en/type_script_node_Js_event_sourcing/?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
 - [How to effectively compose your business logic](https://event-driven.io/en/how_to_effectively_compose_your_business_logic//?utm_source=eventsourcing_nodejs?utm_campaign=workshop)

@@ -15,8 +15,8 @@ Write the code that fulfils this logic. Remember that in Event Sourcing each bus
 
 There are two variations:
 
-- using mutable entities: [./oop/BusinessLogicTests.cs](./oop/businessLogic.exercise.test.ts),
-- using fully immutable structures: [./immutable/BusinessLogicTests.cs](./immutable/businessLogic.exercise.test.ts),
+- using mutable entities: [./oop/businessLogic.exercise.test.ts](./oop/businessLogic.exercise.test.ts),
+- using fully immutable structures: [./immutable/businessLogic.exercise.test.ts](./immutable/businessLogic.exercise.test.ts),
 
 Select your preferred approach (or both) to solve this use case.
 
