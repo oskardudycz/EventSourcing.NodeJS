@@ -9,6 +9,10 @@ import { PricedProductItem, ProductItem } from './shoppingCart';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
+const dummyPriceProvider = (_productId: string) => {
+  return 100;
+};
+
 export const shoppingCartApi = (router: Router) => {
   // Open Shopping cart
   router.post(

@@ -1,5 +1,5 @@
 import { ShoppingCartErrors } from './businessLogic';
-import { Aggregate } from './aggregate';
+import { Aggregate } from './core/aggregate';
 import { Event } from '../../tools/events';
 
 export interface ProductItem {

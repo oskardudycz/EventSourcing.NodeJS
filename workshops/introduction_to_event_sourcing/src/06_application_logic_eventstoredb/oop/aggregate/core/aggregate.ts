@@ -1,4 +1,4 @@
-import { Event } from '../../tools/events';
+import { Event } from '../../../tools/events';
 
 export abstract class Aggregate<E extends Event> {
   #uncommitedEvents: E[] = [];
@@ -7,6 +7,7 @@ export abstract class Aggregate<E extends Event> {
 
   protected enqueue = (event: E) => {
     this.#uncommitedEvents = [...this.#uncommitedEvents, event];
+    this.evolve(event);
   };
 
   dequeueUncommitedEvents = (): E[] => {
