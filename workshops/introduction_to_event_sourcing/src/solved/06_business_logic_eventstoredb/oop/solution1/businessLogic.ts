@@ -11,7 +11,7 @@ import {
 import { Event } from './businessLogic.solved.test';
 
 export abstract class Aggregate<E extends Event> {
-  #uncommitedEvents: Event[] = [];
+  #uncommitedEvents: E[] = [];
 
   abstract evolve(event: E): void;
 

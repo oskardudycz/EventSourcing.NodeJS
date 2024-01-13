@@ -1,6 +1,6 @@
 import { ShoppingCartErrors } from './businessLogic';
-import { Aggregate } from './core';
-import { Event } from './core';
+import { Aggregate } from './aggregate';
+import { Event } from '../../tools/events';
 
 export interface ProductItem {
   productId: string;

@@ -1,25 +1,34 @@
 import { v4 as uuid } from 'uuid';
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
+import { EventStoreDBClient } from '@eventstore/db-client';
+import { getEventStore } from '../../tools/eventStore';
+import {
+  PricedProductItem,
+  ShoppingCart,
+  ShoppingCartEvent,
+  ShoppingCartStatus,
+  getShoppingCart,
+} from './shoppingCart';
 import {
   AddProductItemToShoppingCart,
   CancelShoppingCart,
   ConfirmShoppingCart,
-  decide,
   OpenShoppingCart,
   RemoveProductItemFromShoppingCart,
   ShoppingCartErrors,
 } from './businessLogic';
-import {
-  emptyShoppingCart,
-  getShoppingCart,
-  PricedProductItem,
-  ShoppingCartEvent,
-  ShoppingCartStatus,
-} from './shoppingCart';
-import { getEventStore } from './core';
 
 describe('Business logic', () => {
-  it('Should handle commands correctly', () => {
-    const eventStore = getEventStore();
+  let eventStoreDB: EventStoreDBClient;
+
+  beforeAll(async () => {
+    eventStoreDB = await getEventStoreDBTestClient();
+  });
+
+  afterAll(() => eventStoreDB.dispose());
+
+  it('Should handle commands correctly', async () => {
+    const eventStore = getEventStore(eventStoreDB);
     const shoppingCartId = uuid();
 
     const clientId = uuid();
@@ -47,15 +56,20 @@ describe('Business logic', () => {
       unitPrice: 5,
     };
 
-    let result: ShoppingCartEvent[] = [];
-
     // Open
     const open: OpenShoppingCart = {
       type: 'OpenShoppingCart',
       data: { shoppingCartId, clientId, now: openedAt },
     };
-    result = [decide(open, emptyShoppingCart)];
-    eventStore.appendToStream(shoppingCartId, ...result);
+    let shoppingCart = ShoppingCart.open(
+      open.data.shoppingCartId,
+      open.data.clientId,
+      open.data.now,
+    );
+    await eventStore.appendToStream(
+      shoppingCartId,
+      ...shoppingCart.dequeueUncommitedEvents(),
+    );
 
     // Add Two Pair of Shoes
     const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
@@ -63,10 +77,13 @@ describe('Business logic', () => {
       data: { shoppingCartId, productItem: twoPairsOfShoes },
     };
 
-    let state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    result = [decide(addTwoPairsOfShoes, state)];
+    shoppingCart = getShoppingCart(await eventStore.readStream(shoppingCartId));
+    shoppingCart.addProductItem(addTwoPairsOfShoes.data.productItem);
 
-    eventStore.appendToStream(shoppingCartId, ...result);
+    await eventStore.appendToStream(
+      shoppingCartId,
+      ...shoppingCart.dequeueUncommitedEvents(),
+    );
 
     // Add T-Shirt
     const addTShirt: AddProductItemToShoppingCart = {
@@ -74,9 +91,13 @@ describe('Business logic', () => {
       data: { shoppingCartId, productItem: tShirt },
     };
 
-    state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    result = [decide(addTShirt, state)];
-    eventStore.appendToStream(shoppingCartId, ...result);
+    shoppingCart = getShoppingCart(await eventStore.readStream(shoppingCartId));
+    shoppingCart.addProductItem(addTShirt.data.productItem);
+
+    await eventStore.appendToStream(
+      shoppingCartId,
+      ...shoppingCart.dequeueUncommitedEvents(),
+    );
 
     // Remove pair of shoes
     const removePairOfShoes: RemoveProductItemFromShoppingCart = {
@@ -84,9 +105,13 @@ describe('Business logic', () => {
       data: { shoppingCartId, productItem: pairOfShoes },
     };
 
-    state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    result = [decide(removePairOfShoes, state)];
-    eventStore.appendToStream(shoppingCartId, ...result);
+    shoppingCart = getShoppingCart(await eventStore.readStream(shoppingCartId));
+    shoppingCart.removeProductItem(removePairOfShoes.data.productItem);
+
+    await eventStore.appendToStream(
+      shoppingCartId,
+      ...shoppingCart.dequeueUncommitedEvents(),
+    );
 
     // Confirm
     const confirm: ConfirmShoppingCart = {
@@ -94,24 +119,34 @@ describe('Business logic', () => {
       data: { shoppingCartId, now: confirmedAt },
     };
 
-    state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    result = [decide(confirm, state)];
-    eventStore.appendToStream(shoppingCartId, ...result);
+    shoppingCart = getShoppingCart(await eventStore.readStream(shoppingCartId));
+    shoppingCart.confirm(confirm.data.now);
 
-    // Try Cancel
+    await eventStore.appendToStream(
+      shoppingCartId,
+      ...shoppingCart.dequeueUncommitedEvents(),
+    );
+
     const cancel: CancelShoppingCart = {
       type: 'CancelShoppingCart',
       data: { shoppingCartId, now: canceledAt },
     };
-    const onCancel = () => {
-      state = getShoppingCart(eventStore.readStream(shoppingCartId));
-      result = [decide(cancel, state)];
-      eventStore.appendToStream(shoppingCartId, ...result);
+    const onCancel = async () => {
+      shoppingCart = getShoppingCart(
+        await eventStore.readStream(shoppingCartId),
+      );
+      shoppingCart.cancel(cancel.data.now);
+
+      await eventStore.appendToStream(
+        shoppingCartId,
+        ...shoppingCart.dequeueUncommitedEvents(),
+      );
     };
 
     expect(onCancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
-    const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
+    const events =
+      await eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
 
     expect(events).toEqual([
       {
@@ -157,14 +192,24 @@ describe('Business logic', () => {
       // },
     ]);
 
-    const shoppingCart = getShoppingCart(events);
+    shoppingCart = getShoppingCart(events);
 
-    expect(shoppingCart).toStrictEqual({
-      id: shoppingCartId,
+    expect(shoppingCart).toBeInstanceOf(ShoppingCart);
+    const actual = {
+      shoppingCartId: shoppingCart.id,
+      clientId: shoppingCart.clientId,
+      status: shoppingCart.status,
+      openedAt: shoppingCart.openedAt,
+      productItems: shoppingCart.productItems,
+      confirmedAt: shoppingCart.confirmedAt,
+    };
+
+    expect(actual).toEqual({
+      shoppingCartId,
       clientId,
       status: ShoppingCartStatus.Confirmed,
-      productItems: [pairOfShoes, tShirt],
       openedAt,
+      productItems: [pairOfShoes, tShirt],
       confirmedAt,
     });
   });

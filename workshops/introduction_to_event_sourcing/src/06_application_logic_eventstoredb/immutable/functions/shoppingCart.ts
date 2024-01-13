@@ -1,4 +1,4 @@
-import { merge } from './core';
+import { merge } from '../../tools/utils';
 
 export interface ProductItem {
   productId: string;
