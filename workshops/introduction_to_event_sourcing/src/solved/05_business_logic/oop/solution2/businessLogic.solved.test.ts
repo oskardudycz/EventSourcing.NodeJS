@@ -1,111 +1,23 @@
 import { v4 as uuid } from 'uuid';
 import {
-  EventStoreRepository,
-  ShoppingCart,
+  AddProductItemToShoppingCart,
+  CancelShoppingCart,
+  ConfirmShoppingCart,
+  OpenShoppingCart,
+  RemoveProductItemFromShoppingCart,
   ShoppingCartErrors,
-  ShoppingCartService,
 } from './businessLogic';
+import { getEventStore } from './core';
+import {
+  PricedProductItem,
+  ShoppingCart,
+  ShoppingCartEvent,
+  ShoppingCartStatus,
+  getShoppingCart,
+} from './shoppingCart';
 
-export interface ProductItem {
-  productId: string;
-  quantity: number;
-}
-
-export type PricedProductItem = ProductItem & {
-  unitPrice: number;
-};
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
-
-export type ShoppingCartOpened = Event<
-  'ShoppingCartOpened',
-  {
-    shoppingCartId: string;
-    clientId: string;
-    openedAt: Date;
-  }
->;
-
-export type ProductItemAddedToShoppingCart = Event<
-  'ProductItemAddedToShoppingCart',
-  {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
-  }
->;
-
-export type ProductItemRemovedFromShoppingCart = Event<
-  'ProductItemRemovedFromShoppingCart',
-  {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
-  }
->;
-
-export type ShoppingCartConfirmed = Event<
-  'ShoppingCartConfirmed',
-  {
-    shoppingCartId: string;
-    confirmedAt: Date;
-  }
->;
-
-export type ShoppingCartCanceled = Event<
-  'ShoppingCartCanceled',
-  {
-    shoppingCartId: string;
-    canceledAt: Date;
-  }
->;
-
-export type ShoppingCartEvent =
-  | ShoppingCartOpened
-  | ProductItemAddedToShoppingCart
-  | ProductItemRemovedFromShoppingCart
-  | ShoppingCartConfirmed
-  | ShoppingCartCanceled;
-
-export enum ShoppingCartStatus {
-  Pending = 'Pending',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
-
-export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  return events.reduce<ShoppingCart>(
-    ShoppingCart.evolve,
-    ShoppingCart.default(),
-  );
-};
-
-export interface EventStore {
-  readStream<E extends Event>(streamId: string): E[];
-  appendToStream(streamId: string, ...events: Event[]): void;
-}
-
-export const getEventStore = () => {
-  const streams = new Map<string, Event[]>();
-
-  return {
-    readStream: <E extends Event>(streamId: string): E[] => {
-      return streams.get(streamId)?.map((e) => <E>e) ?? [];
-    },
-    appendToStream: (streamId: string, ...events: Event[]): void => {
-      const current = streams.get(streamId) ?? [];
-
-      streams.set(streamId, [...current, ...events]);
-    },
-  };
-};
-
-describe('Getting state from events', () => {
-  it('Should return the state from the sequence of events', () => {
+describe('Business logic', () => {
+  it('Should handle commands correctly', () => {
     const eventStore = getEventStore();
     const shoppingCartId = uuid();
 
@@ -134,32 +46,84 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    const repository = new EventStoreRepository<
-      ShoppingCart,
-      ShoppingCartEvent
-    >(eventStore, ShoppingCart.default, ShoppingCart.evolve);
-
-    const shoppingCartService = new ShoppingCartService(repository);
-
-    shoppingCartService.open({ shoppingCartId, clientId, now: openedAt });
-    shoppingCartService.addProductItem({
+    // Open
+    const open: OpenShoppingCart = {
+      type: 'OpenShoppingCart',
+      data: { shoppingCartId, clientId, now: openedAt },
+    };
+    eventStore.appendToStream(
       shoppingCartId,
-      productItem: twoPairsOfShoes,
-    });
-    shoppingCartService.addProductItem({
-      shoppingCartId,
-      productItem: tShirt,
-    });
-    shoppingCartService.removeProductItem({
-      shoppingCartId,
-      productItem: pairOfShoes,
-    });
-    shoppingCartService.confirm({ shoppingCartId, now: confirmedAt });
+      ShoppingCart.open(
+        open.data.shoppingCartId,
+        open.data.clientId,
+        open.data.now,
+      ),
+    );
 
-    const cancel = () =>
-      shoppingCartService.cancel({ shoppingCartId, now: canceledAt });
+    // Add Two Pair of Shoes
+    const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: twoPairsOfShoes },
+    };
 
-    expect(cancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
+    let shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+
+    eventStore.appendToStream(
+      shoppingCartId,
+      shoppingCart.addProductItem(addTwoPairsOfShoes.data.productItem),
+    );
+
+    // Add T-Shirt
+    const addTShirt: AddProductItemToShoppingCart = {
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: tShirt },
+    };
+
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+
+    eventStore.appendToStream(
+      shoppingCartId,
+      shoppingCart.addProductItem(addTShirt.data.productItem),
+    );
+
+    // Remove pair of shoes
+    const removePairOfShoes: RemoveProductItemFromShoppingCart = {
+      type: 'RemoveProductItemFromShoppingCart',
+      data: { shoppingCartId, productItem: pairOfShoes },
+    };
+
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+    eventStore.appendToStream(
+      shoppingCartId,
+      shoppingCart.removeProductItem(removePairOfShoes.data.productItem),
+    );
+
+    // Confirm
+    const confirm: ConfirmShoppingCart = {
+      type: 'ConfirmShoppingCart',
+      data: { shoppingCartId, now: confirmedAt },
+    };
+
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+    eventStore.appendToStream(
+      shoppingCartId,
+      shoppingCart.confirm(confirm.data.now),
+    );
+
+    // Try Cancel
+    const cancel: CancelShoppingCart = {
+      type: 'CancelShoppingCart',
+      data: { shoppingCartId, now: canceledAt },
+    };
+    const onCancel = () => {
+      shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+      eventStore.appendToStream(
+        shoppingCartId,
+        shoppingCart.cancel(cancel.data.now),
+      );
+    };
+
+    expect(onCancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
     const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
 
@@ -207,7 +171,7 @@ describe('Getting state from events', () => {
       // },
     ]);
 
-    const shoppingCart = getShoppingCart(events);
+    shoppingCart = getShoppingCart(events);
 
     expect(shoppingCart).toBeInstanceOf(ShoppingCart);
     const actual = {

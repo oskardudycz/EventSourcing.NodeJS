@@ -1,43 +1,53 @@
+import {
+  PricedProductItem,
+  ShoppingCart,
+  ShoppingCartStatus,
+  ShoppingCartEvent,
+} from './shoppingCart';
+
 //////////////////////////////////////
 /// Commands
 //////////////////////////////////////
 
-import {
-  EventStore,
-  PricedProductItem,
-  ProductItemAddedToShoppingCart,
-  ProductItemRemovedFromShoppingCart,
-  ShoppingCart,
-  ShoppingCartCanceled,
-  ShoppingCartConfirmed,
-  ShoppingCartOpened,
-  ShoppingCartStatus,
-} from './businessLogic.solved.test';
-
 export type OpenShoppingCart = {
-  shoppingCartId: string;
-  clientId: string;
-  now: Date;
+  type: 'OpenShoppingCart';
+  data: {
+    shoppingCartId: string;
+    clientId: string;
+    now: Date;
+  };
 };
 
 export type AddProductItemToShoppingCart = {
-  shoppingCartId: string;
-  productItem: PricedProductItem;
+  type: 'AddProductItemToShoppingCart';
+  data: {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  };
 };
 
 export type RemoveProductItemFromShoppingCart = {
-  shoppingCartId: string;
-  productItem: PricedProductItem;
+  type: 'RemoveProductItemFromShoppingCart';
+  data: {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  };
 };
 
 export type ConfirmShoppingCart = {
-  shoppingCartId: string;
-  now: Date;
+  type: 'ConfirmShoppingCart';
+  data: {
+    shoppingCartId: string;
+    now: Date;
+  };
 };
 
 export type CancelShoppingCart = {
-  shoppingCartId: string;
-  now: Date;
+  type: 'CancelShoppingCart';
+  data: {
+    shoppingCartId: string;
+    now: Date;
+  };
 };
 
 export type ShoppingCartCommand =
@@ -74,9 +84,9 @@ export const assertProductItemExists = (
   }
 };
 
-export const openShoppingCart = (
-  command: OpenShoppingCart,
-): ShoppingCartOpened => {
+export const openShoppingCart = ({
+  data: command,
+}: OpenShoppingCart): ShoppingCartEvent => {
   return {
     type: 'ShoppingCartOpened',
     data: {
@@ -88,9 +98,9 @@ export const openShoppingCart = (
 };
 
 export const addProductItemToShoppingCart = (
-  command: AddProductItemToShoppingCart,
+  { data: command }: AddProductItemToShoppingCart,
   shoppingCart: ShoppingCart,
-): ProductItemAddedToShoppingCart => {
+): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
     throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
@@ -104,9 +114,9 @@ export const addProductItemToShoppingCart = (
 };
 
 export const removeProductItemFromShoppingCart = (
-  command: RemoveProductItemFromShoppingCart,
+  { data: command }: RemoveProductItemFromShoppingCart,
   shoppingCart: ShoppingCart,
-): ProductItemRemovedFromShoppingCart => {
+): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
     throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
@@ -123,9 +133,9 @@ export const removeProductItemFromShoppingCart = (
 };
 
 export const confirmShoppingCart = (
-  command: ConfirmShoppingCart,
+  { data: command }: ConfirmShoppingCart,
   shoppingCart: ShoppingCart,
-): ShoppingCartConfirmed => {
+): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
     throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
@@ -144,9 +154,9 @@ export const confirmShoppingCart = (
 };
 
 export const cancelShoppingCart = (
-  command: CancelShoppingCart,
+  { data: command }: CancelShoppingCart,
   shoppingCart: ShoppingCart,
-): ShoppingCartCanceled => {
+): ShoppingCartEvent => {
   if (shoppingCart.status !== ShoppingCartStatus.Pending) {
     throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
@@ -159,31 +169,3 @@ export const cancelShoppingCart = (
     },
   };
 };
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
-
-export const handleCommand =
-  <State, StreamEvent extends Event>(
-    evolve: (state: State, event: StreamEvent) => State,
-    getInitialState: () => State,
-  ) =>
-  (
-    eventStore: EventStore,
-    id: string,
-    handle: (state: State) => StreamEvent | StreamEvent[],
-  ) => {
-    const events = eventStore.readStream<StreamEvent>(id);
-
-    const state = events.reduce<State>(evolve, getInitialState());
-
-    const result = handle(state);
-
-    if (Array.isArray(result)) eventStore.appendToStream(id, ...result);
-    else eventStore.appendToStream(id, result);
-  };

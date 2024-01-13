@@ -1,52 +1,61 @@
-//////////////////////////////////////
-/// Commands
-//////////////////////////////////////
-
 import {
-  EventStore,
   PricedProductItem,
   ShoppingCart,
   ShoppingCartEvent,
   ShoppingCartStatus,
-} from './businessLogic.solved.test';
+} from './shoppingCart';
+
+//////////////////////////////////////
+/// Commands
+//////////////////////////////////////
+
+export type OpenShoppingCart = {
+  type: 'OpenShoppingCart';
+  data: {
+    shoppingCartId: string;
+    clientId: string;
+    now: Date;
+  };
+};
+
+export type AddProductItemToShoppingCart = {
+  type: 'AddProductItemToShoppingCart';
+  data: {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  };
+};
+
+export type RemoveProductItemFromShoppingCart = {
+  type: 'RemoveProductItemFromShoppingCart';
+  data: {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  };
+};
+
+export type ConfirmShoppingCart = {
+  type: 'ConfirmShoppingCart';
+  data: {
+    shoppingCartId: string;
+    now: Date;
+  };
+};
+
+export type CancelShoppingCart = {
+  type: 'CancelShoppingCart';
+  data: {
+    shoppingCartId: string;
+    now: Date;
+  };
+};
 
 export type ShoppingCartCommand =
-  | {
-      type: 'OpenShoppingCart';
-      data: {
-        shoppingCartId: string;
-        clientId: string;
-        now: Date;
-      };
-    }
-  | {
-      type: 'AddProductItemToShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'RemoveProductItemFromShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ConfirmShoppingCart';
-      data: {
-        shoppingCartId: string;
-        now: Date;
-      };
-    }
-  | {
-      type: 'CancelShoppingCart';
-      data: {
-        shoppingCartId: string;
-        now: Date;
-      };
-    };
+  | OpenShoppingCart
+  | AddProductItemToShoppingCart
+  | RemoveProductItemFromShoppingCart
+  | ConfirmShoppingCart
+  | CancelShoppingCart;
 
 //////////////////////////////////////
 /// Decide
@@ -78,9 +87,12 @@ export const assertProductItemExists = (
 export const decide = (
   { type, data: command }: ShoppingCartCommand,
   shoppingCart: ShoppingCart,
-): ShoppingCartEvent | ShoppingCartEvent[] => {
+): ShoppingCartEvent => {
   switch (type) {
     case 'OpenShoppingCart': {
+      if (shoppingCart.status !== ShoppingCartStatus.Empty) {
+        throw new Error(ShoppingCartErrors.CART_ALREADY_EXISTS);
+      }
       return {
         type: 'ShoppingCartOpened',
         data: {
@@ -158,14 +170,6 @@ export const decide = (
   }
 };
 
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
-
 export type Command<
   CommandType extends string = string,
   CommandData extends Record<string, unknown> = Record<string, unknown>,
@@ -173,30 +177,3 @@ export type Command<
   type: Readonly<CommandType>;
   data: Readonly<CommandData>;
 }>;
-
-export type Decider<
-  State,
-  CommandType extends Command,
-  StreamEvent extends Event,
-> = {
-  decide: (command: CommandType, state: State) => StreamEvent | StreamEvent[];
-  evolve: (currentState: State, event: StreamEvent) => State;
-  getInitialState: () => State;
-};
-
-export const CommandHandler =
-  <State, CommandType extends Command, StreamEvent extends Event>({
-    decide,
-    evolve,
-    getInitialState,
-  }: Decider<State, CommandType, StreamEvent>) =>
-  (eventStore: EventStore, streamId: string, command: CommandType): void => {
-    const events = eventStore.readStream<StreamEvent>(streamId);
-
-    const state = events.reduce<State>(evolve, getInitialState());
-
-    const result = decide(command, state);
-
-    if (Array.isArray(result)) eventStore.appendToStream(streamId, ...result);
-    else eventStore.appendToStream(streamId, result);
-  };
