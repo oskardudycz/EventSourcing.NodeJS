@@ -132,7 +132,3 @@ export const evolve = (
       };
   }
 };
-
-export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  return events.reduce<ShoppingCart>(evolve, {} as ShoppingCart);
-};
