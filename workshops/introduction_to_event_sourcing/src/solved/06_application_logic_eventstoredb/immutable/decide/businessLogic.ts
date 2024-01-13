@@ -1,8 +1,11 @@
+import { Decider } from './decider';
 import {
   PricedProductItem,
   ShoppingCart,
   ShoppingCartEvent,
   ShoppingCartStatus,
+  emptyShoppingCart,
+  evolve,
 } from './shoppingCart';
 
 //////////////////////////////////////
@@ -170,10 +173,12 @@ export const decide = (
   }
 };
 
-export type Command<
-  CommandType extends string = string,
-  CommandData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<CommandType>;
-  data: Readonly<CommandData>;
-}>;
+export const decider: Decider<
+  ShoppingCart,
+  ShoppingCartCommand,
+  ShoppingCartEvent
+> = {
+  decide,
+  evolve,
+  getInitialState: () => emptyShoppingCart,
+};
