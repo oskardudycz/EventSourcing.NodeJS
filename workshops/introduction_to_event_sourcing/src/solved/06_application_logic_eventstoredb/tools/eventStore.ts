@@ -6,7 +6,24 @@ import {
 } from '@eventstore/db-client';
 import { Event } from './events';
 
-export const getEventStore = (eventStore: EventStoreDBClient) => {
+export interface EventStore {
+  aggregateStream<Entity, E extends Event>(
+    streamName: string,
+    options: {
+      evolve: (currentState: Entity, event: E) => Entity;
+      getInitialState: () => Entity;
+    },
+  ): Promise<Entity | null>;
+
+  readStream<E extends Event>(streamName: string): Promise<E[]>;
+
+  appendToStream<E extends Event>(
+    streamId: string,
+    ...events: E[]
+  ): Promise<bigint>;
+}
+
+export const getEventStore = (eventStore: EventStoreDBClient): EventStore => {
   return {
     aggregateStream: async <Entity, E extends Event>(
       streamName: string,

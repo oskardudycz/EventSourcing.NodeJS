@@ -5,19 +5,21 @@ import { EventStoreDBClient } from '@eventstore/db-client';
 import { getEventStore } from '../../tools/eventStore';
 import { TestResponse } from '../../tools/testing';
 import { getApplication } from '../../tools/api';
-import { router } from './api';
+import { shoppingCartApi } from './api';
 import {
   ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';
+import { Application } from 'express';
 
 describe('Application logic', () => {
-  const app = getApplication(router);
+  let app: Application;
   let eventStoreDB: EventStoreDBClient;
 
   beforeAll(async () => {
     eventStoreDB = await getEventStoreDBTestClient();
+    app = getApplication(shoppingCartApi(eventStoreDB));
   });
 
   afterAll(() => eventStoreDB.dispose());
