@@ -15,8 +15,8 @@ describe('Application logic', () => {
   let eventStoreDB: EventStoreDBClient;
 
   beforeAll(async () => {
-    app = getApplication(shoppingCartApi);
     eventStoreDB = await getEventStoreDBTestClient();
+    app = getApplication(shoppingCartApi(eventStoreDB));
   });
 
   afterAll(() => eventStoreDB.dispose());
@@ -82,7 +82,7 @@ describe('Application logic', () => {
       .delete(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
       )
-      .expect(200);
+      .expect(204);
 
     ///////////////////////////////////////////////////
     // 5. Confirm cart
