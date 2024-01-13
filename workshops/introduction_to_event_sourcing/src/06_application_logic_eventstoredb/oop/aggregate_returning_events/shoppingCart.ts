@@ -1,5 +1,5 @@
 import { ShoppingCartErrors } from './businessLogic';
-import { Event } from './core';
+import { Event } from '../../tools/events';
 
 export interface ProductItem {
   productId: string;
