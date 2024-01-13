@@ -9,8 +9,10 @@ import http from 'http';
 import 'express-async-errors';
 import { ProblemDocument } from 'http-problem-details';
 
-export const getApplication = (router: Router) => {
+export const getApplication = (...apis: ((router: Router) => void)[]) => {
   const app: Application = express();
+
+  const router = Router();
 
   app.set('etag', false);
   app.use(express.json());
@@ -20,6 +22,9 @@ export const getApplication = (router: Router) => {
     }),
   );
 
+  for (const api of apis) {
+    api(router);
+  }
   app.use(router);
 
   app.use(problemDetailsMiddleware);
