@@ -1,218 +1,30 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { v4 as uuid } from 'uuid';
+import { getEventStore } from './core';
+import {
+  PricedProductItem,
+  ShoppingCartEvent,
+  ShoppingCartStatus,
+  getShoppingCart,
+} from './shoppingCart';
+import {
+  AddProductItemToShoppingCart,
+  CancelShoppingCart,
+  ConfirmShoppingCart,
+  OpenShoppingCart,
+  RemoveProductItemFromShoppingCart,
+  ShoppingCartErrors,
+} from './businessLogic';
 
-export interface ProductItem {
-  productId: string;
-  quantity: number;
-}
-
-export type PricedProductItem = ProductItem & {
-  unitPrice: number;
-};
-
-export type ShoppingCartEvent =
-  | {
-      type: 'ShoppingCartOpened';
-      data: {
-        shoppingCartId: string;
-        clientId: string;
-        openedAt: Date;
-      };
-    }
-  | {
-      type: 'ProductItemAddedToShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ProductItemRemovedFromShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ShoppingCartConfirmed';
-      data: {
-        shoppingCartId: string;
-        confirmedAt: Date;
-      };
-    }
-  | {
-      type: 'ShoppingCartCanceled';
-      data: {
-        shoppingCartId: string;
-        canceledAt: Date;
-      };
-    };
-
-export enum ShoppingCartStatus {
-  Pending = 'Pending',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
-
-export const merge = <T>(
-  array: T[],
-  item: T,
-  where: (current: T) => boolean,
-  onExisting: (current: T) => T,
-  onNotFound: () => T | undefined = () => undefined,
-) => {
-  let wasFound = false;
-
-  const result = array
-    // merge the existing item if matches condition
-    .map((p: T) => {
-      if (!where(p)) return p;
-
-      wasFound = true;
-      return onExisting(p);
-    })
-    // filter out item if undefined was returned
-    // for cases of removal
-    .filter((p) => p !== undefined)
-    // make TypeScript happy
-    .map((p) => {
-      if (!p) throw Error('That should not happen');
-
-      return p;
-    });
-
-  // if item was not found and onNotFound action is defined
-  // try to generate new item
-  if (!wasFound) {
-    const result = onNotFound();
-
-    if (result !== undefined) return [...array, item];
-  }
-
-  return result;
-};
-
-export type ShoppingCart = Readonly<{
-  id: string;
-  clientId: string;
-  status: ShoppingCartStatus;
-  productItems: PricedProductItem[];
-  openedAt: Date;
-  confirmedAt?: Date;
-  canceledAt?: Date;
-}>;
-
-export const evolve = (
-  state: ShoppingCart,
-  { type, data: event }: ShoppingCartEvent,
-): ShoppingCart => {
-  switch (type) {
-    case 'ShoppingCartOpened':
-      return {
-        id: event.shoppingCartId,
-        clientId: event.clientId,
-        openedAt: event.openedAt,
-        productItems: [],
-        status: ShoppingCartStatus.Pending,
-      };
-    case 'ProductItemAddedToShoppingCart': {
-      const { productItems } = state;
-      const { productItem } = event;
-
-      return {
-        ...state,
-        productItems: merge(
-          productItems,
-          productItem,
-          (p) =>
-            p.productId === productItem.productId &&
-            p.unitPrice === productItem.unitPrice,
-          (p) => {
-            return {
-              ...p,
-              quantity: p.quantity + productItem.quantity,
-            };
-          },
-          () => productItem,
-        ),
-      };
-    }
-    case 'ProductItemRemovedFromShoppingCart': {
-      const { productItems } = state;
-      const { productItem } = event;
-      return {
-        ...state,
-        productItems: merge(
-          productItems,
-          productItem,
-          (p) =>
-            p.productId === productItem.productId &&
-            p.unitPrice === productItem.unitPrice,
-          (p) => {
-            return {
-              ...p,
-              quantity: p.quantity - productItem.quantity,
-            };
-          },
-        ),
-      };
-    }
-    case 'ShoppingCartConfirmed':
-      return {
-        ...state,
-        status: ShoppingCartStatus.Confirmed,
-        confirmedAt: event.confirmedAt,
-      };
-    case 'ShoppingCartCanceled':
-      return {
-        ...state,
-        status: ShoppingCartStatus.Canceled,
-        canceledAt: event.canceledAt,
-      };
-  }
-};
-
-export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  // 1. Add logic here
-  return events.reduce<ShoppingCart>(evolve, {} as ShoppingCart);
-};
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
-
-export interface EventStore {
-  readStream<E extends Event>(streamId: string): E[];
-  appendToStream(streamId: string, ...events: Event[]): void;
-}
-
-export const getEventStore = () => {
-  const streams = new Map<string, Event[]>();
-
-  return {
-    readStream: <E extends Event>(streamId: string): E[] => {
-      return streams.get(streamId)?.map((e) => <E>e) ?? [];
-    },
-    appendToStream: (streamId: string, ...events: Event[]): void => {
-      const current = streams.get(streamId) ?? [];
-
-      streams.set(streamId, [...current, ...events]);
-    },
-  };
-};
-
-describe('Getting state from events', () => {
-  it('Should return the state from the sequence of events', () => {
+describe('Business logic', () => {
+  it('Should handle commands correctly', () => {
     const eventStore = getEventStore();
     const shoppingCartId = uuid();
 
     const clientId = uuid();
     const openedAt = new Date();
     const confirmedAt = new Date();
-    // const canceledAt = new Date();
+    const canceledAt = new Date();
 
     const shoesId = uuid();
 
@@ -234,8 +46,71 @@ describe('Getting state from events', () => {
       unitPrice: 5,
     };
 
-    // TODO: Fill the events store results of your business logic
-    // to be the same as events below
+    // eslint-disable-next-line prefer-const
+    let result: ShoppingCartEvent[] = [];
+
+    // Open
+    const open: OpenShoppingCart = {
+      type: 'OpenShoppingCart',
+      data: { shoppingCartId, clientId, now: openedAt },
+    };
+    // result = // run your business logic here
+
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Add Two Pair of Shoes
+    const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: twoPairsOfShoes },
+    };
+
+    let state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    // result = // run your business logic here based on command and state
+
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Add T-Shirt
+    const addTShirt: AddProductItemToShoppingCart = {
+      type: 'AddProductItemToShoppingCart',
+      data: { shoppingCartId, productItem: tShirt },
+    };
+
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    // result = // run your business logic here based on command and state
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Remove pair of shoes
+    const removePairOfShoes: RemoveProductItemFromShoppingCart = {
+      type: 'RemoveProductItemFromShoppingCart',
+      data: { shoppingCartId, productItem: pairOfShoes },
+    };
+
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    // result = // run your business logic here based on command and state
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Confirm
+    const confirm: ConfirmShoppingCart = {
+      type: 'ConfirmShoppingCart',
+      data: { shoppingCartId, now: confirmedAt },
+    };
+
+    state = getShoppingCart(eventStore.readStream(shoppingCartId));
+    // result = // run your business logic here based on command and state
+    eventStore.appendToStream(shoppingCartId, ...result);
+
+    // Try Cancel
+    const cancel: CancelShoppingCart = {
+      type: 'CancelShoppingCart',
+      data: { shoppingCartId, now: canceledAt },
+    };
+    const onCancel = () => {
+      state = getShoppingCart(eventStore.readStream(shoppingCartId));
+      // result = // run your business logic here based on command and state
+      eventStore.appendToStream(shoppingCartId, ...result);
+    };
+
+    expect(onCancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
 
     const events = eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
 
