@@ -24,12 +24,12 @@ Follow the instructions in exercises folders.
    - [EventStoreDB](./src/03_appending_events_eventstoredb/)
 4. Getting State from events
    - [EventStoreDB](./src/04_getting_state_from_events_eventstoredb/)
-5. Business logic:
-   - [General](./src/05_business_logic/)
-   - [EventStoreDB](./src/06_business_logic_eventstoredb/)
-6. Optimistic Concurrency:
+5. [Business logic](./src/05_business_logic/)
+6. Application logic:
+   - [EventStoreDB](./src/06_application_logic_eventstoredb/)
+7. Optimistic Concurrency:
    - [EventStoreDB](./src/07_optimistic_concurrency_eventstoredb/)
-7. Projections:
+8. Projections:
    - [General](./src/08_projections_single_stream/)
    - [Idempotency](./src/09_projections_single_stream_idempotency/)
    - [Eventual Consistency](./src/10_projections_single_stream_eventual_consistency/)
