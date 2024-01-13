@@ -6,11 +6,7 @@ import { getEventStore } from '../../tools/eventStore';
 import { TestResponse } from '../../tools/testing';
 import { getApplication } from '../../tools/api';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
-import {
-  ShoppingCartEvent,
-  ShoppingCartStatus,
-  getShoppingCart,
-} from './shoppingCart';
+import { ShoppingCartEvent } from './shoppingCart';
 import { Application } from 'express';
 import { ShoppingCartErrors } from './businessLogic';
 
