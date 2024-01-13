@@ -6,9 +6,11 @@ import { getEventStore } from '../../tools/eventStore';
 import { TestResponse } from '../../tools/testing';
 import { getApplication } from '../../tools/api';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
-import { ShoppingCartEvent } from './shoppingCart';
+import { ShoppingCart, ShoppingCartEvent } from './shoppingCart';
 import { Application } from 'express';
 import { ShoppingCartErrors } from './businessLogic';
+import { ShoppingCartService } from './applicationService';
+import { EventStoreRepository } from './core/repository';
 
 describe('Application logic', () => {
   let app: Application;
@@ -16,7 +18,17 @@ describe('Application logic', () => {
 
   beforeAll(async () => {
     eventStoreDB = await getEventStoreDBTestClient();
-    app = getApplication(shoppingCartApi);
+    const repository = new EventStoreRepository<
+      ShoppingCart,
+      ShoppingCartEvent
+    >(
+      getEventStore(eventStoreDB),
+      ShoppingCart.default,
+      ShoppingCart.evolve,
+      mapShoppingCartStreamId,
+    );
+    const service = new ShoppingCartService(repository);
+    app = getApplication(shoppingCartApi(service));
   });
 
   afterAll(() => eventStoreDB.dispose());
