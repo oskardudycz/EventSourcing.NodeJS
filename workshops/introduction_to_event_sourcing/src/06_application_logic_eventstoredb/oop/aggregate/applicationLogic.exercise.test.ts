@@ -1,160 +1,128 @@
+import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { getEventStore } from '../../tools/eventStore';
+import { TestResponse } from '../../tools/testing';
+import { getApplication } from '../../tools/api';
+import { mapShoppingCartStreamId, shoppingCartApi } from './api';
 import {
-  PricedProductItem,
-  ShoppingCart,
   ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';
-import {
-  AddProductItemToShoppingCart,
-  CancelShoppingCart,
-  ConfirmShoppingCart,
-  OpenShoppingCart,
-  RemoveProductItemFromShoppingCart,
-  ShoppingCartErrors,
-} from './businessLogic';
+import { Application } from 'express';
+import { ShoppingCartErrors } from './businessLogic';
 
-describe('Business logic', () => {
+describe('Application logic', () => {
+  let app: Application;
   let eventStoreDB: EventStoreDBClient;
 
   beforeAll(async () => {
+    app = getApplication(shoppingCartApi);
     eventStoreDB = await getEventStoreDBTestClient();
   });
 
   afterAll(() => eventStoreDB.dispose());
 
-  it('Should handle commands correctly', async () => {
-    const eventStore = getEventStore(eventStoreDB);
-    const shoppingCartId = uuid();
-
+  it('Should handle requests correctly', async () => {
     const clientId = uuid();
-    const openedAt = new Date();
-    const confirmedAt = new Date();
-    const canceledAt = new Date();
+    ///////////////////////////////////////////////////
+    // 1. Open Shopping Cart
+    ///////////////////////////////////////////////////
+    const response = (await request(app)
+      .post(`/clients/${clientId}/shopping-carts`)
+      .send()
+      .expect(201)) as TestResponse<{ id: string }>;
 
-    const shoesId = uuid();
+    const current = response.body;
 
-    const twoPairsOfShoes: PricedProductItem = {
-      productId: shoesId,
+    if (!current.id) {
+      expect(false).toBeTruthy();
+      return;
+    }
+    expect(current.id).toBeDefined();
+
+    const shoppingCartId = current.id;
+
+    ///////////////////////////////////////////////////
+    // 2. Add Two Pair of Shoes
+    ///////////////////////////////////////////////////
+    const twoPairsOfShoes = {
       quantity: 2,
-      unitPrice: 100,
+      productId: '123',
     };
-    const pairOfShoes: PricedProductItem = {
-      productId: shoesId,
+    await request(app)
+      .post(
+        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
+      )
+      .send(twoPairsOfShoes)
+      .expect(204);
+
+    ///////////////////////////////////////////////////
+    // 3. Add T-Shirt
+    ///////////////////////////////////////////////////
+    const tShirt = {
+      productId: '456',
+      quantity: 1,
+    };
+    await request(app)
+      .post(
+        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
+      )
+      //.set('If-Match', currentRevision)
+      .send(tShirt)
+      .expect(204);
+
+    ///////////////////////////////////////////////////
+    // 4. Remove pair of shoes
+    ///////////////////////////////////////////////////
+    const pairOfShoes = {
+      productId: '123',
       quantity: 1,
       unitPrice: 100,
     };
+    await request(app)
+      .delete(
+        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
+      )
+      .expect(200);
 
-    const tShirtId = uuid();
-    const tShirt: PricedProductItem = {
-      productId: tShirtId,
-      quantity: 1,
-      unitPrice: 5,
-    };
+    ///////////////////////////////////////////////////
+    // 5. Confirm cart
+    ///////////////////////////////////////////////////
 
-    // Open
-    const open: OpenShoppingCart = {
-      type: 'OpenShoppingCart',
-      data: { shoppingCartId, clientId, now: openedAt },
-    };
-    let shoppingCart = ShoppingCart.open(
-      open.data.shoppingCartId,
-      open.data.clientId,
-      open.data.now,
-    );
-    await eventStore.appendToStream(
-      shoppingCartId,
-      ...shoppingCart.dequeueUncommitedEvents(),
-    );
+    await request(app)
+      .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
+      .send()
+      .expect(204);
 
-    // Add Two Pair of Shoes
-    const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
-      type: 'AddProductItemToShoppingCart',
-      data: { shoppingCartId, productItem: twoPairsOfShoes },
-    };
+    ///////////////////////////////////////////////////
+    // 6. Try Cancel Cart
+    ///////////////////////////////////////////////////
 
-    shoppingCart = getShoppingCart(await eventStore.readStream(shoppingCartId));
-    shoppingCart.addProductItem(addTwoPairsOfShoes.data.productItem);
+    await request(app)
+      .delete(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
+      .send()
+      .expect((response) => {
+        expect(response.statusCode).toBe(500);
+        expect(response.body).toMatchObject({
+          detail: ShoppingCartErrors.CART_IS_ALREADY_CLOSED,
+        });
+      });
 
-    await eventStore.appendToStream(
-      shoppingCartId,
-      ...shoppingCart.dequeueUncommitedEvents(),
+    const eventStore = getEventStore(eventStoreDB);
+    const events = await eventStore.readStream<ShoppingCartEvent>(
+      mapShoppingCartStreamId(shoppingCartId),
     );
 
-    // Add T-Shirt
-    const addTShirt: AddProductItemToShoppingCart = {
-      type: 'AddProductItemToShoppingCart',
-      data: { shoppingCartId, productItem: tShirt },
-    };
-
-    shoppingCart = getShoppingCart(await eventStore.readStream(shoppingCartId));
-    shoppingCart.addProductItem(addTShirt.data.productItem);
-
-    await eventStore.appendToStream(
-      shoppingCartId,
-      ...shoppingCart.dequeueUncommitedEvents(),
-    );
-
-    // Remove pair of shoes
-    const removePairOfShoes: RemoveProductItemFromShoppingCart = {
-      type: 'RemoveProductItemFromShoppingCart',
-      data: { shoppingCartId, productItem: pairOfShoes },
-    };
-
-    shoppingCart = getShoppingCart(await eventStore.readStream(shoppingCartId));
-    shoppingCart.removeProductItem(removePairOfShoes.data.productItem);
-
-    await eventStore.appendToStream(
-      shoppingCartId,
-      ...shoppingCart.dequeueUncommitedEvents(),
-    );
-
-    // Confirm
-    const confirm: ConfirmShoppingCart = {
-      type: 'ConfirmShoppingCart',
-      data: { shoppingCartId, now: confirmedAt },
-    };
-
-    shoppingCart = getShoppingCart(await eventStore.readStream(shoppingCartId));
-    shoppingCart.confirm(confirm.data.now);
-
-    await eventStore.appendToStream(
-      shoppingCartId,
-      ...shoppingCart.dequeueUncommitedEvents(),
-    );
-
-    const cancel: CancelShoppingCart = {
-      type: 'CancelShoppingCart',
-      data: { shoppingCartId, now: canceledAt },
-    };
-    const onCancel = async () => {
-      shoppingCart = getShoppingCart(
-        await eventStore.readStream(shoppingCartId),
-      );
-      shoppingCart.cancel(cancel.data.now);
-
-      await eventStore.appendToStream(
-        shoppingCartId,
-        ...shoppingCart.dequeueUncommitedEvents(),
-      );
-    };
-
-    expect(onCancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
-
-    const events =
-      await eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
-
-    expect(events).toEqual([
+    expect(events).toMatchObject([
       {
         type: 'ShoppingCartOpened',
         data: {
           shoppingCartId,
           clientId,
-          openedAt,
+          //openedAt,
         },
       },
       {
@@ -179,7 +147,7 @@ describe('Business logic', () => {
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId,
-          confirmedAt,
+          //confirmedAt,
         },
       },
       // This should fail
@@ -191,26 +159,5 @@ describe('Business logic', () => {
       //   },
       // },
     ]);
-
-    shoppingCart = getShoppingCart(events);
-
-    expect(shoppingCart).toBeInstanceOf(ShoppingCart);
-    const actual = {
-      shoppingCartId: shoppingCart.id,
-      clientId: shoppingCart.clientId,
-      status: shoppingCart.status,
-      openedAt: shoppingCart.openedAt,
-      productItems: shoppingCart.productItems,
-      confirmedAt: shoppingCart.confirmedAt,
-    };
-
-    expect(actual).toEqual({
-      shoppingCartId,
-      clientId,
-      status: ShoppingCartStatus.Confirmed,
-      openedAt,
-      productItems: [pairOfShoes, tShirt],
-      confirmedAt,
-    });
   });
 });
