@@ -13,6 +13,7 @@ export abstract class Aggregate<E extends Event> {
 
   protected enqueue = (event: E) => {
     this.#uncommitedEvents = [...this.#uncommitedEvents, event];
+    this.evolve(event);
   };
 
   dequeueUncommitedEvents = (): Event[] => {
