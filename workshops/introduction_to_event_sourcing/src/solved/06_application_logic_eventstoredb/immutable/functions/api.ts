@@ -7,9 +7,20 @@ import { sendCreated } from '../../tools/api';
 import { getEventStore } from '../../tools/eventStore';
 import { v4 as uuid } from 'uuid';
 import { handleCommand } from './commandHandler';
-import { ShoppingCart, evolve } from './shoppingCart';
+import {
+  PricedProductItem,
+  ProductItem,
+  ShoppingCart,
+  evolve,
+} from './shoppingCart';
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { openShoppingCart } from './businessLogic';
+import {
+  addProductItemToShoppingCart,
+  cancelShoppingCart,
+  confirmShoppingCart,
+  openShoppingCart,
+  removeProductItemFromShoppingCart,
+} from './businessLogic';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
@@ -18,6 +29,10 @@ const handle = handleCommand(
   () => ({}) as ShoppingCart,
   mapShoppingCartStreamId,
 );
+
+const dummyPriceProvider = (_productId: string) => {
+  return 100;
+};
 
 export const shoppingCartApi =
   (eventStoreDB: EventStoreDBClient) => (router: Router) => {
@@ -43,17 +58,31 @@ export const shoppingCartApi =
 
     router.post(
       '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-      (request: AddProductItemRequest, response: Response) => {
-        const _shoppingCartId = assertNotEmptyString(
+      async (request: AddProductItemRequest, response: Response) => {
+        const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
-        const _productItem = {
+        const productItem: ProductItem = {
           productId: assertNotEmptyString(request.body.productId),
           quantity: assertPositiveNumber(request.body.quantity),
         };
+        const unitPrice = dummyPriceProvider(productItem.productId);
 
-        // Fill the gap here
-        throw new Error('Not Implemented!');
+        await handle(eventStore, shoppingCartId, (state) =>
+          addProductItemToShoppingCart(
+            {
+              type: 'AddProductItemToShoppingCart',
+              data: {
+                shoppingCartId,
+                productItem: {
+                  ...productItem,
+                  unitPrice,
+                },
+              },
+            },
+            state,
+          ),
+        );
 
         response.sendStatus(204);
       },
@@ -62,17 +91,28 @@ export const shoppingCartApi =
     // Remove Product Item
     router.delete(
       '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
-      (request: Request, response: Response) => {
-        const _shoppingCartId = assertNotEmptyString(
+      async (request: Request, response: Response) => {
+        const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
-        const _productItem = {
+        const productItem: PricedProductItem = {
           productId: assertNotEmptyString(request.query.productId),
-          quantity: assertPositiveNumber(request.query.quantity),
+          quantity: assertPositiveNumber(Number(request.query.quantity)),
+          unitPrice: assertPositiveNumber(Number(request.query.unitPrice)),
         };
 
-        // Fill the gap here
-        throw new Error('Not Implemented!');
+        await handle(eventStore, shoppingCartId, (state) =>
+          removeProductItemFromShoppingCart(
+            {
+              type: 'RemoveProductItemFromShoppingCart',
+              data: {
+                shoppingCartId,
+                productItem,
+              },
+            },
+            state,
+          ),
+        );
 
         response.sendStatus(204);
       },
@@ -81,13 +121,23 @@ export const shoppingCartApi =
     // Confirm Shopping Cart
     router.post(
       '/clients/:clientId/shopping-carts/:shoppingCartId/confirm',
-      (request: Request, response: Response) => {
-        const _shoppingCartId = assertNotEmptyString(
+      async (request: Request, response: Response) => {
+        const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
 
-        // Fill the gap here
-        throw new Error('Not Implemented!');
+        await handle(eventStore, shoppingCartId, (state) =>
+          confirmShoppingCart(
+            {
+              type: 'ConfirmShoppingCart',
+              data: {
+                shoppingCartId,
+                now: new Date(),
+              },
+            },
+            state,
+          ),
+        );
 
         response.sendStatus(204);
       },
@@ -96,13 +146,23 @@ export const shoppingCartApi =
     // Cancel Shopping Cart
     router.delete(
       '/clients/:clientId/shopping-carts/:shoppingCartId',
-      (request: Request, response: Response) => {
-        const _shoppingCartId = assertNotEmptyString(
+      async (request: Request, response: Response) => {
+        const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
 
-        // Fill the gap here
-        throw new Error('Not Implemented!');
+        await handle(eventStore, shoppingCartId, (state) =>
+          cancelShoppingCart(
+            {
+              type: 'CancelShoppingCart',
+              data: {
+                shoppingCartId,
+                now: new Date(),
+              },
+            },
+            state,
+          ),
+        );
 
         response.sendStatus(204);
       },

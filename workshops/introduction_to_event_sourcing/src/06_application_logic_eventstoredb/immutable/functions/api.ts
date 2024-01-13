@@ -5,6 +5,9 @@ import {
 } from '../../tools/validation';
 import { sendCreated } from '../../tools/api';
 import { v4 as uuid } from 'uuid';
+import { PricedProductItem, ProductItem } from './shoppingCart';
+
+export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
 export const shoppingCartApi = (router: Router) => {
   // Open Shopping cart
@@ -27,7 +30,7 @@ export const shoppingCartApi = (router: Router) => {
       const _shoppingCartId = assertNotEmptyString(
         request.params.shoppingCartId,
       );
-      const _productItem = {
+      const _productItem: ProductItem = {
         productId: assertNotEmptyString(request.body.productId),
         quantity: assertPositiveNumber(request.body.quantity),
       };
@@ -46,9 +49,10 @@ export const shoppingCartApi = (router: Router) => {
       const _shoppingCartId = assertNotEmptyString(
         request.params.shoppingCartId,
       );
-      const _productItem = {
+      const _productItem: PricedProductItem = {
         productId: assertNotEmptyString(request.query.productId),
-        quantity: assertPositiveNumber(request.query.quantity),
+        quantity: assertPositiveNumber(Number(request.query.quantity)),
+        unitPrice: assertPositiveNumber(Number(request.query.unitPrice)),
       };
 
       // Fill the gap here

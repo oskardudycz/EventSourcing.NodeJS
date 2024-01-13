@@ -5,13 +5,14 @@ import { EventStoreDBClient } from '@eventstore/db-client';
 import { getEventStore } from '../../tools/eventStore';
 import { TestResponse } from '../../tools/testing';
 import { getApplication } from '../../tools/api';
-import { shoppingCartApi } from './api';
+import { mapShoppingCartStreamId, shoppingCartApi } from './api';
 import {
   ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';
 import { Application } from 'express';
+import { ShoppingCartErrors } from './businessLogic';
 
 describe('Application logic', () => {
   let app: Application;
@@ -71,7 +72,7 @@ describe('Application logic', () => {
       )
       //.set('If-Match', currentRevision)
       .send(tShirt)
-      .expect(200);
+      .expect(204);
 
     ///////////////////////////////////////////////////
     // 4. Remove pair of shoes
@@ -79,10 +80,11 @@ describe('Application logic', () => {
     const pairOfShoes = {
       productId: '123',
       quantity: 1,
+      unitPrice: 100,
     };
     await request(app)
       .delete(
-        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`,
+        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
       )
       .expect(200);
 
@@ -93,7 +95,7 @@ describe('Application logic', () => {
     await request(app)
       .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
       .send()
-      .expect(200);
+      .expect(204);
 
     ///////////////////////////////////////////////////
     // 6. Try Cancel Cart
@@ -104,11 +106,15 @@ describe('Application logic', () => {
       .send()
       .expect((response) => {
         expect(response.statusCode).toBe(500);
+        expect(response.body).toMatchObject({
+          detail: ShoppingCartErrors.CART_IS_ALREADY_CLOSED,
+        });
       });
 
     const eventStore = getEventStore(eventStoreDB);
-    const events =
-      await eventStore.readStream<ShoppingCartEvent>(shoppingCartId);
+    const events = await eventStore.readStream<ShoppingCartEvent>(
+      mapShoppingCartStreamId(shoppingCartId),
+    );
 
     expect(events).toMatchObject([
       {
@@ -153,18 +159,5 @@ describe('Application logic', () => {
       //   },
       // },
     ]);
-
-    const shoppingCart = getShoppingCart(events);
-
-    expect(shoppingCart).toMatchObject({
-      id: shoppingCartId,
-      clientId,
-      status: ShoppingCartStatus.Confirmed,
-      productItems: [pairOfShoes, tShirt],
-    });
-
-    expect(shoppingCart.openedAt).not.toBeUndefined();
-    expect(shoppingCart.confirmedAt).not.toBeUndefined();
-    expect(shoppingCart.openedAt < shoppingCart.confirmedAt!).toBeTruthy();
   });
 });
