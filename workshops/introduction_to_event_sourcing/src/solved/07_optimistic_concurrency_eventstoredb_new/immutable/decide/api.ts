@@ -58,7 +58,7 @@ export const shoppingCartApi =
             type: 'OpenShoppingCart',
             data: { clientId, shoppingCartId, now: new Date() },
           },
-          { expectedRevision: getExpectedRevision(request) },
+          { expectedRevision: 'no_stream' },
         );
 
         setNextExpectedRevision(response, nextExpectedRevision);
