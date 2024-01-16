@@ -1,4 +1,4 @@
-# Exercise 06 - Application Logic
+# Exercise 07 - Application Logic with Optimistic Concurrency
 
 Having the following shopping cart process:
 
@@ -11,7 +11,11 @@ Having the following shopping cart process:
 
 ![events](./assets/events.jpg)
 
-And business logic implemented in the [previous exercise](../05_business_logic/) write the application code that will _glue_ the API defined in `api.ts` files with the domain code.
+And business logic and application code implemented in the [previous exercise](../06_application_logic_eventstoredb/) update the application code to handle correctly optimistic concurrency. You need to map ETag conditional headers into expected stream revision correctly. Read more:
+
+- [Optimistic concurrency for pessimistic times](https://event-driven.io/en/optimistic_concurrency_for_pessimistic_times/)
+- [MDN - HTTP conditional requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests)
+- [EventStoreDB Documentation - Handling concurrency](https://developers.eventstore.com/clients/grpc/appending-events.html#handling-concurrency)
 
 This time you'll use EventStoreDB instead of the mocked one. Run `docker-compose up` before running test code to have database set up.
 
@@ -22,10 +26,6 @@ There are four variations:
 3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/functions/applicationLogic.exercise.test.ts](./immutable/functions/applicationLogic.exercise.test.ts),
 4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/businessLogic.exercise.test.ts](./immutable/businessLogic.exercise.test.ts),
 
-Select your preferred approach (or both) to solve this use case.
+## Solution
 
-Read also my articles on business logic composition:
-
-- [Straightforward Event Sourcing with TypeScript and NodeJS](https://event-driven.io/en/type_script_node_Js_event_sourcing/?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
-- [How to effectively compose your business logic](https://event-driven.io/en/how_to_effectively_compose_your_business_logic//?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
-- [Slim your aggregates with Event Sourcing!](https://event-driven.io/en/slim_your_entities_with_event_sourcing/?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
+Read more about recommended solution in [How to use ETag header for optimistic concurrency](https://event-driven.io/en/how_to_use_etag_header_for_optimistic_concurrency/)
