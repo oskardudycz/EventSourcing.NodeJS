@@ -1,4 +1,4 @@
-# Exercise 7 - Optimistic Concurrency with EventStoreDB
+# Exercise 06 - Application Logic
 
 Having the following shopping cart process:
 
@@ -11,17 +11,21 @@ Having the following shopping cart process:
 
 ![events](./assets/events.jpg)
 
-Update the code with business logic to handle correctly [Optimistic Concurrency](https://event-driven.io/en/optimistic_concurrency_for_pessimistic_times/?utm_source=eventsourcing_nodejs?utm_campaign=workshop).
+And business logic implemented in the [previous exercise](../05_business_logic/) write the application code that will _glue_ the API defined in `api.ts` files with the domain code.
 
-When you finish, try to rewrite the solution not to have to pass the expected revision explicitly but use it from the loaded stream.
+This time you'll use EventStoreDB instead of the mocked one. Run `docker-compose up` before running test code to have database set up.
 
 There are four variations:
 
-1. Classical, mutable aggregates (rich domain model): [oop/solution1/businessLogic.solved.test.ts](./oop/solution1/businessLogic.solved.test.ts).
-2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [oop/solution2/businessLogic.solved.test.ts](./oop/solution2/businessLogic.solved.test.ts).
-3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/solution1/businessLogic.solved.test.ts](./immutable/solution1/businessLogic.solved.test.ts).
-4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/solution2/businessLogic.solved.test.ts](./immutable/solution2/businessLogic.solved.test.ts).
+1. Classical, mutable aggregates (rich domain model): [./oop/aggregate/applicationLogic.exercise.test.ts](./oop/aggregate/applicationLogic.exercise.test.ts),
+2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [./oop/aggregate_returning_events/applicationLogic.exercise.test.ts](./oop/aggregate_returning_events/applicationLogic.exercise.test.ts),
+3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/functions/applicationLogic.exercise.test.ts](./immutable/functions/applicationLogic.exercise.test.ts),
+4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/businessLogic.exercise.test.ts](./immutable/businessLogic.exercise.test.ts),
 
-Select your preferred approach (or all) to solve this use case using EventStoreDB.
+Select your preferred approach (or both) to solve this use case.
 
-_**Note**: If needed update entities, events or test setup structure_
+Read also my articles on business logic composition:
+
+- [Straightforward Event Sourcing with TypeScript and NodeJS](https://event-driven.io/en/type_script_node_Js_event_sourcing/?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
+- [How to effectively compose your business logic](https://event-driven.io/en/how_to_effectively_compose_your_business_logic//?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
+- [Slim your aggregates with Event Sourcing!](https://event-driven.io/en/slim_your_entities_with_event_sourcing/?utm_source=eventsourcing_nodejs?utm_campaign=workshop)
