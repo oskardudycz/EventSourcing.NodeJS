@@ -1,7 +1,7 @@
-import { Event } from '../../tools/events';
 import { Command } from '../../tools/commands';
-import { Decider } from './decider';
 import { EventStore } from '../../tools/eventStore';
+import { Event } from '../../tools/events';
+import { Decider } from './decider';
 
 export const CommandHandler =
   <State, CommandType extends Command, StreamEvent extends Event>(
@@ -12,7 +12,12 @@ export const CommandHandler =
     }: Decider<State, CommandType, StreamEvent>,
     mapToStreamId: (id: string) => string,
   ) =>
-  async (eventStore: EventStore, id: string, command: CommandType) => {
+  async (
+    eventStore: EventStore,
+    id: string,
+    command: CommandType,
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ) => {
     const streamName = mapToStreamId(id);
 
     const state = await eventStore.aggregateStream(streamName, {
@@ -25,5 +30,6 @@ export const CommandHandler =
     return eventStore.appendToStream(
       streamName,
       Array.isArray(result) ? result : [result],
+      options,
     );
   };
