@@ -1,15 +1,21 @@
+import { EventStoreDBClient } from '@eventstore/db-client';
 import { Request, Response, Router } from 'express';
+import { sendCreated } from '../../tools/api';
+import {
+  HeaderNames,
+  getETagFromIfMatch,
+  getWeakETagValue,
+  toWeakETag,
+} from '../../tools/etag';
+import { getEventStore } from '../../tools/eventStore';
 import {
   assertNotEmptyString,
   assertPositiveNumber,
+  assertUnsignedBigInt,
 } from '../../tools/validation';
-import { sendCreated } from '../../tools/api';
-import { PricedProductItem, ProductItem } from './shoppingCart';
 import { decider } from './businessLogic';
 import { CommandHandler } from './commandHandler';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { getEventStore } from '../../tools/eventStore';
-import { getETagFromIfMatch, getWeakETagValue } from '../../tools/etag';
+import { PricedProductItem, ProductItem } from './shoppingCart';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
@@ -17,6 +23,20 @@ export const handle = CommandHandler(decider, mapShoppingCartStreamId);
 
 const dummyPriceProvider = (_productId: string) => {
   return 100;
+};
+
+export const getExpectedRevision = (request: Request): bigint => {
+  const eTag = getETagFromIfMatch(request);
+  const weakEtag = getWeakETagValue(eTag);
+
+  return assertUnsignedBigInt(weakEtag);
+};
+
+export const setNextExpectedRevision = (
+  response: Response,
+  nextEspectedRevision: bigint,
+): void => {
+  response.set(HeaderNames.ETag, toWeakETag(nextEspectedRevision));
 };
 
 export const shoppingCartApi =
