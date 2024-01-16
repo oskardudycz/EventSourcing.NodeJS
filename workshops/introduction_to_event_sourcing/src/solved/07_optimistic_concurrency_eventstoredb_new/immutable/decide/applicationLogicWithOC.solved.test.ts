@@ -6,6 +6,8 @@ import { getEventStore } from '../../tools/eventStore';
 import {
   TestResponse,
   expectNextRevisionInResponseEtag,
+  runTwice,
+  statuses,
 } from '../../tools/testing';
 import { getApplication } from '../../tools/api';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
@@ -30,10 +32,9 @@ describe('Application logic with optimistic concurrency', () => {
     ///////////////////////////////////////////////////
     // 1. Open Shopping Cart
     ///////////////////////////////////////////////////
-    const createResponse = (await request(app)
-      .post(`/clients/${clientId}/shopping-carts`)
-      .send()
-      .expect(201)) as TestResponse<{ id: string }>;
+    const createResponse = (await runTwice(() =>
+      request(app).post(`/clients/${clientId}/shopping-carts`).send(),
+    ).expect(statuses(201, 500))) as TestResponse<{ id: string }>;
 
     let currentRevision = expectNextRevisionInResponseEtag(createResponse);
     const current = createResponse.body;
@@ -53,13 +54,14 @@ describe('Application logic with optimistic concurrency', () => {
       quantity: 2,
       productId: '123',
     };
-    let response = await request(app)
-      .post(
-        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
-      )
-      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
-      .send(twoPairsOfShoes)
-      .expect(204);
+    let response = await runTwice(() =>
+      request(app)
+        .post(
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
+        )
+        .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
+        .send(twoPairsOfShoes),
+    ).expect(statuses(204, 500));
 
     currentRevision = expectNextRevisionInResponseEtag(response);
 
@@ -70,13 +72,14 @@ describe('Application logic with optimistic concurrency', () => {
       productId: '456',
       quantity: 1,
     };
-    response = await request(app)
-      .post(
-        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
-      )
-      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
-      .send(tShirt)
-      .expect(204);
+    response = await runTwice(() =>
+      request(app)
+        .post(
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
+        )
+        .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
+        .send(tShirt),
+    ).expect(statuses(204, 500));
 
     currentRevision = expectNextRevisionInResponseEtag(response);
 
@@ -88,12 +91,13 @@ describe('Application logic with optimistic concurrency', () => {
       quantity: 1,
       unitPrice: 100,
     };
-    response = await request(app)
-      .delete(
-        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
-      )
-      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
-      .expect(204);
+    response = await runTwice(() =>
+      request(app)
+        .delete(
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
+        )
+        .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision)),
+    ).expect(statuses(204, 500));
 
     currentRevision = expectNextRevisionInResponseEtag(response);
 
@@ -101,10 +105,11 @@ describe('Application logic with optimistic concurrency', () => {
     // 5. Confirm cart
     ///////////////////////////////////////////////////
 
-    response = await request(app)
-      .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
-      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
-      .expect(204);
+    response = await runTwice(() =>
+      request(app)
+        .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
+        .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision)),
+    ).expect(statuses(204, 500));
 
     currentRevision = expectNextRevisionInResponseEtag(response);
 
