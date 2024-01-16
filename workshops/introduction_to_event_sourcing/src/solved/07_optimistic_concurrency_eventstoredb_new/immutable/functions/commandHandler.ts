@@ -11,6 +11,7 @@ export const handleCommand =
     eventStore: EventStore,
     id: string,
     handle: (state: State) => StreamEvent | StreamEvent[],
+    options?: { expectedRevision?: bigint },
   ) => {
     const streamName = mapToStreamId(id);
 
@@ -21,7 +22,9 @@ export const handleCommand =
 
     const result = handle(state ?? getInitialState());
 
-    if (Array.isArray(result))
-      return eventStore.appendToStream(streamName, ...result);
-    else return eventStore.appendToStream(streamName, result);
+    return eventStore.appendToStream(
+      streamName,
+      Array.isArray(result) ? result : [result],
+      options,
+    );
   };
