@@ -57,7 +57,7 @@ describe('Application logic with optimistic concurrency', () => {
       .post(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
       )
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .send(twoPairsOfShoes)
       .expect(204);
 
@@ -74,7 +74,7 @@ describe('Application logic with optimistic concurrency', () => {
       .post(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
       )
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .send(tShirt)
       .expect(204);
 
@@ -92,7 +92,7 @@ describe('Application logic with optimistic concurrency', () => {
       .delete(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
       )
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .expect(204);
 
     currentRevision = expectNextRevisionInResponseEtag(response);
@@ -103,7 +103,7 @@ describe('Application logic with optimistic concurrency', () => {
 
     await request(app)
       .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .expect(204);
 
     currentRevision = expectNextRevisionInResponseEtag(response);
@@ -114,7 +114,7 @@ describe('Application logic with optimistic concurrency', () => {
 
     await request(app)
       .delete(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .expect((response) => {
         expect(response.statusCode).toBe(500);
         expect(response.body).toMatchObject({

@@ -65,11 +65,11 @@ describe('Application logic with optimistic concurrency', () => {
       quantity: 2,
       productId: '123',
     };
-    const response = await request(app)
+    let response = await request(app)
       .post(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
       )
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .send(twoPairsOfShoes)
       .expect(204);
 
@@ -82,11 +82,11 @@ describe('Application logic with optimistic concurrency', () => {
       productId: '456',
       quantity: 1,
     };
-    await request(app)
+    response = await request(app)
       .post(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
       )
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .send(tShirt)
       .expect(204);
 
@@ -100,11 +100,11 @@ describe('Application logic with optimistic concurrency', () => {
       quantity: 1,
       unitPrice: 100,
     };
-    await request(app)
+    response = await request(app)
       .delete(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
       )
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .expect(204);
 
     currentRevision = expectNextRevisionInResponseEtag(response);
@@ -113,9 +113,9 @@ describe('Application logic with optimistic concurrency', () => {
     // 5. Confirm cart
     ///////////////////////////////////////////////////
 
-    await request(app)
+    response = await request(app)
       .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .expect(204);
 
     currentRevision = expectNextRevisionInResponseEtag(response);
@@ -124,9 +124,9 @@ describe('Application logic with optimistic concurrency', () => {
     // 6. Try Cancel Cart
     ///////////////////////////////////////////////////
 
-    await request(app)
+    response = await request(app)
       .delete(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
-      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
+      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .expect((response) => {
         expect(response.statusCode).toBe(500);
         expect(response.body).toMatchObject({
@@ -134,14 +134,12 @@ describe('Application logic with optimistic concurrency', () => {
         });
       });
 
-    currentRevision = expectNextRevisionInResponseEtag(response);
-
     const eventStore = getEventStore(eventStoreDB);
     const events = await eventStore.readStream<ShoppingCartEvent>(
       mapShoppingCartStreamId(shoppingCartId),
     );
 
-    expect(events.length).toBe(currentRevision + 1n);
+    expect(events.length).toBe(Number(currentRevision) + 1);
 
     expect(events).toMatchObject([
       {

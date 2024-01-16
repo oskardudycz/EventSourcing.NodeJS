@@ -21,7 +21,12 @@ import {
   openShoppingCart,
   removeProductItemFromShoppingCart,
 } from './businessLogic';
-import { getETagFromIfMatch, getWeakETagValue } from '../../tools/etag';
+import {
+  getETagFromIfMatch,
+  getWeakETagValue,
+  setETag,
+  toWeakETag,
+} from '../../tools/etag';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
@@ -46,15 +51,18 @@ export const shoppingCartApi =
         const shoppingCartId = uuid();
         const clientId = assertNotEmptyString(request.params.clientId);
 
-        await handle(eventStore, shoppingCartId, (_) =>
-          openShoppingCart({
-            type: 'OpenShoppingCart',
-            data: { clientId, shoppingCartId, now: new Date() },
-          }),
+        const nextExpectedRevision = await handle(
+          eventStore,
+          shoppingCartId,
+          (_) =>
+            openShoppingCart({
+              type: 'OpenShoppingCart',
+              data: { clientId, shoppingCartId, now: new Date() },
+            }),
         );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        const nextETag = toWeakETag(nextExpectedRevision);
+        setETag(response, nextETag);
         sendCreated(response, shoppingCartId);
       },
     );
@@ -75,24 +83,27 @@ export const shoppingCartApi =
         };
         const unitPrice = dummyPriceProvider(productItem.productId);
 
-        await handle(eventStore, shoppingCartId, (state) =>
-          addProductItemToShoppingCart(
-            {
-              type: 'AddProductItemToShoppingCart',
-              data: {
-                shoppingCartId,
-                productItem: {
-                  ...productItem,
-                  unitPrice,
+        const nextExpectedRevision = await handle(
+          eventStore,
+          shoppingCartId,
+          (state) =>
+            addProductItemToShoppingCart(
+              {
+                type: 'AddProductItemToShoppingCart',
+                data: {
+                  shoppingCartId,
+                  productItem: {
+                    ...productItem,
+                    unitPrice,
+                  },
                 },
               },
-            },
-            state,
-          ),
+              state,
+            ),
         );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        const nextETag = toWeakETag(nextExpectedRevision);
+        setETag(response, nextETag);
         response.sendStatus(204);
       },
     );
@@ -114,21 +125,24 @@ export const shoppingCartApi =
           unitPrice: assertPositiveNumber(Number(request.query.unitPrice)),
         };
 
-        await handle(eventStore, shoppingCartId, (state) =>
-          removeProductItemFromShoppingCart(
-            {
-              type: 'RemoveProductItemFromShoppingCart',
-              data: {
-                shoppingCartId,
-                productItem,
+        const nextExpectedRevision = await handle(
+          eventStore,
+          shoppingCartId,
+          (state) =>
+            removeProductItemFromShoppingCart(
+              {
+                type: 'RemoveProductItemFromShoppingCart',
+                data: {
+                  shoppingCartId,
+                  productItem,
+                },
               },
-            },
-            state,
-          ),
+              state,
+            ),
         );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        const nextETag = toWeakETag(nextExpectedRevision);
+        setETag(response, nextETag);
         response.sendStatus(204);
       },
     );
@@ -145,21 +159,24 @@ export const shoppingCartApi =
           request.params.shoppingCartId,
         );
 
-        await handle(eventStore, shoppingCartId, (state) =>
-          confirmShoppingCart(
-            {
-              type: 'ConfirmShoppingCart',
-              data: {
-                shoppingCartId,
-                now: new Date(),
+        const nextExpectedRevision = await handle(
+          eventStore,
+          shoppingCartId,
+          (state) =>
+            confirmShoppingCart(
+              {
+                type: 'ConfirmShoppingCart',
+                data: {
+                  shoppingCartId,
+                  now: new Date(),
+                },
               },
-            },
-            state,
-          ),
+              state,
+            ),
         );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        const nextETag = toWeakETag(nextExpectedRevision);
+        setETag(response, nextETag);
         response.sendStatus(204);
       },
     );
@@ -176,21 +193,24 @@ export const shoppingCartApi =
           request.params.shoppingCartId,
         );
 
-        await handle(eventStore, shoppingCartId, (state) =>
-          cancelShoppingCart(
-            {
-              type: 'CancelShoppingCart',
-              data: {
-                shoppingCartId,
-                now: new Date(),
+        const nextExpectedRevision = await handle(
+          eventStore,
+          shoppingCartId,
+          (state) =>
+            cancelShoppingCart(
+              {
+                type: 'CancelShoppingCart',
+                data: {
+                  shoppingCartId,
+                  now: new Date(),
+                },
               },
-            },
-            state,
-          ),
+              state,
+            ),
         );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        const nextETag = toWeakETag(nextExpectedRevision);
+        setETag(response, nextETag);
         response.sendStatus(204);
       },
     );
