@@ -57,17 +57,3 @@ export const getETagFromIfNotMatch = (request: Request): ETag => {
 export const setETag = (response: Response, etag: ETag): void => {
   response.setHeader(HeaderNames.ETag, etag);
 };
-
-// export const getExpectedRevision = (request: Request): bigint => {
-//   const eTag = getETagFromIfMatch(request);
-//   const weakEtag = getWeakETagValue(eTag);
-
-//   return assertUnsignedBigInt(weakEtag);
-// };
-
-// export const setNextExpectedRevision = (response: Response, nextEspectedRevision): void => {
-//   const eTag = getETagFromIfMatch(response);
-//   const weakEtag = getWeakETagValue(eTag);
-
-//   return assertUnsignedBigInt(weakEtag);
-// };

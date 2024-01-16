@@ -2,10 +2,10 @@ import { Request, Response, Router } from 'express';
 import {
   assertNotEmptyString,
   assertPositiveNumber,
+  assertUnsignedBigInt,
 } from '../../tools/validation';
 import { sendCreated } from '../../tools/api';
 import { getEventStore } from '../../tools/eventStore';
-import { v4 as uuid } from 'uuid';
 import { handleCommand } from './commandHandler';
 import {
   PricedProductItem,
@@ -22,9 +22,9 @@ import {
   removeProductItemFromShoppingCart,
 } from './businessLogic';
 import {
+  HeaderNames,
   getETagFromIfMatch,
   getWeakETagValue,
-  setETag,
   toWeakETag,
 } from '../../tools/etag';
 
@@ -40,6 +40,20 @@ const dummyPriceProvider = (_productId: string) => {
   return 100;
 };
 
+export const getExpectedRevision = (request: Request): bigint => {
+  const eTag = getETagFromIfMatch(request);
+  const weakEtag = getWeakETagValue(eTag);
+
+  return assertUnsignedBigInt(weakEtag);
+};
+
+export const setNextExpectedRevision = (
+  response: Response,
+  nextEspectedRevision: bigint,
+): void => {
+  response.set(HeaderNames.ETag, toWeakETag(nextEspectedRevision));
+};
+
 export const shoppingCartApi =
   (eventStoreDB: EventStoreDBClient) => (router: Router) => {
     const eventStore = getEventStore(eventStoreDB);
@@ -48,8 +62,10 @@ export const shoppingCartApi =
     router.post(
       '/clients/:clientId/shopping-carts/',
       async (request: Request, response: Response) => {
-        const shoppingCartId = uuid();
         const clientId = assertNotEmptyString(request.params.clientId);
+        // We're using here clientId as a shopping cart id (instead a random uuid) to make it unique per client.
+        // What potential issue do you see in that?
+        const shoppingCartId = clientId;
 
         const nextExpectedRevision = await handle(
           eventStore,
@@ -59,10 +75,10 @@ export const shoppingCartApi =
               type: 'OpenShoppingCart',
               data: { clientId, shoppingCartId, now: new Date() },
             }),
+          { expectedRevision: 'no_stream' },
         );
 
-        const nextETag = toWeakETag(nextExpectedRevision);
-        setETag(response, nextETag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         sendCreated(response, shoppingCartId);
       },
     );
@@ -70,10 +86,6 @@ export const shoppingCartApi =
     router.post(
       '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
       async (request: AddProductItemRequest, response: Response) => {
-        const eTag = getETagFromIfMatch(request);
-        // Use this to ensure that there's no conflicting update
-        const _weakEtag = getWeakETagValue(eTag);
-
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -100,10 +112,10 @@ export const shoppingCartApi =
               },
               state,
             ),
+          { expectedRevision: getExpectedRevision(request) },
         );
 
-        const nextETag = toWeakETag(nextExpectedRevision);
-        setETag(response, nextETag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         response.sendStatus(204);
       },
     );
@@ -112,10 +124,6 @@ export const shoppingCartApi =
     router.delete(
       '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
       async (request: Request, response: Response) => {
-        const eTag = getETagFromIfMatch(request);
-        // Use this to ensure that there's no conflicting update
-        const _weakEtag = getWeakETagValue(eTag);
-
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -139,10 +147,10 @@ export const shoppingCartApi =
               },
               state,
             ),
+          { expectedRevision: getExpectedRevision(request) },
         );
 
-        const nextETag = toWeakETag(nextExpectedRevision);
-        setETag(response, nextETag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         response.sendStatus(204);
       },
     );
@@ -151,10 +159,6 @@ export const shoppingCartApi =
     router.post(
       '/clients/:clientId/shopping-carts/:shoppingCartId/confirm',
       async (request: Request, response: Response) => {
-        const eTag = getETagFromIfMatch(request);
-        // Use this to ensure that there's no conflicting update
-        const _weakEtag = getWeakETagValue(eTag);
-
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -173,10 +177,10 @@ export const shoppingCartApi =
               },
               state,
             ),
+          { expectedRevision: getExpectedRevision(request) },
         );
 
-        const nextETag = toWeakETag(nextExpectedRevision);
-        setETag(response, nextETag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         response.sendStatus(204);
       },
     );
@@ -185,10 +189,6 @@ export const shoppingCartApi =
     router.delete(
       '/clients/:clientId/shopping-carts/:shoppingCartId',
       async (request: Request, response: Response) => {
-        const eTag = getETagFromIfMatch(request);
-        // Use this to ensure that there's no conflicting update
-        const _weakEtag = getWeakETagValue(eTag);
-
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -207,10 +207,10 @@ export const shoppingCartApi =
               },
               state,
             ),
+          { expectedRevision: getExpectedRevision(request) },
         );
 
-        const nextETag = toWeakETag(nextExpectedRevision);
-        setETag(response, nextETag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         response.sendStatus(204);
       },
     );

@@ -11,7 +11,7 @@ export const handleCommand =
     eventStore: EventStore,
     id: string,
     handle: (state: State) => StreamEvent | StreamEvent[],
-    options?: { expectedRevision?: bigint },
+    options?: { expectedRevision?: bigint | 'no_stream' },
   ) => {
     const streamName = mapToStreamId(id);
 

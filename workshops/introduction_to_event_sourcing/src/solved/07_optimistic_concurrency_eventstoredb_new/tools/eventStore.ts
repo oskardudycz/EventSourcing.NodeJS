@@ -20,7 +20,7 @@ export interface EventStore {
   appendToStream<E extends Event>(
     streamId: string,
     events: E[],
-    options?: { expectedRevision?: bigint },
+    options?: { expectedRevision?: bigint | 'no_stream' },
   ): Promise<bigint>;
 }
 
@@ -77,7 +77,7 @@ export const getEventStore = (eventStore: EventStoreDBClient): EventStore => {
     appendToStream: async <E extends Event>(
       streamId: string,
       events: E[],
-      options?: { expectedRevision?: bigint },
+      options?: { expectedRevision?: bigint | 'no_stream' },
     ): Promise<bigint> => {
       const serializedEvents = events.map(jsonEvent);
 
