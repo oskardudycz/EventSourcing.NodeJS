@@ -7,12 +7,16 @@ export abstract class ApplicationService<Entity, StreamEvent extends Event> {
   protected on = async (
     id: string,
     handle: (state: Entity) => StreamEvent | StreamEvent[],
+    options?: { expectedRevision?: bigint | 'no_stream' },
   ) => {
     const aggregate = await this.repository.find(id);
 
     const result = handle(aggregate);
 
-    if (Array.isArray(result)) return this.repository.store(id, ...result);
-    else return this.repository.store(id, result);
+    return this.repository.store(
+      id,
+      Array.isArray(result) ? result : [result],
+      options,
+    );
   };
 }

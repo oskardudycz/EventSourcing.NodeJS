@@ -3,7 +3,11 @@ import { Event } from '../../../tools/events';
 
 export interface Repository<Entity, StreamEvent extends Event> {
   find(id: string): Promise<Entity>;
-  store(id: string, ...events: StreamEvent[]): Promise<void>;
+  store(
+    id: string,
+    events: StreamEvent[],
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ): Promise<bigint>;
 }
 
 export class EventStoreRepository<Entity, StreamEvent extends Event>
@@ -25,7 +29,10 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
       },
     )) ?? this.getInitialState();
 
-  store = async (id: string, ...events: StreamEvent[]): Promise<void> => {
-    await this.eventStore.appendToStream(this.mapToStreamId(id), events);
-  };
+  store = (
+    id: string,
+    events: StreamEvent[],
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ): Promise<bigint> =>
+    this.eventStore.appendToStream(this.mapToStreamId(id), events, options);
 }
