@@ -26,6 +26,6 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
     )) ?? this.getInitialState();
 
   store = async (id: string, ...events: StreamEvent[]): Promise<void> => {
-    await this.eventStore.appendToStream(this.mapToStreamId(id), ...events);
+    await this.eventStore.appendToStream(this.mapToStreamId(id), events);
   };
 }

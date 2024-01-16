@@ -22,7 +22,8 @@ export const CommandHandler =
 
     const result = decide(command, state ?? getInitialState());
 
-    if (Array.isArray(result))
-      return eventStore.appendToStream(streamName, ...result);
-    else return eventStore.appendToStream(streamName, result);
+    return eventStore.appendToStream(
+      streamName,
+      Array.isArray(result) ? result : [result],
+    );
   };

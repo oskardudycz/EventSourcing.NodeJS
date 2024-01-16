@@ -1,4 +1,4 @@
-import request from 'supertest';
+import request, { Test } from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { EventStoreDBClient } from '@eventstore/db-client';
@@ -13,6 +13,29 @@ import { ShoppingCartEvent } from './shoppingCart';
 import { Application } from 'express';
 import { ShoppingCartErrors } from './businessLogic';
 import { HeaderNames, toWeakETag } from '../../tools/etag';
+
+export const runTwice = (test: () => Test) => {
+  const expect = async (assert: {
+    first: (test: Test) => Test;
+    second: (test: Test) => Test;
+  }): Promise<Test> => {
+    const { first: firstExpect, second: secondExpect } = assert;
+
+    const result = await firstExpect(test());
+    await secondExpect(test());
+
+    return result;
+  };
+
+  return { expect };
+};
+
+const statuses = (first: number, second: number) => {
+  return {
+    first: (test: Test) => test.expect(first),
+    second: (test: Test) => test.expect(second),
+  };
+};
 
 describe('Application logic with optimistic concurrency', () => {
   let app: Application;
@@ -30,10 +53,9 @@ describe('Application logic with optimistic concurrency', () => {
     ///////////////////////////////////////////////////
     // 1. Open Shopping Cart
     ///////////////////////////////////////////////////
-    const createResponse = (await request(app)
-      .post(`/clients/${clientId}/shopping-carts`)
-      .send()
-      .expect(201)) as TestResponse<{ id: string }>;
+    const createResponse = (await runTwice(() =>
+      request(app).post(`/clients/${clientId}/shopping-carts`).send(),
+    ).expect(statuses(201, 500))) as TestResponse<{ id: string }>;
 
     let currentRevision = expectNextRevisionInResponseEtag(createResponse);
     const current = createResponse.body;

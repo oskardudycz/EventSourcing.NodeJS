@@ -35,6 +35,6 @@ export class EventStoreRepository<
 
     if (events.length === 0) return;
 
-    await this.eventStore.appendToStream(this.mapToStreamId(id), ...events);
+    await this.eventStore.appendToStream(this.mapToStreamId(id), events);
   };
 }
