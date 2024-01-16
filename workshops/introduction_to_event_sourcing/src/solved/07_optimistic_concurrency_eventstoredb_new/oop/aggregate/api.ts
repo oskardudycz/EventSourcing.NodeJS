@@ -45,17 +45,19 @@ export const shoppingCartApi =
         // What potential issue do you see in that?
         const shoppingCartId = clientId;
 
-        await shoppingCartService.open({
-          type: 'OpenShoppingCart',
-          data: {
-            shoppingCartId,
-            clientId,
-            now: new Date(),
+        const nextExpectedRevision = await shoppingCartService.open(
+          {
+            type: 'OpenShoppingCart',
+            data: {
+              shoppingCartId,
+              clientId,
+              now: new Date(),
+            },
           },
-        });
+          { expectedRevision: 'no_stream' },
+        );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         sendCreated(response, shoppingCartId);
       },
     );
@@ -63,10 +65,6 @@ export const shoppingCartApi =
     router.post(
       '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
       async (request: AddProductItemRequest, response: Response) => {
-        const eTag = getETagFromIfMatch(request);
-        // Use this to ensure that there's no conflicting update
-        const _weakEtag = getWeakETagValue(eTag);
-
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -76,19 +74,21 @@ export const shoppingCartApi =
         };
         const unitPrice = dummyPriceProvider(productItem.productId);
 
-        await shoppingCartService.addProductItem({
-          type: 'AddProductItemToShoppingCart',
-          data: {
-            shoppingCartId,
-            productItem: {
-              ...productItem,
-              unitPrice,
+        const nextExpectedRevision = await shoppingCartService.addProductItem(
+          {
+            type: 'AddProductItemToShoppingCart',
+            data: {
+              shoppingCartId,
+              productItem: {
+                ...productItem,
+                unitPrice,
+              },
             },
           },
-        });
+          { expectedRevision: getExpectedRevision(request) },
+        );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         response.sendStatus(204);
       },
     );
@@ -97,10 +97,6 @@ export const shoppingCartApi =
     router.delete(
       '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
       async (request: Request, response: Response) => {
-        const eTag = getETagFromIfMatch(request);
-        // Use this to ensure that there's no conflicting update
-        const _weakEtag = getWeakETagValue(eTag);
-
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -110,16 +106,19 @@ export const shoppingCartApi =
           unitPrice: assertPositiveNumber(Number(request.query.unitPrice)),
         };
 
-        await shoppingCartService.removeProductItem({
-          type: 'RemoveProductItemFromShoppingCart',
-          data: {
-            shoppingCartId,
-            productItem,
-          },
-        });
+        const nextExpectedRevision =
+          await shoppingCartService.removeProductItem(
+            {
+              type: 'RemoveProductItemFromShoppingCart',
+              data: {
+                shoppingCartId,
+                productItem,
+              },
+            },
+            { expectedRevision: getExpectedRevision(request) },
+          );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         response.sendStatus(204);
       },
     );
@@ -128,21 +127,19 @@ export const shoppingCartApi =
     router.post(
       '/clients/:clientId/shopping-carts/:shoppingCartId/confirm',
       async (request: Request, response: Response) => {
-        const eTag = getETagFromIfMatch(request);
-        // Use this to ensure that there's no conflicting update
-        const _weakEtag = getWeakETagValue(eTag);
-
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
 
-        await shoppingCartService.confirm({
-          type: 'ConfirmShoppingCart',
-          data: { shoppingCartId, now: new Date() },
-        });
+        const nextExpectedRevision = await shoppingCartService.confirm(
+          {
+            type: 'ConfirmShoppingCart',
+            data: { shoppingCartId, now: new Date() },
+          },
+          { expectedRevision: getExpectedRevision(request) },
+        );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         response.sendStatus(204);
       },
     );
@@ -151,21 +148,19 @@ export const shoppingCartApi =
     router.delete(
       '/clients/:clientId/shopping-carts/:shoppingCartId',
       async (request: Request, response: Response) => {
-        const eTag = getETagFromIfMatch(request);
-        // Use this to ensure that there's no conflicting update
-        const _weakEtag = getWeakETagValue(eTag);
-
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
 
-        await shoppingCartService.cancel({
-          type: 'CancelShoppingCart',
-          data: { shoppingCartId, now: new Date() },
-        });
+        const nextExpectedRevision = await shoppingCartService.cancel(
+          {
+            type: 'CancelShoppingCart',
+            data: { shoppingCartId, now: new Date() },
+          },
+          { expectedRevision: getExpectedRevision(request) },
+        );
 
-        // Get the next expected revision after appending events from business logic
-        // setETag(response, nextEtag);
+        setNextExpectedRevision(response, nextExpectedRevision);
         response.sendStatus(204);
       },
     );

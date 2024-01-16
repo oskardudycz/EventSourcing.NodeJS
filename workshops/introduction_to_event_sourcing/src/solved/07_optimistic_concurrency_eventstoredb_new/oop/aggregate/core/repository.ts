@@ -4,7 +4,11 @@ import { Aggregate } from './aggregate';
 
 export interface Repository<Entity> {
   find(id: string): Promise<Entity>;
-  store(id: string, entity: Entity): Promise<void>;
+  store(
+    id: string,
+    entity: Entity,
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ): Promise<bigint>;
 }
 
 export class EventStoreRepository<
@@ -30,11 +34,24 @@ export class EventStoreRepository<
       },
     )) ?? this.getInitialState();
 
-  store = async (id: string, entity: Entity): Promise<void> => {
+  store = (
+    id: string,
+    entity: Entity,
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ): Promise<bigint> => {
     const events = entity.dequeueUncommitedEvents();
 
-    if (events.length === 0) return;
+    if (events.length === 0)
+      return Promise.resolve(
+        options?.expectedRevision !== 'no_stream'
+          ? options?.expectedRevision ?? -1n
+          : -1n,
+      );
 
-    await this.eventStore.appendToStream(this.mapToStreamId(id), events);
+    return this.eventStore.appendToStream(
+      this.mapToStreamId(id),
+      events,
+      options,
+    );
   };
 }

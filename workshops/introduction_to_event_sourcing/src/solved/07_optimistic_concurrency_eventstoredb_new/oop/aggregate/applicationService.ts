@@ -14,30 +14,55 @@ export class ShoppingCartService extends ApplicationService<ShoppingCart> {
     super(repository);
   }
 
-  public open = ({
-    data: { shoppingCartId, clientId, now },
-  }: OpenShoppingCart) =>
-    this.on(shoppingCartId, () =>
-      ShoppingCart.open(shoppingCartId, clientId, now),
+  public open = (
+    { data: { shoppingCartId, clientId, now } }: OpenShoppingCart,
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ) =>
+    this.on(
+      shoppingCartId,
+      () => ShoppingCart.open(shoppingCartId, clientId, now),
+      options,
     );
 
-  public addProductItem = ({
-    data: { shoppingCartId, productItem },
-  }: AddProductItemToShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) =>
-      shoppingCart.addProductItem(productItem),
+  public addProductItem = (
+    { data: { shoppingCartId, productItem } }: AddProductItemToShoppingCart,
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ) =>
+    this.on(
+      shoppingCartId,
+      (shoppingCart) => shoppingCart.addProductItem(productItem),
+      options,
     );
 
-  public removeProductItem = ({
-    data: { shoppingCartId, productItem },
-  }: RemoveProductItemFromShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) =>
-      shoppingCart.removeProductItem(productItem),
+  public removeProductItem = (
+    {
+      data: { shoppingCartId, productItem },
+    }: RemoveProductItemFromShoppingCart,
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ) =>
+    this.on(
+      shoppingCartId,
+      (shoppingCart) => shoppingCart.removeProductItem(productItem),
+      options,
     );
 
-  public confirm = ({ data: { shoppingCartId, now } }: ConfirmShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) => shoppingCart.confirm(now));
+  public confirm = (
+    { data: { shoppingCartId, now } }: ConfirmShoppingCart,
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ) =>
+    this.on(
+      shoppingCartId,
+      (shoppingCart) => shoppingCart.confirm(now),
+      options,
+    );
 
-  public cancel = ({ data: { shoppingCartId, now } }: CancelShoppingCart) =>
-    this.on(shoppingCartId, (shoppingCart) => shoppingCart.cancel(now));
+  public cancel = (
+    { data: { shoppingCartId, now } }: CancelShoppingCart,
+    options?: { expectedRevision?: bigint | 'no_stream' },
+  ) =>
+    this.on(
+      shoppingCartId,
+      (shoppingCart) => shoppingCart.cancel(now),
+      options,
+    );
 }
