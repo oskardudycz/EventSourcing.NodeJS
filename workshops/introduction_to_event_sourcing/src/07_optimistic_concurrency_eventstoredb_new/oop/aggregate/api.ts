@@ -7,6 +7,10 @@ import { sendCreated } from '../../tools/api';
 import { v4 as uuid } from 'uuid';
 import { PricedProductItem, ProductItem } from './shoppingCart';
 import { ShoppingCartService } from './applicationService';
+import {
+  getETagFromIfMatch,
+  getWeakETagValue,
+} from 'src/07_optimistic_concurrency_eventstoredb_new/tools/etag';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
@@ -32,6 +36,8 @@ export const shoppingCartApi =
           },
         });
 
+        // Get the next expected revision after appending events from business logic
+        // setETag(response, nextEtag);
         sendCreated(response, shoppingCartId);
       },
     );
@@ -39,6 +45,10 @@ export const shoppingCartApi =
     router.post(
       '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
       async (request: AddProductItemRequest, response: Response) => {
+        const eTag = getETagFromIfMatch(request);
+        // Use this to ensure that there's no conflicting update
+        const _weakEtag = getWeakETagValue(eTag);
+
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -59,6 +69,8 @@ export const shoppingCartApi =
           },
         });
 
+        // Get the next expected revision after appending events from business logic
+        // setETag(response, nextEtag);
         response.sendStatus(204);
       },
     );
@@ -67,6 +79,10 @@ export const shoppingCartApi =
     router.delete(
       '/clients/:clientId/shopping-carts/:shoppingCartId/product-items',
       async (request: Request, response: Response) => {
+        const eTag = getETagFromIfMatch(request);
+        // Use this to ensure that there's no conflicting update
+        const _weakEtag = getWeakETagValue(eTag);
+
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -84,6 +100,8 @@ export const shoppingCartApi =
           },
         });
 
+        // Get the next expected revision after appending events from business logic
+        // setETag(response, nextEtag);
         response.sendStatus(204);
       },
     );
@@ -92,6 +110,10 @@ export const shoppingCartApi =
     router.post(
       '/clients/:clientId/shopping-carts/:shoppingCartId/confirm',
       async (request: Request, response: Response) => {
+        const eTag = getETagFromIfMatch(request);
+        // Use this to ensure that there's no conflicting update
+        const _weakEtag = getWeakETagValue(eTag);
+
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -101,6 +123,8 @@ export const shoppingCartApi =
           data: { shoppingCartId, now: new Date() },
         });
 
+        // Get the next expected revision after appending events from business logic
+        // setETag(response, nextEtag);
         response.sendStatus(204);
       },
     );
@@ -109,6 +133,10 @@ export const shoppingCartApi =
     router.delete(
       '/clients/:clientId/shopping-carts/:shoppingCartId',
       async (request: Request, response: Response) => {
+        const eTag = getETagFromIfMatch(request);
+        // Use this to ensure that there's no conflicting update
+        const _weakEtag = getWeakETagValue(eTag);
+
         const shoppingCartId = assertNotEmptyString(
           request.params.shoppingCartId,
         );
@@ -118,6 +146,8 @@ export const shoppingCartApi =
           data: { shoppingCartId, now: new Date() },
         });
 
+        // Get the next expected revision after appending events from business logic
+        // setETag(response, nextEtag);
         response.sendStatus(204);
       },
     );
