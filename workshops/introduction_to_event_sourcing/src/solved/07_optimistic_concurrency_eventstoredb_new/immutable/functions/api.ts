@@ -1,19 +1,18 @@
+import { EventStoreDBClient } from '@eventstore/db-client';
 import { Request, Response, Router } from 'express';
+import { sendCreated } from '../../tools/api';
+import {
+  HeaderNames,
+  getETagFromIfMatch,
+  getWeakETagValue,
+  toWeakETag,
+} from '../../tools/etag';
+import { getEventStore } from '../../tools/eventStore';
 import {
   assertNotEmptyString,
   assertPositiveNumber,
   assertUnsignedBigInt,
 } from '../../tools/validation';
-import { sendCreated } from '../../tools/api';
-import { getEventStore } from '../../tools/eventStore';
-import { handleCommand } from './commandHandler';
-import {
-  PricedProductItem,
-  ProductItem,
-  ShoppingCart,
-  evolve,
-} from './shoppingCart';
-import { EventStoreDBClient } from '@eventstore/db-client';
 import {
   addProductItemToShoppingCart,
   cancelShoppingCart,
@@ -21,12 +20,13 @@ import {
   openShoppingCart,
   removeProductItemFromShoppingCart,
 } from './businessLogic';
+import { handleCommand } from './commandHandler';
 import {
-  HeaderNames,
-  getETagFromIfMatch,
-  getWeakETagValue,
-  toWeakETag,
-} from '../../tools/etag';
+  PricedProductItem,
+  ProductItem,
+  ShoppingCart,
+  evolve,
+} from './shoppingCart';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 

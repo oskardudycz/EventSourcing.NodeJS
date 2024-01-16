@@ -1,12 +1,32 @@
 import { Request, Response, Router } from 'express';
+import { sendCreated } from '../../tools/api';
+import {
+  HeaderNames,
+  getETagFromIfMatch,
+  getWeakETagValue,
+  toWeakETag,
+} from '../../tools/etag';
 import {
   assertNotEmptyString,
   assertPositiveNumber,
+  assertUnsignedBigInt,
 } from '../../tools/validation';
-import { sendCreated } from '../../tools/api';
-import { PricedProductItem, ProductItem } from './shoppingCart';
 import { ShoppingCartService } from './applicationService';
-import { getETagFromIfMatch, getWeakETagValue } from '../../tools/etag';
+import { PricedProductItem, ProductItem } from './shoppingCart';
+
+export const getExpectedRevision = (request: Request): bigint => {
+  const eTag = getETagFromIfMatch(request);
+  const weakEtag = getWeakETagValue(eTag);
+
+  return assertUnsignedBigInt(weakEtag);
+};
+
+export const setNextExpectedRevision = (
+  response: Response,
+  nextEspectedRevision: bigint,
+): void => {
+  response.set(HeaderNames.ETag, toWeakETag(nextEspectedRevision));
+};
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
