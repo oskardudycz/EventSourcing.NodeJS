@@ -16,13 +16,14 @@ export const CommandHandler =
     eventStore: EventStore,
     id: string,
     command: CommandType,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) => {
     const streamName = mapToStreamId(id);
 
     const state = await eventStore.aggregateStream(streamName, {
       evolve,
       getInitialState,
+      expectedRevision: options?.expectedRevision,
     });
 
     const result = decide(command, state ?? getInitialState());

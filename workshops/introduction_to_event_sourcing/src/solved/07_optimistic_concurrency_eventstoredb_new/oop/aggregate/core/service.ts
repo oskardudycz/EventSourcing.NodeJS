@@ -6,9 +6,9 @@ export abstract class ApplicationService<Entity> {
   protected on = async (
     id: string,
     handle: (state: Entity) => void | Entity,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) => {
-    const aggregate = await this.repository.find(id);
+    const aggregate = await this.repository.find(id, options);
 
     const result = handle(aggregate) ?? aggregate;
 

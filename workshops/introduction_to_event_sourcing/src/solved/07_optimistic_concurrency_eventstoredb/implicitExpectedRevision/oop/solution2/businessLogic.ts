@@ -3,7 +3,6 @@ import {
   AppendResult,
   EventStoreDBClient,
   jsonEvent,
-  NO_STREAM,
   StreamNotFoundError,
 } from '@eventstore/db-client';
 import {
@@ -19,7 +18,7 @@ import {
 } from './optimisticConcurrency.exercise.test';
 
 export interface Repository<Entity, StreamEvent extends Event> {
-  find(id: string): Promise<{ entity: Entity; revision: bigint | 'no_stream' }>;
+  find(id: string): Promise<{ entity: Entity; revision: bigint }>;
   store(
     id: string,
     expectedRevision: AppendExpectedRevision,
@@ -37,12 +36,10 @@ export class EventStoreRepository<Entity, StreamEvent extends Event>
     private mapToStreamId: (id: string) => string,
   ) {}
 
-  find = async (
-    id: string,
-  ): Promise<{ entity: Entity; revision: bigint | 'no_stream' }> => {
+  find = async (id: string): Promise<{ entity: Entity; revision: bigint }> => {
     const state = this.getInitialState();
 
-    let revision: bigint | 'no_stream' = NO_STREAM;
+    let revision: bigint = 0n;
 
     try {
       const readResult = this.eventStore.readStream<StreamEvent>(

@@ -1,6 +1,7 @@
 import {
   ANY,
   EventStoreDBClient,
+  NO_STREAM,
   StreamNotFoundError,
   jsonEvent,
 } from '@eventstore/db-client';
@@ -20,7 +21,7 @@ export interface EventStore {
   appendToStream<E extends Event>(
     streamId: string,
     events: E[],
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ): Promise<bigint>;
 }
 
@@ -77,7 +78,7 @@ export const getEventStore = (eventStore: EventStoreDBClient): EventStore => {
     appendToStream: async <E extends Event>(
       streamId: string,
       events: E[],
-      options?: { expectedRevision?: bigint | 'no_stream' },
+      options?: { expectedRevision?: bigint },
     ): Promise<bigint> => {
       const serializedEvents = events.map(jsonEvent);
 
@@ -85,11 +86,20 @@ export const getEventStore = (eventStore: EventStoreDBClient): EventStore => {
         streamId,
         serializedEvents,
         {
-          expectedRevision: options?.expectedRevision ?? ANY,
+          expectedRevision:
+            options?.expectedRevision != undefined
+              ? options.expectedRevision !== 0n
+                ? options.expectedRevision
+                : NO_STREAM
+              : ANY,
         },
       );
 
       return appendResult.nextExpectedRevision;
     },
   };
+};
+
+export const EventStoreErrors = {
+  WrongExpectedRevision: 'WrongExpectedRevision',
 };

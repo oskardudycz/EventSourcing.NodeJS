@@ -3,15 +3,14 @@ import {
   AppendResult,
   EventStoreDBClient,
   jsonEvent,
-  NO_STREAM,
   StreamNotFoundError,
 } from '@eventstore/db-client';
 import {
+  Event,
   PricedProductItem,
   ShoppingCartEvent,
   ShoppingCartStatus,
 } from './optimisticConcurrency.exercise.test';
-import { Event } from './optimisticConcurrency.exercise.test';
 
 export abstract class Aggregate<E extends Event> {
   #uncommitedEvents: E[] = [];
@@ -33,7 +32,7 @@ export abstract class Aggregate<E extends Event> {
 }
 
 export interface Repository<Entity> {
-  find(id: string): Promise<{ entity: Entity; revision: bigint | 'no_stream' }>;
+  find(id: string): Promise<{ entity: Entity; revision: bigint }>;
   store(
     id: string,
     entity: Entity,
@@ -52,12 +51,10 @@ export class EventStoreRepository<
     private mapToStreamId: (id: string) => string,
   ) {}
 
-  find = async (
-    id: string,
-  ): Promise<{ entity: Entity; revision: bigint | 'no_stream' }> => {
+  find = async (id: string): Promise<{ entity: Entity; revision: bigint }> => {
     const state = this.getInitialState();
 
-    let revision: bigint | 'no_stream' = NO_STREAM;
+    let revision: bigint = 0n;
     try {
       const readResult = this.eventStore.readStream<StreamEvent>(
         this.mapToStreamId(id),
