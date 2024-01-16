@@ -54,7 +54,7 @@ export const shoppingCartApi =
               now: new Date(),
             },
           },
-          { expectedRevision: 'no_stream' },
+          { expectedRevision: -1n },
         );
 
         setNextExpectedRevision(response, nextExpectedRevision);

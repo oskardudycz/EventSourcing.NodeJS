@@ -21,7 +21,7 @@ export class ShoppingCartService extends ApplicationService<
 
   public open = (
     { data: { shoppingCartId, clientId, now } }: OpenShoppingCart,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) =>
     this.on(
       shoppingCartId,
@@ -31,7 +31,7 @@ export class ShoppingCartService extends ApplicationService<
 
   public addProductItem = (
     { data: { shoppingCartId, productItem } }: AddProductItemToShoppingCart,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) =>
     this.on(
       shoppingCartId,
@@ -43,7 +43,7 @@ export class ShoppingCartService extends ApplicationService<
     {
       data: { shoppingCartId, productItem },
     }: RemoveProductItemFromShoppingCart,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) =>
     this.on(
       shoppingCartId,
@@ -53,7 +53,7 @@ export class ShoppingCartService extends ApplicationService<
 
   public confirm = (
     { data: { shoppingCartId, now } }: ConfirmShoppingCart,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) =>
     this.on(
       shoppingCartId,
@@ -63,7 +63,7 @@ export class ShoppingCartService extends ApplicationService<
 
   public cancel = (
     { data: { shoppingCartId, now } }: CancelShoppingCart,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) =>
     this.on(
       shoppingCartId,

@@ -1,13 +1,14 @@
 import express, {
   Application,
   NextFunction,
-  Router,
   Request,
   Response,
+  Router,
 } from 'express';
-import http from 'http';
 import 'express-async-errors';
+import http from 'http';
 import { ProblemDocument } from 'http-problem-details';
+import { EventStoreErrors } from './eventStore';
 
 export const getApplication = (...apis: ((router: Router) => void)[]) => {
   const app: Application = express();
@@ -48,9 +49,12 @@ export const problemDetailsMiddleware = (
   response: Response,
   _next: NextFunction,
 ): void => {
-  const statusCode = 500;
+  let statusCode = 500;
 
   // here could come the special mapping
+  if (error.message === EventStoreErrors.WrongExpectedRevision) {
+    statusCode = 412;
+  }
 
   response.statusCode = statusCode;
   response.setHeader('Content-Type', 'application/problem+json');

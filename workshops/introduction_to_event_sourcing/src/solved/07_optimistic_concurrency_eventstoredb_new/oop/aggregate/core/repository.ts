@@ -3,11 +3,11 @@ import { Event } from '../../../tools/events';
 import { Aggregate } from './aggregate';
 
 export interface Repository<Entity> {
-  find(id: string): Promise<Entity>;
+  find(id: string, options?: { expectedRevision?: bigint }): Promise<Entity>;
   store(
     id: string,
     entity: Entity,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ): Promise<bigint>;
 }
 
@@ -22,7 +22,10 @@ export class EventStoreRepository<
     private mapToStreamId: (id: string) => string,
   ) {}
 
-  find = async (id: string): Promise<Entity> =>
+  find = async (
+    id: string,
+    options?: { expectedRevision?: bigint },
+  ): Promise<Entity> =>
     (await this.eventStore.aggregateStream<Entity, StreamEvent>(
       this.mapToStreamId(id),
       {
@@ -31,20 +34,21 @@ export class EventStoreRepository<
           return state;
         },
         getInitialState: this.getInitialState,
+        expectedRevision: options?.expectedRevision,
       },
     )) ?? this.getInitialState();
 
   store = (
     id: string,
     entity: Entity,
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ): Promise<bigint> => {
     const events = entity.dequeueUncommitedEvents();
 
     if (events.length === 0)
       return Promise.resolve(
-        options?.expectedRevision !== 'no_stream'
-          ? options?.expectedRevision ?? -1n
+        options?.expectedRevision !== undefined
+          ? options?.expectedRevision
           : -1n,
       );
 

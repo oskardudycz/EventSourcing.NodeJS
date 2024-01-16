@@ -11,13 +11,14 @@ export const handleCommand =
     eventStore: EventStore,
     id: string,
     handle: (state: State) => StreamEvent | StreamEvent[],
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) => {
     const streamName = mapToStreamId(id);
 
     const state = await eventStore.aggregateStream(streamName, {
       evolve,
       getInitialState,
+      expectedRevision: options?.expectedRevision,
     });
 
     const result = handle(state ?? getInitialState());

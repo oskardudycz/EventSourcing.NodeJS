@@ -7,9 +7,9 @@ export abstract class ApplicationService<Entity, StreamEvent extends Event> {
   protected on = async (
     id: string,
     handle: (state: Entity) => StreamEvent | StreamEvent[],
-    options?: { expectedRevision?: bigint | 'no_stream' },
+    options?: { expectedRevision?: bigint },
   ) => {
-    const aggregate = await this.repository.find(id);
+    const aggregate = await this.repository.find(id, options);
 
     const result = handle(aggregate);
 
