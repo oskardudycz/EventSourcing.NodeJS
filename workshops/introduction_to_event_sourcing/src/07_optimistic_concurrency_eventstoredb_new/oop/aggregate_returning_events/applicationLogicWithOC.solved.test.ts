@@ -3,20 +3,36 @@ import { v4 as uuid } from 'uuid';
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { EventStoreDBClient } from '@eventstore/db-client';
 import { getEventStore } from '../../tools/eventStore';
-import { TestResponse } from '../../tools/testing';
+import {
+  TestResponse,
+  expectNextRevisionInResponseEtag,
+} from '../../tools/testing';
 import { getApplication } from '../../tools/api';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
-import { ShoppingCartEvent } from './shoppingCart';
+import { ShoppingCart, ShoppingCartEvent } from './shoppingCart';
 import { Application } from 'express';
 import { ShoppingCartErrors } from './businessLogic';
+import { ShoppingCartService } from './applicationService';
+import { EventStoreRepository } from './core/repository';
+import { HeaderNames, toWeakETag } from '../../tools/etag';
 
-describe('Application logic', () => {
+describe('Application logic with optimistic concurrency', () => {
   let app: Application;
   let eventStoreDB: EventStoreDBClient;
 
   beforeAll(async () => {
     eventStoreDB = await getEventStoreDBTestClient();
-    app = getApplication(shoppingCartApi(eventStoreDB));
+    const repository = new EventStoreRepository<
+      ShoppingCart,
+      ShoppingCartEvent
+    >(
+      getEventStore(eventStoreDB),
+      ShoppingCart.default,
+      ShoppingCart.evolve,
+      mapShoppingCartStreamId,
+    );
+    const service = new ShoppingCartService(repository);
+    app = getApplication(shoppingCartApi(service));
   });
 
   afterAll(() => eventStoreDB.dispose());
@@ -26,12 +42,13 @@ describe('Application logic', () => {
     ///////////////////////////////////////////////////
     // 1. Open Shopping Cart
     ///////////////////////////////////////////////////
-    const response = (await request(app)
+    const createResponse = (await request(app)
       .post(`/clients/${clientId}/shopping-carts`)
       .send()
       .expect(201)) as TestResponse<{ id: string }>;
 
-    const current = response.body;
+    let currentRevision = expectNextRevisionInResponseEtag(createResponse);
+    const current = createResponse.body;
 
     if (!current.id) {
       expect(false).toBeTruthy();
@@ -48,12 +65,15 @@ describe('Application logic', () => {
       quantity: 2,
       productId: '123',
     };
-    await request(app)
+    const response = await request(app)
       .post(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
       )
+      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
       .send(twoPairsOfShoes)
       .expect(204);
+
+    currentRevision = expectNextRevisionInResponseEtag(response);
 
     ///////////////////////////////////////////////////
     // 3. Add T-Shirt
@@ -66,9 +86,11 @@ describe('Application logic', () => {
       .post(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
       )
-      //.set('If-Match', currentRevision)
+      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
       .send(tShirt)
       .expect(204);
+
+    currentRevision = expectNextRevisionInResponseEtag(response);
 
     ///////////////////////////////////////////////////
     // 4. Remove pair of shoes
@@ -82,7 +104,10 @@ describe('Application logic', () => {
       .delete(
         `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
       )
+      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
       .expect(204);
+
+    currentRevision = expectNextRevisionInResponseEtag(response);
 
     ///////////////////////////////////////////////////
     // 5. Confirm cart
@@ -90,8 +115,10 @@ describe('Application logic', () => {
 
     await request(app)
       .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
-      .send()
+      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
       .expect(204);
+
+    currentRevision = expectNextRevisionInResponseEtag(response);
 
     ///////////////////////////////////////////////////
     // 6. Try Cancel Cart
@@ -99,7 +126,7 @@ describe('Application logic', () => {
 
     await request(app)
       .delete(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
-      .send()
+      .set(HeaderNames.IF_NOT_MATCH, toWeakETag(currentRevision))
       .expect((response) => {
         expect(response.statusCode).toBe(500);
         expect(response.body).toMatchObject({
@@ -107,10 +134,14 @@ describe('Application logic', () => {
         });
       });
 
+    currentRevision = expectNextRevisionInResponseEtag(response);
+
     const eventStore = getEventStore(eventStoreDB);
     const events = await eventStore.readStream<ShoppingCartEvent>(
       mapShoppingCartStreamId(shoppingCartId),
     );
+
+    expect(events.length).toBe(currentRevision + 1n);
 
     expect(events).toMatchObject([
       {
