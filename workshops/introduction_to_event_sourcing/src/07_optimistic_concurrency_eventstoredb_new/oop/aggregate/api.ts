@@ -7,10 +7,7 @@ import { sendCreated } from '../../tools/api';
 import { v4 as uuid } from 'uuid';
 import { PricedProductItem, ProductItem } from './shoppingCart';
 import { ShoppingCartService } from './applicationService';
-import {
-  getETagFromIfMatch,
-  getWeakETagValue,
-} from 'src/07_optimistic_concurrency_eventstoredb_new/tools/etag';
+import { getETagFromIfMatch, getWeakETagValue } from '../../tools/etag';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
