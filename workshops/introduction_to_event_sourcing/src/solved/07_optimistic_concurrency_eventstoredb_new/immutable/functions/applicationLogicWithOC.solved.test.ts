@@ -1,4 +1,4 @@
-import request, { Test } from 'supertest';
+import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { EventStoreDBClient } from '@eventstore/db-client';
@@ -6,6 +6,8 @@ import { getEventStore } from '../../tools/eventStore';
 import {
   TestResponse,
   expectNextRevisionInResponseEtag,
+  runTwice,
+  statuses,
 } from '../../tools/testing';
 import { getApplication } from '../../tools/api';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
@@ -13,29 +15,6 @@ import { ShoppingCartEvent } from './shoppingCart';
 import { Application } from 'express';
 import { ShoppingCartErrors } from './businessLogic';
 import { HeaderNames, toWeakETag } from '../../tools/etag';
-
-export const runTwice = (test: () => Test) => {
-  const expect = async (assert: {
-    first: (test: Test) => Test;
-    second: (test: Test) => Test;
-  }): Promise<Test> => {
-    const { first: firstExpect, second: secondExpect } = assert;
-
-    const result = await firstExpect(test());
-    await secondExpect(test());
-
-    return result;
-  };
-
-  return { expect };
-};
-
-const statuses = (first: number, second: number) => {
-  return {
-    first: (test: Test) => test.expect(first),
-    second: (test: Test) => test.expect(second),
-  };
-};
 
 describe('Application logic with optimistic concurrency', () => {
   let app: Application;
@@ -75,13 +54,14 @@ describe('Application logic with optimistic concurrency', () => {
       quantity: 2,
       productId: '123',
     };
-    let response = await request(app)
-      .post(
-        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
-      )
-      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
-      .send(twoPairsOfShoes)
-      .expect(204);
+    let response = await runTwice(() =>
+      request(app)
+        .post(
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
+        )
+        .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
+        .send(twoPairsOfShoes),
+    ).expect(statuses(204, 500));
 
     currentRevision = expectNextRevisionInResponseEtag(response);
 
@@ -92,13 +72,14 @@ describe('Application logic with optimistic concurrency', () => {
       productId: '456',
       quantity: 1,
     };
-    response = await request(app)
-      .post(
-        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
-      )
-      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
-      .send(tShirt)
-      .expect(204);
+    response = await runTwice(() =>
+      request(app)
+        .post(
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items`,
+        )
+        .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
+        .send(tShirt),
+    ).expect(statuses(204, 500));
 
     currentRevision = expectNextRevisionInResponseEtag(response);
 
@@ -110,12 +91,13 @@ describe('Application logic with optimistic concurrency', () => {
       quantity: 1,
       unitPrice: 100,
     };
-    response = await request(app)
-      .delete(
-        `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
-      )
-      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
-      .expect(204);
+    response = await runTwice(() =>
+      request(app)
+        .delete(
+          `/clients/${clientId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}&unitPrice=${pairOfShoes.unitPrice}`,
+        )
+        .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision)),
+    ).expect(statuses(204, 500));
 
     currentRevision = expectNextRevisionInResponseEtag(response);
 
@@ -123,10 +105,11 @@ describe('Application logic with optimistic concurrency', () => {
     // 5. Confirm cart
     ///////////////////////////////////////////////////
 
-    response = await request(app)
-      .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
-      .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
-      .expect(204);
+    response = await runTwice(() =>
+      request(app)
+        .post(`/clients/${clientId}/shopping-carts/${shoppingCartId}/confirm`)
+        .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision)),
+    ).expect(statuses(204, 500));
 
     currentRevision = expectNextRevisionInResponseEtag(response);
 

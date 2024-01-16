@@ -4,7 +4,6 @@ import {
   assertPositiveNumber,
 } from '../../tools/validation';
 import { sendCreated } from '../../tools/api';
-import { v4 as uuid } from 'uuid';
 import { PricedProductItem, ProductItem } from './shoppingCart';
 import { decider } from './businessLogic';
 import { CommandHandler } from './commandHandler';
@@ -27,8 +26,10 @@ export const shoppingCartApi =
     router.post(
       '/clients/:clientId/shopping-carts/',
       async (request: Request, response: Response) => {
-        const shoppingCartId = uuid();
         const clientId = assertNotEmptyString(request.params.clientId);
+        // We're using here clientId as a shopping cart id (instead a random uuid) to make it unique per client.
+        // What potential issue do you see in that?
+        const shoppingCartId = clientId;
 
         await handle(eventStore, shoppingCartId, {
           type: 'OpenShoppingCart',
