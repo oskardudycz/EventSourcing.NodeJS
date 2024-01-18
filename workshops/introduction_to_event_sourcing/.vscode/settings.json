@@ -4,7 +4,7 @@
   "editor.formatOnSave": true,
 
   "editor.codeActionsOnSave": {
-    "source.organizeImports": true,
+    "source.organizeImports": "explicit",
     "source.fixAll.eslint": "explicit",
     "source.addMissingImports": "always"
   },

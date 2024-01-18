@@ -1,6 +1,5 @@
-import { Map } from 'immutable';
 import { Command } from '#core/command';
-import { enqueue, ProcesssingResult, schedule } from '#core/processManager';
+import { Map } from 'immutable';
 import {
   CheckOut,
   GuestCheckedOut,
@@ -19,10 +18,7 @@ export type GroupCheckoutProcessManagerEvent =
   | GuestCheckedOut
   | GuestCheckoutFailed;
 
-export type GroupCheckoutProcessingResult = ProcesssingResult<
-  CheckOut,
-  GroupCheckoutEvent
->;
+export type GroupCheckoutProcessingResult = CheckOut | GroupCheckoutEvent;
 
 export type InitiateGroupCheckout = Command<
   'InitiateGroupCheckout',
@@ -68,27 +64,29 @@ export const GroupCheckoutProcessManager = (
 
       if (state.status === 'Finished') return [];
 
-      const checkoutGuestStays = event.guestStayAccountIds.map((id) => {
-        return schedule<CheckOut>({
-          type: 'CheckOut',
-          data: {
-            guestStayAccountId: id,
-            now: event.initiatedAt,
-            groupCheckoutId: event.groupCheckoutId,
-          },
-        });
-      });
+      const checkoutGuestStays: CheckOut[] = event.guestStayAccountIds.map(
+        (id) => {
+          return {
+            type: 'CheckOut',
+            data: {
+              guestStayAccountId: id,
+              now: event.initiatedAt,
+              groupCheckoutId: event.groupCheckoutId,
+            },
+          };
+        },
+      );
 
       return [
         ...checkoutGuestStays,
-        enqueue({
+        {
           type: 'GuestCheckoutsInitiated',
           data: {
             groupCheckoutId: event.groupCheckoutId,
             initiatedGuestStayIds: event.guestStayAccountIds,
             initiatedAt: event.initiatedAt,
           },
-        }),
+        },
       ];
     }
 
@@ -137,11 +135,8 @@ export const GroupCheckoutProcessManager = (
             };
 
       return areAnyOngoingCheckouts(guestStayAccountIds)
-        ? enqueue(finished)
-        : [
-            enqueue(finished),
-            enqueue(finish(groupCheckoutId, state.guestStayAccountIds, now)),
-          ];
+        ? finished
+        : [finished, finish(groupCheckoutId, state.guestStayAccountIds, now)];
     }
   }
 };
