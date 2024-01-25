@@ -12,7 +12,10 @@ export type ShoppingCartOpenedObsoleteVersions =
   | ShoppingCartOpenedV1
   | ShoppingCartOpened;
 
-export type ShoppingCartOpenedAllVersions = Omit<ShoppingCartOpenedV1, 'type'> &
+export type ShoppingCartOpenedAllCompatible = Omit<
+  ShoppingCartOpenedV1,
+  'type'
+> &
   Omit<ShoppingCartOpened, 'type'> &
   ShoppingCartOpenedWithStatus;
 
@@ -50,7 +53,7 @@ export const upcastShoppingCartOpened = ({
 export const downcastShoppingCartOpened = ({
   type,
   data,
-}: ShoppingCartOpenedWithStatus): ShoppingCartOpenedAllVersions => {
+}: ShoppingCartOpenedWithStatus): ShoppingCartOpenedAllCompatible => {
   return {
     type,
     data: {
