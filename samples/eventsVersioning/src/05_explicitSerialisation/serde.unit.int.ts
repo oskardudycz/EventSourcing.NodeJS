@@ -1,68 +1,12 @@
 import { v4 as uuid } from 'uuid';
+import { ShoppingCartStatus } from '../04_transformations/shoppingCart';
 import { EventStore, getEventStore } from '../core/eventStoreDB';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
 } from '../core/testing/eventStoreDB/eventStoreDBContainer';
-
-export type Client = {
-  id: string;
-  name: string;
-};
-
-enum ShoppingCartStatus {
-  Pending = 'Pending',
-  Opened = 'Opened',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
-
-export interface ProductItem {
-  productId: string;
-  quantity: number;
-}
-
-export type PricedProductItem = ProductItem & {
-  unitPrice: number;
-};
-
-export type ShoppingCartEvent =
-  | {
-      type: 'ShoppingCartOpened';
-      data: {
-        shoppingCartId: string;
-        client: Client;
-        status: ShoppingCartStatus;
-      };
-    }
-  | {
-      type: 'ProductItemAddedToShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ProductItemRemovedFromShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ShoppingCartConfirmed';
-      data: {
-        shoppingCartId: string;
-        confirmedAt: Date;
-      };
-    }
-  | {
-      type: 'ShoppingCartCanceled';
-      data: {
-        shoppingCartId: string;
-        canceledAt: Date;
-      };
-    };
+import { PricedProductItem } from '../events/events.v1';
+import { Client, ShoppingCartEvent } from './shoppingCart';
 
 //////////////////////////////////////////
 //// SERIALIZATION
