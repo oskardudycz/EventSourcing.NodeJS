@@ -70,7 +70,7 @@ export const evolve = (
         id: event.shoppingCartId,
         client: event.client,
         productItems: [],
-        status: ShoppingCartStatus.Pending,
+        status: event.status,
       };
     case 'ProductItemAddedToShoppingCart': {
       const { productItems } = state;

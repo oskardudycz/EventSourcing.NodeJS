@@ -6,7 +6,12 @@ import {
   StartedEventStoreDBContainer,
 } from '../core/testing/eventStoreDB/eventStoreDBContainer';
 import { PricedProductItem } from '../events/events.v1';
-import { Client, ShoppingCartEvent } from './shoppingCart';
+import {
+  Client,
+  ShoppingCart,
+  ShoppingCartEvent,
+  evolve,
+} from './shoppingCart';
 
 //////////////////////////////////////////
 //// SERIALIZATION
@@ -160,6 +165,23 @@ export const ShoppingCartEventSerde = {
   },
 };
 
+const getShoppingCart = (
+  eventStore: EventStore,
+  shoppingCartId: string,
+): Promise<ShoppingCart | null> => {
+  return eventStore.aggregateStream<
+    ShoppingCart,
+    ShoppingCartEvent,
+    ShoppingCartEventPayload
+  >(`shoppingCart-${shoppingCartId}`, {
+    getInitialState: () => {
+      return {} as ShoppingCart;
+    },
+    evolve,
+    parse: ShoppingCartEventSerde.deserialize,
+  });
+};
+
 describe('Multiple transformations with different event types', () => {
   jest.setTimeout(180_000);
 
@@ -176,7 +198,7 @@ describe('Multiple transformations with different event types', () => {
     return container.stop();
   });
 
-  it('upcast should be forward compatible', async () => {
+  it('should read new event schema using Serde', async () => {
     const clientIds = [uuid(), uuid(), uuid()];
 
     const eventV1: ShoppingCartEventPayload = {
@@ -251,7 +273,7 @@ describe('Multiple transformations with different event types', () => {
 
     expect(deserializedEvents).toEqual([
       {
-        type: 'ShoppingCartOpened.v3',
+        type: 'ShoppingCartOpened',
         data: {
           client: { id: eventV1.data.clientId, name: 'Unknown' },
           shoppingCartId: eventV1.data.shoppingCartId,
@@ -259,18 +281,25 @@ describe('Multiple transformations with different event types', () => {
         },
       },
       {
-        type: 'ShoppingCartOpened.v3',
+        type: 'ShoppingCartOpened',
         data: {
           client: eventV2.data.client,
           shoppingCartId: eventV2.data.shoppingCartId,
           status: ShoppingCartStatus.Opened,
         },
       },
-      eventV3,
+      {
+        type: 'ShoppingCartOpened',
+        data: {
+          client: eventV3.data.client,
+          shoppingCartId: eventV3.data.shoppingCartId,
+          status: eventV3.data.status,
+        },
+      },
     ]);
   });
 
-  it('using explicit derserialisation with Serde should be forward compatible', () => {
+  it('should get state using Serde', async () => {
     const clientIds = [uuid(), uuid(), uuid()];
 
     const eventV1: ShoppingCartEventPayload = {
@@ -300,47 +329,46 @@ describe('Multiple transformations with different event types', () => {
       },
     };
 
-    const events = [eventV1, eventV2, eventV3];
-
-    // Given
-    const serializedEvents = events.map((e) => {
-      return {
-        type: e.type,
-        payload: JSON.stringify(e),
-      };
-    });
-
-    // When
-    const deserializedEvents = serializedEvents.map((e) =>
-      ShoppingCartEventSerde.deserialize(
-        JSON.parse(e.payload) as ShoppingCartEventPayload,
-      ),
+    await eventStore.appendToStream(
+      `shoppingCart-${eventV1.data.shoppingCartId}`,
+      [eventV1],
     );
 
-    expect(deserializedEvents).toEqual([
+    await eventStore.appendToStream(
+      `shoppingCart-${eventV2.data.shoppingCartId}`,
+      [eventV2],
+    );
+
+    await eventStore.appendToStream(
+      `shoppingCart-${eventV3.data.shoppingCartId}`,
+      [eventV3],
+    );
+
+    // When
+    const shoppingCarts: (ShoppingCart | null)[] = [
+      await getShoppingCart(eventStore, eventV1.data.shoppingCartId),
+      await getShoppingCart(eventStore, eventV2.data.shoppingCartId),
+      await getShoppingCart(eventStore, eventV3.data.shoppingCartId),
+    ];
+
+    expect(shoppingCarts).toEqual([
       {
-        type: 'ShoppingCartOpened',
-        data: {
-          client: { id: eventV1.data.clientId, name: 'Unknown' },
-          shoppingCartId: eventV1.data.shoppingCartId,
-          status: ShoppingCartStatus.Opened,
-        },
+        id: eventV1.data.shoppingCartId,
+        client: { id: eventV1.data.clientId, name: 'Unknown' },
+        status: ShoppingCartStatus.Opened,
+        productItems: [],
       },
       {
-        type: 'ShoppingCartOpened',
-        data: {
-          client: eventV2.data.client,
-          shoppingCartId: eventV2.data.shoppingCartId,
-          status: ShoppingCartStatus.Opened,
-        },
+        id: eventV2.data.shoppingCartId,
+        client: eventV2.data.client,
+        status: ShoppingCartStatus.Opened,
+        productItems: [],
       },
       {
-        type: 'ShoppingCartOpened',
-        data: {
-          client: eventV3.data.client,
-          shoppingCartId: eventV3.data.shoppingCartId,
-          status: eventV3.data.status,
-        },
+        id: eventV3.data.shoppingCartId,
+        client: eventV3.data.client,
+        status: eventV3.data.status,
+        productItems: [],
       },
     ]);
   });
