@@ -8,40 +8,14 @@ import {
   EventTypeToRecordedEvent,
   jsonEvent,
 } from '@eventstore/db-client';
-import { ShoppingCartOpened as ShoppingCartOpenedV1 } from 'src/events/events.v1';
 import { v4 as uuid } from 'uuid';
 import { EventStore, getEventStore } from '../core/eventStoreDB';
-
-export type Client = {
-  id: string;
-  name: string;
-};
-
-export type ShoppingCartOpened = Event<
-  'ShoppingCartOpened.v2',
-  {
-    shoppingCartId: string;
-    //new nested property instead of a single field
-    client: Client;
-  }
->;
-
-enum ShoppingCartStatus {
-  Pending = 'Pending',
-  Opened = 'Opened',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
-
-export type ShoppingCartOpenedWithStatus = Event<
-  'ShoppingCartOpened.v3',
-  {
-    shoppingCartId: string;
-    client: Client;
-    // Adding new required property as nullable
-    status: ShoppingCartStatus;
-  }
->;
+import { ShoppingCartOpened as ShoppingCartOpenedV1 } from '../events/events.v1';
+import {
+  ShoppingCartOpened,
+  ShoppingCartOpenedWithStatus,
+  ShoppingCartStatus,
+} from './shoppingCart';
 
 export type ShoppingCartOpenedObsoleteVersions =
   | ShoppingCartOpenedV1

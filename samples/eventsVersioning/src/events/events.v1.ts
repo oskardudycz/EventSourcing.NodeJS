@@ -37,7 +37,7 @@ export type ShoppingCartConfirmed = Event<
   'ShoppingCartConfirmed',
   {
     shoppingCartId: string;
-    confirmedAt: Date;
+    confirmedAt: string;
   }
 >;
 
@@ -45,11 +45,11 @@ export type ShoppingCartCanceled = Event<
   'ShoppingCartCanceled',
   {
     shoppingCartId: string;
-    canceledAt: Date;
+    canceledAt: string;
   }
 >;
 
-export type ShoppingCartEvent =
+export type OriginalShoppingCartEvent =
   | ShoppingCartOpened
   | ProductItemAddedToShoppingCart
   | ProductItemRemovedFromShoppingCart
