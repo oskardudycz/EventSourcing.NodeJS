@@ -1,7 +1,16 @@
 import { Event } from '#core/event';
-import { JSONParser } from '#core/jsonParser';
+import {
+  EventStoreDBContainer,
+  StartedEventStoreDBContainer,
+} from '#core/testing/eventStoreDB/eventStoreDBContainer';
+import {
+  EventData,
+  EventTypeToRecordedEvent,
+  jsonEvent,
+} from '@eventstore/db-client';
 import { ShoppingCartOpened as ShoppingCartOpenedV1 } from 'src/events/events.v1';
 import { v4 as uuid } from 'uuid';
+import { EventStore, getEventStore } from '../core/eventStoreDB';
 
 export type Client = {
   id: string;
@@ -116,37 +125,43 @@ export class EventTransformations {
   };
 }
 
-export type StoredEvent = {
-  type: string;
-  payload: string;
-};
-
 export class EventParser {
   constructor(private eventTransformations: EventTransformations) {}
 
-  public parse<E extends Event = Event>({ type, payload }: StoredEvent) {
-    const upcaster = this.eventTransformations.get.upcaster(type);
+  public parse<E extends Event = Event>(
+    recordedEvent: EventTypeToRecordedEvent<E>,
+  ) {
+    const upcaster = this.eventTransformations.get.upcaster(recordedEvent.type);
 
-    const result = JSONParser.parse(payload, upcaster ? { map: upcaster } : {});
+    const parsed = { type: recordedEvent.type, data: recordedEvent.data };
 
-    return result as E;
+    return upcaster ? upcaster(parsed) : <E>parsed;
   }
 
-  public stringify<E extends Event = Event>(event: E): StoredEvent {
+  public stringify<E extends Event = Event>(event: E): EventData {
     const downcaster = this.eventTransformations.get.downcaster(event.type);
 
-    return {
-      type: event.type,
-      payload: JSONParser.stringify(
-        event,
-        downcaster ? { map: downcaster } : {},
-      ),
-    };
+    return jsonEvent(downcaster ? downcaster(event) : event);
   }
 }
 
 describe('Multiple transformations with different event types', () => {
-  it('upcast should be forward compatible', () => {
+  jest.setTimeout(180_000);
+
+  let container: StartedEventStoreDBContainer;
+  let eventStore: EventStore;
+
+  beforeAll(async () => {
+    container = await new EventStoreDBContainer().start();
+    const client = container.getClient();
+    eventStore = getEventStore(client);
+  });
+
+  afterAll(() => {
+    return container.stop();
+  });
+
+  it('upcast should be forward compatible', async () => {
     const eventTransformations = new EventTransformations();
     eventTransformations.register
       .upcaster('ShoppingCartOpened', upcastShoppingCartOpened)
@@ -155,6 +170,7 @@ describe('Multiple transformations with different event types', () => {
 
     const parser = new EventParser(eventTransformations);
 
+    // Given
     const eventV1: ShoppingCartOpenedV1 = {
       type: 'ShoppingCartOpened',
       data: {
@@ -180,20 +196,42 @@ describe('Multiple transformations with different event types', () => {
       },
     };
 
-    const events = [eventV1, eventV2, eventV3];
+    await eventStore.appendToStream(
+      `shoppingCart-${eventV1.data.shoppingCartId}`,
+      [eventV1],
+    );
 
-    // Given
-    const serializedEvents = events.map((e) => {
-      return {
-        type: e.type,
-        payload: JSON.stringify(e),
-      };
-    });
+    await eventStore.appendToStream(
+      `shoppingCart-${eventV2.data.shoppingCartId}`,
+      [eventV2],
+    );
+
+    await eventStore.appendToStream(
+      `shoppingCart-${eventV3.data.shoppingCartId}`,
+      [eventV3],
+    );
 
     // When
-    const deserializedEvents = serializedEvents.map((e) =>
-      parser.parse<ShoppingCartOpenedWithStatus>(e),
-    );
+    const deserializedEvents = [
+      (
+        await eventStore.readStream(
+          `shoppingCart-${eventV1.data.shoppingCartId}`,
+          { parse: (e) => parser.parse(e) },
+        )
+      )[0],
+      (
+        await eventStore.readStream(
+          `shoppingCart-${eventV2.data.shoppingCartId}`,
+          { parse: (e) => parser.parse(e) },
+        )
+      )[0],
+      (
+        await eventStore.readStream(
+          `shoppingCart-${eventV3.data.shoppingCartId}`,
+          { parse: (e) => parser.parse(e) },
+        )
+      )[0],
+    ];
 
     expect(deserializedEvents).toEqual([
       {

@@ -1,7 +1,7 @@
 import { Event } from '#core/event';
+import { JSONParser } from '#core/jsonParser';
 import { ShoppingCartOpened as ShoppingCartOpenedV1 } from 'src/events/events.v1';
 import { v4 as uuid } from 'uuid';
-import { JSONParser } from '#core/jsonParser';
 
 export type EventMetadata = {
   userId: string;
@@ -14,9 +14,9 @@ export type EventWithMetadata<E extends Event> = E & {
 export type ShoppingCartOpened = Event<
   'ShoppingCartOpened',
   {
-    //renamed property
     shoppingCartId: string;
     clientId: string;
+    // new required property
     initializedBy: string;
   }
 >;

@@ -1,7 +1,7 @@
 import { Event } from '#core/event';
+import { JSONParser } from '#core/jsonParser';
 import { ShoppingCartOpened as ShoppingCartOpenedV1 } from 'src/events/events.v1';
 import { v4 as uuid } from 'uuid';
-import { JSONParser } from '#core/jsonParser';
 
 export type Client = {
   id: string;
@@ -11,8 +11,8 @@ export type Client = {
 export type ShoppingCartOpened = Event<
   'ShoppingCartOpened',
   {
-    //renamed property
     shoppingCartId: string;
+    //new nested property instead of a single field
     client: Client;
   }
 >;
