@@ -136,6 +136,7 @@ export type GroupCheckoutOutput =
   | GroupCheckoutFailed
   | Ignored
   | UnexpectedErrorOcurred;
+
 export type Ignored = {
   type: 'Ignored';
   data: {
