@@ -5,7 +5,7 @@ export type Command<
   CommandData extends Record<string, unknown> = Record<string, unknown>,
 > = Flavour<
   Readonly<{
-    type: Readonly<CommandType>;
+    type: CommandType;
     data: Readonly<CommandData>;
   }>,
   'Command'
