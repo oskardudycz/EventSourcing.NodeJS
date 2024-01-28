@@ -1,6 +1,16 @@
 import { Command } from '#core/command';
 import { Event } from '#core/event';
-import { Workflow, WorkflowEvent } from '#core/workflow';
+import {
+  Workflow,
+  WorkflowEvent,
+  WorkflowOutput,
+  accept,
+  complete,
+  error,
+  ignore,
+  publish,
+  send,
+} from '#core/workflow';
 import { Map } from 'immutable';
 import {
   CheckOut,
@@ -24,6 +34,15 @@ export type InitiateGroupCheckout = Command<
   }
 >;
 
+export type TimeoutGroupCheckout = Command<
+  'TimeoutGroupCheckout',
+  {
+    groupCheckoutId: string;
+    startedAt: Date;
+    timeOutAt: Date;
+  }
+>;
+
 ////////////////////////////////////////////
 ////////// EVENTS
 ///////////////////////////////////////////
@@ -35,33 +54,6 @@ export type GroupCheckoutInitiated = Event<
     clerkId: string;
     guestStayAccountIds: string[];
     initiatedAt: Date;
-  }
->;
-
-export type GuestCheckoutsInitiated = Event<
-  'GuestCheckoutsInitiated',
-  {
-    groupCheckoutId: string;
-    initiatedGuestStayIds: string[];
-    initiatedAt: Date;
-  }
->;
-
-export type GuestCheckoutCompletionRecorded = Event<
-  'GuestCheckoutCompletionRecorded',
-  {
-    groupCheckoutId: string;
-    guestStayAccountId: string;
-    completedAt: Date;
-  }
->;
-
-export type GuestCheckoutFailureRecorded = Event<
-  'GuestCheckoutFailureRecorded',
-  {
-    groupCheckoutId: string;
-    guestStayAccountId: string;
-    failedAt: Date;
   }
 >;
 
@@ -84,13 +76,16 @@ export type GroupCheckoutFailed = Event<
   }
 >;
 
-export type GroupCheckoutEvent =
-  | GroupCheckoutInitiated
-  | GuestCheckoutsInitiated
-  | GuestCheckoutCompletionRecorded
-  | GuestCheckoutFailureRecorded
-  | GroupCheckoutCompleted
-  | GroupCheckoutFailed;
+export type GroupCheckoutTimedOut = Event<
+  'GroupCheckoutTimedOut',
+  {
+    groupCheckoutId: string;
+    incompleteCheckouts: string[];
+    completedCheckouts: string[];
+    failedCheckouts: string[];
+    timedOutAt: Date;
+  }
+>;
 
 ////////////////////////////////////////////
 ////////// Entity
@@ -112,7 +107,6 @@ export const getInitialState = (): GroupCheckout => {
 
 export enum GuestStayStatus {
   Pending = 'Pending',
-  Initiated = 'Initiated',
   Completed = 'Completed',
   Failed = 'Failed',
 }
@@ -124,59 +118,25 @@ export enum GuestStayStatus {
 export type GroupCheckoutInput =
   | InitiateGroupCheckout
   | GuestCheckedOut
-  | GuestCheckoutFailed;
+  | GuestCheckoutFailed
+  | TimeoutGroupCheckout;
 
 export type GroupCheckoutOutput =
   | GroupCheckoutInitiated
   | CheckOut
-  | GuestCheckoutCompletionRecorded
-  | GuestCheckoutFailureRecorded
-  | GuestCheckoutsInitiated
   | GroupCheckoutCompleted
   | GroupCheckoutFailed
-  | Ignored
-  | UnexpectedErrorOcurred;
+  | GroupCheckoutTimedOut;
 
-export type Ignored = {
-  type: 'Ignored';
-  data: {
-    reason: IgnoredReason;
-  };
-};
-
-export type UnexpectedErrorOcurred = {
-  type: 'ErrorOcurred';
-  data: {
-    reason: ErrorReason;
-  };
-};
-
-export type IgnoredReason =
-  | 'GroupCheckoutAlreadyInitiated'
-  | 'GuestCheckoutsInitiationAlreadyRecorded'
-  | 'GuestCheckoutAlreadyFinished'
-  | 'GroupCheckoutAlreadyFinished'
-  | 'GroupCheckoutDoesNotExist';
+export enum IgnoredReason {
+  GroupCheckoutAlreadyInitiated = 'GroupCheckoutAlreadyInitiated',
+  GuestCheckoutWasNotPartOfGroupCheckout = 'GuestCheckoutWasNotPartOfGroupCheckout',
+  GuestCheckoutAlreadyFinished = 'GuestCheckoutAlreadyFinished',
+  GroupCheckoutAlreadyFinished = 'GroupCheckoutAlreadyFinished',
+  GroupCheckoutDoesNotExist = 'GroupCheckoutDoesNotExist',
+}
 
 export type ErrorReason = 'UnknownInputType';
-
-const ignore = (reason: IgnoredReason): Ignored => {
-  return {
-    type: 'Ignored',
-    data: {
-      reason,
-    },
-  };
-};
-
-const error = (reason: ErrorReason): UnexpectedErrorOcurred => {
-  return {
-    type: 'ErrorOcurred',
-    data: {
-      reason,
-    },
-  };
-};
 
 ////////////////////////////////////////////
 ////////// Evolve
@@ -185,53 +145,56 @@ const error = (reason: ErrorReason): UnexpectedErrorOcurred => {
 export const decide = (
   input: GroupCheckoutInput,
   state: GroupCheckout,
-): GroupCheckoutOutput[] => {
+): WorkflowOutput<GroupCheckoutOutput>[] => {
   const { type, data } = input;
 
   switch (type) {
     case 'InitiateGroupCheckout': {
       if (state.status !== 'NotExisting')
-        return [ignore('GroupCheckoutAlreadyInitiated')];
+        return [ignore(IgnoredReason.GroupCheckoutAlreadyInitiated)];
 
-      const checkoutGuestStays = data.guestStayAccountIds.map<CheckOut>(
-        (id) => {
-          return {
-            type: 'CheckOut',
-            data: {
-              guestStayAccountId: id,
-              now: data.now,
-              groupCheckoutId: data.groupCheckoutId,
-            },
-          };
-        },
-      );
+      const checkoutGuestStays = data.guestStayAccountIds.map((id) => {
+        return send<GroupCheckoutOutput>({
+          type: 'CheckOut',
+          data: {
+            guestStayAccountId: id,
+            now: data.now,
+            groupCheckoutId: data.groupCheckoutId,
+          },
+        });
+      });
 
       return [
-        {
-          type: 'GuestCheckoutsInitiated',
+        ...checkoutGuestStays,
+        publish<GroupCheckoutOutput>({
+          type: 'GroupCheckoutInitiated',
           data: {
             groupCheckoutId: data.groupCheckoutId,
-            initiatedGuestStayIds: data.guestStayAccountIds,
+            guestStayAccountIds: data.guestStayAccountIds,
             initiatedAt: data.now,
+            clerkId: data.clerkId,
           },
-        },
-        ...checkoutGuestStays,
+        }),
       ];
     }
     case 'GuestCheckedOut':
     case 'GuestCheckoutFailed': {
-      if (!data.groupCheckoutId) return [];
+      if (!data.groupCheckoutId)
+        return [ignore(IgnoredReason.GuestCheckoutWasNotPartOfGroupCheckout)];
 
-      if (state.status === 'NotExisting') return [];
+      if (state.status === 'NotExisting')
+        return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
 
-      if (state.status === 'Finished') return [];
+      if (state.status === 'Finished')
+        return [ignore(IgnoredReason.GuestCheckoutAlreadyFinished)];
 
       const { guestStayAccountId, groupCheckoutId } = data;
 
       const guestCheckoutStatus =
         state.guestStayAccountIds.get(guestStayAccountId);
 
-      if (isAlreadyClosed(guestCheckoutStatus)) return [];
+      if (isAlreadyClosed(guestCheckoutStatus))
+        return [ignore(IgnoredReason.GuestCheckoutAlreadyFinished)];
 
       const guestStayAccountIds = state.guestStayAccountIds.set(
         guestStayAccountId,
@@ -243,28 +206,30 @@ export const decide = (
       const now =
         type === 'GuestCheckedOut' ? data.checkedOutAt : data.failedAt;
 
-      const finished: GroupCheckoutEvent =
-        type === 'GuestCheckedOut'
-          ? {
-              type: 'GuestCheckoutCompletionRecorded',
-              data: {
-                groupCheckoutId,
-                guestStayAccountId,
-                completedAt: now,
-              },
-            }
-          : {
-              type: 'GuestCheckoutFailureRecorded',
-              data: {
-                groupCheckoutId,
-                guestStayAccountId,
-                failedAt: now,
-              },
-            };
-
       return areAnyOngoingCheckouts(guestStayAccountIds)
-        ? [finished]
-        : [finished, finish(groupCheckoutId, state.guestStayAccountIds, now)];
+        ? [accept()]
+        : [
+            publish(finished(groupCheckoutId, state.guestStayAccountIds, now)),
+            complete(),
+          ];
+    }
+    case 'TimeoutGroupCheckout': {
+      if (state.status === 'NotExisting')
+        return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
+
+      if (state.status === 'Finished')
+        return [ignore(IgnoredReason.GroupCheckoutAlreadyFinished)];
+
+      return [
+        publish(
+          timedOut(
+            data.groupCheckoutId,
+            state.guestStayAccountIds,
+            data.timeOutAt,
+          ),
+        ),
+        complete(),
+      ];
     }
     default: {
       const _notExistingEventType: never = type;
@@ -275,7 +240,10 @@ export const decide = (
 
 export const evolve = (
   state: GroupCheckout,
-  { type, data: event }: WorkflowEvent<GroupCheckoutOutput>,
+  {
+    type,
+    data: event,
+  }: WorkflowEvent<GroupCheckoutInput | GroupCheckoutOutput>,
 ): GroupCheckout => {
   switch (type) {
     case 'GroupCheckoutInitiated': {
@@ -289,33 +257,23 @@ export const evolve = (
         ),
       };
     }
-    case 'GuestCheckoutsInitiated': {
-      if (state.status !== 'Pending') return state;
-
-      return {
-        status: 'Pending',
-        guestStayAccountIds: event.initiatedGuestStayIds.reduce(
-          (map, id) => map.set(id, GuestStayStatus.Initiated),
-          state.guestStayAccountIds,
-        ),
-      };
-    }
-    case 'GuestCheckoutCompletionRecorded':
-    case 'GuestCheckoutFailureRecorded': {
+    case 'GuestCheckedOut':
+    case 'GuestCheckoutFailed': {
       if (state.status !== 'Pending') return state;
 
       return {
         ...state,
         guestStayAccountIds: state.guestStayAccountIds.set(
           event.guestStayAccountId,
-          type === 'GuestCheckoutCompletionRecorded'
+          type === 'GuestCheckedOut'
             ? GuestStayStatus.Completed
             : GuestStayStatus.Failed,
         ),
       };
     }
     case 'GroupCheckoutCompleted':
-    case 'GroupCheckoutFailed': {
+    case 'GroupCheckoutFailed':
+    case 'GroupCheckoutTimedOut': {
       if (state.status !== 'Pending') return state;
 
       return {
@@ -355,11 +313,11 @@ const checkoutsWith = (
 ): string[] =>
   Array.from(guestStayAccounts.filter((s) => s === status).values());
 
-const finish = (
+const finished = (
   groupCheckoutId: string,
   guestStayAccounts: Map<string, GuestStayStatus>,
   now: Date,
-): GroupCheckoutEvent => {
+): GroupCheckoutCompleted | GroupCheckoutFailed => {
   return areAllCompleted(guestStayAccounts)
     ? {
         type: 'GroupCheckoutCompleted',
@@ -384,4 +342,27 @@ const finish = (
           failedAt: now,
         },
       };
+};
+
+const timedOut = (
+  groupCheckoutId: string,
+  guestStayAccounts: Map<string, GuestStayStatus>,
+  now: Date,
+): GroupCheckoutTimedOut => {
+  return {
+    type: 'GroupCheckoutTimedOut',
+    data: {
+      groupCheckoutId,
+      incompleteCheckouts: checkoutsWith(
+        guestStayAccounts,
+        GuestStayStatus.Pending,
+      ),
+      completedCheckouts: checkoutsWith(
+        guestStayAccounts,
+        GuestStayStatus.Completed,
+      ),
+      failedCheckouts: checkoutsWith(guestStayAccounts, GuestStayStatus.Failed),
+      timedOutAt: now,
+    },
+  };
 };

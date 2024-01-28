@@ -5,7 +5,7 @@ export type Event<
   EventData extends Record<string, unknown> = Record<string, unknown>,
 > = Flavour<
   Readonly<{
-    type: Readonly<EventType>;
+    type: EventType;
     data: Readonly<EventData>;
   }>,
   'Event'
