@@ -23,8 +23,6 @@ export type WorkflowCommand<Output extends Command | Event> = Extract<
   { __brand?: 'Command' }
 >;
 
-export type Reply = Command | Event;
-
 export type WorkflowOutput<TOutput extends Command | Event> =
   | { kind: 'Reply'; message: TOutput }
   | { kind: 'Send'; message: WorkflowCommand<TOutput> }
