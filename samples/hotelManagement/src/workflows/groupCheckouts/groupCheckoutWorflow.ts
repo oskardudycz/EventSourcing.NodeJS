@@ -150,38 +150,68 @@ export const decide = (
   state: GroupCheckout,
 ): WorkflowOutput<GroupCheckoutOutput>[] => {
   const { type } = input;
+  const { status } = state;
 
-  switch (type) {
-    case 'InitiateGroupCheckout': {
-      if (state.status !== 'NotExisting')
+  switch (status) {
+    case 'NotExisting': {
+      if (type !== 'InitiateGroupCheckout')
         return [ignore(IgnoredReason.GroupCheckoutAlreadyInitiated)];
 
       return initiate(input);
     }
-    case 'GuestCheckedOut':
-    case 'GuestCheckoutFailed': {
-      if (state.status === 'NotExisting')
-        return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
+    case 'Pending': {
+      switch (type) {
+        case 'GuestCheckedOut':
+        case 'GuestCheckoutFailed':
+          return tryComplete(input, state);
 
-      if (state.status === 'Finished')
-        return [ignore(IgnoredReason.GuestCheckoutAlreadyFinished)];
+        case 'TimeoutGroupCheckout':
+          return timeOut(input, state);
 
-      return tryComplete(input, state);
+        default: {
+          return [error('UnknownInputType')];
+        }
+      }
     }
-    case 'TimeoutGroupCheckout': {
-      if (state.status === 'NotExisting')
-        return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
-
-      if (state.status === 'Finished')
-        return [ignore(IgnoredReason.GroupCheckoutAlreadyFinished)];
-
-      return timeOut(input, state);
-    }
+    case 'Finished':
+      return [ignore(IgnoredReason.GroupCheckoutAlreadyFinished)];
     default: {
-      const _notExistingEventType: never = type;
+      const _notExistingEventType: never = status;
       return [error('UnknownInputType')];
     }
   }
+
+  // switch (type) {
+  //   case 'InitiateGroupCheckout': {
+  //     if (state.status !== 'NotExisting')
+  //       return [ignore(IgnoredReason.GroupCheckoutAlreadyInitiated)];
+
+  //     return initiate(input);
+  //   }
+  //   case 'GuestCheckedOut':
+  //   case 'GuestCheckoutFailed': {
+  //     if (state.status === 'NotExisting')
+  //       return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
+
+  //     if (state.status === 'Finished')
+  //       return [ignore(IgnoredReason.GuestCheckoutAlreadyFinished)];
+
+  //     return tryComplete(input, state);
+  //   }
+  //   case 'TimeoutGroupCheckout': {
+  //     if (state.status === 'NotExisting')
+  //       return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
+
+  //     if (state.status === 'Finished')
+  //       return [ignore(IgnoredReason.GroupCheckoutAlreadyFinished)];
+
+  //     return timeOut(input, state);
+  //   }
+  //   default: {
+  //     const _notExistingEventType: never = type;
+  //     return [error('UnknownInputType')];
+  //   }
+  // }
 };
 
 const initiate = ({
