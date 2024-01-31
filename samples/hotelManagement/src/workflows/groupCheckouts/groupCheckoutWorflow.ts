@@ -152,13 +152,31 @@ export const decide = (
   const { type } = input;
 
   switch (type) {
-    case 'InitiateGroupCheckout':
-      return whenNotExisting(state, () => initiate(input));
+    case 'InitiateGroupCheckout': {
+      if (state.status !== 'NotExisting')
+        return [ignore(IgnoredReason.GroupCheckoutAlreadyInitiated)];
+
+      return initiate(input);
+    }
     case 'GuestCheckedOut':
-    case 'GuestCheckoutFailed':
-      return whenPending(state, (pending) => tryComplete(input, pending));
-    case 'TimeoutGroupCheckout':
-      return whenPending(state, (pending) => timeOut(input, pending));
+    case 'GuestCheckoutFailed': {
+      if (state.status === 'NotExisting')
+        return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
+
+      if (state.status === 'Finished')
+        return [ignore(IgnoredReason.GuestCheckoutAlreadyFinished)];
+
+      return tryComplete(input, state);
+    }
+    case 'TimeoutGroupCheckout': {
+      if (state.status === 'NotExisting')
+        return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
+
+      if (state.status === 'Finished')
+        return [ignore(IgnoredReason.GroupCheckoutAlreadyFinished)];
+
+      return timeOut(input, state);
+    }
     default: {
       const _notExistingEventType: never = type;
       return [error('UnknownInputType')];
@@ -254,32 +272,6 @@ const timeOut = (
     }),
     complete(),
   ];
-};
-
-const whenNotExisting = (
-  state: GroupCheckout,
-  when: (notExisting: NotExisting) => WorkflowOutput<GroupCheckoutOutput>[],
-): WorkflowOutput<GroupCheckoutOutput>[] => {
-  if (state.status === 'Pending')
-    return [ignore(IgnoredReason.GroupCheckoutAlreadyInitiated)];
-
-  if (state.status === 'Finished')
-    return [ignore(IgnoredReason.GroupCheckoutAlreadyFinished)];
-
-  return when(state);
-};
-
-const whenPending = (
-  state: GroupCheckout,
-  when: (pending: Pending) => WorkflowOutput<GroupCheckoutOutput>[],
-): WorkflowOutput<GroupCheckoutOutput>[] => {
-  if (state.status === 'NotExisting')
-    return [ignore(IgnoredReason.GroupCheckoutDoesNotExist)];
-
-  if (state.status === 'Finished')
-    return [ignore(IgnoredReason.GroupCheckoutAlreadyFinished)];
-
-  return when(state);
 };
 
 ////////////////////////////////////////////
@@ -390,4 +382,27 @@ const finished = (
           failedAt: now,
         },
       };
+};
+
+const timedOut = (
+  groupCheckoutId: string,
+  guestStayAccounts: Map<string, GuestStayStatus>,
+  now: Date,
+): GroupCheckoutTimedOut => {
+  return {
+    type: 'GroupCheckoutTimedOut',
+    data: {
+      groupCheckoutId,
+      incompleteCheckouts: checkoutsWith(
+        guestStayAccounts,
+        GuestStayStatus.Pending,
+      ),
+      completedCheckouts: checkoutsWith(
+        guestStayAccounts,
+        GuestStayStatus.Completed,
+      ),
+      failedCheckouts: checkoutsWith(guestStayAccounts, GuestStayStatus.Failed),
+      timedOutAt: now,
+    },
+  };
 };
