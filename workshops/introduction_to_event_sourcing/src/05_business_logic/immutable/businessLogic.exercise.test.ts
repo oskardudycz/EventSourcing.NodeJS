@@ -1,12 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { v4 as uuid } from 'uuid';
-import { getEventStore } from './core';
-import {
-  PricedProductItem,
-  ShoppingCartEvent,
-  ShoppingCartStatus,
-  getShoppingCart,
-} from './shoppingCart';
 import {
   AddProductItemToShoppingCart,
   CancelShoppingCart,
@@ -14,7 +7,19 @@ import {
   OpenShoppingCart,
   RemoveProductItemFromShoppingCart,
   ShoppingCartErrors,
+  addProductItemToShoppingCart,
+  cancelShoppingCart,
+  confirmShoppingCart,
+  openShoppingCart,
+  removeProductItemFromShoppingCart,
 } from './businessLogic';
+import { getEventStore } from './core';
+import {
+  PricedProductItem,
+  ShoppingCartEvent,
+  ShoppingCartStatus,
+  getShoppingCart,
+} from './shoppingCart';
 
 describe('Business logic', () => {
   it('Should handle commands correctly', () => {
@@ -46,7 +51,6 @@ describe('Business logic', () => {
       unitPrice: 5,
     };
 
-    // eslint-disable-next-line prefer-const
     let result: ShoppingCartEvent[] = [];
 
     // Open
@@ -54,8 +58,7 @@ describe('Business logic', () => {
       type: 'OpenShoppingCart',
       data: { shoppingCartId, clientId, now: openedAt },
     };
-    // result = // run your business logic here
-
+    result = [openShoppingCart(open)];
     eventStore.appendToStream(shoppingCartId, ...result);
 
     // Add Two Pair of Shoes
@@ -65,7 +68,7 @@ describe('Business logic', () => {
     };
 
     let state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    // result = // run your business logic here based on command and state
+    result = [addProductItemToShoppingCart(addTwoPairsOfShoes, state)];
 
     eventStore.appendToStream(shoppingCartId, ...result);
 
@@ -76,7 +79,7 @@ describe('Business logic', () => {
     };
 
     state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    // result = // run your business logic here based on command and state
+    result = [addProductItemToShoppingCart(addTShirt, state)];
     eventStore.appendToStream(shoppingCartId, ...result);
 
     // Remove pair of shoes
@@ -86,7 +89,7 @@ describe('Business logic', () => {
     };
 
     state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    // result = // run your business logic here based on command and state
+    result = [removeProductItemFromShoppingCart(removePairOfShoes, state)];
     eventStore.appendToStream(shoppingCartId, ...result);
 
     // Confirm
@@ -96,7 +99,7 @@ describe('Business logic', () => {
     };
 
     state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    // result = // run your business logic here based on command and state
+    result = [confirmShoppingCart(confirm, state)];
     eventStore.appendToStream(shoppingCartId, ...result);
 
     // Try Cancel
@@ -106,7 +109,7 @@ describe('Business logic', () => {
     };
     const onCancel = () => {
       state = getShoppingCart(eventStore.readStream(shoppingCartId));
-      // result = // run your business logic here based on command and state
+      result = [cancelShoppingCart(cancel, state)];
       eventStore.appendToStream(shoppingCartId, ...result);
     };
 

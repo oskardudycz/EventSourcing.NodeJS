@@ -74,6 +74,8 @@ export class ShoppingCart {
     private _canceledAt?: Date,
   ) {}
 
+  #uncommittedEvents: Event[] = [];
+
   get id() {
     return this._id;
   }
@@ -101,6 +103,34 @@ export class ShoppingCart {
   get canceledAt() {
     return this._canceledAt;
   }
+
+  get uncommitedEvents() {
+    return this.#uncommittedEvents;
+  }
+
+  public static open = (
+    _shoppingCartId: string,
+    _clientId: string,
+    _now: Date,
+  ): ShoppingCart => {
+    throw new Error('Fill the implementation part');
+  };
+
+  public addProductItem = (_productItem: PricedProductItem): void => {
+    throw new Error('Fill the implementation part');
+  };
+
+  public removeProductItem = (_productItem: PricedProductItem): void => {
+    throw new Error('Fill the implementation part');
+  };
+
+  public confirm = (_now: Date): void => {
+    throw new Error('Fill the implementation part');
+  };
+
+  public cancel = (_now: Date): void => {
+    throw new Error('Fill the implementation part');
+  };
 
   public evolve = ({ type, data: event }: ShoppingCartEvent): void => {
     switch (type) {
@@ -163,14 +193,8 @@ export class ShoppingCart {
       }
     }
   };
-}
 
-export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
-  return events.reduce<ShoppingCart>(
-    (state, event) => {
-      state.evolve(event);
-      return state;
-    },
+  public static default = (): ShoppingCart =>
     new ShoppingCart(
       undefined!,
       undefined!,
@@ -179,6 +203,12 @@ export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
       undefined,
       undefined,
       undefined,
-    ),
-  );
+    );
+}
+
+export const getShoppingCart = (events: ShoppingCartEvent[]): ShoppingCart => {
+  return events.reduce<ShoppingCart>((state, event) => {
+    state.evolve(event);
+    return state;
+  }, ShoppingCart.default());
 };
