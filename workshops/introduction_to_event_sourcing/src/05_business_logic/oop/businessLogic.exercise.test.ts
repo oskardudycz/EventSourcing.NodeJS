@@ -1,13 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { v4 as uuid } from 'uuid';
-import { getEventStore } from './core';
-import {
-  PricedProductItem,
-  ShoppingCart,
-  ShoppingCartEvent,
-  ShoppingCartStatus,
-  getShoppingCart,
-} from './shoppingCart';
 import {
   AddProductItemToShoppingCart,
   CancelShoppingCart,
@@ -16,6 +8,14 @@ import {
   RemoveProductItemFromShoppingCart,
   ShoppingCartErrors,
 } from './businessLogic';
+import { getEventStore } from './core';
+import {
+  PricedProductItem,
+  ShoppingCart,
+  ShoppingCartEvent,
+  ShoppingCartStatus,
+  getShoppingCart,
+} from './shoppingCart';
 
 describe('Business logic', () => {
   it('Should handle commands correctly', () => {
@@ -47,17 +47,17 @@ describe('Business logic', () => {
       unitPrice: 5,
     };
 
-    // eslint-disable-next-line prefer-const
-    let result: ShoppingCartEvent[] = [];
-
     // Open
     const open: OpenShoppingCart = {
       type: 'OpenShoppingCart',
       data: { shoppingCartId, clientId, now: openedAt },
     };
-    // result = // run your business logic here
-
-    eventStore.appendToStream(shoppingCartId, ...result);
+    let shoppingCart = ShoppingCart.open(
+      open.data.shoppingCartId,
+      open.data.clientId,
+      open.data.now,
+    );
+    eventStore.appendToStream(shoppingCartId, ...shoppingCart.uncommitedEvents);
 
     // Add Two Pair of Shoes
     const addTwoPairsOfShoes: AddProductItemToShoppingCart = {
@@ -65,10 +65,10 @@ describe('Business logic', () => {
       data: { shoppingCartId, productItem: twoPairsOfShoes },
     };
 
-    let state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    // result = // run your business logic here based on command and state
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+    shoppingCart.addProductItem(addTwoPairsOfShoes.data.productItem);
 
-    eventStore.appendToStream(shoppingCartId, ...result);
+    eventStore.appendToStream(shoppingCartId, ...shoppingCart.uncommitedEvents);
 
     // Add T-Shirt
     const addTShirt: AddProductItemToShoppingCart = {
@@ -76,9 +76,10 @@ describe('Business logic', () => {
       data: { shoppingCartId, productItem: tShirt },
     };
 
-    state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    // result = // run your business logic here based on command and state
-    eventStore.appendToStream(shoppingCartId, ...result);
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+    shoppingCart.addProductItem(addTShirt.data.productItem);
+
+    eventStore.appendToStream(shoppingCartId, ...shoppingCart.uncommitedEvents);
 
     // Remove pair of shoes
     const removePairOfShoes: RemoveProductItemFromShoppingCart = {
@@ -86,9 +87,10 @@ describe('Business logic', () => {
       data: { shoppingCartId, productItem: pairOfShoes },
     };
 
-    state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    // result = // run your business logic here based on command and state
-    eventStore.appendToStream(shoppingCartId, ...result);
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+    shoppingCart.removeProductItem(removePairOfShoes.data.productItem);
+
+    eventStore.appendToStream(shoppingCartId, ...shoppingCart.uncommitedEvents);
 
     // Confirm
     const confirm: ConfirmShoppingCart = {
@@ -96,19 +98,23 @@ describe('Business logic', () => {
       data: { shoppingCartId, now: confirmedAt },
     };
 
-    state = getShoppingCart(eventStore.readStream(shoppingCartId));
-    // result = // run your business logic here based on command and state
-    eventStore.appendToStream(shoppingCartId, ...result);
+    shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+    shoppingCart.confirm(confirm.data.now);
 
-    // Try Cancel
+    eventStore.appendToStream(shoppingCartId, ...shoppingCart.uncommitedEvents);
+
     const cancel: CancelShoppingCart = {
       type: 'CancelShoppingCart',
       data: { shoppingCartId, now: canceledAt },
     };
     const onCancel = () => {
-      state = getShoppingCart(eventStore.readStream(shoppingCartId));
-      // result = // run your business logic here based on command and state
-      eventStore.appendToStream(shoppingCartId, ...result);
+      shoppingCart = getShoppingCart(eventStore.readStream(shoppingCartId));
+      shoppingCart.cancel(cancel.data.now);
+
+      eventStore.appendToStream(
+        shoppingCartId,
+        ...shoppingCart.uncommitedEvents,
+      );
     };
 
     expect(onCancel).toThrow(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
@@ -159,20 +165,25 @@ describe('Business logic', () => {
       // },
     ]);
 
-    const shoppingCart = getShoppingCart(events);
+    shoppingCart = getShoppingCart(events);
 
     expect(shoppingCart).toBeInstanceOf(ShoppingCart);
-    expect(JSON.stringify(shoppingCart)).toBe(
-      JSON.stringify(
-        new ShoppingCart(
-          shoppingCartId,
-          clientId,
-          ShoppingCartStatus.Confirmed,
-          openedAt,
-          [pairOfShoes, tShirt],
-          confirmedAt,
-        ),
-      ),
-    );
+    const actual = {
+      shoppingCartId: shoppingCart.id,
+      clientId: shoppingCart.clientId,
+      status: shoppingCart.status,
+      openedAt: shoppingCart.openedAt,
+      productItems: shoppingCart.productItems,
+      confirmedAt: shoppingCart.confirmedAt,
+    };
+
+    expect(actual).toEqual({
+      shoppingCartId,
+      clientId,
+      status: ShoppingCartStatus.Confirmed,
+      openedAt,
+      productItems: [pairOfShoes, tShirt],
+      confirmedAt,
+    });
   });
 });

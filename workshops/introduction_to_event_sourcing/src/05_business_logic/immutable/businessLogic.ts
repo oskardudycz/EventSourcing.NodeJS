@@ -1,8 +1,12 @@
+import {
+  PricedProductItem,
+  ShoppingCart,
+  ShoppingCartEvent,
+} from './shoppingCart';
+
 //////////////////////////////////////
 /// Commands
 //////////////////////////////////////
-
-import { PricedProductItem } from './shoppingCart';
 
 export type OpenShoppingCart = {
   type: 'OpenShoppingCart';
@@ -52,10 +56,49 @@ export type ShoppingCartCommand =
   | ConfirmShoppingCart
   | CancelShoppingCart;
 
+//////////////////////////////////////
+/// Decide
+//////////////////////////////////////
+
 export const enum ShoppingCartErrors {
+  CART_ALREADY_EXISTS = 'CART_ALREADY_EXISTS',
   CART_IS_ALREADY_CLOSED = 'CART_IS_ALREADY_CLOSED',
   PRODUCT_ITEM_NOT_FOUND = 'PRODUCT_ITEM_NOT_FOUND',
   CART_IS_EMPTY = 'CART_IS_EMPTY',
   UNKNOWN_EVENT_TYPE = 'UNKNOWN_EVENT_TYPE',
   UNKNOWN_COMMAND_TYPE = 'UNKNOWN_COMMAND_TYPE',
 }
+
+export const openShoppingCart = ({
+  data: _command,
+}: OpenShoppingCart): ShoppingCartEvent => {
+  throw new Error('Fill the implementation part');
+};
+
+export const addProductItemToShoppingCart = (
+  { data: _command }: AddProductItemToShoppingCart,
+  _shoppingCart: ShoppingCart,
+): ShoppingCartEvent => {
+  throw new Error('Fill the implementation part');
+};
+
+export const removeProductItemFromShoppingCart = (
+  { data: _command }: RemoveProductItemFromShoppingCart,
+  _shoppingCart: ShoppingCart,
+): ShoppingCartEvent => {
+  throw new Error('Fill the implementation part');
+};
+
+export const confirmShoppingCart = (
+  { data: _command }: ConfirmShoppingCart,
+  _shoppingCart: ShoppingCart,
+): ShoppingCartEvent => {
+  throw new Error('Fill the implementation part');
+};
+
+export const cancelShoppingCart = (
+  { data: _command }: CancelShoppingCart,
+  _shoppingCart: ShoppingCart,
+): ShoppingCartEvent => {
+  throw new Error('Fill the implementation part');
+};
