@@ -179,7 +179,7 @@ export const getShoppingCart = (
   _streamName: string,
 ): Promise<ShoppingCart> => {
   // 1. Add logic here
-  return Promise.reject('Not implemented!');
+  return Promise.reject(new Error('Not implemented!'));
 };
 
 describe('Events definition', () => {
