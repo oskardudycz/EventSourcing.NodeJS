@@ -75,6 +75,10 @@ describe('Appending events', () => {
     eventStore = await getEventStoreDBTestClient();
   });
 
+  afterAll(async () => {
+    await eventStore.dispose();
+  })
+  
   it('should append events to EventStoreDB', async () => {
     const shoppingCartId = uuid();
     const clientId = uuid();

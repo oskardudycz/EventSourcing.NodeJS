@@ -189,6 +189,10 @@ describe('Events definition', () => {
     eventStore = await getEventStoreDBTestClient();
   });
 
+  afterAll(async () => {
+    await eventStore.dispose();
+  })
+  
   it('all event types should be defined', async () => {
     const shoppingCartId = uuid();
 
