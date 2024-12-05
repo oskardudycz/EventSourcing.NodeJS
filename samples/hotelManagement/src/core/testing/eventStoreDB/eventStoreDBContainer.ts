@@ -7,10 +7,9 @@ import {
 import { Environment } from 'testcontainers/build/types';
 
 const EVENTSTOREDB_PORT = 2113;
-const EVENTSTOREDB_TCP_PORT = 1113;
-const EVENTSTOREDB_TCP_PORTS = [EVENTSTOREDB_TCP_PORT, EVENTSTOREDB_PORT];
+const EVENTSTOREDB_TCP_PORTS = [EVENTSTOREDB_PORT];
 const EVENTSTOREDB_IMAGE_NAME = 'eventstore/eventstore';
-const EVENTSTOREDB_IMAGE_TAG = '23.10.0-bookworm-slim';
+const EVENTSTOREDB_IMAGE_TAG = '24.10.0-bookworm-slim';
 
 export class EventStoreDBContainer extends GenericContainer {
   private readonly tcpPorts = EVENTSTOREDB_TCP_PORTS;
@@ -43,9 +42,7 @@ export class EventStoreDBContainer extends GenericContainer {
         : {}),
       EVENTSTORE_CLUSTER_SIZE: '1',
       EVENTSTORE_START_STANDARD_PROJECTIONS: 'true',
-      EVENTSTORE_EXT_TCP_PORT: `${EVENTSTOREDB_TCP_PORT}`,
-      EVENTSTORE_HTTP_PORT: `${EVENTSTOREDB_PORT}`,
-      EVENTSTORE_ENABLE_EXTERNAL_TCP: 'true',
+      EVENTSTORE_NODE_PORT: `${EVENTSTOREDB_PORT}`,
       EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: 'true',
     };
 
