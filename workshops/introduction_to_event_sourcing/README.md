@@ -51,12 +51,12 @@ Follow the instructions in exercises folders.
 
 ## Ensuring that all is setup correctly
 
-1. Run: `docker-compose up` to start EventStoreDB docker image.
+1. Run: `docker compose up` to start EventStoreDB docker image.
 2. Run `npm run test:solved`. If all is fine then all tests should be green.
 
 ## Running
 
-1. Run: `docker-compose up` to start EventStoreDB docker image.You should automatically get EventStoreDB UI: http://localhost:2113/
+1. Run: `docker compose up` to start EventStoreDB docker image.You should automatically get EventStoreDB UI: http://localhost:2113/
 2. You can get build watch by running `npm run build:ts:watch`.
 3. To run test for exercises run `npm run test:exercise`. For solutions run `npm run test:solved`, for all `npm run test`.
 4. Whe you're working with exercise and want to have tests running on file change run `npm run test:exercise:watch`.
