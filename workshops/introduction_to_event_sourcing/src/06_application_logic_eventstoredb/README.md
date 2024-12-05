@@ -13,7 +13,7 @@ Having the following shopping cart process:
 
 And business logic implemented in the [previous exercise](../05_business_logic/) write the application code that will _glue_ the API defined in `api.ts` files with the domain code.
 
-This time you'll use EventStoreDB instead of the mocked one. Run `docker-compose up` before running test code to have database set up.
+This time you'll use EventStoreDB instead of the mocked one. Run `docker compose up` before running test code to have database set up.
 
 There are four variations:
 

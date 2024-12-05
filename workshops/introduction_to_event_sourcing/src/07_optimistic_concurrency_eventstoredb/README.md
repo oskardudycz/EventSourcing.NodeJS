@@ -17,7 +17,7 @@ And business logic and application code implemented in the [previous exercise](.
 - [MDN - HTTP conditional requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests)
 - [EventStoreDB Documentation - Handling concurrency](https://developers.eventstore.com/clients/grpc/appending-events.html#handling-concurrency)
 
-This time you'll use EventStoreDB instead of the mocked one. Run `docker-compose up` before running test code to have database set up.
+This time you'll use EventStoreDB instead of the mocked one. Run `docker compose up` before running test code to have database set up.
 
 There are four variations:
 

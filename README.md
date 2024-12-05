@@ -1218,7 +1218,7 @@ $ docker pull oskardudycz/eventsourcing.js.simple
 4. Build Docker Compose based on the `docker-compose.yml` file in the current directory
 
 ```bash
-$ docker-compose build
+$ docker compose build
 ```
 
 5. Show running containers
@@ -1233,22 +1233,22 @@ $ docker ps
 $ docker ps -a
 ```
 
-7. Start services with docker-compose
+7. Start services with docker compose
 
 ```bash
-$ docker-compose up
+$ docker compose up
 ```
 
-8. Kill all services from docker-compose
+8. Kill all services from docker compose
 
 ```bash
-$ docker-compose kill
+$ docker compose kill
 ```
 
-6. Remove all services and clean the data from docker-compose
+6. Remove all services and clean the data from docker compose
 
 ```bash
-$ docker-compose down -v
+$ docker compose down -v
 ```
 
 #### Container registry
