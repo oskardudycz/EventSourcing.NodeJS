@@ -55,7 +55,7 @@ const appendToStream = async (
   _events: ShoppingCartEvent[],
 ): Promise<bigint> => {
   // TODO: Fill append events logic here.
-  return Promise.reject('Not implemented!');
+  return Promise.reject(new Error('Not implemented!'));
 };
 
 describe('Appending events', () => {
