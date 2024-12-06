@@ -1,13 +1,10 @@
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { type Event } from '@event-driven-io/emmett';
 import {
-  getMongoDBEventStore,
-  MongoDBEventStore,
-} from '@event-driven-io/emmett-mongodb';
+  type EventStoreDBEventStore,
+  getEventStoreDBEventStore,
+} from '@event-driven-io/emmett-esdb';
 import { v4 as uuid } from 'uuid';
-import {
-  getMongoDBTestClient,
-  releaseMongoDBContainer,
-} from '../../core/testing/mongoDB';
 
 export interface ProductItem {
   productId: string;
@@ -67,26 +64,25 @@ export type ShoppingCartEvent =
   | ShoppingCartCanceled;
 
 const appendToStream = async (
-  _eventStore: MongoDBEventStore,
-  _streamName: string,
-  _events: ShoppingCartEvent[],
+  eventStore: EventStoreDBEventStore,
+  streamName: string,
+  events: ShoppingCartEvent[],
 ): Promise<bigint> => {
-  // TODO: Fill append events logic here.
-  return Promise.reject(new Error('Not implemented!'));
+  const { nextExpectedStreamVersion } = await eventStore.appendToStream(
+    streamName,
+    events,
+  );
+
+  return nextExpectedStreamVersion;
 };
 
 describe('Appending events', () => {
-  let eventStore: MongoDBEventStore;
+  let eventStore: EventStoreDBEventStore;
 
   beforeAll(async () => {
-    const client = await getMongoDBTestClient();
+    const client = await getEventStoreDBTestClient();
 
-    eventStore = getMongoDBEventStore({ client });
-  });
-
-  afterAll(async () => {
-    await eventStore.close();
-    await releaseMongoDBContainer();
+    eventStore = getEventStoreDBEventStore(client);
   });
 
   it('should append events to EventStoreDB', async () => {
@@ -135,7 +131,7 @@ describe('Appending events', () => {
       },
     ];
 
-    const streamName = `shopping_cart:${shoppingCartId}`;
+    const streamName = `shopping_cart-${shoppingCartId}`;
 
     const appendedEventsCount = await appendToStream(
       eventStore,
@@ -143,6 +139,6 @@ describe('Appending events', () => {
       events,
     );
 
-    expect(appendedEventsCount).toBe(BigInt(events.length));
+    expect(appendedEventsCount).toBe(BigInt(events.length - 1));
   });
 });

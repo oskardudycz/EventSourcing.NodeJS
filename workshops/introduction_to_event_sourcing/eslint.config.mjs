@@ -21,6 +21,7 @@ export default [
       '**/dist/',
       '**/lib/',
       '**/cache/',
+      '**/docker/',
       'node_modules/*',
       '**/node_modules',
       'dist/*coverage/*',
