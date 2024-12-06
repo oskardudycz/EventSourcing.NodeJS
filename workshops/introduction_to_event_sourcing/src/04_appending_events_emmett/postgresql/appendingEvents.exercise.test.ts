@@ -1,13 +1,13 @@
 import { type Event } from '@event-driven-io/emmett';
 import {
-  getMongoDBEventStore,
-  MongoDBEventStore,
-} from '@event-driven-io/emmett-mongodb';
+  getPostgreSQLEventStore,
+  PostgresEventStore,
+} from '@event-driven-io/emmett-postgresql/.';
 import { v4 as uuid } from 'uuid';
 import {
-  getMongoDBTestClient,
-  releaseMongoDBContainer,
-} from '../../core/testing/mongoDB';
+  getPostgreSQLConnectionString,
+  releasePostgreSqlContainer,
+} from '../../core/testing/postgreSQL';
 
 export interface ProductItem {
   productId: string;
@@ -67,7 +67,7 @@ export type ShoppingCartEvent =
   | ShoppingCartCanceled;
 
 const appendToStream = async (
-  _eventStore: MongoDBEventStore,
+  _eventStore: PostgresEventStore,
   _streamName: string,
   _events: ShoppingCartEvent[],
 ): Promise<bigint> => {
@@ -76,17 +76,17 @@ const appendToStream = async (
 };
 
 describe('Appending events', () => {
-  let eventStore: MongoDBEventStore;
+  let eventStore: PostgresEventStore;
 
   beforeAll(async () => {
-    const client = await getMongoDBTestClient();
+    const connectionString = await getPostgreSQLConnectionString();
 
-    eventStore = getMongoDBEventStore({ client });
+    eventStore = getPostgreSQLEventStore(connectionString);
   });
 
   afterAll(async () => {
     await eventStore.close();
-    await releaseMongoDBContainer();
+    await releasePostgreSqlContainer();
   });
 
   it('should append events to EventStoreDB', async () => {
