@@ -61,33 +61,23 @@ services:
   #######################################################
   postgres:
     image: postgres:15.1-alpine
-    ports:
-      - '5432:5432'
+    container_name: postgres
     environment:
       - POSTGRES_DB=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Password12!
+    ports:
+      - 5432:5432
     networks:
       - postgresql_network
 
   pgadmin:
-    container_name: pgadmin_container
     image: dpage/pgadmin4
+    container_name: pgadmin
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD:-postgres}
-      - PGADMIN_CONFIG_SERVER_MODE=False
-      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@pgadmin.org}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
     ports:
       - '${PGADMIN_PORT:-5050}:80'
-    entrypoint: /bin/sh -c "chmod 600 /pgpass; /entrypoint.sh;"
-    user: root
-    volumes:
-      - ./docker/pgAdmin/pgpass:/pgpass
-      - ./docker/pgAdmin/servers.json:/pgadmin4/servers.json
-    depends_on:
-      - postgres
-    restart: unless-stopped
     networks:
       - postgresql_network
 

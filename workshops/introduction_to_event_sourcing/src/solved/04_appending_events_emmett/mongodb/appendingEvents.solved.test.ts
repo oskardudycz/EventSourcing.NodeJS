@@ -1,13 +1,13 @@
+import {
+  getMongoDBTestClient,
+  releaseMongoDBContainer,
+} from '#core/testing/mongoDB';
 import { type Event } from '@event-driven-io/emmett';
 import {
   getMongoDBEventStore,
   MongoDBEventStore,
 } from '@event-driven-io/emmett-mongodb';
 import { v4 as uuid } from 'uuid';
-import {
-  getMongoDBTestClient,
-  releaseMongoDBContainer,
-} from '../../core/testing/mongoDB';
 
 export interface ProductItem {
   productId: string;
@@ -67,12 +67,16 @@ export type ShoppingCartEvent =
   | ShoppingCartCanceled;
 
 const appendToStream = async (
-  _eventStore: MongoDBEventStore,
-  _streamName: string,
-  _events: ShoppingCartEvent[],
+  eventStore: MongoDBEventStore,
+  streamName: string,
+  events: ShoppingCartEvent[],
 ): Promise<bigint> => {
-  // TODO: Fill append events logic here.
-  return Promise.reject(new Error('Not implemented!'));
+  const { nextExpectedStreamVersion } = await eventStore.appendToStream(
+    streamName,
+    events,
+  );
+
+  return nextExpectedStreamVersion;
 };
 
 describe('Appending events', () => {
@@ -89,7 +93,7 @@ describe('Appending events', () => {
     await releaseMongoDBContainer();
   });
 
-  it('should append events to EventStoreDB', async () => {
+  it('should append events to MongoDB', async () => {
     const shoppingCartId = uuid();
     const clientId = uuid();
     const pairOfShoes: PricedProductItem = {
