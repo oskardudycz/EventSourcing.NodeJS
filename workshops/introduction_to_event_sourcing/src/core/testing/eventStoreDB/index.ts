@@ -1,13 +1,13 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from './eventStoreDBContainer';
+} from '@event-driven-io/emmett-testcontainers';
+import { EventStoreDBClient } from '@eventstore/db-client';
 
 let esdbContainer: StartedEventStoreDBContainer;
 
 export const getEventStoreDBTestClient = async (
-  useTestContainers = false,
+  useTestContainers = true,
 ): Promise<EventStoreDBClient> => {
   let connectionString;
 
