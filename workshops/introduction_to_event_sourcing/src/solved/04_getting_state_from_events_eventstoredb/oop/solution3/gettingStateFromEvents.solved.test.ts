@@ -1,4 +1,4 @@
-import { getEventStoreDBTestClient } from '@event-driven-io/emmett-testcontainers';
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import {
   ANY,
   AppendResult,
