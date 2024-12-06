@@ -1,14 +1,10 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import { type Event } from '@event-driven-io/emmett';
+import {
+  type EventStoreDBEventStore,
+  getEventStoreDBEventStore,
+} from '@event-driven-io/emmett-esdb';
 import { v4 as uuid } from 'uuid';
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
 
 export interface ProductItem {
   productId: string;
@@ -68,7 +64,7 @@ export type ShoppingCartEvent =
   | ShoppingCartCanceled;
 
 const appendToStream = async (
-  _eventStore: EventStoreDBClient,
+  _eventStore: EventStoreDBEventStore,
   _streamName: string,
   _events: ShoppingCartEvent[],
 ): Promise<bigint> => {
@@ -77,10 +73,12 @@ const appendToStream = async (
 };
 
 describe('Appending events', () => {
-  let eventStore: EventStoreDBClient;
+  let eventStore: EventStoreDBEventStore;
 
   beforeAll(async () => {
-    eventStore = await getEventStoreDBTestClient();
+    const client = await getEventStoreDBTestClient();
+
+    eventStore = getEventStoreDBEventStore(client);
   });
 
   it('should append events to EventStoreDB', async () => {

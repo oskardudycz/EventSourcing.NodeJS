@@ -1,14 +1,13 @@
-import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import { type Event } from '@event-driven-io/emmett';
+import {
+  getMongoDBEventStore,
+  MongoDBEventStore,
+} from '@event-driven-io/emmett-mongodb';
 import { v4 as uuid } from 'uuid';
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
+import {
+  getMongoDBTestClient,
+  releaseMongoDBContainer,
+} from '../../core/testing/mongoDB';
 
 export interface ProductItem {
   productId: string;
@@ -68,7 +67,7 @@ export type ShoppingCartEvent =
   | ShoppingCartCanceled;
 
 const appendToStream = async (
-  _eventStore: EventStoreDBClient,
+  _eventStore: MongoDBEventStore,
   _streamName: string,
   _events: ShoppingCartEvent[],
 ): Promise<bigint> => {
@@ -77,10 +76,17 @@ const appendToStream = async (
 };
 
 describe('Appending events', () => {
-  let eventStore: EventStoreDBClient;
+  let eventStore: MongoDBEventStore;
 
   beforeAll(async () => {
-    eventStore = await getEventStoreDBTestClient();
+    const client = await getMongoDBTestClient();
+
+    eventStore = getMongoDBEventStore({ client });
+  });
+
+  afterAll(async () => {
+    await eventStore.close();
+    await releaseMongoDBContainer();
   });
 
   it('should append events to EventStoreDB', async () => {

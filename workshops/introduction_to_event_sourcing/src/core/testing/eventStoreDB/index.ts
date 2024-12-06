@@ -1,17 +1,19 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
 import {
   EventStoreDBContainer,
   StartedEventStoreDBContainer,
-} from './eventStoreDBContainer';
+} from '@event-driven-io/emmett-testcontainers';
+import { EventStoreDBClient } from '@eventstore/db-client';
 
-let esdbContainer: StartedEventStoreDBContainer;
+let esdbContainer: StartedEventStoreDBContainer | undefined;
+let instanceCounter = 0;
 
 export const getEventStoreDBTestClient = async (
-  useTestContainers = false,
+  useTestContainers = true,
 ): Promise<EventStoreDBClient> => {
   let connectionString;
 
   if (useTestContainers) {
+    ++instanceCounter;
     if (!esdbContainer)
       esdbContainer = await new EventStoreDBContainer().start();
 
@@ -24,4 +26,16 @@ export const getEventStoreDBTestClient = async (
   // That's how EventStoreDB client is setup
   // We're taking the connection string from container
   return EventStoreDBClient.connectionString(connectionString);
+};
+
+export const releaseEventStoreDBContainer = async () => {
+  if (--instanceCounter !== 0) return;
+  try {
+    if (esdbContainer) {
+      await esdbContainer.stop();
+      esdbContainer = undefined;
+    }
+  } catch {
+    // mute
+  }
 };

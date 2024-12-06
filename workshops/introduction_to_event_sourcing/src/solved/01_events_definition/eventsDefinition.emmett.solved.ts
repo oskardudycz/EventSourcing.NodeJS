@@ -1,14 +1,5 @@
-import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import { type Event } from '@event-driven-io/emmett';
 import { v4 as uuid } from 'uuid';
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
 
 export interface ProductItem {
   productId: string;
@@ -67,23 +58,64 @@ export type ShoppingCartEvent =
   | ShoppingCartConfirmed
   | ShoppingCartCanceled;
 
-const appendToStream = async (
-  _eventStore: EventStoreDBClient,
-  _streamName: string,
-  _events: ShoppingCartEvent[],
-): Promise<bigint> => {
-  // TODO: Fill append events logic here.
-  return Promise.reject(new Error('Not implemented!'));
-};
+enum ShoppingCartStatus {
+  Pending = 'Pending',
+  Confirmed = 'Confirmed',
+  Canceled = 'Canceled',
+}
 
-describe('Appending events', () => {
-  let eventStore: EventStoreDBClient;
+export type ShoppingCart = Readonly<{
+  id: string;
+  clientId: string;
+  status: ShoppingCartStatus;
+  productItems: PricedProductItem[];
+  openedAt: Date;
+  confirmedAt?: Date;
+  canceledAt?: Date;
+}>;
 
-  beforeAll(async () => {
-    eventStore = await getEventStoreDBTestClient();
-  });
+export class ShoppingCartOOP {
+  constructor(
+    private _id: string,
+    private _clientId: string,
+    private _status: ShoppingCartStatus,
+    private _openedAt: Date,
+    private _productItems: PricedProductItem[] = [],
+    private _confirmedAt?: Date,
+    private _canceledAt?: Date,
+  ) {}
 
-  it('should append events to EventStoreDB', async () => {
+  get id() {
+    return this._id;
+  }
+
+  get clientId() {
+    return this._clientId;
+  }
+
+  get status() {
+    return this._status;
+  }
+
+  get openedAt() {
+    return this._openedAt;
+  }
+
+  get productItems() {
+    return this._productItems;
+  }
+
+  get confirmedAt() {
+    return this._confirmedAt;
+  }
+
+  get canceledAt() {
+    return this._canceledAt;
+  }
+}
+
+describe('Events definition', () => {
+  it('all event types should be defined', () => {
     const shoppingCartId = uuid();
     const clientId = uuid();
     const pairOfShoes: PricedProductItem = {
@@ -129,14 +161,6 @@ describe('Appending events', () => {
       },
     ];
 
-    const streamName = `shopping_cart-${shoppingCartId}`;
-
-    const appendedEventsCount = await appendToStream(
-      eventStore,
-      streamName,
-      events,
-    );
-
-    expect(appendedEventsCount).toBe(BigInt(events.length - 1));
+    expect(events.length).toBe(5);
   });
 });
