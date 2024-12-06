@@ -1,4 +1,4 @@
-import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
+import { getEventStoreDBTestClient } from '@event-driven-io/emmett-testcontainers';
 import {
   ANY,
   AppendResult,
@@ -7,6 +7,14 @@ import {
   StreamNotFoundError,
 } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
+
+export type Event<
+  EventType extends string = string,
+  EventData extends Record<string, unknown> = Record<string, unknown>,
+> = Readonly<{
+  type: Readonly<EventType>;
+  data: Readonly<EventData>;
+}>;
 
 export interface ProductItem {
   productId: string;
@@ -17,43 +25,53 @@ export type PricedProductItem = ProductItem & {
   unitPrice: number;
 };
 
+export type ShoppingCartOpened = Event<
+  'ShoppingCartOpened',
+  {
+    shoppingCartId: string;
+    clientId: string;
+    openedAt: string;
+  }
+>;
+
+export type ProductItemAddedToShoppingCart = Event<
+  'ProductItemAddedToShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  }
+>;
+
+export type ProductItemRemovedFromShoppingCart = Event<
+  'ProductItemRemovedFromShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  }
+>;
+
+export type ShoppingCartConfirmed = Event<
+  'ShoppingCartConfirmed',
+  {
+    shoppingCartId: string;
+    confirmedAt: string;
+  }
+>;
+
+export type ShoppingCartCanceled = Event<
+  'ShoppingCartCanceled',
+  {
+    shoppingCartId: string;
+    canceledAt: string;
+  }
+>;
+
 export type ShoppingCartEvent =
-  | {
-      type: 'ShoppingCartOpened';
-      data: {
-        shoppingCartId: string;
-        clientId: string;
-        openedAt: string;
-      };
-    }
-  | {
-      type: 'ProductItemAddedToShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ProductItemRemovedFromShoppingCart';
-      data: {
-        shoppingCartId: string;
-        productItem: PricedProductItem;
-      };
-    }
-  | {
-      type: 'ShoppingCartConfirmed';
-      data: {
-        shoppingCartId: string;
-        confirmedAt: string;
-      };
-    }
-  | {
-      type: 'ShoppingCartCanceled';
-      data: {
-        shoppingCartId: string;
-        canceledAt: string;
-      };
-    };
+  | ShoppingCartOpened
+  | ProductItemAddedToShoppingCart
+  | ProductItemRemovedFromShoppingCart
+  | ShoppingCartConfirmed
+  | ShoppingCartCanceled;
 
 enum ShoppingCartStatus {
   Pending = 'Pending',
@@ -166,14 +184,6 @@ export class ShoppingCart {
     }
   };
 }
-
-export type Event<
-  EventType extends string = string,
-  EventData extends Record<string, unknown> = Record<string, unknown>,
-> = Readonly<{
-  type: Readonly<EventType>;
-  data: Readonly<EventData>;
-}>;
 
 export const readStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
