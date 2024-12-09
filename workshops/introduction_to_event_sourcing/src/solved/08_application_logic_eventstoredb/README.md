@@ -1,4 +1,4 @@
-# Exercise 06 - Application Logic
+# Exercise 08 - Application Logic
 
 Having the following shopping cart process:
 

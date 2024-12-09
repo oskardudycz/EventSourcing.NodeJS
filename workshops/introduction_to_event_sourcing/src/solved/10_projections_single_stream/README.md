@@ -1,4 +1,4 @@
-# Exercise 08 - Projections
+# Exercise 10 - Projections
 
 With the [Database](./tools/database.ts) interface representing the sample database, implement the following projections:
 

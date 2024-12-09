@@ -11,7 +11,7 @@ export const getPostgreSQLConnectionString = async (
 ): Promise<string> => {
   let connectionString;
 
-  if (useTestContainers) {
+  if (process.env.ES_USE_TEST_CONTAINERS !== 'false' && useTestContainers) {
     ++instanceCounter;
     if (!postgreSQLContainer)
       postgreSQLContainer = await new PostgreSqlContainer().start();
