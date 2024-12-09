@@ -17,53 +17,43 @@ export type PricedProductItem = ProductItem & {
   unitPrice: number;
 };
 
-export type ShoppingCartOpened = Event<
-  'ShoppingCartOpened',
-  {
-    shoppingCartId: string;
-    clientId: string;
-    openedAt: Date;
-  }
->;
-
-export type ProductItemAddedToShoppingCart = Event<
-  'ProductItemAddedToShoppingCart',
-  {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
-  }
->;
-
-export type ProductItemRemovedFromShoppingCart = Event<
-  'ProductItemRemovedFromShoppingCart',
-  {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
-  }
->;
-
-export type ShoppingCartConfirmed = Event<
-  'ShoppingCartConfirmed',
-  {
-    shoppingCartId: string;
-    confirmedAt: Date;
-  }
->;
-
-export type ShoppingCartCanceled = Event<
-  'ShoppingCartCanceled',
-  {
-    shoppingCartId: string;
-    canceledAt: Date;
-  }
->;
-
 export type ShoppingCartEvent =
-  | ShoppingCartOpened
-  | ProductItemAddedToShoppingCart
-  | ProductItemRemovedFromShoppingCart
-  | ShoppingCartConfirmed
-  | ShoppingCartCanceled;
+  | {
+      type: 'ShoppingCartOpened';
+      data: {
+        shoppingCartId: string;
+        clientId: string;
+        openedAt: Date;
+      };
+    }
+  | {
+      type: 'ProductItemAddedToShoppingCart';
+      data: {
+        shoppingCartId: string;
+        productItem: PricedProductItem;
+      };
+    }
+  | {
+      type: 'ProductItemRemovedFromShoppingCart';
+      data: {
+        shoppingCartId: string;
+        productItem: PricedProductItem;
+      };
+    }
+  | {
+      type: 'ShoppingCartConfirmed';
+      data: {
+        shoppingCartId: string;
+        confirmedAt: Date;
+      };
+    }
+  | {
+      type: 'ShoppingCartCanceled';
+      data: {
+        shoppingCartId: string;
+        canceledAt: Date;
+      };
+    };
 
 enum ShoppingCartStatus {
   Pending = 'Pending',
