@@ -1,4 +1,4 @@
-# Exercise 04 - Getting the current entity state from events using EventStoreDB
+# Exercise 06 - Getting the current entity state from events using Emmett
 
 Having a defined structure of events and an entity representing the shopping cart from the [first exercise](../01_events_definition/), fill a `GetShoppingCart` function that will rebuild the current state from events.
 

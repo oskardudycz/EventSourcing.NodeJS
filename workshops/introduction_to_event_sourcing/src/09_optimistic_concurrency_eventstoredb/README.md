@@ -1,4 +1,4 @@
-# Exercise 07 - Application Logic with Optimistic Concurrency
+# Exercise 09 - Application Logic with Optimistic Concurrency
 
 Having the following shopping cart process:
 

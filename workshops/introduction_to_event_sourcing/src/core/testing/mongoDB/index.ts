@@ -12,14 +12,14 @@ export const getMongoDBTestClient = async (
 ): Promise<MongoClient> => {
   let connectionString;
 
-  if (useTestContainers) {
+  if (process.env.ES_USE_TEST_CONTAINERS !== 'false' && useTestContainers) {
     ++instanceCounter;
     if (!mongoDBContainer)
       mongoDBContainer = await new MongoDBContainer().start();
 
     connectionString = mongoDBContainer.getConnectionString();
   } else {
-    connectionString = 'mongodb://mongodb:27017/';
+    connectionString = 'mongodb://localhost:27017/';
   }
 
   return new MongoClient(connectionString, {
