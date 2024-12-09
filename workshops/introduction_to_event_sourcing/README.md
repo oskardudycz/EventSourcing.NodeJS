@@ -26,15 +26,17 @@ Follow the instructions in exercises folders.
 4. Getting State from events
    - [Raw EventStoreDB](./src/05_getting_state_from_events_eventstoredb/)
    - [Emmett with various storages (PostgreSQL, EventStoreDB, MongoDB)](./src/06_getting_state_from_events_emmett/)
-5. [Business logic](./src/07_business_logic/)
+5. Business Logic:
+   - [Writing](./src/07_business_logic/)
+   - [Testing](./src/08_business_logic/)
 6. Application logic:
-   - [EventStoreDB](./src/08_application_logic_eventstoredb/)
+   - [EventStoreDB](./src/09_application_logic_eventstoredb/)
 7. Optimistic Concurrency:
-   - [EventStoreDB](./src/09_optimistic_concurrency_eventstoredb/)
+   - [EventStoreDB](./src/10_optimistic_concurrency_eventstoredb/)
 8. Projections:
-   - [General](./src/10_projections_single_stream/)
-   - [Idempotency](./src/11_projections_single_stream_idempotency/)
-   - [Eventual Consistency](./src/12_projections_single_stream_eventual_consistency/)
+   - [General](./src/11_projections_single_stream/)
+   - [Idempotency](./src/12_projections_single_stream_idempotency/)
+   - [Eventual Consistency](./src/13_projections_single_stream_eventual_consistency/)
 
 ## Prerequisites
 
