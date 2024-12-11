@@ -22,9 +22,13 @@ export const getMongoDBTestClient = async (
     connectionString = 'mongodb://localhost:27017/';
   }
 
-  return new MongoClient(connectionString, {
+  const client = new MongoClient(connectionString, {
     directConnection: true,
   });
+
+  await client.connect();
+
+  return client;
 };
 
 export const releaseMongoDBContainer = async () => {
