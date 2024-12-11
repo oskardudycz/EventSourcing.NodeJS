@@ -476,7 +476,7 @@ describe('Getting state from events', () => {
       _metadata: {
         name: 'short_info',
         schemaVersion: 1,
-        streamPosition: 3,
+        streamPosition: 1,
       },
     });
   });
