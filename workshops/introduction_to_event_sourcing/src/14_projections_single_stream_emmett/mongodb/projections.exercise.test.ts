@@ -325,7 +325,7 @@ describe('Getting state from events', () => {
     expect(shoppingCartStream).not.toBeNull();
 
     let shoppingCart = shoppingCartStream!.projections[
-      '_default'
+      'details'
     ] as MongoDBReadModel<ShoppingCartDetails>;
 
     expect(shoppingCart).toEqual({
@@ -340,7 +340,7 @@ describe('Getting state from events', () => {
         tShirt.unitPrice * tShirt.quantity,
       totalItemsCount: pairOfShoes.quantity + tShirt.quantity,
       _metadata: {
-        name: '_default',
+        name: 'details',
         schemaVersion: 1,
         streamPosition: 5,
       },
@@ -357,7 +357,7 @@ describe('Getting state from events', () => {
     });
 
     shoppingCart = shoppingCartStream!.projections[
-      '_default'
+      'details'
     ] as MongoDBReadModel<ShoppingCartDetails>;
 
     expect(shoppingCart).toEqual({
@@ -370,7 +370,7 @@ describe('Getting state from events', () => {
       totalAmount: dress.unitPrice * dress.quantity,
       totalItemsCount: dress.quantity,
       _metadata: {
-        name: '_default',
+        name: 'details',
         schemaVersion: 1,
         streamPosition: 3,
       },
@@ -387,7 +387,7 @@ describe('Getting state from events', () => {
     });
 
     shoppingCart = shoppingCartStream!.projections[
-      '_default'
+      'details'
     ] as MongoDBReadModel<ShoppingCartDetails>;
 
     expect(shoppingCart).toEqual({
@@ -400,7 +400,7 @@ describe('Getting state from events', () => {
       totalAmount: dress.unitPrice * dress.quantity,
       totalItemsCount: dress.quantity,
       _metadata: {
-        name: '_default',
+        name: 'details',
         schemaVersion: 1,
         streamPosition: 3,
       },
@@ -417,7 +417,7 @@ describe('Getting state from events', () => {
     });
 
     shoppingCart = shoppingCartStream!.projections[
-      '_default'
+      'details'
     ] as MongoDBReadModel<ShoppingCartDetails>;
 
     expect(shoppingCart).toEqual({
@@ -430,7 +430,7 @@ describe('Getting state from events', () => {
       totalAmount: trousers.unitPrice * trousers.quantity,
       totalItemsCount: trousers.quantity,
       _metadata: {
-        name: '_default',
+        name: 'details',
         schemaVersion: 1,
         streamPosition: 3,
       },
@@ -447,7 +447,7 @@ describe('Getting state from events', () => {
     });
 
     shoppingCart = shoppingCartStream!.projections[
-      '_default'
+      'details'
     ] as MongoDBReadModel<ShoppingCartDetails>;
     expect(shoppingCart).toEqual({
       id: otherPendingShoppingCartId,
@@ -458,7 +458,7 @@ describe('Getting state from events', () => {
       totalAmount: 0,
       totalItemsCount: 0,
       _metadata: {
-        name: '_default',
+        name: 'details',
         schemaVersion: 1,
         streamPosition: 1,
       },
