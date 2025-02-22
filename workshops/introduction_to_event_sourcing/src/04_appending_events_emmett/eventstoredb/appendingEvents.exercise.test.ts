@@ -1,4 +1,7 @@
-import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
+import {
+  getEventStoreDBTestClient,
+  releaseEventStoreDBContainer,
+} from '#core/testing/eventStoreDB';
 import { type Event } from '@event-driven-io/emmett';
 import {
   type EventStoreDBEventStore,
@@ -80,6 +83,8 @@ describe('Appending events', () => {
 
     eventStore = getEventStoreDBEventStore(client);
   });
+
+  afterAll(() => releaseEventStoreDBContainer());
 
   it('should append events to EventStoreDB', async () => {
     const shoppingCartId = uuid();

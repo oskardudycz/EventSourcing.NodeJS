@@ -1,13 +1,13 @@
+import {
+  getPostgreSQLConnectionString,
+  releasePostgreSqlContainer,
+} from '#core/testing/postgreSQL';
 import { type Event } from '@event-driven-io/emmett';
 import {
   getPostgreSQLEventStore,
   type PostgresEventStore,
 } from '@event-driven-io/emmett-postgresql';
 import { v4 as uuid } from 'uuid';
-import {
-  getPostgreSQLConnectionString,
-  releasePostgreSqlContainer,
-} from '../../core/testing/postgreSQL';
 
 export interface ProductItem {
   productId: string;
@@ -66,16 +66,44 @@ export type ShoppingCartEvent =
   | ShoppingCartConfirmed
   | ShoppingCartCanceled;
 
+enum ShoppingCartStatus {
+  Pending = 'Pending',
+  Confirmed = 'Confirmed',
+  Canceled = 'Canceled',
+}
+
+export type ShoppingCart = Readonly<{
+  id: string;
+  clientId: string;
+  status: ShoppingCartStatus;
+  productItems: PricedProductItem[];
+  openedAt: Date;
+  confirmedAt?: Date;
+  canceledAt?: Date;
+}>;
+
 const appendToStream = async (
+  eventStore: PostgresEventStore,
+  streamName: string,
+  events: ShoppingCartEvent[],
+): Promise<bigint> => {
+  const { nextExpectedStreamVersion } = await eventStore.appendToStream(
+    streamName,
+    events,
+  );
+
+  return nextExpectedStreamVersion;
+};
+
+export const getShoppingCart = (
   _eventStore: PostgresEventStore,
   _streamName: string,
-  _events: ShoppingCartEvent[],
-): Promise<bigint> => {
-  // TODO: Fill append events logic here.
+): Promise<ShoppingCart> => {
+  // 1. Add logic here
   return Promise.reject(new Error('Not implemented!'));
 };
 
-describe('Appending events', () => {
+describe('Events definition', () => {
   let eventStore: PostgresEventStore;
 
   beforeAll(async () => {
@@ -89,13 +117,32 @@ describe('Appending events', () => {
     await releasePostgreSqlContainer();
   });
 
-  it('should append events to EventStoreDB', async () => {
+  it('all event types should be defined', async () => {
     const shoppingCartId = uuid();
+
     const clientId = uuid();
+    const openedAt = new Date();
+    const confirmedAt = new Date();
+    const canceledAt = new Date();
+
+    const shoesId = uuid();
+
+    const twoPairsOfShoes: PricedProductItem = {
+      productId: shoesId,
+      quantity: 2,
+      unitPrice: 100,
+    };
     const pairOfShoes: PricedProductItem = {
-      productId: uuid(),
+      productId: shoesId,
       quantity: 1,
       unitPrice: 100,
+    };
+
+    const tShirtId = uuid();
+    const tShirt: PricedProductItem = {
+      productId: tShirtId,
+      quantity: 1,
+      unitPrice: 5,
     };
 
     const events: ShoppingCartEvent[] = [
@@ -105,14 +152,21 @@ describe('Appending events', () => {
         data: {
           shoppingCartId,
           clientId,
-          openedAt: new Date(),
+          openedAt,
         },
       },
       {
         type: 'ProductItemAddedToShoppingCart',
         data: {
           shoppingCartId,
-          productItem: pairOfShoes,
+          productItem: twoPairsOfShoes,
+        },
+      },
+      {
+        type: 'ProductItemAddedToShoppingCart',
+        data: {
+          shoppingCartId,
+          productItem: tShirt,
         },
       },
       {
@@ -123,26 +177,32 @@ describe('Appending events', () => {
         type: 'ShoppingCartConfirmed',
         data: {
           shoppingCartId,
-          confirmedAt: new Date(),
+          confirmedAt,
         },
       },
       {
         type: 'ShoppingCartCanceled',
         data: {
           shoppingCartId,
-          canceledAt: new Date(),
+          canceledAt,
         },
       },
     ];
 
     const streamName = `shopping_cart:${shoppingCartId}`;
 
-    const appendedEventsCount = await appendToStream(
-      eventStore,
-      streamName,
-      events,
-    );
+    await appendToStream(eventStore, streamName, events);
 
-    expect(appendedEventsCount).toBe(BigInt(events.length));
+    const shoppingCart = await getShoppingCart(eventStore, streamName);
+
+    expect(shoppingCart).toBe({
+      id: shoppingCartId,
+      clientId,
+      status: ShoppingCartStatus.Canceled,
+      productItems: [pairOfShoes, tShirt],
+      openedAt,
+      confirmedAt,
+      canceledAt,
+    });
   });
 });
