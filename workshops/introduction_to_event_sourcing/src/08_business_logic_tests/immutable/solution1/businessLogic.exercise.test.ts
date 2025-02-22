@@ -1,7 +1,7 @@
 import { DeciderSpecification } from '@event-driven-io/emmett';
 import { v4 as uuid } from 'uuid';
 import {
-  ShoppingCartCommand,
+  type ShoppingCartCommand,
   ShoppingCartErrors,
   addProductItemToShoppingCart,
   cancelShoppingCart,
@@ -10,9 +10,9 @@ import {
   removeProductItemFromShoppingCart,
 } from './businessLogic';
 import {
-  PricedProductItem,
-  ShoppingCart,
-  ShoppingCartEvent,
+  type PricedProductItem,
+  type ShoppingCart,
+  type ShoppingCartEvent,
   evolve,
 } from './shoppingCart';
 

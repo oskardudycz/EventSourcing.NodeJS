@@ -1,23 +1,26 @@
 {
+  "exclude": ["**/node_modules", "**/tmp", "**/dist", "**/lib"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
 
     /* Basic Options */
     // "incremental": true,                         /* Enable incremental compilation */
-    "target": "ES2022" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', or 'ESNEXT'. */,
-    "module": "commonjs" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', 'es2020', or 'ESNext'. */,
+    "target": "ESNext" /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019', 'ES2020', or 'ESNEXT'. */,
+    "verbatimModuleSyntax": true,
+    "module": "ESNext" /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', 'es2020', or 'ESNext'. */,
     "lib": [
-      "ES2023"
+      "ESNext"
     ] /* Specify library files to be included in the compilation. */,
-    // "allowJs": true,                             /* Allow javascript files to be compiled. */
+    "useDefineForClassFields": true,
+    //"allowJs": true /* Allow javascript files to be compiled. */,
     // "checkJs": true,                             /* Report errors in .js files. */
     // "jsx": "preserve",                           /* Specify JSX code generation: 'preserve', 'react-native', 'react', 'react-jsx' or 'react-jsxdev'. */
-    // "declaration": true,                         /* Generates corresponding '.d.ts' file. */
+    "declaration": true /* Generates corresponding '.d.ts' file. */,
     // "declarationMap": true,                      /* Generates a sourcemap for each corresponding '.d.ts' file. */
-    // "sourceMap": true,                           /* Generates corresponding '.map' file. */
+    "sourceMap": true /* Generates corresponding '.map' file. */,
     // "outFile": "./",                             /* Concatenate and emit output to single file. */
     "outDir": "./dist" /* Redirect output structure to the directory. */,
-    // "rootDir": "./",                             /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
+    //"rootDir": "./" /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */,
     // "composite": true,                           /* Enable project compilation */
     // "tsBuildInfoFile": "./",                     /* Specify file to store incremental compilation information */
     // "removeComments": true,                      /* Do not emit comments to output. */
@@ -41,7 +44,7 @@
     "noUnusedParameters": false /* Report errors on unused parameters. */,
     "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
     // "noFallthroughCasesInSwitch": true,          /* Report errors for fallthrough cases in switch statement. */
-    // "noUncheckedIndexedAccess": true,            /* Include 'undefined' in index signature results */
+    "noUncheckedIndexedAccess": true /* Include 'undefined' in index signature results */,
     // "noPropertyAccessFromIndexSignature": true,  /* Require undeclared properties from index signatures to use element accesses. */
 
     /* Module Resolution Options */
@@ -59,11 +62,12 @@
     // "preserveSymlinks": true,                    /* Do not resolve the real path of symlinks. */
     // "allowUmdGlobalAccess": true,                /* Allow accessing UMD globals from modules. */
     "resolveJsonModule": true /* Enable importing .json files */,
+    "moduleDetection": "force",
     /* Source Map Options */
     // "sourceRoot": "",                            /* Specify the location where debugger should locate TypeScript files instead of source locations. */
     // "mapRoot": "",                               /* Specify the location where debugger should locate map files instead of generated locations. */
-    // "inlineSourceMap": true,                     /* Emit a single file with source maps instead of having a separate file. */
-    // "inlineSources": true,                       /* Emit the source alongside the sourcemaps within a single file; requires '--inlineSourceMap' or '--sourceMap' to be set. */
+    "inlineSourceMap": false /* Emit a single file with source maps instead of having a separate file. */,
+    "inlineSources": true /* Emit the source alongside the sourcemaps within a single file; requires '--inlineSourceMap' or '--sourceMap' to be set. */,
 
     /* Experimental Options */
     // "experimentalDecorators": true,              /* Enables experimental support for ES7 decorators. */

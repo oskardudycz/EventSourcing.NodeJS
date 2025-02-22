@@ -1,20 +1,20 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { Application } from 'express';
+import { type Application } from 'express';
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { getApplication } from '../../tools/api';
 import { HeaderNames, toWeakETag } from '../../tools/etag';
 import { getEventStore } from '../../tools/eventStore';
 import {
-  TestResponse,
+  type TestResponse,
   expectNextRevisionInResponseEtag,
   runTwice,
   statuses,
 } from '../../tools/testing';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
 import { ShoppingCartErrors } from './businessLogic';
-import { ShoppingCartEvent } from './shoppingCart';
+import { type ShoppingCartEvent } from './shoppingCart';
 
 describe('Application logic with optimistic concurrency', () => {
   let app: Application;

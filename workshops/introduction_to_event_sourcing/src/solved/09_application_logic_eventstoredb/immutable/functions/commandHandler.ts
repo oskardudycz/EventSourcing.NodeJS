@@ -1,5 +1,5 @@
-import { Event } from '../../tools/events';
-import { EventStore } from '../../tools/eventStore';
+import { type Event } from '../../tools/events';
+import { type EventStore } from '../../tools/eventStore';
 
 export const handleCommand =
   <State, StreamEvent extends Event>(

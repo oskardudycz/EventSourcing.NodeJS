@@ -1,5 +1,5 @@
-import { Command } from '@event-driven-io/emmett';
-import { PricedProductItem } from './shoppingCart';
+import { type Command } from '@event-driven-io/emmett';
+import { type PricedProductItem } from './shoppingCart';
 
 export type OpenShoppingCart = Command<
   'OpenShoppingCart',

@@ -5,8 +5,9 @@ import {
 import { type Event, merge } from '@event-driven-io/emmett';
 import {
   getMongoDBEventStore,
-  MongoDBEventStore,
+  type MongoDBEventStore,
 } from '@event-driven-io/emmett-mongodb';
+import type { MongoClient } from 'mongodb';
 import { v4 as uuid } from 'uuid';
 
 export interface ProductItem {
@@ -183,15 +184,16 @@ export const getShoppingCart = async (
 
 describe('Events definition', () => {
   let eventStore: MongoDBEventStore;
+  let client: MongoClient;
 
   beforeAll(async () => {
-    const client = await getMongoDBTestClient();
+    client = await getMongoDBTestClient();
 
     eventStore = getMongoDBEventStore({ client });
   });
 
   afterAll(async () => {
-    await eventStore.close();
+    await client.close();
     await releaseMongoDBContainer();
   });
 

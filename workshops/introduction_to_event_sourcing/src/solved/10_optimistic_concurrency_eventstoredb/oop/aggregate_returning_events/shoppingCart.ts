@@ -1,5 +1,5 @@
+import { type Event } from '../../tools/events';
 import { ShoppingCartErrors } from './businessLogic';
-import { Event } from '../../tools/events';
 
 export interface ProductItem {
   productId: string;

@@ -1,16 +1,16 @@
-import request from 'supertest';
-import { v4 as uuid } from 'uuid';
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { getEventStore } from '../../tools/eventStore';
-import { TestResponse } from '../../tools/testing';
+import { type Application } from 'express';
+import request from 'supertest';
+import { v4 as uuid } from 'uuid';
 import { getApplication } from '../../tools/api';
+import { getEventStore } from '../../tools/eventStore';
+import { type TestResponse } from '../../tools/testing';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
-import { ShoppingCart, ShoppingCartEvent } from './shoppingCart';
-import { Application } from 'express';
-import { ShoppingCartErrors } from './businessLogic';
 import { ShoppingCartService } from './applicationService';
+import { ShoppingCartErrors } from './businessLogic';
 import { EventStoreRepository } from './core/repository';
+import { ShoppingCart, type ShoppingCartEvent } from './shoppingCart';
 
 describe('Application logic', () => {
   let app: Application;

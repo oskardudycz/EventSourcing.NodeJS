@@ -1,8 +1,8 @@
 import {
-  PricedProductItem,
-  ShoppingCart,
   ShoppingCartStatus,
-  ShoppingCartEvent,
+  type PricedProductItem,
+  type ShoppingCart,
+  type ShoppingCartEvent,
 } from './shoppingCart';
 
 //////////////////////////////////////

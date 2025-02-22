@@ -1,13 +1,13 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { Application } from 'express';
+import { type Application } from 'express';
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { getApplication } from '../../tools/api';
 import { HeaderNames, toWeakETag } from '../../tools/etag';
 import { getEventStore } from '../../tools/eventStore';
 import {
-  TestResponse,
+  type TestResponse,
   expectNextRevisionInResponseEtag,
   runTwice,
   statuses,
@@ -16,7 +16,7 @@ import { mapShoppingCartStreamId, shoppingCartApi } from './api';
 import { ShoppingCartService } from './applicationService';
 import { ShoppingCartErrors } from './businessLogic';
 import { EventStoreRepository } from './core/repository';
-import { ShoppingCart, ShoppingCartEvent } from './shoppingCart';
+import { ShoppingCart, type ShoppingCartEvent } from './shoppingCart';
 
 describe('Application logic with optimistic concurrency', () => {
   let app: Application;

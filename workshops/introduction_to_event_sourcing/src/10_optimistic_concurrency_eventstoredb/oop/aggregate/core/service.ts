@@ -1,4 +1,4 @@
-import { Repository } from './repository';
+import { type Repository } from './repository';
 
 export abstract class ApplicationService<Entity> {
   constructor(protected repository: Repository<Entity>) {}

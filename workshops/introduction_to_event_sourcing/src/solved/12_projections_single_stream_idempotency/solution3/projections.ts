@@ -1,11 +1,11 @@
-import { EventHandler } from './tools/eventStore';
-import { DocumentsCollection } from './tools/database';
 import {
-  ShoppingCartDetails,
-  ShoppingCartEvent,
-  ShoppingCartShortInfo,
+  type ShoppingCartDetails,
+  type ShoppingCartEvent,
+  type ShoppingCartShortInfo,
   ShoppingCartStatus,
 } from './projections.exercise.test';
+import { type DocumentsCollection } from './tools/database';
+import { type EventHandler } from './tools/eventStore';
 
 export const getAndStore = <T>(
   collection: DocumentsCollection<T>,
@@ -55,7 +55,7 @@ export const ShoppingCartDetailsProjection = (
             } else {
               document.productItems[
                 document.productItems.indexOf(existingProductItem)
-              ].quantity += productItem.quantity;
+              ]!.quantity += productItem.quantity;
             }
 
             document.totalAmount +=

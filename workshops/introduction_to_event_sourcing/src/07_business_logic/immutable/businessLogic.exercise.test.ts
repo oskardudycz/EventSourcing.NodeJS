@@ -1,10 +1,10 @@
 import { v4 as uuid } from 'uuid';
 import {
-  AddProductItemToShoppingCart,
-  CancelShoppingCart,
-  ConfirmShoppingCart,
-  OpenShoppingCart,
-  RemoveProductItemFromShoppingCart,
+  type AddProductItemToShoppingCart,
+  type CancelShoppingCart,
+  type ConfirmShoppingCart,
+  type OpenShoppingCart,
+  type RemoveProductItemFromShoppingCart,
   ShoppingCartErrors,
   addProductItemToShoppingCart,
   cancelShoppingCart,
@@ -14,8 +14,8 @@ import {
 } from './businessLogic';
 import { getEventStore } from './core';
 import {
-  PricedProductItem,
-  ShoppingCartEvent,
+  type PricedProductItem,
+  type ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';

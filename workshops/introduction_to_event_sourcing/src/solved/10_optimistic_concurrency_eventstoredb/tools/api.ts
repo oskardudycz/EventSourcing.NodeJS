@@ -1,8 +1,8 @@
 import express, {
-  Application,
-  NextFunction,
-  Request,
-  Response,
+  type Application,
+  type NextFunction,
+  type Request,
+  type Response,
   Router,
 } from 'express';
 import 'express-async-errors';

@@ -1,5 +1,5 @@
-import { Event } from '../../../tools/events';
-import { Repository } from './repository';
+import { type Event } from '../../../tools/events';
+import { type Repository } from './repository';
 
 export abstract class ApplicationService<Entity, StreamEvent extends Event> {
   constructor(protected repository: Repository<Entity, StreamEvent>) {}

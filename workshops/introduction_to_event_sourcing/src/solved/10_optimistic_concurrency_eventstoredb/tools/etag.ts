@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 //import { assertUnsignedBigInt } from './validation';
 
 export const enum HeaderNames {
@@ -27,7 +27,7 @@ export const getWeakETagValue = (etag: ETag): string => {
   if (result === null || result.length === 0) {
     throw new Error(ETagErrors.WRONG_WEAK_ETAG_FORMAT);
   }
-  return result[1];
+  return result[1]!;
 };
 
 export const toWeakETag = (value: number | bigint | string): WeakETag => {
@@ -51,7 +51,7 @@ export const getETagFromIfNotMatch = (request: Request): ETag => {
     throw new Error(ETagErrors.MISSING_IF_MATCH_HEADER);
   }
 
-  return Array.isArray(etag) ? etag[0] : etag;
+  return Array.isArray(etag) ? etag[0]! : etag;
 };
 
 export const setETag = (response: Response, etag: ETag): void => {

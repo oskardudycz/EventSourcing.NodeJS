@@ -4,7 +4,7 @@ import {
   StreamNotFoundError,
   jsonEvent,
 } from '@eventstore/db-client';
-import { Event } from './events';
+import { type Event } from './events';
 
 export const getEventStore = (eventStore: EventStoreDBClient) => {
   return {

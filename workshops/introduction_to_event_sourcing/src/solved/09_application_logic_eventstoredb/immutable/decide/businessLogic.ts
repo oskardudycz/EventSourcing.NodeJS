@@ -1,8 +1,8 @@
-import { Decider } from './decider';
+import { type Decider } from './decider';
 import {
-  PricedProductItem,
-  ShoppingCart,
-  ShoppingCartEvent,
+  type PricedProductItem,
+  type ShoppingCart,
+  type ShoppingCartEvent,
   ShoppingCartStatus,
   emptyShoppingCart,
   evolve,

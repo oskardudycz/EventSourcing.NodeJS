@@ -1,4 +1,4 @@
-import { Request, Response, Router } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { sendCreated } from '../../tools/api';
 import {
   HeaderNames,
@@ -12,7 +12,7 @@ import {
   assertUnsignedBigInt,
 } from '../../tools/validation';
 import { ShoppingCartService } from './applicationService';
-import { PricedProductItem, ProductItem } from './shoppingCart';
+import { type PricedProductItem, type ProductItem } from './shoppingCart';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
