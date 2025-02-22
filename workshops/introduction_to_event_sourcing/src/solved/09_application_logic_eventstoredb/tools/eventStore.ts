@@ -4,7 +4,7 @@ import {
   StreamNotFoundError,
   jsonEvent,
 } from '@eventstore/db-client';
-import { Event } from './events';
+import { type Event } from './events';
 
 export interface EventStore {
   aggregateStream<Entity, E extends Event>(

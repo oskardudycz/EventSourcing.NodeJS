@@ -1,5 +1,5 @@
-import { EventStore } from '../../../tools/eventStore';
-import { Event } from '../../../tools/events';
+import { type EventStore } from '../../../tools/eventStore';
+import { type Event } from '../../../tools/events';
 
 export interface Repository<Entity, StreamEvent extends Event> {
   find(id: string, options?: { expectedRevision?: bigint }): Promise<Entity>;

@@ -1,7 +1,7 @@
-import { Event } from '../../tools/events';
-import { Command } from '../../tools/commands';
-import { Decider } from './decider';
-import { EventStore } from '../../tools/eventStore';
+import { type Command } from '../../tools/commands';
+import { type Event } from '../../tools/events';
+import { type EventStore } from '../../tools/eventStore';
+import { type Decider } from './decider';
 
 export const CommandHandler =
   <State, CommandType extends Command, StreamEvent extends Event>(

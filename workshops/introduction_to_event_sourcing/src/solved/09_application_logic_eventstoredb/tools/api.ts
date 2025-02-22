@@ -1,12 +1,12 @@
 import express, {
-  Application,
-  NextFunction,
   Router,
-  Request,
-  Response,
+  type Application,
+  type NextFunction,
+  type Request,
+  type Response,
 } from 'express';
-import http from 'http';
 import 'express-async-errors';
+import http from 'http';
 import { ProblemDocument } from 'http-problem-details';
 
 export const getApplication = (...apis: ((router: Router) => void)[]) => {

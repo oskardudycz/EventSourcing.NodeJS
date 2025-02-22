@@ -1,4 +1,4 @@
-import { Response, Test } from 'supertest';
+import { type Response, Test } from 'supertest';
 import { getWeakETagValue } from './etag';
 import { assertUnsignedBigInt } from './validation';
 
@@ -17,7 +17,7 @@ export const expectNextRevisionInResponseEtag = <RequestBody>(
   expect(eTagValue).toBeDefined();
   expect(eTagValue).toMatch(/W\/"\d+.*"/);
 
-  const eTag = getWeakETagValue(eTagValue);
+  const eTag = getWeakETagValue(eTagValue!);
 
   return assertUnsignedBigInt(eTag);
 };

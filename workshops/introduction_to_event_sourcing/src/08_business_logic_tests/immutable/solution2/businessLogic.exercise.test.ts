@@ -1,7 +1,11 @@
 import { DeciderSpecification } from '@event-driven-io/emmett';
 import { v4 as uuid } from 'uuid';
 import { ShoppingCartErrors, decide } from './businessLogic';
-import { PricedProductItem, emptyShoppingCart, evolve } from './shoppingCart';
+import {
+  type PricedProductItem,
+  emptyShoppingCart,
+  evolve,
+} from './shoppingCart';
 
 const given = DeciderSpecification.for({
   decide,

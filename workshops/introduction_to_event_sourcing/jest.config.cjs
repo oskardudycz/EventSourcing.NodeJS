@@ -7,10 +7,13 @@ module.exports = {
       'ts-jest',
       {
         tsconfig: './tsconfig.json',
+        useESM: true,
+        isolatedModules: true,
       },
     ],
   },
-  setupFilesAfterEnv: ['./jest.setup.js'],
+  extensionsToTreatAsEsm: ['.ts'],
+  setupFilesAfterEnv: ['./jest.setup.cjs'],
   moduleNameMapper: {
     '#core/(.*)': '<rootDir>/src/core/$1',
     '#config': '<rootDir>/config.ts',

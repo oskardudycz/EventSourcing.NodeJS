@@ -1,5 +1,5 @@
-import { EventStore } from '../../../tools/eventStore';
-import { Event } from '../../../tools/events';
+import { type EventStore } from '../../../tools/eventStore';
+import { type Event } from '../../../tools/events';
 import { Aggregate } from './aggregate';
 
 export interface Repository<Entity> {

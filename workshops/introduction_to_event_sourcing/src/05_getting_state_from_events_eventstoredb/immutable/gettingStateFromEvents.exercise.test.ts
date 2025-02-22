@@ -1,7 +1,7 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import {
   ANY,
-  AppendResult,
+  type AppendResult,
   EventStoreDBClient,
   jsonEvent,
 } from '@eventstore/db-client';

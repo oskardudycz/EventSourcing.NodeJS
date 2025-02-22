@@ -6,7 +6,7 @@ import {
   jsonEvent,
 } from '@eventstore/db-client';
 import { WrongExpectedVersion } from '@eventstore/db-client/generated/shared_pb';
-import { Event } from './events';
+import { type Event } from './events';
 
 export interface EventStore {
   aggregateStream<Entity, E extends Event>(

@@ -1,15 +1,15 @@
-import { Request, Response, Router } from 'express';
+import { EventStoreDBClient } from '@eventstore/db-client';
+import { type Request, type Response, Router } from 'express';
+import { v4 as uuid } from 'uuid';
+import { sendCreated } from '../../tools/api';
+import { getEventStore } from '../../tools/eventStore';
 import {
   assertNotEmptyString,
   assertPositiveNumber,
 } from '../../tools/validation';
-import { sendCreated } from '../../tools/api';
-import { v4 as uuid } from 'uuid';
-import { PricedProductItem, ProductItem } from './shoppingCart';
 import { decider } from './businessLogic';
 import { CommandHandler } from './commandHandler';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { getEventStore } from '../../tools/eventStore';
+import { type PricedProductItem, type ProductItem } from './shoppingCart';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 

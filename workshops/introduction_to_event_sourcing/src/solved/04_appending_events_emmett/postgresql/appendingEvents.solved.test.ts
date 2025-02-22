@@ -5,7 +5,7 @@ import {
 import { type Event } from '@event-driven-io/emmett';
 import {
   getPostgreSQLEventStore,
-  PostgresEventStore,
+  type PostgresEventStore,
 } from '@event-driven-io/emmett-postgresql/.';
 import { v4 as uuid } from 'uuid';
 

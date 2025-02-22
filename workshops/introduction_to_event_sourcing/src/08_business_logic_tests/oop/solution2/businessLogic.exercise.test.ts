@@ -1,10 +1,10 @@
 import { DeciderSpecification } from '@event-driven-io/emmett';
 import { v4 as uuid } from 'uuid';
-import { ShoppingCartCommand, ShoppingCartErrors } from './businessLogic';
+import { type ShoppingCartCommand, ShoppingCartErrors } from './businessLogic';
 import {
-  PricedProductItem,
+  type PricedProductItem,
   ShoppingCart,
-  ShoppingCartEvent,
+  type ShoppingCartEvent,
 } from './shoppingCart';
 
 const decide = (

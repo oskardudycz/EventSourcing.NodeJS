@@ -1,5 +1,5 @@
 import { EventStoreDBClient } from '@eventstore/db-client';
-import { Request, Response, Router } from 'express';
+import { type Request, type Response, Router } from 'express';
 import { sendCreated } from '../../tools/api';
 import {
   HeaderNames,
@@ -22,9 +22,9 @@ import {
 } from './businessLogic';
 import { handleCommand } from './commandHandler';
 import {
-  PricedProductItem,
-  ProductItem,
-  ShoppingCart,
+  type PricedProductItem,
+  type ProductItem,
+  type ShoppingCart,
   evolve,
 } from './shoppingCart';
 

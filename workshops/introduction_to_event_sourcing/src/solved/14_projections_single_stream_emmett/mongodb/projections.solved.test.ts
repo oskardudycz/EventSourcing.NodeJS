@@ -4,13 +4,14 @@ import {
 } from '#core/testing/mongoDB';
 import { projections, type Event } from '@event-driven-io/emmett';
 import {
-  EventStream,
-  MongoDBEventStore,
-  MongoDBReadModel,
+  fromStreamName,
   getMongoDBEventStore,
   mongoDBInlineProjection,
   toStreamCollectionName,
   toStreamName,
+  type EventStream,
+  type MongoDBEventStore,
+  type MongoDBReadModel,
 } from '@event-driven-io/emmett-mongodb';
 import { MongoClient } from 'mongodb';
 import { v4 as uuid } from 'uuid';
@@ -99,19 +100,19 @@ export type ShoppingCartShortInfo = {
 
 describe('Getting state from events', () => {
   let eventStore: MongoDBEventStore;
-  let mongo: MongoClient;
+  let client: MongoClient;
 
   beforeAll(async () => {
-    mongo = await getMongoDBTestClient();
+    client = await getMongoDBTestClient();
 
     eventStore = getMongoDBEventStore({
-      client: mongo,
+      client,
       projections: projections.inline([detailsProjection, shortInfoProjection]),
     });
   });
 
   afterAll(async () => {
-    await eventStore.close();
+    await client.close();
     await releaseMongoDBContainer();
   });
 
@@ -165,7 +166,7 @@ describe('Getting state from events', () => {
     const clientId = uuid();
     const otherClientId = uuid();
 
-    const database = mongo.db();
+    const database = client.db();
 
     const shoppingCartStreams = database.collection<
       EventStream<ShoppingCartEvent>
@@ -341,6 +342,7 @@ describe('Getting state from events', () => {
       totalItemsCount: pairOfShoes.quantity + tShirt.quantity,
       _metadata: {
         name: 'details',
+        streamId: fromStreamName(shoppingCartId).streamId,
         schemaVersion: 1,
         streamPosition: 5,
       },
@@ -371,6 +373,7 @@ describe('Getting state from events', () => {
       totalItemsCount: dress.quantity,
       _metadata: {
         name: 'details',
+        streamId: fromStreamName(cancelledShoppingCartId).streamId,
         schemaVersion: 1,
         streamPosition: 3,
       },
@@ -401,6 +404,7 @@ describe('Getting state from events', () => {
       totalItemsCount: dress.quantity,
       _metadata: {
         name: 'details',
+        streamId: fromStreamName(otherClientShoppingCartId).streamId,
         schemaVersion: 1,
         streamPosition: 3,
       },
@@ -430,6 +434,7 @@ describe('Getting state from events', () => {
       totalAmount: trousers.unitPrice * trousers.quantity,
       totalItemsCount: trousers.quantity,
       _metadata: {
+        streamId: fromStreamName(otherConfirmedShoppingCartId).streamId,
         name: 'details',
         schemaVersion: 1,
         streamPosition: 3,
@@ -459,6 +464,7 @@ describe('Getting state from events', () => {
       totalItemsCount: 0,
       _metadata: {
         name: 'details',
+        streamId: fromStreamName(otherPendingShoppingCartId).streamId,
         schemaVersion: 1,
         streamPosition: 1,
       },
@@ -475,6 +481,7 @@ describe('Getting state from events', () => {
       totalItemsCount: 0,
       _metadata: {
         name: 'short_info',
+        streamId: fromStreamName(otherPendingShoppingCartId).streamId,
         schemaVersion: 1,
         streamPosition: 1,
       },
@@ -520,7 +527,7 @@ const detailsProjection = mongoDBInlineProjection({
         } else {
           document.productItems[
             document.productItems.indexOf(existingProductItem)
-          ].quantity += productItem.quantity;
+          ]!.quantity += productItem.quantity;
         }
 
         document.totalAmount += productItem.quantity * productItem.unitPrice;

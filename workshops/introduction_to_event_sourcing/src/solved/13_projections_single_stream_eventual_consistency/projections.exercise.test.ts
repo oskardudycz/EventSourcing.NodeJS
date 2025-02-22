@@ -3,9 +3,9 @@ import {
   getWithRetries,
   ShoppingCartDetailsProjection,
   ShoppingCartShortInfoProjection,
-  VersionedDocument,
+  type VersionedDocument,
 } from './projections';
-import { DocumentsCollection, getDatabase } from './tools/database';
+import { type DocumentsCollection, getDatabase } from './tools/database';
 import { getEventStore } from './tools/eventStore';
 
 export interface ProductItem {

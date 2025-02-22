@@ -1,20 +1,20 @@
 import { v4 as uuid } from 'uuid';
+import {
+  type AddProductItemToShoppingCart,
+  type CancelShoppingCart,
+  type ConfirmShoppingCart,
+  type OpenShoppingCart,
+  type RemoveProductItemFromShoppingCart,
+  ShoppingCartErrors,
+} from './businessLogic';
 import { getEventStore } from './core';
 import {
-  PricedProductItem,
+  type PricedProductItem,
   ShoppingCart,
-  ShoppingCartEvent,
+  type ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';
-import {
-  AddProductItemToShoppingCart,
-  CancelShoppingCart,
-  ConfirmShoppingCart,
-  OpenShoppingCart,
-  RemoveProductItemFromShoppingCart,
-  ShoppingCartErrors,
-} from './businessLogic';
 
 describe('Business logic', () => {
   it('Should handle commands correctly', () => {

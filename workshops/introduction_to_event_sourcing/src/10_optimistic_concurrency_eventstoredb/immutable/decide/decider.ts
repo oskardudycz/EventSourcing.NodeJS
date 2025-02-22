@@ -1,5 +1,5 @@
-import { Event } from '../../tools/events';
-import { Command } from '../../tools/commands';
+import { type Command } from '../../tools/commands';
+import { type Event } from '../../tools/events';
 
 export type Decider<
   State,

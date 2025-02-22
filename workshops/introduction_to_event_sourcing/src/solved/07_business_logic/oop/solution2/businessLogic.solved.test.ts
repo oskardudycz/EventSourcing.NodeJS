@@ -1,17 +1,17 @@
 import { v4 as uuid } from 'uuid';
 import {
-  AddProductItemToShoppingCart,
-  CancelShoppingCart,
-  ConfirmShoppingCart,
-  OpenShoppingCart,
-  RemoveProductItemFromShoppingCart,
+  type AddProductItemToShoppingCart,
+  type CancelShoppingCart,
+  type ConfirmShoppingCart,
+  type OpenShoppingCart,
+  type RemoveProductItemFromShoppingCart,
   ShoppingCartErrors,
 } from './businessLogic';
 import { getEventStore } from './core';
 import {
-  PricedProductItem,
+  type PricedProductItem,
   ShoppingCart,
-  ShoppingCartEvent,
+  type ShoppingCartEvent,
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';
