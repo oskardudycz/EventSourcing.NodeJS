@@ -10,6 +10,12 @@ Run [docker compose](../docker-compose.yml) script from the main workshop reposi
 docker compose up
 ```
 
+or for Mac:
+
+```shell
+docker compose -f docker-compose.arm.yml up
+```
+
 After that you can use EventStoreDB UI to see how streams and events look like. It's available at: http://localhost:2113/.
 
 ## Solution

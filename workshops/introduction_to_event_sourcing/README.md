@@ -55,7 +55,8 @@ Follow the instructions in exercises folders.
 
 ## Ensuring that all is setup correctly
 
-1. Run: `docker compose up` to start PostgreSQL, EventStoreDB, MongoDB docker images.
+1. Run `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) to start PostgreSQL, EventStoreDB, MongoDB docker images.
+
 2. Run `npm run test:solved`. If all is fine then all tests should be green.
 
 ## Running
