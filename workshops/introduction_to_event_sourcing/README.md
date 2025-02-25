@@ -43,7 +43,7 @@ Follow the instructions in exercises folders.
 1. Install git - https://git-scm.com/downloads.
 2. Clone this repository.
 3. Install Node.js 20.10 - https://Node.js.org/en/download/ (Or better using NVM).
-4. Install VSCode, WebStorm or other prefered IDE.
+4. Install VSCode, WebStorm or other preferred IDE.
 5. Install docker - https://docs.docker.com/engine/install/.
 6. Open the current folder in IDE.
 
@@ -58,6 +58,8 @@ Follow the instructions in exercises folders.
 1. Run `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) to start PostgreSQL, EventStoreDB, MongoDB docker images.
 
 2. Run `npm run test:solved`. If all is fine then all tests should be green.
+
+3. Be aware that 
 
 ## Running
 

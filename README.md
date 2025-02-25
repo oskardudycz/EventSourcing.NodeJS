@@ -57,7 +57,7 @@ Read more in my article:
 
 ### What is Event?
 
-Events, represent facts in the past. They carry information about something accomplished. It should be named in the past tense, e.g. _"user added"_, _"order confirmed"_. Events are not directed to a specific recipient - they're broadcasted information. It's like telling a story at a party. We hope that someone listens to us, but we may quickly realise that no one is paying attention.
+Events, represent facts in the past. They carry information about something accomplished. It should be named in the past tense, e.g. _"user added"_, _"order confirmed"_. Events are not directed to a specific recipient - they're broadcasted information. It's like telling a story at a party. We hope that someone listens to us, but we may quickly realize that no one is paying attention.
 
 Events:
 
@@ -132,7 +132,7 @@ Several things are going on here:
 
 1. Event type definition is not directly string, but it might be defined differently (`EventType extends string = string`). It's added to be able to define the alias for the event type. Thanks to that, we're getting compiler check and IntelliSense support,
 2. Event data is defined as [Record](https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeystype) (`EventData extends Record<string, unknown> = Record<string, unknown>`). It is the way of telling the TypeScript compiler that it may expect any type but allows you to specify your own and get a proper type check.
-3. We're using [Readonly<>](https://www.typescriptlang.org/docs/handbook/utility-types.html#readonlytype) wrapper around the Event type definition. We want to be sure that our event is immutable. Neither type nor data should change once it was initialised. `Readonly<>` constructs a type with all properties set as `readonly`. Syntax:
+3. We're using [Readonly<>](https://www.typescriptlang.org/docs/handbook/utility-types.html#readonlytype) wrapper around the Event type definition. We want to be sure that our event is immutable. Neither type nor data should change once it was initialized. `Readonly<>` constructs a type with all properties set as `readonly`. Syntax:
 
 ```typescript
 Readonly<{
@@ -468,11 +468,11 @@ class EventStore {
   private events: { readonly streamId: string; readonly data: string }[] = [];
 
   appendToStream(streamId: string, ...events: any[]): void {
-    const serialisedEvents = events.map((event) => {
+    const serializedEvents = events.map((event) => {
       return { streamId: streamId, data: JSON.stringify(event) };
     });
 
-    this.events.push(...serialisedEvents);
+    this.events.push(...serializedEvents);
   }
 
   readFromStream<T = any>(streamId: string): T[] {
@@ -602,7 +602,7 @@ Follow the instructions in exercises folders.
    ```bash
    npm i -g typescript
    ```
-   - add TypeScript compiler buid command to NPM:
+   - add TypeScript compiler build command to NPM:
    ```json
    {
      "scripts": {
@@ -674,7 +674,7 @@ Follow the instructions in exercises folders.
    }
    ```
 
-   - add [.eslintignore](./samples/simple/.eslintignore) to configure exclusion for files that we don't want to analyse:
+   - add [.eslintignore](./samples/simple/.eslintignore) to configure exclusion for files that we don't want to analyze:
 
    ```bash
    /node_modules/*
@@ -809,7 +809,7 @@ Follow the instructions in exercises folders.
 
 To configure VSCode debug you need to add [launch.json](./samples/simple/.vscode/launch.json) file in the [.vscode](./samples/simple/.vscode) folder.
 
-To not need to synchronise two separate configurations, we'll reuse the existing NPM script `dev:start` that starts the application.
+To not need to synchronize two separate configurations, we'll reuse the existing NPM script `dev:start` that starts the application.
 
 ```json
 {
@@ -967,7 +967,7 @@ app.get("/", (_req: Request, res: Response) => {
 export default app;
 ```
 
-Our updated intex will look like:
+Our updated index will look like:
 
 ```typescript
 import app from "./app";
@@ -1106,13 +1106,13 @@ jobs:
 
 #### Docker
 
-Docker allows creating lightweight images with preconfigured services. Thanks to its immutable nature, it allows having the same experience in runtime configuration independent of the operating systems. It makes deployment and testing easier and more predictable. Most of the hosting (both cloud and on-premise) supports Docker images deployment.
+Docker allows creating lightweight images with pre-configured services. Thanks to its immutable nature, it allows having the same experience in runtime configuration independent of the operating systems. It makes deployment and testing easier and more predictable. Most of the hosting (both cloud and on-premise) supports Docker images deployment.
 
 #### Image
 
-The basis of the Docker configuration is an image definition. It's defined as the text file and usually named by convention as `Dockerfile`. It starts with information of which base image we'll be using and then customisation. Most of the technologies provide various types of base images. We'll use `node:lts-alpine`. Which represent the latest Long-Term Support version. Alpine type of image is recommended as usually the smallest with a minimum set of dependencies.
+The basis of the Docker configuration is an image definition. It's defined as the text file and usually named by convention as `Dockerfile`. It starts with information of which base image we'll be using and then customization. Most of the technologies provide various types of base images. We'll use `node:lts-alpine`. Which represent the latest Long-Term Support version. Alpine type of image is recommended as usually the smallest with a minimum set of dependencies.
 
-The best practice for building the docker image is to use [multistage build](https://docs.docker.com/develop/develop-images/multistage-build/) feature. It allows to use at the first image with all build dependencies, build artefacts and copy it to the final _"smaller"_ image.
+The best practice for building the docker image is to use [multistage build](https://docs.docker.com/develop/develop-images/multistage-build/) feature. It allows to use at the first image with all build dependencies, build artifacts and copy it to the final _"smaller"_ image.
 
 Each line in the Dockerfile will create a separate _layer_. Such _layer_ is immutable, and if the file, if this line was not changed or, e.g. copied file in this file, was not changed, it won't be rebuilt and reused. That's why it's essential to at first copy files that are changed rarely (e.g. `package.json` file and running installing node modules), then copy source codes.
 
@@ -1173,7 +1173,7 @@ EXPOSE 5000
 ENTRYPOINT ["node", "./dist/index.js"]
 ```
 
-It's also worth adding [.dockerignore](./samples/simple/.dockerignore) file and exclude local built artefacts (e.g. from `dist` folder) and dependencies (e.g. `node_modules` folder). It will speed up the build time and ensure that platform-specific files won't clash with each other.
+It's also worth adding [.dockerignore](./samples/simple/.dockerignore) file and exclude local built artifacts (e.g. from `dist` folder) and dependencies (e.g. `node_modules` folder). It will speed up the build time and ensure that platform-specific files won't clash with each other.
 
 ```
 **/dist/
@@ -1342,7 +1342,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # setup Docker buld action
+      # setup Docker build action
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
