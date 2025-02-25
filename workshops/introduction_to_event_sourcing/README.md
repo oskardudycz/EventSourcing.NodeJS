@@ -42,7 +42,8 @@ Follow the instructions in exercises folders.
 
 1. Install git - https://git-scm.com/downloads.
 2. Clone this repository.
-3. Install Node.js 20.10 - https://Node.js.org/en/download/ (Or better using NVM).
+3. Install Node.js 20.10 - https://Node.js.org/en/download/ (or better using NVM).
+   - if you're using Node.js higher than v20, you can update `tsconfig.json`'s `compilerOptions.lib|target` in order to use newer JavaScript standard APIs, e.g. `Array.fromAsync`
 4. Install VSCode, WebStorm or other prefered IDE.
 5. Install docker - https://docs.docker.com/engine/install/.
 6. Open the current folder in IDE.
