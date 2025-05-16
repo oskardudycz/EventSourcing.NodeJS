@@ -1,0 +1,82 @@
+{
+  "name": "eventsourcing.nodejs",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Samples of Event Sourcing in JavaScript and TypeScript",
+  "engines": {
+    "node": ">=20.11.1"
+  },
+  "scripts": {
+    "setup": "cat .nvmrc | nvm install; nvm use",
+    "build": "run-s lint build:ts",
+    "build:ts": "tsc -b",
+    "build:ts:watch": "tsc -b --watch",
+    "start": "ts-node -r tsconfig-paths/register ./src/index.ts",
+    "lint": "npm run lint:eslint && npm run lint:prettier",
+    "lint:prettier": "prettier --check \"**/**/!(*.d).{ts,json,md}\"",
+    "lint:eslint": "eslint **/*.ts",
+    "fix": "run-s fix:eslint fix:prettier",
+    "fix:prettier": "prettier --write \"**/**/!(*.d).{ts,json,md}\"",
+    "fix:eslint": "eslint **/*.ts --fix",
+    "test:file": "jest test --passWithNoTests",
+    "test": "run-s test:exercises test:solved test:infr",
+    "test:exercises": "jest exercise --passWithNoTests --forceExit",
+    "test:solved": "jest solved --passWithNoTests --forceExit",
+    "test:infr": "jest infr --passWithNoTests --forceExit",
+    "test:watch": "jest test --passWithNoTests",
+    "test:exercises:watch": "jest exercise --passWithNoTests --forceExit --watch",
+    "test:solved:watch": "jest solved --passWithNoTests --forceExit --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oskardudycz/EventSourcing.NodeJS.git"
+  },
+  "keywords": [
+    "Event Sourcing"
+  ],
+  "author": "Oskar Dudycz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/oskardudycz/EventSourcing.NodeJS/issues"
+  },
+  "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
+  "dependencies": {
+    "@eventstore/db-client": "6.2.1",
+    "@faker-js/faker": "9.5.0",
+    "dotenv": "16.4.7",
+    "dotenv-cli": "8.0.0",
+    "express": "4.21.2",
+    "express-async-errors": "3.1.1",
+    "@event-driven-io/emmett": "0.38.0",
+    "@event-driven-io/emmett-esdb": "0.38.0",
+    "@event-driven-io/emmett-postgresql": "0.38.0",
+    "@event-driven-io/emmett-mongodb": "0.38.0",
+    "@event-driven-io/emmett-expressjs": "0.38.0",
+    "http-problem-details": "0.1.5",
+    "immutable": "5.0.3"
+  },
+  "devDependencies": {
+    "@event-driven-io/emmett-testcontainers": "0.38.0",
+    "@types/express": "4.17.21",
+    "@types/jest": "29.5.14",
+    "@types/node": "22.13.5",
+    "@types/supertest": "6.0.2",
+    "@types/uuid": "10.0.0",
+    "@typescript-eslint/eslint-plugin": "8.24.1",
+    "@typescript-eslint/parser": "8.24.1",
+    "eslint": "9.21.0",
+    "eslint-config-prettier": "10.0.1",
+    "eslint-plugin-prettier": "5.2.3",
+    "jest": "29.7.0",
+    "npm-run-all2": "7.0.2",
+    "prettier": "3.5.2",
+    "supertest": "7.0.0",
+    "testcontainers": "10.18.0",
+    "@testcontainers/postgresql": "10.18.0",
+    "@testcontainers/mongodb": "10.18.0",
+    "ts-jest": "29.2.5",
+    "ts-node": "10.9.2",
+    "tsconfig-paths": "4.2.0",
+    "typescript": "5.7.3"
+  }
+}
