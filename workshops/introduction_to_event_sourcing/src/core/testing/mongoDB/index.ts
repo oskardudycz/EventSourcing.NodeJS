@@ -8,11 +8,11 @@ let mongoDBContainer: StartedMongoDBContainer | undefined;
 let instanceCounter = 0;
 
 export const getMongoDBTestClient = async (
-  useTestContainers = true,
+  useTestContainers = false,
 ): Promise<MongoClient> => {
   let connectionString;
 
-  if (process.env.ES_USE_TEST_CONTAINERS !== 'false' && useTestContainers) {
+  if (process.env.ES_USE_TEST_CONTAINERS === 'false' && useTestContainers) {
     ++instanceCounter;
     if (!mongoDBContainer)
       mongoDBContainer = await new MongoDBContainer().start();

@@ -8,11 +8,11 @@ let esdbContainer: StartedEventStoreDBContainer | undefined;
 let instanceCounter = 0;
 
 export const getEventStoreDBTestClient = async (
-  useTestContainers = true,
+  useTestContainers = false,
 ): Promise<EventStoreDBClient> => {
   let connectionString;
 
-  if (process.env.ES_USE_TEST_CONTAINERS !== 'false' && useTestContainers) {
+  if (process.env.ES_USE_TEST_CONTAINERS === 'false' && useTestContainers) {
     ++instanceCounter;
     if (!esdbContainer)
       esdbContainer = await new EventStoreDBContainer().start();
