@@ -8,13 +8,7 @@ Using a defined structure of events from the [first exercise](../01_events_defin
 
 ## Prerequisities
 
-1. Tests by default are using TestContainers, but if you'd like to troubleshoot it manually, you can disable the TestContainers and use regular docker images by setting the `ES_USE_TEST_CONTAINERS` environment variable to false:
-
-```bash
-ES_USE_TEST_CONTAINERS=false
-```
-
-2. Then run: `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) to start EventStoreDB docker image.You should automatically get:
+1. Run: `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) to start EventStoreDB docker image.You should automatically get:
 
 - EventStoreDB UI: http://localhost:2113/
 - Mongo Express UI: http://localhost:8081/
