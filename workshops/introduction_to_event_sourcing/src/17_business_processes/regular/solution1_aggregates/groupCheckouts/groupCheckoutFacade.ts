@@ -1,5 +1,8 @@
-import type { CommandBus, Database, EventBus, Message } from '../../../tools';
-import type { GroupCheckoutInitiated } from './groupCheckout';
+import type { EventStore } from '../../../tools';
+import type {
+  GroupCheckoutEvent,
+  GroupCheckoutInitiated,
+} from './groupCheckout';
 
 export type InitiateGroupCheckout = {
   type: 'InitiateGroupCheckout';
@@ -34,15 +37,8 @@ export type GroupCheckoutCommand =
   | RecordGuestCheckoutCompletion
   | RecordGuestCheckoutFailure;
 
-export const GroupCheckoutFacade = (options: {
-  database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
-}) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { database, eventBus, commandBus } = options;
-
-  const groupCheckouts = database.collection('groupCheckout');
+export const GroupCheckoutFacade = (options: { eventStore: EventStore }) => {
+  const { eventStore } = options;
 
   return {
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
@@ -55,33 +51,45 @@ export const GroupCheckoutFacade = (options: {
           initiatedAt: command.data.now,
         },
       };
-      eventBus.publish([event]);
+      eventStore.appendToStream(command.data.groupCheckoutId, [event]);
     },
     recordGuestCheckoutCompletion: (command: RecordGuestCheckoutCompletion) => {
-      const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
+      const groupCheckout = eventStore.aggregateStream(
+        command.data.groupCheckoutId,
+        undefined!, // pass proper evolve and initial state
+      );
 
       if (!groupCheckout) {
-        return;
+        throw new Error('Entity not found');
       }
 
-      // TODO: do something with grup checkout and produce messages
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const messages: Message[] = [];
+      // TODO: Fill the business logic implementation calling your entity/aggregate
+      // e.g. account.doSomething;
+      const events: GroupCheckoutEvent[] = []; // fill your events
 
-      groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+      eventStore.appendToStream(command.data.guestStayAccountId, events);
+      throw new Error(
+        'TODO: Fill the implementation calling your entity/aggregate',
+      );
     },
     recordGuestCheckoutFailure: (command: RecordGuestCheckoutFailure) => {
-      const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
+      const groupCheckout = eventStore.aggregateStream(
+        command.data.groupCheckoutId,
+        undefined!, // pass proper evolve and initial state
+      );
 
       if (!groupCheckout) {
-        return;
+        throw new Error('Entity not found');
       }
 
-      // TODO: do something with grup checkout and produce messages
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const messages: Message[] = [];
+      // TODO: Fill the business logic implementation calling your entity/aggregate
+      // e.g. account.doSomething;
+      const events: GroupCheckoutEvent[] = []; // fill your events
 
-      groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+      eventStore.appendToStream(command.data.guestStayAccountId, events);
+      throw new Error(
+        'TODO: Fill the implementation calling your entity/aggregate',
+      );
     },
   };
 };

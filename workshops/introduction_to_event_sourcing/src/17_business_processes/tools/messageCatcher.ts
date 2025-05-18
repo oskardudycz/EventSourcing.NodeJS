@@ -1,5 +1,5 @@
 import { type Command } from './commandBus';
-import { type Event } from './eventBus';
+import { type Event } from './eventStore';
 
 export type Message = Event | Command;
 

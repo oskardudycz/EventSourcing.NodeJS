@@ -2,12 +2,10 @@ import { faker } from '@faker-js/faker';
 import { v4 as uuid } from 'uuid';
 import {
   getCommandBus,
-  getDatabase,
-  getEventBus,
+  getEventStore,
   getMessageCatcher,
   type CommandBus,
-  type Database,
-  type EventBus,
+  type EventStore,
   type MessageCatcher,
 } from '../../tools';
 import {
@@ -31,8 +29,7 @@ type ExpectedTypes =
   | GuestStayAccountCommand;
 
 describe('Business Process Tests', () => {
-  let database: Database;
-  let eventBus: EventBus;
+  let eventStore: EventStore;
   let commandBus: CommandBus;
   let publishedMessages: MessageCatcher;
   let guestStayFacade: GuestStayAccountFacade;
@@ -40,24 +37,21 @@ describe('Business Process Tests', () => {
   let now: Date;
 
   beforeEach(() => {
-    database = getDatabase();
-    eventBus = getEventBus();
+    eventStore = getEventStore();
     commandBus = getCommandBus();
     publishedMessages = getMessageCatcher();
     now = new Date();
 
-    eventBus.use(publishedMessages.catchMessage);
+    eventStore.use(publishedMessages.catchMessage);
     commandBus.use(publishedMessages.catchMessage);
 
     groupCheckoutFacade = configureGroupCheckouts({
-      eventBus,
+      eventStore,
       commandBus,
-      database,
     }).groupCheckoutFacade;
     guestStayFacade = configureGuestStayAccounts({
       commandBus,
-      eventBus,
-      database,
+      eventStore,
     }).guestStayAccountFacade;
   });
 

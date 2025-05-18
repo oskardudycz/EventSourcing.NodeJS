@@ -1,4 +1,4 @@
-import type { Database, EventBus } from '../tools';
+import type { EventStore } from '../tools';
 import type { GuestStayAccountEvent } from './guestStayAccounts';
 
 export type CheckInGuest = {
@@ -78,13 +78,8 @@ export type GroupCheckoutCommand =
   | RecordGuestCheckoutCompletion
   | RecordGuestCheckoutFailure;
 
-export const GuestStayFacade = (options: {
-  database: Database;
-  eventBus: EventBus;
-}) => {
-  const { database, eventBus } = options;
-
-  const accounts = database.collection('guestStayAccount');
+export const GuestStayFacade = (options: { eventStore: EventStore }) => {
+  const { eventStore } = options;
 
   return {
     checkInGuest: (_command: CheckInGuest) => {
@@ -93,7 +88,10 @@ export const GuestStayFacade = (options: {
       );
     },
     recordCharge: (command: RecordCharge) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        undefined!, // pass proper evolve and initial state
+      );
 
       if (!account) {
         throw new Error('Entity not found');
@@ -103,8 +101,7 @@ export const GuestStayFacade = (options: {
       // e.g. account.doSomething;
       const events: GuestStayAccountEvent[] = []; // fill your events
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(events);
+      eventStore.appendToStream(command.data.guestStayAccountId, events);
       throw new Error(
         'TODO: Fill the implementation calling your entity/aggregate',
       );
@@ -126,3 +123,5 @@ export const GuestStayFacade = (options: {
     },
   };
 };
+
+export type GuestStayFacade = ReturnType<typeof GuestStayFacade>;

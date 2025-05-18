@@ -1,12 +1,10 @@
 import { faker } from '@faker-js/faker';
 import { v4 as uuid } from 'uuid';
 import {
-  getDatabase,
-  getEventBus,
   getEventCatcher,
-  type Database,
-  type EventBus,
+  getEventStore,
   type EventCatcher,
+  type EventStore,
 } from '../tools';
 import {
   GuestStayFacade,
@@ -18,20 +16,17 @@ import {
 } from './guestStayFacade';
 
 describe('Entity Definition Tests', () => {
-  let database: Database;
-  let eventBus: EventBus;
+  let eventStore: EventStore;
   let publishedEvents: EventCatcher;
-  let guestStayFacade: ReturnType<typeof GuestStayFacade>;
+  let guestStayFacade: GuestStayFacade;
   let now: Date;
 
   beforeEach(() => {
-    database = getDatabase();
-    eventBus = getEventBus();
+    eventStore = getEventStore();
     publishedEvents = getEventCatcher();
-    guestStayFacade = GuestStayFacade({ database, eventBus });
-
+    guestStayFacade = GuestStayFacade({ eventStore: eventStore });
     now = new Date();
-    eventBus.use(publishedEvents.catchMessage);
+    eventStore.use(publishedEvents.catchMessage);
   });
 
   it('checking in guest succeeds', () => {

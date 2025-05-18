@@ -1,4 +1,4 @@
-import { type Event } from './eventBus';
+import { type Event } from './eventStore';
 
 export type EventCatcher = {
   catchMessage: (event: Event) => void;
