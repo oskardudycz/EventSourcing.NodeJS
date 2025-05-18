@@ -1,5 +1,5 @@
-import type { GroupCheckoutInitiated } from '../../emmett/groupCheckouts';
 import type { Database, EventBus } from '../../tools';
+import type { GroupCheckoutInitiated } from './groupCheckouts';
 import { GuestStayAccount } from './guestStayAccounts';
 
 export type CheckInGuest = {
