@@ -8,162 +8,225 @@ export type Event<
   data: Readonly<EventData>;
 }>;
 
-export interface ProductItem {
-  productId: string;
-  quantity: number;
-}
+////////////////////////////////////////
+///// Guest Stay Account Events ////////
+////////////////////////////////////////
 
-export type PricedProductItem = ProductItem & {
-  unitPrice: number;
-};
-
-export type ShoppingCartOpened = Event<
-  'ShoppingCartOpened',
+export type GuestCheckedIn = Event<
+  'GuestCheckedIn',
   {
-    shoppingCartId: string;
-    clientId: string;
-    openedAt: Date;
+    guestStayAccountId: string;
+    guestId: string;
+    roomId: string;
+    checkedInAt: Date;
   }
 >;
 
-export type ProductItemAddedToShoppingCart = Event<
-  'ProductItemAddedToShoppingCart',
+export type ChargeRecorded = Event<
+  'ChargeRecorded',
   {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
+    chargeId: string;
+    guestStayAccountId: string;
+    amount: number;
+    recordedAt: Date;
   }
 >;
 
-export type ProductItemRemovedFromShoppingCart = Event<
-  'ProductItemRemovedFromShoppingCart',
+export type PaymentRecorded = Event<
+  'PaymentRecorded',
   {
-    shoppingCartId: string;
-    productItem: PricedProductItem;
+    paymentId: string;
+    guestStayAccountId: string;
+    amount: number;
+    recordedAt: Date;
   }
 >;
 
-export type ShoppingCartConfirmed = Event<
-  'ShoppingCartConfirmed',
+export type GuestCheckedOut = Event<
+  'GuestCheckedOut',
   {
-    shoppingCartId: string;
-    confirmedAt: Date;
+    guestStayAccountId: string;
+    checkedOutAt: Date;
+    groupCheckoutId?: string;
   }
 >;
 
-export type ShoppingCartCanceled = Event<
-  'ShoppingCartCanceled',
+export type GuestCheckoutFailed = Event<
+  'GuestCheckoutFailed',
   {
-    shoppingCartId: string;
-    canceledAt: Date;
+    guestStayAccountId: string;
+    reason: 'NotCheckedIn' | 'BalanceNotSettled';
+    failedAt: Date;
+    groupCheckoutId?: string;
   }
 >;
 
-export type ShoppingCartEvent =
-  | ShoppingCartOpened
-  | ProductItemAddedToShoppingCart
-  | ProductItemRemovedFromShoppingCart
-  | ShoppingCartConfirmed
-  | ShoppingCartCanceled;
+export type GuestStayAccountEvent =
+  | GuestCheckedIn
+  | ChargeRecorded
+  | PaymentRecorded
+  | GuestCheckedOut
+  | GuestCheckoutFailed;
 
-enum ShoppingCartStatus {
-  Pending = 'Pending',
-  Confirmed = 'Confirmed',
-  Canceled = 'Canceled',
-}
+////////////////////////////////////////
+///// Group Checkout Account Events ////
+////////////////////////////////////////
 
-export type ShoppingCart = Readonly<{
-  id: string;
-  clientId: string;
-  status: ShoppingCartStatus;
-  productItems: PricedProductItem[];
-  openedAt: Date;
-  confirmedAt?: Date;
-  canceledAt?: Date;
-}>;
-
-export class ShoppingCartOOP {
-  constructor(
-    private _id: string,
-    private _clientId: string,
-    private _status: ShoppingCartStatus,
-    private _openedAt: Date,
-    private _productItems: PricedProductItem[] = [],
-    private _confirmedAt?: Date,
-    private _canceledAt?: Date,
-  ) {}
-
-  get id() {
-    return this._id;
+export type GroupCheckoutInitiated = Event<
+  'GroupCheckoutInitiated',
+  {
+    groupCheckoutId: string;
+    clerkId: string;
+    guestStayAccountIds: string[];
+    initiatedAt: Date;
   }
+>;
 
-  get clientId() {
-    return this._clientId;
+export type GroupCheckoutCompletionRecorded = Event<
+  'GroupCheckoutCompletionRecorded',
+  {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    completedAt: Date;
   }
+>;
 
-  get status() {
-    return this._status;
+export type GuestCheckoutFailureRecorded = Event<
+  'GuestCheckoutFailureRecorded',
+  {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    failedAt: Date;
   }
+>;
 
-  get openedAt() {
-    return this._openedAt;
+export type GroupCheckoutCompleted = Event<
+  'GroupCheckoutCompleted',
+  {
+    groupCheckoutId: string;
+    completedCheckouts: string[];
+    completedAt: Date;
   }
+>;
 
-  get productItems() {
-    return this._productItems;
+export type GroupCheckoutFailed = Event<
+  'GroupCheckoutFailed',
+  {
+    groupCheckoutId: string;
+    completedCheckouts: string[];
+    failedCheckouts: string[];
+    failedAt: Date;
   }
+>;
 
-  get confirmedAt() {
-    return this._confirmedAt;
-  }
-
-  get canceledAt() {
-    return this._canceledAt;
-  }
-}
+export type GroupCheckoutEvent =
+  | GroupCheckoutInitiated
+  | GroupCheckoutCompletionRecorded
+  | GuestCheckoutFailureRecorded
+  | GroupCheckoutCompleted
+  | GroupCheckoutFailed;
 
 describe('Events definition', () => {
-  it('all event types should be defined', () => {
-    const shoppingCartId = uuid();
-    const clientId = uuid();
-    const pairOfShoes: PricedProductItem = {
-      productId: uuid(),
-      quantity: 1,
-      unitPrice: 100,
-    };
+  const guestId = uuid();
+  const clerkId = 'room-123';
+  const roomId = 'room-123';
+  const groupCheckoutId = uuid();
+  const guestStayAccountId = uuid();
+  const otherGuestStayAccountId = uuid();
 
-    const events: ShoppingCartEvent[] = [
-      // 2. Put your sample events here
+  it('Guest Stay Account event types are defined', () => {
+    const events: GuestStayAccountEvent[] = [
       {
-        type: 'ShoppingCartOpened',
+        type: 'GuestCheckedIn',
         data: {
-          shoppingCartId,
-          clientId,
-          openedAt: new Date(),
+          guestStayAccountId,
+          guestId,
+          roomId,
+          checkedInAt: new Date(),
         },
       },
       {
-        type: 'ProductItemAddedToShoppingCart',
+        type: 'ChargeRecorded',
         data: {
-          shoppingCartId,
-          productItem: pairOfShoes,
+          guestStayAccountId,
+          chargeId: uuid(),
+          amount: 123.45,
+          recordedAt: new Date(),
         },
       },
       {
-        type: 'ProductItemRemovedFromShoppingCart',
-        data: { shoppingCartId, productItem: pairOfShoes },
-      },
-      {
-        type: 'ShoppingCartConfirmed',
+        type: 'PaymentRecorded',
         data: {
-          shoppingCartId,
-          confirmedAt: new Date(),
+          guestStayAccountId,
+          paymentId: uuid(),
+          amount: 123.45,
+          recordedAt: new Date(),
         },
       },
       {
-        type: 'ShoppingCartCanceled',
+        type: 'GuestCheckedOut',
         data: {
-          shoppingCartId,
-          canceledAt: new Date(),
+          guestStayAccountId,
+          checkedOutAt: new Date(),
+          groupCheckoutId,
+        },
+      },
+      {
+        type: 'GuestCheckoutFailed',
+        data: {
+          guestStayAccountId,
+          reason: 'NotCheckedIn',
+          failedAt: new Date(),
+          groupCheckoutId,
+        },
+      },
+    ];
+
+    expect(events.length).toBe(5);
+  });
+
+  it('Group Checkout event types are defined', () => {
+    const events: GroupCheckoutEvent[] = [
+      {
+        type: 'GroupCheckoutInitiated',
+        data: {
+          groupCheckoutId,
+          clerkId,
+          guestStayAccountIds: [guestStayAccountId],
+          initiatedAt: new Date(),
+        },
+      },
+      {
+        type: 'GroupCheckoutCompletionRecorded',
+        data: {
+          guestStayAccountId,
+          groupCheckoutId,
+          completedAt: new Date(),
+        },
+      },
+      {
+        type: 'GuestCheckoutFailureRecorded',
+        data: {
+          guestStayAccountId: otherGuestStayAccountId,
+          groupCheckoutId,
+          failedAt: new Date(),
+        },
+      },
+      {
+        type: 'GroupCheckoutCompleted',
+        data: {
+          groupCheckoutId,
+          completedCheckouts: [guestStayAccountId],
+          completedAt: new Date(),
+        },
+      },
+      {
+        type: 'GroupCheckoutFailed',
+        data: {
+          groupCheckoutId,
+          completedCheckouts: [guestStayAccountId],
+          failedCheckouts: [otherGuestStayAccountId],
+          failedAt: new Date(),
         },
       },
     ];
