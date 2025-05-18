@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { v4 as uuid } from 'uuid';
 import {
   getDatabase,
@@ -20,11 +21,6 @@ describe('Entity Definition Tests', () => {
   let eventBus: EventBus;
   let publishedEvents: EventCatcher;
   let guestStayFacade: ReturnType<typeof GuestStayFacade>;
-  let faker: {
-    number: () => {
-      randomDouble: (precision: number, min: number, max: number) => number;
-    };
-  };
   let now: Date;
 
   beforeEach(() => {
@@ -32,12 +28,6 @@ describe('Entity Definition Tests', () => {
     eventBus = getEventBus();
     publishedEvents = getEventCatcher();
     guestStayFacade = GuestStayFacade({ database, eventBus });
-    faker = {
-      number: () => ({
-        randomDouble: (precision: number, min: number, max: number) =>
-          Math.floor(Math.random() * (max - min + 1)) + min,
-      }),
-    };
     now = new Date();
     eventBus.use(publishedEvents.catchMessage);
   });
@@ -83,7 +73,11 @@ describe('Entity Definition Tests', () => {
     });
     publishedEvents.reset();
 
-    const amount = faker.number().randomDouble(2, 10, 1000);
+    const amount = faker.number.float({
+      min: 10,
+      max: 1000,
+      fractionDigits: 2,
+    });
     const command: RecordCharge = {
       type: 'RecordCharge',
       data: {
@@ -121,7 +115,11 @@ describe('Entity Definition Tests', () => {
     });
     publishedEvents.reset();
 
-    const amount = faker.number().randomDouble(2, 10, 1000);
+    const amount = faker.number.float({
+      min: 10,
+      max: 1000,
+      fractionDigits: 2,
+    });
     const command: RecordPayment = {
       type: 'RecordPayment',
       data: {
@@ -164,13 +162,21 @@ describe('Entity Definition Tests', () => {
       data: {
         guestStayAccountId,
         chargeId,
-        amount: faker.number().randomDouble(2, 10, 1000),
+        amount: faker.number.float({
+          min: 2,
+          max: 10,
+          fractionDigits: 2,
+        }),
         now: new Date(now.getTime() - 60 * 60 * 1000),
       },
     });
     publishedEvents.reset();
 
-    const amount = faker.number().randomDouble(2, 10, 1000);
+    const amount = faker.number.float({
+      min: 10,
+      max: 1000,
+      fractionDigits: 2,
+    });
     const command: RecordPayment = {
       type: 'RecordPayment',
       data: {
@@ -198,7 +204,11 @@ describe('Entity Definition Tests', () => {
     const guestStayAccountId = uuid();
     const paymentId = uuid();
     const chargeId = uuid();
-    const amount = faker.number().randomDouble(2, 10, 1000);
+    const amount = faker.number.float({
+      min: 10,
+      max: 1000,
+      fractionDigits: 2,
+    });
 
     guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
@@ -253,7 +263,11 @@ describe('Entity Definition Tests', () => {
     const guestStayAccountId = uuid();
     const paymentId = uuid();
     const chargeId = uuid();
-    const amount = faker.number().randomDouble(2, 10, 1000);
+    const amount = faker.number.float({
+      min: 10,
+      max: 1000,
+      fractionDigits: 2,
+    });
 
     guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
