@@ -6,15 +6,14 @@ import {
   type Database,
   type EventBus,
   type EventCatcher,
-} from '../tools';
-import {
-  GuestStayFacade,
-  type CheckInGuest,
-  type CheckoutGuest,
-  type InitiateGroupCheckout,
-  type RecordCharge,
-  type RecordPayment,
-} from './guestStayFacade';
+} from '../../tools';
+import type {
+  CheckInGuest,
+  CheckoutGuest,
+  RecordCharge,
+  RecordPayment,
+} from './guestStayAccounts';
+import { GuestStayFacade, type InitiateGroupCheckout } from './guestStayFacade';
 
 describe('Entity Definition Tests', () => {
   let database: Database;
