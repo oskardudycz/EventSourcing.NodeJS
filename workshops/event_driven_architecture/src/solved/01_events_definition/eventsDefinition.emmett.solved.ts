@@ -1,6 +1,10 @@
 import { type Event } from '@event-driven-io/emmett';
 import { v4 as uuid } from 'uuid';
 
+////////////////////////////////////////
+///// Guest Stay Account Events ////////
+////////////////////////////////////////
+
 export type GuestCheckedIn = Event<
   'GuestCheckedIn',
   {
@@ -57,6 +61,10 @@ export type GuestStayAccountEvent =
   | GuestCheckedOut
   | GuestCheckoutFailed;
 
+////////////////////////////////////////
+///// Group Checkout Account Events ////
+////////////////////////////////////////
+
 export type GroupCheckoutInitiated = Event<
   'GroupCheckoutInitiated',
   {
@@ -67,21 +75,21 @@ export type GroupCheckoutInitiated = Event<
   }
 >;
 
-export type GuestCheckoutFailureRecorded = Event<
-  'GuestCheckoutFailureRecorded',
-  {
-    groupCheckoutId: string;
-    guestStayAccountId: string;
-    failedAt: Date;
-  }
->;
-
 export type GroupCheckoutCompletionRecorded = Event<
   'GroupCheckoutCompletionRecorded',
   {
     groupCheckoutId: string;
     guestStayAccountId: string;
     completedAt: Date;
+  }
+>;
+
+export type GuestCheckoutFailureRecorded = Event<
+  'GuestCheckoutFailureRecorded',
+  {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    failedAt: Date;
   }
 >;
 
@@ -104,14 +112,23 @@ export type GroupCheckoutFailed = Event<
   }
 >;
 
-describe('Events definition', () => {
-  it('Guest Stay Account event types are defined', () => {
-    const guestId = uuid();
-    const roomId = 'room-123';
-    const groupCheckoutId = uuid();
-    const guestStayAccountId = uuid();
+export type GroupCheckoutEvent =
+  | GroupCheckoutInitiated
+  | GroupCheckoutCompletionRecorded
+  | GuestCheckoutFailureRecorded
+  | GroupCheckoutCompleted
+  | GroupCheckoutFailed;
 
-    const events = [
+describe('Events definition', () => {
+  const guestId = uuid();
+  const clerkId = 'room-123';
+  const roomId = 'room-123';
+  const groupCheckoutId = uuid();
+  const guestStayAccountId = uuid();
+  const otherGuestStayAccountId = uuid();
+
+  it('Guest Stay Account event types are defined', () => {
+    const events: GuestStayAccountEvent[] = [
       {
         type: 'GuestCheckedIn',
         data: {
@@ -134,7 +151,7 @@ describe('Events definition', () => {
         type: 'PaymentRecorded',
         data: {
           guestStayAccountId,
-          chargeId: uuid(),
+          paymentId: uuid(),
           amount: 123.45,
           recordedAt: new Date(),
         },
@@ -162,8 +179,49 @@ describe('Events definition', () => {
   });
 
   it('Group Checkout event types are defined', () => {
-    const events = [
-      // 2. Put your sample events here
+    const events: GroupCheckoutEvent[] = [
+      {
+        type: 'GroupCheckoutInitiated',
+        data: {
+          groupCheckoutId,
+          clerkId,
+          guestStayAccountIds: [guestStayAccountId],
+          initiatedAt: new Date(),
+        },
+      },
+      {
+        type: 'GroupCheckoutCompletionRecorded',
+        data: {
+          guestStayAccountId,
+          groupCheckoutId,
+          completedAt: new Date(),
+        },
+      },
+      {
+        type: 'GuestCheckoutFailureRecorded',
+        data: {
+          guestStayAccountId: otherGuestStayAccountId,
+          groupCheckoutId,
+          failedAt: new Date(),
+        },
+      },
+      {
+        type: 'GroupCheckoutCompleted',
+        data: {
+          groupCheckoutId,
+          completedCheckouts: [guestStayAccountId],
+          completedAt: new Date(),
+        },
+      },
+      {
+        type: 'GroupCheckoutFailed',
+        data: {
+          groupCheckoutId,
+          completedCheckouts: [guestStayAccountId],
+          failedCheckouts: [otherGuestStayAccountId],
+          failedAt: new Date(),
+        },
+      },
     ];
 
     expect(events.length).toBe(5);

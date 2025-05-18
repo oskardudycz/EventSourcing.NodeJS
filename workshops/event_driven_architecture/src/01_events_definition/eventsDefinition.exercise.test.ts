@@ -1,4 +1,4 @@
-// 1. Define your events and entity here
+// 1. Define your events here
 
 describe('Events definition', () => {
   it('Guest Stay Account event types are defined', () => {
