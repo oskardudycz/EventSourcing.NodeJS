@@ -1,4 +1,3 @@
-import type { GuestStayAccountEvent } from '../../solution2_immutableEntities/guestStayAccounts';
 import { Aggregate } from '../core';
 
 export type GuestCheckedIn = {
@@ -45,6 +44,13 @@ export type GuestCheckoutFailed = {
     groupCheckoutId?: string;
   };
 };
+
+export type GuestStayAccountEvent =
+  | GuestCheckedIn
+  | ChargeRecorded
+  | PaymentRecorded
+  | GuestCheckedOut
+  | GuestCheckoutFailed;
 
 export type GuestStayAccountStatus = 'NotExisting' | 'CheckedIn' | 'CheckedOut';
 

@@ -1,6 +1,5 @@
 import { GuestStayAccount } from '.';
 import type { Database, EventBus } from '../../../tools';
-import type { GroupCheckoutInitiated } from '../groupCheckouts';
 
 export type CheckInGuest = {
   type: 'CheckInGuest';
@@ -45,18 +44,6 @@ export type GuestStayAccountCommand =
   | RecordCharge
   | RecordPayment
   | CheckoutGuest;
-
-export type InitiateGroupCheckout = {
-  type: 'InitiateGroupCheckout';
-  data: {
-    groupCheckoutId: string;
-    clerkId: string;
-    guestStayIds: string[];
-    now: Date;
-  };
-};
-
-export type GroupCheckoutCommand = InitiateGroupCheckout;
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
@@ -112,18 +99,6 @@ export const GuestStayAccountFacade = (options: {
 
       accounts.store(command.data.guestStayAccountId, account);
       eventBus.publish(account.dequeueUncommitedEvents());
-    },
-    initiateGroupCheckout: (command: InitiateGroupCheckout) => {
-      const event: GroupCheckoutInitiated = {
-        type: 'GroupCheckoutInitiated',
-        data: {
-          groupCheckoutId: command.data.groupCheckoutId,
-          clerkId: command.data.clerkId,
-          guestStayAccountIds: command.data.guestStayIds,
-          initiatedAt: command.data.now,
-        },
-      };
-      eventBus.publish([event]);
     },
   };
 };

@@ -1,5 +1,8 @@
 import type { CommandBus, Database, EventBus } from '../../../tools';
-import { GuestStayAccountFacade } from './guestStayAccountFacade';
+import {
+  type CheckoutGuest,
+  GuestStayAccountFacade,
+} from './guestStayAccountFacade';
 
 export * from './guestStayAccount';
 export * from './guestStayAccountFacade';
@@ -9,7 +12,7 @@ export const configureGuestStayAccounts = (options: {
   eventBus: EventBus;
   commandBus: CommandBus;
 }): { guestStayAccountFacade: GuestStayAccountFacade } => {
-  const { database, eventBus } = options;
+  const { database, eventBus, commandBus } = options;
 
   const guestStayAccountFacade: GuestStayAccountFacade = GuestStayAccountFacade(
     {
@@ -17,7 +20,11 @@ export const configureGuestStayAccounts = (options: {
       eventBus,
     },
   );
-  // TODO: Configure guest stay handlers here
+
+  commandBus.handle<CheckoutGuest>(
+    'CheckoutGuest',
+    guestStayAccountFacade.checkoutGuest,
+  );
 
   return { guestStayAccountFacade };
 };

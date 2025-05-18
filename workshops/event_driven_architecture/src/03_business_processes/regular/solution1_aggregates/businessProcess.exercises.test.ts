@@ -122,14 +122,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutCompletion',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[0]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutCompletion',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[0]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
@@ -154,14 +154,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutCompletion',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[1]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutCompletion',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[1]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
@@ -186,14 +186,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutCompletion',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[2]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutCompletion',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[2]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
@@ -361,14 +361,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutCompletion',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[0]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutCompletion',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[0]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
@@ -393,14 +393,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutCompletion',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[1]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutCompletion',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[1]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
@@ -425,14 +425,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutCompletion',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[2]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutCompletion',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[2]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
@@ -584,14 +584,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutCompletion',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[0]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutCompletion',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[0]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
@@ -617,14 +617,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutFailure',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[1]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutFailure',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[1]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutFailureRecorded',
         data: {
@@ -650,14 +650,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutFailure',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[2]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutFailure',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[2]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutFailureRecorded',
         data: {
@@ -802,14 +802,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutFailure',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[0]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutFailure',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[0]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutFailureRecorded',
         data: {
@@ -835,14 +835,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutFailure',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[1]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutFailure',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[1]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutFailureRecorded',
         data: {
@@ -868,14 +868,14 @@ describe('Business Process Tests', () => {
           groupCheckoutId,
         },
       },
-      // {
-      //   type: 'RecordGuestCheckoutFailure',
-      //   data: {
-      //     groupCheckoutId,
-      //     guestStayAccountId: guestStayAccountIds[2]!,
-      //     now,
-      //   },
-      // },
+      {
+        type: 'RecordGuestCheckoutFailure',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: guestStayAccountIds[2]!,
+          now,
+        },
+      },
       {
         type: 'GuestCheckoutFailureRecorded',
         data: {

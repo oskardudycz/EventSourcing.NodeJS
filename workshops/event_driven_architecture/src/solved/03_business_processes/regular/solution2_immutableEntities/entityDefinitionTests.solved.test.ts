@@ -1,33 +1,47 @@
 import { faker } from '@faker-js/faker';
 import { v4 as uuid } from 'uuid';
 import {
+  getCommandBus,
   getDatabase,
   getEventBus,
   getMessageCatcher,
+  type CommandBus,
   type Database,
   type EventBus,
   type MessageCatcher,
 } from '../../tools';
+import {
+  GroupCheckoutFacade,
+  type InitiateGroupCheckout,
+} from './groupCheckouts';
 import type {
   CheckInGuest,
   CheckoutGuest,
   RecordCharge,
   RecordPayment,
 } from './guestStayAccounts';
-import { GuestStayFacade, type InitiateGroupCheckout } from './guestStayFacade';
+import { GuestStayAccountFacade } from './guestStayAccounts';
 
 describe('Entity Definition Tests', () => {
   let database: Database;
   let eventBus: EventBus;
+  let commandBus: CommandBus;
   let publishedEvents: MessageCatcher;
-  let guestStayFacade: ReturnType<typeof GuestStayFacade>;
+  let guestStayFacade: GuestStayAccountFacade;
+  let groupCheckoutFacade: GroupCheckoutFacade;
   let now: Date;
 
   beforeEach(() => {
     database = getDatabase();
     eventBus = getEventBus();
+    commandBus = getCommandBus();
     publishedEvents = getMessageCatcher();
-    guestStayFacade = GuestStayFacade({ database, eventBus });
+    guestStayFacade = GuestStayAccountFacade({ database, eventBus });
+    groupCheckoutFacade = GroupCheckoutFacade({
+      database,
+      eventBus,
+      commandBus,
+    });
     now = new Date();
     eventBus.use(publishedEvents.catchMessage);
   });
@@ -351,7 +365,7 @@ describe('Entity Definition Tests', () => {
       },
     };
 
-    guestStayFacade.initiateGroupCheckout(command);
+    groupCheckoutFacade.initiateGroupCheckout(command);
 
     publishedEvents.shouldReceiveSingleMessage({
       type: 'GroupCheckoutInitiated',

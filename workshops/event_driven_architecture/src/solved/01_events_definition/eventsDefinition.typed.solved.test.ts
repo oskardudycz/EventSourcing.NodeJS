@@ -87,7 +87,7 @@ export type GuestCheckoutCompletionRecorded = Event<
   {
     groupCheckoutId: string;
     guestStayAccountId: string;
-    completedAt: Date;
+    checkedOutAt: Date;
   }
 >;
 
@@ -201,7 +201,7 @@ describe('Events definition', () => {
         data: {
           guestStayAccountId,
           groupCheckoutId,
-          completedAt: new Date(),
+          checkedOutAt: new Date(),
         },
       },
       {
