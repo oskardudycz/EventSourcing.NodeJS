@@ -51,3 +51,64 @@ export type GroupCheckoutEvent =
   | GuestCheckoutFailureRecorded
   | GroupCheckoutCompleted
   | GroupCheckoutFailed;
+
+export type CheckoutStatus =
+  | 'NotExisting'
+  | 'Initiated'
+  | 'Completed'
+  | 'Failed';
+
+export type GroupCheckout =
+  | { status: 'NotExisting' }
+  | {
+      status: 'Initiated';
+      guestStayCheckouts: Map<string, CheckoutStatus>;
+    }
+  | { status: 'Finished' };
+
+export const initial: GroupCheckout = {
+  status: 'NotExisting',
+};
+
+export const evolve = (
+  state: GroupCheckout,
+  { type, data: event }: GroupCheckoutEvent,
+): GroupCheckout => {
+  switch (type) {
+    case 'GroupCheckoutInitiated': {
+      if (state.status !== 'NotExisting') return state;
+
+      return {
+        status: 'Initiated',
+        guestStayCheckouts: event.guestStayAccountIds.reduce(
+          (map, id) => map.set(id, 'Initiated'),
+          new Map<string, CheckoutStatus>(),
+        ),
+      };
+    }
+    case 'GuestCheckoutCompletionRecorded':
+    case 'GuestCheckoutFailureRecorded': {
+      if (state.status !== 'Initiated') return state;
+
+      return {
+        ...state,
+        guestStayCheckouts: state.guestStayCheckouts.set(
+          event.guestStayAccountId,
+          type === 'GuestCheckoutCompletionRecorded' ? 'Completed' : 'Failed',
+        ),
+      };
+    }
+    case 'GroupCheckoutCompleted':
+    case 'GroupCheckoutFailed': {
+      if (state.status !== 'Initiated') return state;
+
+      return {
+        status: 'Finished',
+      };
+    }
+    default: {
+      const _notExistingEventType: never = type;
+      return state;
+    }
+  }
+};

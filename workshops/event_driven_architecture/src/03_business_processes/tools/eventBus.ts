@@ -9,7 +9,7 @@ export type Event<
 export interface EventBus {
   publish<E extends Event>(events: E[]): void;
   subscribe<E extends Event>(
-    eventType: string,
+    eventType: E['type'],
     eventHandler: EventHandler<E>,
   ): void;
 

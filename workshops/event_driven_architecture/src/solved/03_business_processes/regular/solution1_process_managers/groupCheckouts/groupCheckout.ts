@@ -4,6 +4,7 @@ import type {
   GuestCheckedOut,
   GuestCheckoutFailed,
 } from '../guestStayAccounts';
+import type { InitiateGroupCheckout } from './groupCheckoutFacade';
 
 export type GroupCheckoutInitiated = {
   type: 'GroupCheckoutInitiated';
@@ -59,18 +60,6 @@ export type GroupCheckoutEvent =
   | GroupCheckoutCompleted
   | GroupCheckoutFailed;
 
-export type InitiateGroupCheckout = {
-  type: 'InitiateGroupCheckout';
-  data: {
-    groupCheckoutId: string;
-    clerkId: string;
-    guestStayIds: string[];
-    now: Date;
-  };
-};
-
-export type GroupCheckoutCommand = InitiateGroupCheckout;
-
 export type CheckoutStatus =
   | 'NotExisting'
   | 'Initiated'
@@ -115,7 +104,7 @@ export class GroupCheckout extends ProcessManager<
     return groupCheckout;
   };
 
-  onGuestCheckoutCompleted = ({ data: event }: GuestCheckedOut): void => {
+  onGuestCheckedOut = ({ data: event }: GuestCheckedOut): void => {
     if (event.groupCheckoutId !== this.groupCheckoutId) return;
 
     this.enqueue({
@@ -153,7 +142,7 @@ export class GroupCheckout extends ProcessManager<
     );
 
   private areAllCompleted = () =>
-    [...this.guestStayCheckouts.values()].some(
+    [...this.guestStayCheckouts.values()].every(
       (status) => status === 'Completed',
     );
 
@@ -162,26 +151,27 @@ export class GroupCheckout extends ProcessManager<
       .filter((s) => s[1] === status)
       .map((s) => s[0]);
 
-  private finish = (now: Date): GroupCheckoutEvent => {
-    return this.areAllCompleted()
-      ? {
-          type: 'GroupCheckoutCompleted',
-          data: {
-            groupCheckoutId: this.groupCheckoutId,
-            completedCheckouts: Array.from(this.guestStayCheckouts.values()),
-            completedAt: now,
+  private finish = (now: Date): void =>
+    this.enqueue(
+      this.areAllCompleted()
+        ? {
+            type: 'GroupCheckoutCompleted',
+            data: {
+              groupCheckoutId: this.groupCheckoutId,
+              completedCheckouts: Array.from(this.guestStayCheckouts.keys()),
+              completedAt: now,
+            },
+          }
+        : {
+            type: 'GroupCheckoutFailed',
+            data: {
+              groupCheckoutId: this.groupCheckoutId,
+              completedCheckouts: this.checkoutsWith('Completed'),
+              failedCheckouts: this.checkoutsWith('Failed'),
+              failedAt: now,
+            },
           },
-        }
-      : {
-          type: 'GroupCheckoutFailed',
-          data: {
-            groupCheckoutId: this.groupCheckoutId,
-            completedCheckouts: this.checkoutsWith('Completed'),
-            failedCheckouts: this.checkoutsWith('Failed'),
-            failedAt: now,
-          },
-        };
-  };
+    );
 
   evolve = ({ type, data: event }: GroupCheckoutEvent): void => {
     switch (type) {

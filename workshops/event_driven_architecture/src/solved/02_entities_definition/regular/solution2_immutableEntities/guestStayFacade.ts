@@ -21,7 +21,28 @@ export type InitiateGroupCheckout = {
   };
 };
 
-export type GroupCheckoutCommand = InitiateGroupCheckout;
+export type RecordGuestCheckoutCompletion = {
+  type: 'RecordGuestCheckoutCompletion';
+  data: {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    now: Date;
+  };
+};
+
+export type RecordGuestCheckoutFailure = {
+  type: 'RecordGuestCheckoutFailure';
+  data: {
+    groupCheckoutId: string;
+    guestStayAccountId: string;
+    now: Date;
+  };
+};
+
+export type GroupCheckoutCommand =
+  | InitiateGroupCheckout
+  | RecordGuestCheckoutCompletion
+  | RecordGuestCheckoutFailure;
 
 export const GuestStayFacade = (options: {
   database: Database;

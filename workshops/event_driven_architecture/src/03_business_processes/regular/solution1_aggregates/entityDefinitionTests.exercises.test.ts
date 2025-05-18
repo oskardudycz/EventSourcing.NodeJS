@@ -1,34 +1,47 @@
 import { faker } from '@faker-js/faker';
 import { v4 as uuid } from 'uuid';
 import {
+  getCommandBus,
   getDatabase,
   getEventBus,
-  getEventCatcher,
+  getMessageCatcher,
+  type CommandBus,
   type Database,
   type EventBus,
-  type EventCatcher,
+  type MessageCatcher,
 } from '../../tools';
 import {
-  GuestStayFacade,
+  GroupCheckoutFacade,
+  type InitiateGroupCheckout,
+} from './groupCheckouts';
+import {
+  GuestStayAccountFacade,
   type CheckInGuest,
   type CheckoutGuest,
-  type InitiateGroupCheckout,
   type RecordCharge,
   type RecordPayment,
-} from './guestStayFacade';
+} from './guestStayAccounts';
 
 describe('Entity Definition Tests', () => {
   let database: Database;
   let eventBus: EventBus;
-  let publishedEvents: EventCatcher;
-  let guestStayFacade: ReturnType<typeof GuestStayFacade>;
+  let commandBus: CommandBus;
+  let publishedEvents: MessageCatcher;
+  let guestStayFacade: GuestStayAccountFacade;
+  let groupCheckoutFacade: GroupCheckoutFacade;
   let now: Date;
 
   beforeEach(() => {
     database = getDatabase();
     eventBus = getEventBus();
-    publishedEvents = getEventCatcher();
-    guestStayFacade = GuestStayFacade({ database, eventBus });
+    commandBus = getCommandBus();
+    publishedEvents = getMessageCatcher();
+    guestStayFacade = GuestStayAccountFacade({ database, eventBus });
+    groupCheckoutFacade = GroupCheckoutFacade({
+      database,
+      eventBus,
+      commandBus,
+    });
     now = new Date();
     eventBus.use(publishedEvents.catchMessage);
   });
@@ -48,7 +61,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.checkInGuest(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedEvents.shouldReceiveSingleMessage({
       type: 'GuestCheckedIn',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -91,7 +104,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.recordCharge(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedEvents.shouldReceiveSingleMessage({
       type: 'ChargeRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -133,7 +146,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.recordPayment(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedEvents.shouldReceiveSingleMessage({
       type: 'PaymentRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -190,7 +203,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.recordPayment(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedEvents.shouldReceiveSingleMessage({
       type: 'PaymentRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -250,7 +263,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.checkoutGuest(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedEvents.shouldReceiveSingleMessage({
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -313,7 +326,7 @@ describe('Entity Definition Tests', () => {
       console.log((exc as Error).message);
     }
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedEvents.shouldReceiveSingleMessage({
       type: 'GuestCheckoutFailed',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -352,9 +365,9 @@ describe('Entity Definition Tests', () => {
       },
     };
 
-    guestStayFacade.initiateGroupCheckout(command);
+    groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedEvents.shouldReceiveSingleMessage({
       type: 'GroupCheckoutInitiated',
       data: {
         groupCheckoutId,

@@ -19,16 +19,21 @@ export abstract class Aggregate<E extends Event> {
   };
 }
 
-export type MessageWrapper<M extends Command | Event> = {
-  kind: 'Command' | 'Event';
-  message: M;
-};
+export type MessageWrapper =
+  | {
+      kind: 'Event';
+      message: Event;
+    }
+  | {
+      kind: 'Command';
+      message: Command;
+    };
 
 export abstract class ProcessManager<
   Sends extends Command,
   Records extends Event,
 > {
-  #uncommitedMessages: MessageWrapper<Sends | Records>[] = [];
+  #uncommitedMessages: MessageWrapper[] = [];
 
   abstract evolve(event: Records): void;
 
@@ -47,7 +52,7 @@ export abstract class ProcessManager<
     ];
   };
 
-  dequeueUncommitedEvents = (): MessageWrapper<Sends | Records>[] => {
+  dequeueUncommitedMessages = (): MessageWrapper[] => {
     const messages = this.#uncommitedMessages;
 
     this.#uncommitedMessages = [];
