@@ -73,11 +73,11 @@ describe('Events definition', () => {
         },
       },
       {
-        type: 'GroupCheckoutCompletionRecorded',
+        type: 'GuestCheckoutCompletionRecorded',
         data: {
           guestStayAccountId,
           groupCheckoutId,
-          completedAt: new Date(),
+          checkedOutAt: new Date(),
         },
       },
       {

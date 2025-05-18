@@ -9,11 +9,11 @@ export type GroupCheckoutEvent =
       };
     }
   | {
-      type: 'GroupCheckoutCompletionRecorded';
+      type: 'GuestCheckoutCompletionRecorded';
       data: {
         groupCheckoutId: string;
         guestStayAccountId: string;
-        completedAt: Date;
+        checkedOutAt: Date;
       };
     }
   | {

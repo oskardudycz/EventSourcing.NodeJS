@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
-import type { GuestStayAccountEvent } from './guestStayAccounts';
 import type { GroupCheckoutEvent } from './groupCheckouts';
+import type { GuestStayAccountEvent } from './guestStayAccounts';
 
 describe('Events definition', () => {
   const guestId = uuid();
@@ -73,11 +73,11 @@ describe('Events definition', () => {
         },
       },
       {
-        type: 'GroupCheckoutCompletionRecorded',
+        type: 'GuestCheckoutCompletionRecorded',
         data: {
           guestStayAccountId,
           groupCheckoutId,
-          completedAt: new Date(),
+          checkedOutAt: new Date(),
         },
       },
       {

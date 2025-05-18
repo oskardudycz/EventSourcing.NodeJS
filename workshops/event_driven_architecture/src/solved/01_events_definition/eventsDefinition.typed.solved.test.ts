@@ -82,8 +82,8 @@ export type GroupCheckoutInitiated = Event<
   }
 >;
 
-export type GroupCheckoutCompletionRecorded = Event<
-  'GroupCheckoutCompletionRecorded',
+export type GuestCheckoutCompletionRecorded = Event<
+  'GuestCheckoutCompletionRecorded',
   {
     groupCheckoutId: string;
     guestStayAccountId: string;
@@ -121,7 +121,7 @@ export type GroupCheckoutFailed = Event<
 
 export type GroupCheckoutEvent =
   | GroupCheckoutInitiated
-  | GroupCheckoutCompletionRecorded
+  | GuestCheckoutCompletionRecorded
   | GuestCheckoutFailureRecorded
   | GroupCheckoutCompleted
   | GroupCheckoutFailed;
@@ -197,7 +197,7 @@ describe('Events definition', () => {
         },
       },
       {
-        type: 'GroupCheckoutCompletionRecorded',
+        type: 'GuestCheckoutCompletionRecorded',
         data: {
           guestStayAccountId,
           groupCheckoutId,
