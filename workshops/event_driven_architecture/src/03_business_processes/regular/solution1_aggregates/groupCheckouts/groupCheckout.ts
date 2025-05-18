@@ -8,12 +8,12 @@ export type GroupCheckoutInitiated = {
   };
 };
 
-export type GroupCheckoutCompletionRecorded = {
-  type: 'GroupCheckoutCompletionRecorded';
+export type GuestCheckoutCompletionRecorded = {
+  type: 'GuestCheckoutCompletionRecorded';
   data: {
     groupCheckoutId: string;
     guestStayAccountId: string;
-    completedAt: Date;
+    checkedOutAt: Date;
   };
 };
 
@@ -47,7 +47,7 @@ export type GroupCheckoutFailed = {
 
 export type GroupCheckoutEvent =
   | GroupCheckoutInitiated
-  | GroupCheckoutCompletionRecorded
+  | GuestCheckoutCompletionRecorded
   | GuestCheckoutFailureRecorded
   | GroupCheckoutCompleted
   | GroupCheckoutFailed;

@@ -1,50 +1,50 @@
+import type { GuestStayAccountEvent } from '../../solution2_immutableEntities/guestStayAccounts';
 import { Aggregate } from '../core';
 
-export type GuestStayAccountEvent =
-  | {
-      type: 'GuestCheckedIn';
-      data: {
-        guestStayAccountId: string;
-        guestId: string;
-        roomId: string;
-        checkedInAt: Date;
-      };
-    }
-  | {
-      type: 'ChargeRecorded';
-      data: {
-        chargeId: string;
-        guestStayAccountId: string;
-        amount: number;
-        recordedAt: Date;
-      };
-    }
-  | {
-      type: 'PaymentRecorded';
-      data: {
-        paymentId: string;
-        guestStayAccountId: string;
-        amount: number;
-        recordedAt: Date;
-      };
-    }
-  | {
-      type: 'GuestCheckedOut';
-      data: {
-        guestStayAccountId: string;
-        checkedOutAt: Date;
-        groupCheckoutId?: string;
-      };
-    }
-  | {
-      type: 'GuestCheckoutFailed';
-      data: {
-        guestStayAccountId: string;
-        reason: 'NotCheckedIn' | 'BalanceNotSettled';
-        failedAt: Date;
-        groupCheckoutId?: string;
-      };
-    };
+export type GuestCheckedIn = {
+  type: 'GuestCheckedIn';
+  data: {
+    guestStayAccountId: string;
+    guestId: string;
+    roomId: string;
+    checkedInAt: Date;
+  };
+};
+export type ChargeRecorded = {
+  type: 'ChargeRecorded';
+  data: {
+    chargeId: string;
+    guestStayAccountId: string;
+    amount: number;
+    recordedAt: Date;
+  };
+};
+export type PaymentRecorded = {
+  type: 'PaymentRecorded';
+  data: {
+    paymentId: string;
+    guestStayAccountId: string;
+    amount: number;
+    recordedAt: Date;
+  };
+};
+export type GuestCheckedOut = {
+  type: 'GuestCheckedOut';
+  data: {
+    guestStayAccountId: string;
+    checkedOutAt: Date;
+    groupCheckoutId?: string;
+  };
+};
+export type GuestCheckoutFailed = {
+  type: 'GuestCheckoutFailed';
+  data: {
+    guestStayAccountId: string;
+    reason: 'NotCheckedIn' | 'BalanceNotSettled';
+    failedAt: Date;
+    groupCheckoutId?: string;
+  };
+};
 
 export type GuestStayAccountStatus = 'NotExisting' | 'CheckedIn' | 'CheckedOut';
 

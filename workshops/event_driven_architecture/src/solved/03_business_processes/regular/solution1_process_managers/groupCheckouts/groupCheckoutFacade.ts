@@ -1,17 +1,5 @@
-import type { GroupCheckoutInitiated } from '.';
+import type { GroupCheckoutInitiated, InitiateGroupCheckout } from '.';
 import type { CommandBus, Database, EventBus } from '../../../tools';
-
-export type InitiateGroupCheckout = {
-  type: 'InitiateGroupCheckout';
-  data: {
-    groupCheckoutId: string;
-    clerkId: string;
-    guestStayIds: string[];
-    now: Date;
-  };
-};
-
-export type GroupCheckoutCommand = InitiateGroupCheckout;
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
@@ -34,6 +22,7 @@ export const GroupCheckoutFacade = (options: {
           initiatedAt: command.data.now,
         },
       };
+
       eventBus.publish([event]);
     },
   };

@@ -65,7 +65,7 @@ export type GroupCheckoutEvent =
       };
     }
   | {
-      type: 'GroupCheckoutCompletionRecorded';
+      type: 'GuestCheckoutCompletionRecorded';
       data: {
         groupCheckoutId: string;
         guestStayAccountId: string;
@@ -169,7 +169,7 @@ describe('Events definition', () => {
         },
       },
       {
-        type: 'GroupCheckoutCompletionRecorded',
+        type: 'GuestCheckoutCompletionRecorded',
         data: {
           guestStayAccountId,
           groupCheckoutId,
