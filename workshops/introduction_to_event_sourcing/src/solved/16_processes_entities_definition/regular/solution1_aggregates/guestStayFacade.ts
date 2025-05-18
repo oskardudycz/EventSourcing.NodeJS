@@ -1,6 +1,9 @@
-import type { Database, EventBus } from '../../tools';
+import type { EventStore } from '../../tools';
 import type { GroupCheckoutInitiated } from './groupCheckouts';
-import { GuestStayAccount } from './guestStayAccounts';
+import {
+  GuestStayAccount,
+  type GuestStayAccountEvent,
+} from './guestStayAccounts';
 
 export type CheckInGuest = {
   type: 'CheckInGuest';
@@ -79,27 +82,34 @@ export type GroupCheckoutCommand =
   | RecordGuestCheckoutCompletion
   | RecordGuestCheckoutFailure;
 
-export const GuestStayFacade = (options: {
-  database: Database;
-  eventBus: EventBus;
-}) => {
-  const { database, eventBus } = options;
+export const GuestStayFacade = (options: { eventBus: EventStore }) => {
+  const { eventBus: eventStore } = options;
 
-  const accounts = database.collection<GuestStayAccount>('guestStayAccount');
+  const aggregateOptions = {
+    evolve: (state: GuestStayAccount | null, event: GuestStayAccountEvent) => {
+      state ??= GuestStayAccount.initial();
+
+      state.evolve(event);
+
+      return state;
+    },
+    initial: () => null,
+  };
 
   return {
     checkInGuest: (command: CheckInGuest) => {
-      if (accounts.get(command.data.guestStayAccountId)) {
-        throw Error('Guest is already checked-in!');
-      }
-
       const account = GuestStayAccount.checkInGuest(command.data);
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     recordCharge: (command: RecordCharge) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       if (!account) {
         throw new Error('Entity not found');
@@ -107,11 +117,16 @@ export const GuestStayFacade = (options: {
 
       account.recordCharge(command.data);
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     recordPayment: (command: RecordPayment) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       if (!account) {
         throw new Error('Entity not found');
@@ -119,11 +134,16 @@ export const GuestStayFacade = (options: {
 
       account.recordPayment(command.data);
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     checkoutGuest: (command: CheckoutGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       if (!account) {
         throw new Error('Entity not found');
@@ -131,8 +151,10 @@ export const GuestStayFacade = (options: {
 
       account.checkoutGuest(command.data);
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
       const event: GroupCheckoutInitiated = {
@@ -144,7 +166,9 @@ export const GuestStayFacade = (options: {
           initiatedAt: command.data.now,
         },
       };
-      eventBus.publish([event]);
+      eventStore.appendToStream(command.data.groupCheckoutId, [event]);
     },
   };
 };
+
+export type GuestStayFacade = ReturnType<typeof GuestStayFacade>;

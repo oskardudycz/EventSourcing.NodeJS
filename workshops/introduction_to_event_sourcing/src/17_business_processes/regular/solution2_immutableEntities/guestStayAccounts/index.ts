@@ -1,4 +1,4 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { CommandBus, EventStore } from '../../../tools';
 import { GuestStayAccountFacade } from './guestStayAccountFacade';
 
 export * from './businessLogic';
@@ -6,17 +6,15 @@ export * from './guestStayAccount';
 export * from './guestStayAccountFacade';
 
 export const configureGuestStayAccounts = (options: {
-  database: Database;
-  eventBus: EventBus;
+  eventStore: EventStore;
   commandBus: CommandBus;
 }): { guestStayAccountFacade: GuestStayAccountFacade } => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { database, eventBus, commandBus } = options;
+  const { eventStore, commandBus } = options;
 
   const guestStayAccountFacade: GuestStayAccountFacade = GuestStayAccountFacade(
     {
-      database,
-      eventBus,
+      eventStore,
+      commandBus,
     },
   );
 

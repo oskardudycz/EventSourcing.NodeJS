@@ -1,14 +1,53 @@
 import type { EventStore } from '../../tools';
 import type { GroupCheckoutInitiated } from './groupCheckouts';
 import {
-  decide,
-  evolve,
-  initial,
-  type CheckInGuest,
-  type CheckoutGuest,
-  type RecordCharge,
-  type RecordPayment,
+  GuestStayAccount,
+  type GuestStayAccountEvent,
 } from './guestStayAccounts';
+
+export type CheckInGuest = {
+  type: 'CheckInGuest';
+  data: {
+    guestStayAccountId: string;
+    guestId: string;
+    roomId: string;
+    now: Date;
+  };
+};
+export type RecordCharge = {
+  type: 'RecordCharge';
+  data: {
+    guestStayAccountId: string;
+    chargeId: string;
+    amount: number;
+    now: Date;
+  };
+};
+
+export type RecordPayment = {
+  type: 'RecordPayment';
+  data: {
+    guestStayAccountId: string;
+    paymentId: string;
+    amount: number;
+    now: Date;
+  };
+};
+
+export type CheckoutGuest = {
+  type: 'CheckoutGuest';
+  data: {
+    guestStayAccountId: string;
+    now: Date;
+    groupCheckoutId?: string | undefined;
+  };
+};
+
+export type GuestStayAccountCommand =
+  | CheckInGuest
+  | RecordCharge
+  | RecordPayment
+  | CheckoutGuest;
 
 export type InitiateGroupCheckout = {
   type: 'InitiateGroupCheckout';
@@ -46,18 +85,25 @@ export type GroupCheckoutCommand =
 export const GuestStayFacade = (options: { eventStore: EventStore }) => {
   const { eventStore } = options;
 
-  const aggregateOptions = { evolve, initial: () => initial };
+  const aggregateOptions = {
+    evolve: (state: GuestStayAccount | null, event: GuestStayAccountEvent) => {
+      state ??= GuestStayAccount.initial();
+
+      state.evolve(event);
+
+      return state;
+    },
+    initial: () => null,
+  };
 
   return {
     checkInGuest: (command: CheckInGuest) => {
-      const account = eventStore.aggregateStream(
+      const account = GuestStayAccount.checkInGuest(command.data);
+
+      eventStore.appendToStream(
         command.data.guestStayAccountId,
-        aggregateOptions,
+        account.dequeueUncommitedEvents(),
       );
-
-      const events = decide(command, account);
-
-      eventStore.appendToStream(command.data.guestStayAccountId, events);
     },
     recordCharge: (command: RecordCharge) => {
       const account = eventStore.aggregateStream(
@@ -65,9 +111,16 @@ export const GuestStayFacade = (options: { eventStore: EventStore }) => {
         aggregateOptions,
       );
 
-      const events = decide(command, account);
+      if (!account) {
+        throw new Error('Entity not found');
+      }
 
-      eventStore.appendToStream(command.data.guestStayAccountId, events);
+      account.recordCharge(command.data);
+
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     recordPayment: (command: RecordPayment) => {
       const account = eventStore.aggregateStream(
@@ -75,9 +128,16 @@ export const GuestStayFacade = (options: { eventStore: EventStore }) => {
         aggregateOptions,
       );
 
-      const events = decide(command, account);
+      if (!account) {
+        throw new Error('Entity not found');
+      }
 
-      eventStore.appendToStream(command.data.guestStayAccountId, events);
+      account.recordPayment(command.data);
+
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     checkoutGuest: (command: CheckoutGuest) => {
       const account = eventStore.aggregateStream(
@@ -85,9 +145,16 @@ export const GuestStayFacade = (options: { eventStore: EventStore }) => {
         aggregateOptions,
       );
 
-      const events = decide(command, account);
+      if (!account) {
+        throw new Error('Entity not found');
+      }
 
-      eventStore.appendToStream(command.data.guestStayAccountId, events);
+      account.checkoutGuest(command.data);
+
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
       const event: GroupCheckoutInitiated = {
@@ -103,3 +170,5 @@ export const GuestStayFacade = (options: { eventStore: EventStore }) => {
     },
   };
 };
+
+export type GuestStayFacade = ReturnType<typeof GuestStayFacade>;

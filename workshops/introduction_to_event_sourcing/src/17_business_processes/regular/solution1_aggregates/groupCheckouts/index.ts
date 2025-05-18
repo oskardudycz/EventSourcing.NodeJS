@@ -1,22 +1,17 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { CommandBus, EventStore } from '../../../tools';
 import { GroupCheckoutFacade } from './groupCheckoutFacade';
 
 export * from './groupCheckout';
 export * from './groupCheckoutFacade';
 
 export const configureGroupCheckouts = ({
-  database,
-  eventBus,
-  commandBus,
+  eventStore,
 }: {
-  database: Database;
-  eventBus: EventBus;
+  eventStore: EventStore;
   commandBus: CommandBus;
 }): { groupCheckoutFacade: GroupCheckoutFacade } => {
   const groupCheckoutFacade: GroupCheckoutFacade = GroupCheckoutFacade({
-    database,
-    eventBus,
-    commandBus,
+    eventStore,
   });
   // TODO: Configure group checkouts handlers here
 
