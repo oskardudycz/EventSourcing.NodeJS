@@ -1,8 +1,4 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
-import type {
-  GuestCheckedOut,
-  GuestCheckoutFailed,
-} from '../guestStayAccounts';
+import type { CommandBus, EventStore } from '../../../tools';
 import {
   initiateGroupCheckout,
   recordGuestCheckout,
@@ -10,67 +6,43 @@ import {
   type RecordGuestCheckoutCompletion,
   type RecordGuestCheckoutFailure,
 } from './businessLogic';
-import { evolve, initial, type GroupCheckout } from './groupCheckout';
+import { evolve, initial } from './groupCheckout';
 
 export const GroupCheckoutFacade = (options: {
-  database: Database;
-  eventBus: EventBus;
+  eventStore: EventStore;
   commandBus: CommandBus;
 }) => {
-  const { database, eventBus } = options;
+  const { eventStore } = options;
 
-  const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
+  const aggregateStreamOptions = { evolve, initial: () => initial };
 
   return {
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
-      const groupCheckout =
-        groupCheckouts.get(command.data.groupCheckoutId) ?? initial;
+      const groupCheckout = eventStore.aggregateStream(
+        command.data.groupCheckoutId,
+        aggregateStreamOptions,
+      );
 
       const event = initiateGroupCheckout(command, groupCheckout);
-
-      groupCheckouts.store(
-        command.data.groupCheckoutId,
-        evolve(groupCheckout, event),
-      );
-      eventBus.publish([event]);
+      eventStore.appendToStream(command.data.groupCheckoutId, [event]);
     },
-    onGuestCheckoutResult: (event: GuestCheckedOut | GuestCheckoutFailed) => {
-      if (!event.data.groupCheckoutId) return;
-
-      const groupCheckout = groupCheckouts.get(event.data.groupCheckoutId);
-
-      if (!groupCheckout) {
-        return;
-      }
-
-      const command:
-        | RecordGuestCheckoutCompletion
-        | RecordGuestCheckoutFailure =
-        event.type === 'GuestCheckedOut'
-          ? {
-              type: 'RecordGuestCheckoutCompletion',
-              data: {
-                groupCheckoutId: event.data.groupCheckoutId,
-                guestStayAccountId: event.data.guestStayAccountId,
-                now: event.data.checkedOutAt,
-              },
-            }
-          : {
-              type: 'RecordGuestCheckoutFailure',
-              data: {
-                groupCheckoutId: event.data.groupCheckoutId,
-                guestStayAccountId: event.data.guestStayAccountId,
-                now: event.data.failedAt,
-              },
-            };
+    recordGuestCheckoutCompletion: (command: RecordGuestCheckoutCompletion) => {
+      const groupCheckout = eventStore.aggregateStream(
+        command.data.groupCheckoutId,
+        aggregateStreamOptions,
+      );
 
       const events = recordGuestCheckout(command, groupCheckout);
-
-      groupCheckouts.store(
-        event.data.groupCheckoutId,
-        events.reduce(evolve, groupCheckout),
+      eventStore.appendToStream(command.data.groupCheckoutId, events);
+    },
+    recordGuestCheckoutFailure: (command: RecordGuestCheckoutFailure) => {
+      const groupCheckout = eventStore.aggregateStream(
+        command.data.groupCheckoutId,
+        aggregateStreamOptions,
       );
-      eventBus.publish(events);
+
+      const events = recordGuestCheckout(command, groupCheckout);
+      eventStore.appendToStream(command.data.groupCheckoutId, events);
     },
   };
 };

@@ -1,4 +1,4 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { CommandBus, EventStore } from '../../../tools';
 import {
   type GuestCheckedOut,
   type GuestCheckoutFailed,
@@ -9,25 +9,22 @@ export * from './groupCheckout';
 export * from './groupCheckoutFacade';
 
 export const configureGroupCheckouts = ({
-  database,
-  eventBus,
+  eventStore,
   commandBus,
 }: {
-  database: Database;
-  eventBus: EventBus;
+  eventStore: EventStore;
   commandBus: CommandBus;
 }): { groupCheckoutFacade: GroupCheckoutFacade } => {
   const groupCheckoutFacade: GroupCheckoutFacade = GroupCheckoutFacade({
-    database,
-    eventBus,
+    eventStore,
     commandBus,
   });
 
-  eventBus.subscribe<GuestCheckedOut>(
+  eventStore.subscribe<GuestCheckedOut>(
     'GuestCheckedOut',
     groupCheckoutFacade.onGuestCheckedOut,
   );
-  eventBus.subscribe<GuestCheckoutFailed>(
+  eventStore.subscribe<GuestCheckoutFailed>(
     'GuestCheckoutFailed',
     groupCheckoutFacade.onGuestCheckoutFailed,
   );

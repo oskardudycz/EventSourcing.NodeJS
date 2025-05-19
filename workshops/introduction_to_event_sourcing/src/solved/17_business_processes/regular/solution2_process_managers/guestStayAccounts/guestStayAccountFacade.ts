@@ -1,5 +1,5 @@
-import { GuestStayAccount } from '.';
-import type { Database, EventBus } from '../../../tools';
+import { GuestStayAccount, type GuestStayAccountEvent } from '.';
+import type { EventStore } from '../../../tools';
 
 export type CheckInGuest = {
   type: 'CheckInGuest';
@@ -45,27 +45,34 @@ export type GuestStayAccountCommand =
   | RecordPayment
   | CheckoutGuest;
 
-export const GuestStayAccountFacade = (options: {
-  database: Database;
-  eventBus: EventBus;
-}) => {
-  const { database, eventBus } = options;
+export const GuestStayAccountFacade = (options: { eventStore: EventStore }) => {
+  const { eventStore } = options;
 
-  const accounts = database.collection<GuestStayAccount>('guestStayAccount');
+  const aggregateOptions = {
+    evolve: (state: GuestStayAccount | null, event: GuestStayAccountEvent) => {
+      state ??= GuestStayAccount.initial();
+
+      state.evolve(event);
+
+      return state;
+    },
+    initial: () => null,
+  };
 
   return {
     checkInGuest: (command: CheckInGuest) => {
-      if (accounts.get(command.data.guestStayAccountId)) {
-        throw Error('Guest is already checked-in!');
-      }
-
       const account = GuestStayAccount.checkInGuest(command.data);
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     recordCharge: (command: RecordCharge) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       if (!account) {
         throw new Error('Entity not found');
@@ -73,11 +80,16 @@ export const GuestStayAccountFacade = (options: {
 
       account.recordCharge(command.data);
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     recordPayment: (command: RecordPayment) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       if (!account) {
         throw new Error('Entity not found');
@@ -85,11 +97,16 @@ export const GuestStayAccountFacade = (options: {
 
       account.recordPayment(command.data);
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
     checkoutGuest: (command: CheckoutGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       if (!account) {
         throw new Error('Entity not found');
@@ -97,8 +114,10 @@ export const GuestStayAccountFacade = (options: {
 
       account.checkoutGuest(command.data);
 
-      accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      eventStore.appendToStream(
+        command.data.guestStayAccountId,
+        account.dequeueUncommitedEvents(),
+      );
     },
   };
 };

@@ -4,85 +4,59 @@ import {
   initial,
   type CheckInGuest,
   type CheckoutGuest,
-  type GuestStayAccount,
   type RecordCharge,
   type RecordPayment,
 } from '.';
-import type { Database, EventBus } from '../../../tools';
-import type { GroupCheckoutInitiated } from '../groupCheckouts';
+import type { CommandBus, EventStore } from '../../../tools';
 
 export const GuestStayAccountFacade = (options: {
-  database: Database;
-  eventBus: EventBus;
+  commandBus: CommandBus;
+  eventStore: EventStore;
 }) => {
-  const { database, eventBus } = options;
+  const { eventStore } = options;
 
-  const accounts = database.collection<GuestStayAccount>('guestStayAccount');
+  const aggregateOptions = { evolve, initial: () => initial };
 
   return {
     checkInGuest: (command: CheckInGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       const events = decide(command, account);
 
-      accounts.store(
-        command.data.guestStayAccountId,
-        events.reduce(evolve, account),
-      );
-      eventBus.publish(events);
+      eventStore.appendToStream(command.data.guestStayAccountId, events);
     },
     recordCharge: (command: RecordCharge) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       const events = decide(command, account);
 
-      accounts.store(
-        command.data.guestStayAccountId,
-        events.reduce(evolve, account),
-      );
-      eventBus.publish(events);
+      eventStore.appendToStream(command.data.guestStayAccountId, events);
     },
     recordPayment: (command: RecordPayment) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       const events = decide(command, account);
 
-      accounts.store(
-        command.data.guestStayAccountId,
-        events.reduce(evolve, account),
-      );
-      eventBus.publish(events);
+      eventStore.appendToStream(command.data.guestStayAccountId, events);
     },
     checkoutGuest: (command: CheckoutGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+      const account = eventStore.aggregateStream(
+        command.data.guestStayAccountId,
+        aggregateOptions,
+      );
 
       const events = decide(command, account);
 
-      accounts.store(
-        command.data.guestStayAccountId,
-        events.reduce(evolve, account),
-      );
-      eventBus.publish(events);
-    },
-    onGroupCheckout: (event: GroupCheckoutInitiated) => {
-      // This could be transactional also or we could do fan out based on ids
-      for (const guestStayAccountId of event.data.guestStayAccountIds) {
-        const account = accounts.get(guestStayAccountId) ?? initial;
-
-        const command: CheckoutGuest = {
-          type: 'CheckoutGuest',
-          data: {
-            groupCheckoutId: event.data.groupCheckoutId,
-            guestStayAccountId,
-            now: event.data.initiatedAt,
-          },
-        };
-
-        const events = decide(command, account);
-
-        accounts.store(guestStayAccountId, events.reduce(evolve, account));
-        eventBus.publish(events);
-      }
+      eventStore.appendToStream(command.data.guestStayAccountId, events);
     },
   };
 };
