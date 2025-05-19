@@ -70,13 +70,15 @@ export class GroupCheckout extends ProcessManager<
   CheckoutGuest,
   GroupCheckoutEvent
 > {
-  private groupCheckoutId: string = undefined!;
+  private groupCheckoutId: string = '';
   private guestStayCheckouts: Map<string, CheckoutStatus> = new Map();
   private status: CheckoutStatus = 'NotExisting';
 
   private constructor() {
     super();
   }
+
+  static initial = () => new GroupCheckout();
 
   static initiate = ({
     data: command,

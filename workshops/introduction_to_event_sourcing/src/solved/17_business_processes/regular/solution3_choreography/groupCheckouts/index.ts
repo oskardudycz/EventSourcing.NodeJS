@@ -1,4 +1,4 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { CommandBus, EventStore } from '../../../tools';
 import type {
   GuestCheckedOut,
   GuestCheckoutFailed,
@@ -10,28 +10,41 @@ export * from './groupCheckout';
 export * from './groupCheckoutFacade';
 
 export const configureGroupCheckouts = ({
-  database,
-  eventBus,
+  eventStore,
   commandBus,
 }: {
-  database: Database;
-  eventBus: EventBus;
+  eventStore: EventStore;
   commandBus: CommandBus;
 }): { groupCheckoutFacade: GroupCheckoutFacade } => {
   const groupCheckoutFacade: GroupCheckoutFacade = GroupCheckoutFacade({
-    database,
-    eventBus,
+    eventStore,
     commandBus,
   });
 
-  eventBus.subscribe<GuestCheckedOut>(
-    'GuestCheckedOut',
-    groupCheckoutFacade.onGuestCheckoutResult,
-  );
-  eventBus.subscribe<GuestCheckoutFailed>(
-    'GuestCheckoutFailed',
-    groupCheckoutFacade.onGuestCheckoutResult,
-  );
+  eventStore.subscribe<GuestCheckedOut>('GuestCheckedOut', (event) => {
+    if (!event.data.groupCheckoutId) return;
+
+    groupCheckoutFacade.recordGuestCheckoutCompletion({
+      type: 'RecordGuestCheckoutCompletion',
+      data: {
+        groupCheckoutId: event.data.groupCheckoutId,
+        guestStayAccountId: event.data.guestStayAccountId,
+        now: event.data.checkedOutAt,
+      },
+    });
+  });
+  eventStore.subscribe<GuestCheckoutFailed>('GuestCheckoutFailed', (event) => {
+    if (!event.data.groupCheckoutId) return;
+
+    groupCheckoutFacade.recordGuestCheckoutFailure({
+      type: 'RecordGuestCheckoutFailure',
+      data: {
+        groupCheckoutId: event.data.groupCheckoutId,
+        guestStayAccountId: event.data.guestStayAccountId,
+        now: event.data.failedAt,
+      },
+    });
+  });
 
   return { groupCheckoutFacade };
 };

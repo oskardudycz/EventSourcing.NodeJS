@@ -1,5 +1,5 @@
-import { GroupCheckout } from '.';
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import { GroupCheckout, type GroupCheckoutEvent } from '.';
+import type { CommandBus, EventStore } from '../../../tools';
 import {
   type GuestCheckedOut,
   type GuestCheckoutFailed,
@@ -39,60 +39,67 @@ export type GroupCheckoutCommand =
   | RecordGuestCheckoutFailure;
 
 export const GroupCheckoutFacade = (options: {
-  database: Database;
-  eventBus: EventBus;
+  eventStore: EventStore;
   commandBus: CommandBus;
 }) => {
-  const { database, eventBus, commandBus } = options;
+  const { eventStore, commandBus } = options;
 
-  const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
+  const aggregateStreamOptions = {
+    evolve: (state: GroupCheckout, event: GroupCheckoutEvent) => {
+      state.evolve(event);
+      return state;
+    },
+    initial: GroupCheckout.initial,
+  };
 
-  const publishMessages = (groupCheckout: GroupCheckout) => {
+  const publishMessages = (
+    groupCheckoutId: string,
+    groupCheckout: GroupCheckout,
+  ) => {
     const messages = groupCheckout.dequeueUncommitedMessages();
 
-    for (const { kind, message } of messages) {
-      if (kind === 'Event') eventBus.publish([message]);
-      else commandBus.send([message]);
-    }
+    const events = messages
+      .filter((message) => message.kind === 'Event')
+      .map((m) => m.message);
+
+    const commands = messages
+      .filter((message) => message.kind === 'Command')
+      .map((m) => m.message);
+
+    eventStore.appendToStream(groupCheckoutId, events);
+
+    commandBus.send(commands);
   };
 
   return {
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
       const groupCheckout = GroupCheckout.initiate(command);
 
-      groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
-
-      publishMessages(groupCheckout);
+      publishMessages(command.data.groupCheckoutId, groupCheckout);
     },
     onGuestCheckedOut: (event: GuestCheckedOut) => {
       if (!event.data.groupCheckoutId) return;
 
-      const groupCheckout = groupCheckouts.get(event.data.groupCheckoutId);
-
-      if (!groupCheckout) {
-        return;
-      }
+      const groupCheckout = eventStore.aggregateStream(
+        event.data.groupCheckoutId,
+        aggregateStreamOptions,
+      );
 
       groupCheckout.onGuestCheckedOut(event);
 
-      groupCheckouts.store(event.data.groupCheckoutId, groupCheckout);
-
-      publishMessages(groupCheckout);
+      publishMessages(event.data.groupCheckoutId, groupCheckout);
     },
     onGuestCheckoutFailed: (event: GuestCheckoutFailed) => {
       if (!event.data.groupCheckoutId) return;
 
-      const groupCheckout = groupCheckouts.get(event.data.groupCheckoutId);
-
-      if (!groupCheckout) {
-        return;
-      }
+      const groupCheckout = eventStore.aggregateStream(
+        event.data.groupCheckoutId,
+        aggregateStreamOptions,
+      );
 
       groupCheckout.onGuestCheckoutFailed(event);
 
-      groupCheckouts.store(event.data.groupCheckoutId, groupCheckout);
-
-      publishMessages(groupCheckout);
+      publishMessages(event.data.groupCheckoutId, groupCheckout);
     },
   };
 };

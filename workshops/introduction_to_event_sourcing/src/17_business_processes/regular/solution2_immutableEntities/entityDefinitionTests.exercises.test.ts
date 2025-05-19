@@ -1,29 +1,34 @@
 import { faker } from '@faker-js/faker';
 import { v4 as uuid } from 'uuid';
 import {
+  getCommandBus,
   getEventStore,
   getMessageCatcher,
+  type CommandBus,
   type EventStore,
   type MessageCatcher,
 } from '../../tools';
+import type { InitiateGroupCheckout } from './groupCheckouts';
 import type {
   CheckInGuest,
   CheckoutGuest,
   RecordCharge,
   RecordPayment,
 } from './guestStayAccounts';
-import { GuestStayFacade, type InitiateGroupCheckout } from './guestStayFacade';
+import { GuestStayAccountFacade } from './guestStayAccounts';
 
 describe('Entity Definition Tests', () => {
   let eventStore: EventStore;
+  let commandBus: CommandBus;
   let publishedEvents: MessageCatcher;
-  let guestStayFacade: ReturnType<typeof GuestStayFacade>;
+  let guestStayFacade: GuestStayAccountFacade;
   let now: Date;
 
   beforeEach(() => {
     eventStore = getEventStore();
+    commandBus = getCommandBus();
     publishedEvents = getMessageCatcher();
-    guestStayFacade = GuestStayFacade({ eventStore: eventStore });
+    guestStayFacade = GuestStayAccountFacade({ eventStore, commandBus });
     now = new Date();
     eventStore.use(publishedEvents.catchMessage);
   });

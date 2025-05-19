@@ -6,27 +6,29 @@ import {
   type EventStore,
   type MessageCatcher,
 } from '../../tools';
-import { GroupCheckoutFacade } from './groupCheckouts';
 import {
-  GuestStayFacade,
+  GroupCheckoutFacade,
+  type InitiateGroupCheckout,
+} from './groupCheckouts';
+import {
+  GuestStayAccountFacade,
   type CheckInGuest,
   type CheckoutGuest,
-  type InitiateGroupCheckout,
   type RecordCharge,
   type RecordPayment,
-} from './guestStayFacade';
+} from './guestStayAccounts';
 
 describe('Entity Definition Tests', () => {
   let eventStore: EventStore;
   let publishedEvents: MessageCatcher;
-  let guestStayFacade: GuestStayFacade;
+  let guestStayFacade: GuestStayAccountFacade;
   let groupCheckoutFacade: GroupCheckoutFacade;
   let now: Date;
 
   beforeEach(() => {
     eventStore = getEventStore();
     publishedEvents = getMessageCatcher();
-    guestStayFacade = GuestStayFacade({ eventStore });
+    guestStayFacade = GuestStayAccountFacade({ eventStore });
     groupCheckoutFacade = GroupCheckoutFacade({ eventStore });
     now = new Date();
     eventStore.use(publishedEvents.catchMessage);

@@ -1,4 +1,4 @@
 export * from './commandBus';
 export * from './database';
-export * from './eventBus';
+export * from './eventStore';
 export * from './messageCatcher';

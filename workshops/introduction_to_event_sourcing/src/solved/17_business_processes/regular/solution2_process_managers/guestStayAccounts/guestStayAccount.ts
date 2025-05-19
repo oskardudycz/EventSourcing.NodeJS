@@ -63,6 +63,8 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
     super();
   }
 
+  static initial = () => new GuestStayAccount();
+
   static checkInGuest = (data: {
     guestId: string;
     roomId: string;

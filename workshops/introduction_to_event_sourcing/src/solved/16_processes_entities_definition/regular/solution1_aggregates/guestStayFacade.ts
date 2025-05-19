@@ -82,8 +82,8 @@ export type GroupCheckoutCommand =
   | RecordGuestCheckoutCompletion
   | RecordGuestCheckoutFailure;
 
-export const GuestStayFacade = (options: { eventBus: EventStore }) => {
-  const { eventBus: eventStore } = options;
+export const GuestStayFacade = (options: { eventStore: EventStore }) => {
+  const { eventStore: eventStore } = options;
 
   const aggregateOptions = {
     evolve: (state: GuestStayAccount | null, event: GuestStayAccountEvent) => {

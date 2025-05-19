@@ -24,7 +24,7 @@ describe('Entity Definition Tests', () => {
   beforeEach(() => {
     eventStore = getEventStore();
     publishedEvents = getEventCatcher();
-    guestStayFacade = GuestStayFacade({ eventBus: eventStore });
+    guestStayFacade = GuestStayFacade({ eventStore: eventStore });
     now = new Date();
     eventStore.use(publishedEvents.catchMessage);
   });

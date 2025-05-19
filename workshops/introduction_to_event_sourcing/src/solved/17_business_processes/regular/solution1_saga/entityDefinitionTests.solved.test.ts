@@ -2,29 +2,26 @@ import { faker } from '@faker-js/faker';
 import { v4 as uuid } from 'uuid';
 import {
   getCommandBus,
-  getDatabase,
-  getEventBus,
+  getEventStore,
   getMessageCatcher,
   type CommandBus,
-  type Database,
-  type EventBus,
+  type EventStore,
   type MessageCatcher,
 } from '../../tools';
 import {
   GroupCheckoutFacade,
   type InitiateGroupCheckout,
 } from './groupCheckouts';
-import type {
-  CheckInGuest,
-  CheckoutGuest,
-  RecordCharge,
-  RecordPayment,
+import {
+  GuestStayAccountFacade,
+  type CheckInGuest,
+  type CheckoutGuest,
+  type RecordCharge,
+  type RecordPayment,
 } from './guestStayAccounts';
-import { GuestStayAccountFacade } from './guestStayAccounts';
 
 describe('Entity Definition Tests', () => {
-  let database: Database;
-  let eventBus: EventBus;
+  let eventStore: EventStore;
   let commandBus: CommandBus;
   let publishedEvents: MessageCatcher;
   let guestStayFacade: GuestStayAccountFacade;
@@ -32,18 +29,13 @@ describe('Entity Definition Tests', () => {
   let now: Date;
 
   beforeEach(() => {
-    database = getDatabase();
-    eventBus = getEventBus();
+    eventStore = getEventStore();
     commandBus = getCommandBus();
     publishedEvents = getMessageCatcher();
-    guestStayFacade = GuestStayAccountFacade({ database, eventBus });
-    groupCheckoutFacade = GroupCheckoutFacade({
-      database,
-      eventBus,
-      commandBus,
-    });
+    guestStayFacade = GuestStayAccountFacade({ eventStore, commandBus });
+    groupCheckoutFacade = GroupCheckoutFacade({ eventStore, commandBus });
     now = new Date();
-    eventBus.use(publishedEvents.catchMessage);
+    eventStore.use(publishedEvents.catchMessage);
   });
 
   it('checking in guest succeeds', () => {
