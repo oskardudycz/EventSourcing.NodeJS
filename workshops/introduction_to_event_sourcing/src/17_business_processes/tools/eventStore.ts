@@ -30,6 +30,7 @@ export interface EventStore {
     options: AggregateStreamOptions<Entity, E>,
   ): Entity;
   appendToStream(streamId: string, events: Event[]): void;
+  subscribe: <E extends Event>(eventHandler: EventHandler<E>) => void;
   use(middleware: DomainEventHandler): void;
 }
 
