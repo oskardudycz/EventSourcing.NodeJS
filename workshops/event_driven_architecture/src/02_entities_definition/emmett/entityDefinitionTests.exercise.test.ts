@@ -2,11 +2,11 @@ import { faker } from '@faker-js/faker';
 import { v4 as uuid } from 'uuid';
 import {
   getDatabase,
-  getEventBus,
-  getEventCatcher,
+  getMessageBus,
+  getMessageCatcher,
   type Database,
-  type EventBus,
-  type EventCatcher,
+  type MessageBus,
+  type MessageCatcher,
 } from '../tools';
 import {
   GuestStayFacade,
@@ -19,19 +19,19 @@ import {
 
 describe('Entity Definition Tests', () => {
   let database: Database;
-  let eventBus: EventBus;
-  let publishedEvents: EventCatcher;
+  let messageBus: MessageBus;
+  let publishedMessages: MessageCatcher;
   let guestStayFacade: ReturnType<typeof GuestStayFacade>;
   let now: Date;
 
   beforeEach(() => {
     database = getDatabase();
-    eventBus = getEventBus();
-    publishedEvents = getEventCatcher();
-    guestStayFacade = GuestStayFacade({ database, eventBus });
+    messageBus = getMessageBus();
+    publishedMessages = getMessageCatcher();
+    guestStayFacade = GuestStayFacade({ database, messageBus });
 
     now = new Date();
-    eventBus.use(publishedEvents.catchMessage);
+    messageBus.use(publishedMessages.catchMessage);
   });
 
   it('checking in guest succeeds', () => {
@@ -45,11 +45,11 @@ describe('Entity Definition Tests', () => {
         now,
       },
     };
-    publishedEvents.reset();
+    publishedMessages.reset();
 
     guestStayFacade.checkInGuest(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedIn',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -73,7 +73,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    publishedEvents.reset();
+    publishedMessages.reset();
 
     const amount = faker.number.float({
       min: 10,
@@ -92,7 +92,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.recordCharge(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedMessages.shouldReceiveSingleMessage({
       type: 'ChargeRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -115,7 +115,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    publishedEvents.reset();
+    publishedMessages.reset();
 
     const amount = faker.number.float({
       min: 10,
@@ -134,7 +134,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.recordPayment(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedMessages.shouldReceiveSingleMessage({
       type: 'PaymentRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -172,7 +172,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 60 * 60 * 1000),
       },
     });
-    publishedEvents.reset();
+    publishedMessages.reset();
 
     const amount = faker.number.float({
       min: 10,
@@ -191,7 +191,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.recordPayment(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedMessages.shouldReceiveSingleMessage({
       type: 'PaymentRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -239,7 +239,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 60 * 60 * 1000),
       },
     });
-    publishedEvents.reset();
+    publishedMessages.reset();
 
     const command: CheckoutGuest = {
       type: 'CheckoutGuest',
@@ -251,7 +251,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.checkoutGuest(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -298,7 +298,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 60 * 60 * 1000),
       },
     });
-    publishedEvents.reset();
+    publishedMessages.reset();
 
     const command: CheckoutGuest = {
       type: 'CheckoutGuest',
@@ -314,7 +314,7 @@ describe('Entity Definition Tests', () => {
       console.log((exc as Error).message);
     }
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckoutFailed',
       data: {
         guestStayAccountId: guestStayAccountId,
@@ -339,7 +339,7 @@ describe('Entity Definition Tests', () => {
         },
       });
     }
-    publishedEvents.reset();
+    publishedMessages.reset();
 
     const groupCheckoutId = uuid();
     const clerkId = uuid();
@@ -355,7 +355,7 @@ describe('Entity Definition Tests', () => {
 
     guestStayFacade.initiateGroupCheckout(command);
 
-    publishedEvents.shouldReceiveSingleEvent({
+    publishedMessages.shouldReceiveSingleMessage({
       type: 'GroupCheckoutInitiated',
       data: {
         groupCheckoutId,

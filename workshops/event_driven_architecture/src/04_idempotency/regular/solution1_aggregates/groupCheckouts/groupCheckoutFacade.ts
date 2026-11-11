@@ -1,5 +1,5 @@
 import { GroupCheckout } from '.';
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 
 export type InitiateGroupCheckout = {
   type: 'InitiateGroupCheckout';
@@ -36,10 +36,9 @@ export type GroupCheckoutCommand =
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
 
@@ -51,7 +50,7 @@ export const GroupCheckoutFacade = (options: {
 
       groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
 
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     recordGuestCheckoutCompletion: (command: RecordGuestCheckoutCompletion) => {
       const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
@@ -66,7 +65,7 @@ export const GroupCheckoutFacade = (options: {
 
       groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
 
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     recordGuestCheckoutFailure: (command: RecordGuestCheckoutFailure) => {
       const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
@@ -81,7 +80,7 @@ export const GroupCheckoutFacade = (options: {
 
       groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
 
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
   };
 };

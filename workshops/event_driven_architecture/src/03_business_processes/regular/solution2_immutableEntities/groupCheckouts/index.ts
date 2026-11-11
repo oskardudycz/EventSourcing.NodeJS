@@ -1,4 +1,5 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
+import type { GroupCheckoutInitiated } from './groupCheckout';
 import { GroupCheckoutFacade } from './groupCheckoutFacade';
 
 export * from './groupCheckout';
@@ -6,19 +7,20 @@ export * from './groupCheckoutFacade';
 
 export const configureGroupCheckouts = ({
   database,
-  eventBus,
-  commandBus,
+  messageBus,
 }: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }): { groupCheckoutFacade: GroupCheckoutFacade } => {
-  const groupCheckoutFacade: GroupCheckoutFacade = GroupCheckoutFacade({
+  const _groupCheckoutFacade: GroupCheckoutFacade = GroupCheckoutFacade({
     database,
-    eventBus,
-    commandBus,
+    messageBus,
   });
-  // TODO: Configure group checkouts handlers here
 
-  return { groupCheckoutFacade };
+  messageBus.subscribe<GroupCheckoutInitiated>('GroupCheckoutInitiated', () => {
+    throw new Error('Handle GroupCheckout Initiated event');
+  });
+  // Add other message bus subscriptions for commands and events when needed
+
+  throw new Error('Configure group checkouts handlers here');
 };

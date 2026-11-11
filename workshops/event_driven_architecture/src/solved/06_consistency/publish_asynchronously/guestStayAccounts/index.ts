@@ -1,4 +1,4 @@
-import type { BackgroundJobs, CommandBus, Database, EventBus } from '../tools';
+import type { BackgroundJobs, Database, MessageBus } from '../tools';
 import type { CheckoutGuest } from './businessLogic';
 import { GuestStayAccountFacade } from './guestStayAccountFacade';
 
@@ -8,21 +8,20 @@ export * from './guestStayAccountFacade';
 
 export const configureGuestStayAccounts = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
   backgroundJobs: BackgroundJobs;
 }): { guestStayAccountFacade: GuestStayAccountFacade } => {
-  const { database, eventBus, commandBus, backgroundJobs } = options;
+  const { database, messageBus, backgroundJobs } = options;
 
   const guestStayAccountFacade: GuestStayAccountFacade = GuestStayAccountFacade(
     {
       database,
-      eventBus,
+      messageBus,
       backgroundJobs,
     },
   );
 
-  commandBus.handle<CheckoutGuest>(
+  messageBus.subscribe<CheckoutGuest>(
     'CheckoutGuest',
     guestStayAccountFacade.checkoutGuest,
   );

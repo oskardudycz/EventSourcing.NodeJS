@@ -15,20 +15,20 @@ import {
   retryUntilSucceeds,
   type BackgroundJobs,
   type Database,
-  type EventBus,
+  type MessageBus,
 } from '../tools';
 
 const outboxName = 'guestStayAccountsOutbox';
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
   backgroundJobs: BackgroundJobs;
 }) => {
-  const { database, eventBus, backgroundJobs } = options;
+  const { database, messageBus, backgroundJobs } = options;
 
   backgroundJobs.register(() =>
-    publishFromOutbox({ database, eventBus, outboxName }),
+    publishFromOutbox({ database, messageBus, outboxName }),
   );
 
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
@@ -45,7 +45,10 @@ export const GuestStayAccountFacade = (options: {
         ),
       );
 
-      await publishOrStoreInOutbox({ database, eventBus, outboxName }, events);
+      await publishOrStoreInOutbox(
+        { database, messageBus, outboxName },
+        events,
+      );
     },
     recordCharge: async (command: RecordCharge) => {
       const events = await retryOnConflict(async () => {
@@ -65,7 +68,10 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await publishOrStoreInOutbox({ database, eventBus, outboxName }, events);
+      await publishOrStoreInOutbox(
+        { database, messageBus, outboxName },
+        events,
+      );
     },
     recordPayment: async (command: RecordPayment) => {
       const events = await retryOnConflict(async () => {
@@ -85,7 +91,10 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await publishOrStoreInOutbox({ database, eventBus, outboxName }, events);
+      await publishOrStoreInOutbox(
+        { database, messageBus, outboxName },
+        events,
+      );
     },
     checkoutGuest: async (command: CheckoutGuest) => {
       const events = await retryOnConflict(async () => {
@@ -105,7 +114,10 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await publishOrStoreInOutbox({ database, eventBus, outboxName }, events);
+      await publishOrStoreInOutbox(
+        { database, messageBus, outboxName },
+        events,
+      );
     },
   };
 };

@@ -1,5 +1,6 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 import type {
+  CheckoutGuest,
   GuestCheckedOut,
   GuestCheckoutFailed,
 } from '../guestStayAccounts';
@@ -14,10 +15,9 @@ import { evolve, initial, type GroupCheckout } from './groupCheckout';
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
 
@@ -32,7 +32,18 @@ export const GroupCheckoutFacade = (options: {
         command.data.groupCheckoutId,
         evolve(groupCheckout, event),
       );
-      eventBus.publish([event]);
+      messageBus.publish([event]);
+
+      messageBus.publish<CheckoutGuest>(
+        event.data.guestStayAccountIds.map((guestStayAccountId) => ({
+          type: 'CheckoutGuest',
+          data: {
+            guestStayAccountId,
+            now: event.data.initiatedAt,
+            groupCheckoutId: event.data.groupCheckoutId,
+          },
+        })),
+      );
     },
     onGuestCheckoutResult: (event: GuestCheckedOut | GuestCheckoutFailed) => {
       if (!event.data.groupCheckoutId) return;
@@ -70,7 +81,7 @@ export const GroupCheckoutFacade = (options: {
         event.data.groupCheckoutId,
         events.reduce(evolve, groupCheckout),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
   };
 };

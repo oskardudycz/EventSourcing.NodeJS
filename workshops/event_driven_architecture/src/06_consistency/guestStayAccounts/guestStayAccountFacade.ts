@@ -12,15 +12,15 @@ import {
   retryOnConflict,
   type BackgroundJobs,
   type Database,
-  type EventBus,
+  type MessageBus,
 } from '../tools';
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
   backgroundJobs: BackgroundJobs;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
 
@@ -34,7 +34,7 @@ export const GuestStayAccountFacade = (options: {
         { expectedVersion: 0 },
       );
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordCharge: async (command: RecordCharge) => {
       const events = await retryOnConflict(async () => {
@@ -52,7 +52,7 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordPayment: async (command: RecordPayment) => {
       const events = await retryOnConflict(async () => {
@@ -70,7 +70,7 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     checkoutGuest: async (command: CheckoutGuest) => {
       const events = await retryOnConflict(async () => {
@@ -88,7 +88,7 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

@@ -8,13 +8,13 @@ import {
   type RecordCharge,
   type RecordPayment,
 } from '.';
-import type { Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
 
@@ -28,7 +28,7 @@ export const GuestStayAccountFacade = (options: {
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     recordCharge: (command: RecordCharge) => {
       const account = accounts.get(command.data.guestStayAccountId) ?? initial;
@@ -39,7 +39,7 @@ export const GuestStayAccountFacade = (options: {
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     recordPayment: (command: RecordPayment) => {
       const account = accounts.get(command.data.guestStayAccountId) ?? initial;
@@ -50,7 +50,7 @@ export const GuestStayAccountFacade = (options: {
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     checkoutGuest: (command: CheckoutGuest) => {
       const account = accounts.get(command.data.guestStayAccountId) ?? initial;
@@ -61,7 +61,7 @@ export const GuestStayAccountFacade = (options: {
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
   };
 };

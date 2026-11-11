@@ -1,9 +1,8 @@
 import {
   retryOnConflict,
   type BackgroundJobs,
-  type CommandBus,
   type Database,
-  type EventBus,
+  type MessageBus,
 } from '../tools';
 import {
   initiateGroupCheckout,
@@ -21,11 +20,10 @@ import {
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
   backgroundJobs: BackgroundJobs;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
 
@@ -53,7 +51,7 @@ export const GroupCheckoutFacade = (options: {
         },
       );
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordGuestCheckoutCompletion: async (
       command: RecordGuestCheckoutCompletion,
@@ -78,7 +76,7 @@ export const GroupCheckoutFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordGuestCheckoutFailure: async (command: RecordGuestCheckoutFailure) => {
       const events = await retryOnConflict(async () => {
@@ -101,7 +99,7 @@ export const GroupCheckoutFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

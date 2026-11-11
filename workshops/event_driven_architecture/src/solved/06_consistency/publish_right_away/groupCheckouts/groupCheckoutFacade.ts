@@ -4,9 +4,8 @@ import {
   retryOnConflict,
   retryUntilSucceeds,
   type BackgroundJobs,
-  type CommandBus,
   type Database,
-  type EventBus,
+  type MessageBus,
 } from '../tools';
 import {
   initiateGroupCheckout,
@@ -26,14 +25,13 @@ const outboxName = 'groupCheckoutsOutbox';
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
   backgroundJobs: BackgroundJobs;
 }) => {
-  const { database, eventBus, backgroundJobs } = options;
+  const { database, messageBus, backgroundJobs } = options;
 
   backgroundJobs.register(() =>
-    publishFromOutbox({ database, eventBus, outboxName }),
+    publishFromOutbox({ database, messageBus, outboxName }),
   );
 
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
@@ -64,7 +62,10 @@ export const GroupCheckoutFacade = (options: {
         },
       );
 
-      await publishOrStoreInOutbox({ database, eventBus, outboxName }, events);
+      await publishOrStoreInOutbox(
+        { database, messageBus, outboxName },
+        events,
+      );
     },
     recordGuestCheckoutCompletion: async (
       command: RecordGuestCheckoutCompletion,
@@ -91,7 +92,10 @@ export const GroupCheckoutFacade = (options: {
         return events;
       });
 
-      await publishOrStoreInOutbox({ database, eventBus, outboxName }, events);
+      await publishOrStoreInOutbox(
+        { database, messageBus, outboxName },
+        events,
+      );
     },
     recordGuestCheckoutFailure: async (command: RecordGuestCheckoutFailure) => {
       const events = await retryOnConflict(async () => {
@@ -116,7 +120,10 @@ export const GroupCheckoutFacade = (options: {
         return events;
       });
 
-      await publishOrStoreInOutbox({ database, eventBus, outboxName }, events);
+      await publishOrStoreInOutbox(
+        { database, messageBus, outboxName },
+        events,
+      );
     },
   };
 };

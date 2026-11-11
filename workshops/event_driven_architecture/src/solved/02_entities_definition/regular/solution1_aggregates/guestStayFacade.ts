@@ -1,4 +1,4 @@
-import type { Database, EventBus } from '../../tools';
+import type { Database, MessageBus } from '../../tools';
 import type { GroupCheckoutInitiated } from './groupCheckouts';
 import { GuestStayAccount } from './guestStayAccounts';
 
@@ -81,9 +81,9 @@ export type GroupCheckoutCommand =
 
 export const GuestStayFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
 
@@ -96,7 +96,7 @@ export const GuestStayFacade = (options: {
       const account = GuestStayAccount.checkInGuest(command.data);
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      messageBus.publish(account.dequeueUncommitedEvents());
     },
     recordCharge: (command: RecordCharge) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -108,7 +108,7 @@ export const GuestStayFacade = (options: {
       account.recordCharge(command.data);
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      messageBus.publish(account.dequeueUncommitedEvents());
     },
     recordPayment: (command: RecordPayment) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -120,7 +120,7 @@ export const GuestStayFacade = (options: {
       account.recordPayment(command.data);
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      messageBus.publish(account.dequeueUncommitedEvents());
     },
     checkoutGuest: (command: CheckoutGuest) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -132,7 +132,7 @@ export const GuestStayFacade = (options: {
       account.checkoutGuest(command.data);
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      messageBus.publish(account.dequeueUncommitedEvents());
     },
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
       const event: GroupCheckoutInitiated = {
@@ -144,7 +144,7 @@ export const GuestStayFacade = (options: {
           initiatedAt: command.data.now,
         },
       };
-      eventBus.publish([event]);
+      messageBus.publish([event]);
     },
   };
 };

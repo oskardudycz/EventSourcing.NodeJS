@@ -1,5 +1,5 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
-import type { GroupCheckoutInitiated } from '../groupCheckouts';
+import type { Database, MessageBus } from '../../../tools';
+import type { CheckoutGuest } from './businessLogic';
 import { GuestStayAccountFacade } from './guestStayAccountFacade';
 
 export * from './businessLogic';
@@ -8,21 +8,20 @@ export * from './guestStayAccountFacade';
 
 export const configureGuestStayAccounts = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }): { guestStayAccountFacade: GuestStayAccountFacade } => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const guestStayAccountFacade: GuestStayAccountFacade = GuestStayAccountFacade(
     {
       database,
-      eventBus,
+      messageBus,
     },
   );
 
-  eventBus.subscribe<GroupCheckoutInitiated>(
-    'GroupCheckoutInitiated',
-    guestStayAccountFacade.onGroupCheckout,
+  messageBus.subscribe<CheckoutGuest>(
+    'CheckoutGuest',
+    guestStayAccountFacade.checkoutGuest,
   );
 
   return { guestStayAccountFacade };

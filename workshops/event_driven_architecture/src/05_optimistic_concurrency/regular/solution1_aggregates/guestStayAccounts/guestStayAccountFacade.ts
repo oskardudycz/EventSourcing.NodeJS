@@ -1,5 +1,5 @@
 import { GuestStayAccount } from '.';
-import type { Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 
 export type CheckInGuest = {
   type: 'CheckInGuest';
@@ -47,9 +47,9 @@ export type GuestStayAccountCommand =
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
 
@@ -62,7 +62,7 @@ export const GuestStayAccountFacade = (options: {
       const events = account.dequeueUncommitedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordCharge: async (command: RecordCharge) => {
       const existing = await accounts.get(command.data.guestStayAccountId);
@@ -78,7 +78,7 @@ export const GuestStayAccountFacade = (options: {
       const events = account.dequeueUncommitedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordPayment: async (command: RecordPayment) => {
       const existing = await accounts.get(command.data.guestStayAccountId);
@@ -94,7 +94,7 @@ export const GuestStayAccountFacade = (options: {
       const events = account.dequeueUncommitedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     checkoutGuest: async (command: CheckoutGuest) => {
       const existing = await accounts.get(command.data.guestStayAccountId);
@@ -110,7 +110,7 @@ export const GuestStayAccountFacade = (options: {
       const events = account.dequeueUncommitedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

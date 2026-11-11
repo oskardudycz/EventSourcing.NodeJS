@@ -1,5 +1,9 @@
 import { GuestStayAccount } from '.';
-import { retryOnConflict, type Database, type EventBus } from '../../../tools';
+import {
+  retryOnConflict,
+  type Database,
+  type MessageBus,
+} from '../../../tools';
 
 export type CheckInGuest = {
   type: 'CheckInGuest';
@@ -47,9 +51,9 @@ export type GuestStayAccountCommand =
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
 
@@ -69,7 +73,7 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordCharge: async (command: RecordCharge) => {
       const events = await retryOnConflict(async () => {
@@ -92,7 +96,7 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordPayment: async (command: RecordPayment) => {
       const events = await retryOnConflict(async () => {
@@ -115,7 +119,7 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     checkoutGuest: async (command: CheckoutGuest) => {
       const events = await retryOnConflict(async () => {
@@ -138,7 +142,7 @@ export const GuestStayAccountFacade = (options: {
         return events;
       });
 
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

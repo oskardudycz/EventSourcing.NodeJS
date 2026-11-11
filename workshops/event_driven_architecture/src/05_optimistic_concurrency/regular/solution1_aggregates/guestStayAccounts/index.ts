@@ -1,4 +1,4 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 import type { CheckoutGuest } from './guestStayAccountFacade';
 import { GuestStayAccountFacade } from './guestStayAccountFacade';
 
@@ -7,19 +7,18 @@ export * from './guestStayAccount';
 
 export const configureGuestStayAccounts = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }): { guestStayAccountFacade: GuestStayAccountFacade } => {
-  const { database, eventBus, commandBus } = options;
+  const { database, messageBus } = options;
 
   const guestStayAccountFacade: GuestStayAccountFacade = GuestStayAccountFacade(
     {
       database,
-      eventBus,
+      messageBus,
     },
   );
 
-  commandBus.handle<CheckoutGuest>(
+  messageBus.subscribe<CheckoutGuest>(
     'CheckoutGuest',
     guestStayAccountFacade.checkoutGuest,
   );

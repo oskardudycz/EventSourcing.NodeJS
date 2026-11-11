@@ -1,4 +1,4 @@
-import type { Database, EventBus } from '../../tools';
+import type { Database, MessageBus } from '../../tools';
 import type { GroupCheckoutInitiated } from './groupCheckouts';
 import {
   decide,
@@ -46,9 +46,9 @@ export type GroupCheckoutCommand =
 
 export const GuestStayFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
 
@@ -62,7 +62,7 @@ export const GuestStayFacade = (options: {
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     recordCharge: (command: RecordCharge) => {
       const account = accounts.get(command.data.guestStayAccountId) ?? initial;
@@ -73,7 +73,7 @@ export const GuestStayFacade = (options: {
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     recordPayment: (command: RecordPayment) => {
       const account = accounts.get(command.data.guestStayAccountId) ?? initial;
@@ -84,7 +84,7 @@ export const GuestStayFacade = (options: {
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     checkoutGuest: (command: CheckoutGuest) => {
       const account = accounts.get(command.data.guestStayAccountId) ?? initial;
@@ -95,7 +95,7 @@ export const GuestStayFacade = (options: {
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      eventBus.publish(events);
+      messageBus.publish(events);
     },
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
       const event: GroupCheckoutInitiated = {
@@ -107,7 +107,7 @@ export const GuestStayFacade = (options: {
           initiatedAt: command.data.now,
         },
       };
-      eventBus.publish([event]);
+      messageBus.publish([event]);
     },
   };
 };

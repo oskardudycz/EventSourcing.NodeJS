@@ -1,5 +1,5 @@
 import { GuestStayAccount } from '.';
-import type { Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 
 export type CheckInGuest = {
   type: 'CheckInGuest';
@@ -47,9 +47,9 @@ export type GuestStayAccountCommand =
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
 
@@ -62,7 +62,7 @@ export const GuestStayAccountFacade = (options: {
       const account = GuestStayAccount.checkInGuest(command.data);
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      messageBus.publish(account.dequeueUncommitedEvents());
     },
     recordCharge: (command: RecordCharge) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -74,7 +74,7 @@ export const GuestStayAccountFacade = (options: {
       account.recordCharge(command.data);
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      messageBus.publish(account.dequeueUncommitedEvents());
     },
     recordPayment: (command: RecordPayment) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -86,7 +86,7 @@ export const GuestStayAccountFacade = (options: {
       account.recordPayment(command.data);
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      messageBus.publish(account.dequeueUncommitedEvents());
     },
     checkoutGuest: (command: CheckoutGuest) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -98,7 +98,7 @@ export const GuestStayAccountFacade = (options: {
       account.checkoutGuest(command.data);
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(account.dequeueUncommitedEvents());
+      messageBus.publish(account.dequeueUncommitedEvents());
     },
   };
 };

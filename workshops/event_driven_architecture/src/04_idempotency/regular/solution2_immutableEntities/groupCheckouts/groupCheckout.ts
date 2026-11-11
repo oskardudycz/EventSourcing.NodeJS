@@ -64,7 +64,10 @@ export type GroupCheckout =
       status: 'Initiated';
       guestStayCheckouts: Map<string, CheckoutStatus>;
     }
-  | { status: 'Finished' };
+  | {
+      status: 'Finished';
+      guestStayCheckouts: Map<string, CheckoutStatus>;
+    };
 
 export const initial: GroupCheckout = {
   status: 'NotExisting',
@@ -103,6 +106,7 @@ export const evolve = (
       if (state.status !== 'Initiated') return state;
 
       return {
+        ...state,
         status: 'Finished',
       };
     }

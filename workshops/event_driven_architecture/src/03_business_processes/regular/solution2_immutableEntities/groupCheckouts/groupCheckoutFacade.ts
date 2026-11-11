@@ -1,5 +1,4 @@
-import type { CommandBus, Database, EventBus, Message } from '../../../tools';
-import type { GroupCheckoutInitiated } from './groupCheckout';
+import type { Database, Message, MessageBus } from '../../../tools';
 
 export type InitiateGroupCheckout = {
   type: 'InitiateGroupCheckout';
@@ -36,52 +35,51 @@ export type GroupCheckoutCommand =
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { database, eventBus, commandBus } = options;
+  const { database, messageBus } = options;
 
   const groupCheckouts = database.collection('groupCheckout');
 
   return {
-    initiateGroupCheckout: (command: InitiateGroupCheckout) => {
-      const event: GroupCheckoutInitiated = {
-        type: 'GroupCheckoutInitiated',
-        data: {
-          groupCheckoutId: command.data.groupCheckoutId,
-          clerkId: command.data.clerkId,
-          guestStayAccountIds: command.data.guestStayIds,
-          initiatedAt: command.data.now,
-        },
-      };
-      eventBus.publish([event]);
+    initiateGroupCheckout: (_command: InitiateGroupCheckout) => {
+      throw new Error(
+        'TODO: Fill the implementation calling your entity/aggregate',
+      );
     },
     recordGuestCheckoutCompletion: (command: RecordGuestCheckoutCompletion) => {
       const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
 
       if (!groupCheckout) {
-        return;
+        throw new Error('Entity not found');
       }
 
       // TODO: do something with grup checkout and produce messages
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const messages: Message[] = [];
 
       groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+      messageBus.publish(messages);
+
+      throw new Error(
+        'TODO: Fill the implementation calling your entity/aggregate',
+      );
     },
     recordGuestCheckoutFailure: (command: RecordGuestCheckoutFailure) => {
       const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
 
       if (!groupCheckout) {
-        return;
+        throw new Error('Entity not found');
       }
 
       // TODO: do something with grup checkout and produce messages
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const messages: Message[] = [];
 
       groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+      messageBus.publish(messages);
+
+      throw new Error(
+        'TODO: Fill the implementation calling your entity/aggregate',
+      );
     },
   };
 };
