@@ -21,13 +21,19 @@ We still need to support regular checkouts, payments, charges etc. as we do righ
 
 ## Goal
 
-**Make the group checkout handle the same command more than once.**
+**Make the guest stay accounts and the group checkout handle the same message more than once.**
 
 Message brokers usually guarantee at-least-once delivery, and clients retry requests when they don't get a response. Your handlers will see the same message twice, so handling it again must not change the outcome.
 
-- Start from the [saga solution](./groupCheckouts) of the previous exercise,
+- Start from the saga solution of the previous exercise. Choose one path: [Aggregates](./regular/solution1_aggregates) or [Immutable Entities](./regular/solution2_immutableEntities),
+- Make the guest stay account ignore:
+  - checking in the same guest stay twice,
+  - recording the same charge twice (the same charge id),
+  - recording the same payment twice (the same payment id),
+  - checking out the guest twice for the same group checkout,
 - Make the group checkout ignore:
   - initiating a group checkout that already exists,
   - recording the same guest checkout completion twice,
   - recording the same guest checkout failure twice,
-- Use [idempotency tests](./idempotency.exercise.test.ts) to guide you and verify if you implemented it correctly. Business process and entity definition tests should stay green.
+- The whole process should give the same result when [the event bus](./tools/eventBus.ts) and [the command bus](./tools/commandBus.ts) deliver every message twice,
+- Use idempotency tests ([aggregates](./regular/solution1_aggregates/idempotency.exercise.test.ts), [immutable entities](./regular/solution2_immutableEntities/idempotency.exercise.test.ts)) to guide you and verify if you implemented it correctly. Business process and entity definition tests should stay green.

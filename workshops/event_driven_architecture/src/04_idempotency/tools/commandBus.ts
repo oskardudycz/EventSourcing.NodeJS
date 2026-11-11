@@ -18,7 +18,9 @@ export interface CommandBus {
 
 export type CommandHandler<C extends Command = Command> = (command: C) => void;
 
-export const getCommandBus = (): CommandBus => {
+export const getCommandBus = (
+  options: { deliverTwice?: boolean } = {},
+): CommandBus => {
   const handlers: Map<string, CommandHandler> = new Map();
   const middlewares: CommandHandler[] = [];
 
@@ -29,7 +31,10 @@ export const getCommandBus = (): CommandBus => {
 
         const handle = handlers.get(command.type);
 
-        if (handle) handle(command);
+        if (!handle) continue;
+
+        handle(command);
+        if (options.deliverTwice) handle(command);
       }
     },
     handle: <E extends Command>(

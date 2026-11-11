@@ -18,7 +18,9 @@ export interface EventBus {
 
 export type EventHandler<E extends Event = Event> = (event: E) => void;
 
-export const getEventBus = (): EventBus => {
+export const getEventBus = (
+  options: { deliverTwice?: boolean } = {},
+): EventBus => {
   const handlers: Map<string, EventHandler[]> = new Map();
   const middlewares: EventHandler[] = [];
 
@@ -31,6 +33,7 @@ export const getEventBus = (): EventBus => {
 
         for (const handle of eventHandlers) {
           handle(event);
+          if (options.deliverTwice) handle(event);
         }
       }
     },
