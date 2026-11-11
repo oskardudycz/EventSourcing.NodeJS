@@ -1,5 +1,5 @@
 import { GroupCheckout } from '.';
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 import {
   type GuestCheckedOut,
   type GuestCheckoutFailed,
@@ -40,20 +40,16 @@ export type GroupCheckoutCommand =
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus, commandBus } = options;
+  const { database, messageBus } = options;
 
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
 
   const publishMessages = (groupCheckout: GroupCheckout) => {
     const messages = groupCheckout.dequeueUncommitedMessages();
 
-    for (const { kind, message } of messages) {
-      if (kind === 'Event') eventBus.publish([message]);
-      else commandBus.send([message]);
-    }
+    messageBus.publish(messages.map(({ message }) => message));
   };
 
   return {

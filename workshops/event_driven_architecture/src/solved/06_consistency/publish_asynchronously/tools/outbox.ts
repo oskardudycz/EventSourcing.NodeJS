@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 import type { Database } from './database';
-import type { Event, EventBus } from './eventBus';
+import type { Event, MessageBus } from './messageBus';
 import { retryUntilSucceeds } from './retry';
 
 type Checkpoint = { position: number };
@@ -17,11 +17,11 @@ export const storeInOutbox = async (
 
 export const publishFromOutbox = async ({
   database,
-  eventBus,
+  messageBus,
   outboxName,
 }: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
   outboxName: string;
 }): Promise<void> => {
   const outbox = database.collection<Event>(outboxName);
@@ -35,7 +35,7 @@ export const publishFromOutbox = async ({
   );
 
   for (const { document: event, position } of messages) {
-    await eventBus.publish([event]);
+    await messageBus.publish([event]);
 
     await retryUntilSucceeds(() => checkpoints.store(outboxName, { position }));
   }

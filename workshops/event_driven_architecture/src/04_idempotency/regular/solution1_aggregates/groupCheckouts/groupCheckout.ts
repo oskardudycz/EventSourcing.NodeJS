@@ -96,8 +96,6 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
     guestStayAccountId: string;
     now: Date;
   }): void {
-    if (this.status !== 'Initiated') return;
-
     this.enqueue({
       type: 'GuestCheckoutCompletionRecorded',
       data: {
@@ -114,8 +112,6 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
     guestStayAccountId: string;
     now: Date;
   }): void {
-    if (this.status !== 'Initiated') return;
-
     this.enqueue({
       type: 'GuestCheckoutFailureRecorded',
       data: {

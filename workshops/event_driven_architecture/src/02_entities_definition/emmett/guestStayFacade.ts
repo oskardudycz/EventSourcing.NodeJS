@@ -1,4 +1,4 @@
-import type { Database, EventBus } from '../tools';
+import type { Database, MessageBus } from '../tools';
 import type { GuestStayAccountEvent } from './guestStayAccounts';
 
 export type CheckInGuest = {
@@ -80,9 +80,9 @@ export type GroupCheckoutCommand =
 
 export const GuestStayFacade = (options: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const accounts = database.collection('guestStayAccount');
 
@@ -104,7 +104,7 @@ export const GuestStayFacade = (options: {
       const events: GuestStayAccountEvent[] = []; // fill your events
 
       accounts.store(command.data.guestStayAccountId, account);
-      eventBus.publish(events);
+      messageBus.publish(events);
       throw new Error(
         'TODO: Fill the implementation calling your entity/aggregate',
       );

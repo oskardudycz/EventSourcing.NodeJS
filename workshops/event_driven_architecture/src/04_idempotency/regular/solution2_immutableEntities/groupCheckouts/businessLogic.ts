@@ -67,7 +67,7 @@ export const recordGuestCheckout = (
   }: RecordGuestCheckoutCompletion | RecordGuestCheckoutFailure,
   state: GroupCheckout,
 ): GroupCheckoutEvent[] => {
-  if (state.status !== 'Initiated') return [];
+  if (state.status === 'NotExisting') return [];
 
   const guestCheckoutCompletionRecorded: GroupCheckoutEvent =
     type === 'RecordGuestCheckoutCompletion'

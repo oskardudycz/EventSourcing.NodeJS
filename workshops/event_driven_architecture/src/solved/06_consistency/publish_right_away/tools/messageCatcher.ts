@@ -1,12 +1,10 @@
-import { type Command } from './commandBus';
-import { type Event } from './eventBus';
-
-export type Message = Event | Command;
+import { type Message } from './messageBus';
 
 export type MessageCatcher = {
-  catchMessage: (event: Message) => void;
+  readonly published: Message[];
+  catchMessage: (message: Message) => void;
   reset: () => void;
-  count: () => number;
+  shouldNotReceiveAnyMessage: () => void;
   shouldReceiveSingleMessage: (expectedMessage: Message) => void;
   shouldReceiveMessages<ExpectedTypes extends Message>(
     expectedMessages: ExpectedTypes[],
@@ -20,13 +18,18 @@ export const getMessageCatcher = (): MessageCatcher => {
   let messages: Message[] = [];
 
   return {
-    catchMessage: (event: Message): void => {
-      messages.push(event);
+    get published(): Message[] {
+      return messages;
+    },
+    catchMessage: (message: Message): void => {
+      messages.push(message);
     },
     reset: (): void => {
       messages = [];
     },
-    count: (): number => messages.length,
+    shouldNotReceiveAnyMessage: (): void => {
+      expect(messages).toEqual([]);
+    },
     shouldReceiveSingleMessage: (expectedMessage: Message): void => {
       expect(messages.length).toBe(1);
       expect(messages[0]).toEqual(expectedMessage);

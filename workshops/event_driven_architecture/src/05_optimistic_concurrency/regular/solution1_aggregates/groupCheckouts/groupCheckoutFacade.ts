@@ -1,5 +1,5 @@
 import { GroupCheckout } from '.';
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 
 export type InitiateGroupCheckout = {
   type: 'InitiateGroupCheckout';
@@ -36,10 +36,9 @@ export type GroupCheckoutCommand =
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
 
@@ -52,7 +51,7 @@ export const GroupCheckoutFacade = (options: {
       const events = groupCheckout.dequeueUncommitedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordGuestCheckoutCompletion: async (
       command: RecordGuestCheckoutCompletion,
@@ -70,7 +69,7 @@ export const GroupCheckoutFacade = (options: {
       const events = groupCheckout.dequeueUncommitedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordGuestCheckoutFailure: async (command: RecordGuestCheckoutFailure) => {
       const existing = await groupCheckouts.get(command.data.groupCheckoutId);
@@ -86,7 +85,7 @@ export const GroupCheckoutFacade = (options: {
       const events = groupCheckout.dequeueUncommitedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

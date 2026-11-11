@@ -35,5 +35,5 @@ Message brokers usually guarantee at-least-once delivery, and clients retry requ
   - initiating a group checkout that already exists,
   - recording the same guest checkout completion twice,
   - recording the same guest checkout failure twice,
-- The whole process should give the same result when [the event bus](./tools/eventBus.ts) and [the command bus](./tools/commandBus.ts) deliver every message twice,
+- The whole process should give the same result when [the message bus](./tools/messageBus.ts) delivers every message twice,
 - Use idempotency tests ([aggregates](./regular/solution1_aggregates/idempotency.exercise.test.ts), [immutable entities](./regular/solution2_immutableEntities/idempotency.exercise.test.ts)) to guide you and verify if you implemented it correctly. Business process and entity definition tests should stay green.

@@ -1,20 +1,20 @@
 import { v4 as uuid } from 'uuid';
 import type { Database } from './database';
-import type { Event, EventBus } from './eventBus';
+import type { Event, MessageBus } from './messageBus';
 import { retryUntilSucceeds } from './retry';
 import { TimeoutError } from './timeoutError';
 
 export const publishOrStoreInOutbox = async (
   {
     database,
-    eventBus,
+    messageBus,
     outboxName,
-  }: { database: Database; eventBus: EventBus; outboxName: string },
+  }: { database: Database; messageBus: MessageBus; outboxName: string },
   events: Event[],
 ): Promise<void> => {
   for (const [index, event] of events.entries()) {
     try {
-      await eventBus.publish([event]);
+      await messageBus.publish([event]);
     } catch (error) {
       if (!(error instanceof TimeoutError)) throw error;
 
@@ -33,17 +33,17 @@ export const publishOrStoreInOutbox = async (
 
 export const publishFromOutbox = async ({
   database,
-  eventBus,
+  messageBus,
   outboxName,
 }: {
   database: Database;
-  eventBus: EventBus;
+  messageBus: MessageBus;
   outboxName: string;
 }): Promise<void> => {
   const outbox = database.collection<Event>(outboxName);
 
   for (const { id, document: event } of await outbox.getAll()) {
-    await eventBus.publish([event]);
+    await messageBus.publish([event]);
 
     await retryUntilSucceeds(() => outbox.delete(id));
   }

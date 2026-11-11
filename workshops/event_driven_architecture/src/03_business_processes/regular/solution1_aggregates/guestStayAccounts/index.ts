@@ -1,25 +1,29 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
-import { GuestStayAccountFacade } from './guestStayAccountFacade';
+import type { Database, MessageBus } from '../../../tools';
+import {
+  GuestStayAccountFacade,
+  type CheckoutGuest,
+} from './guestStayAccountFacade';
 
 export * from './guestStayAccount';
 export * from './guestStayAccountFacade';
 
 export const configureGuestStayAccounts = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }): { guestStayAccountFacade: GuestStayAccountFacade } => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { database, eventBus, commandBus } = options;
+  const { database, messageBus } = options;
 
   const guestStayAccountFacade: GuestStayAccountFacade = GuestStayAccountFacade(
     {
       database,
-      eventBus,
+      messageBus,
     },
   );
 
-  // TODO: Configure guest stay accounts handlers here
+  messageBus.subscribe<CheckoutGuest>(
+    'CheckoutGuest',
+    guestStayAccountFacade.checkoutGuest,
+  );
 
   return { guestStayAccountFacade };
 };

@@ -1,4 +1,9 @@
-import type { BackgroundJobs, CommandBus, Database, EventBus } from '../tools';
+import {
+  retryUntilSucceeds,
+  type BackgroundJobs,
+  type Database,
+  type MessageBus,
+} from '../tools';
 import type {
   GuestCheckedOut,
   GuestCheckoutFailed,
@@ -17,38 +22,36 @@ export * from './groupCheckoutFacade';
 
 export const configureGroupCheckouts = ({
   database,
-  eventBus,
-  commandBus,
+  messageBus,
   backgroundJobs,
 }: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
   backgroundJobs: BackgroundJobs;
 }): { groupCheckoutFacade: GroupCheckoutFacade } => {
   const groupCheckoutFacade: GroupCheckoutFacade = GroupCheckoutFacade({
     database,
-    eventBus,
-    commandBus,
+    messageBus,
     backgroundJobs,
   });
 
-  eventBus.subscribe<GroupCheckoutInitiated>(
+  messageBus.subscribe<GroupCheckoutInitiated>(
     'GroupCheckoutInitiated',
-    (event) => commandBus.send(GroupCheckoutSaga(event)),
+    (event) =>
+      retryUntilSucceeds(() => messageBus.publish(GroupCheckoutSaga(event))),
   );
-  eventBus.subscribe<GuestCheckedOut>('GuestCheckedOut', (event) =>
-    commandBus.send(GroupCheckoutSaga(event)),
+  messageBus.subscribe<GuestCheckedOut>('GuestCheckedOut', (event) =>
+    retryUntilSucceeds(() => messageBus.publish(GroupCheckoutSaga(event))),
   );
-  eventBus.subscribe<GuestCheckoutFailed>('GuestCheckoutFailed', (event) =>
-    commandBus.send(GroupCheckoutSaga(event)),
+  messageBus.subscribe<GuestCheckoutFailed>('GuestCheckoutFailed', (event) =>
+    retryUntilSucceeds(() => messageBus.publish(GroupCheckoutSaga(event))),
   );
 
-  commandBus.handle<RecordGuestCheckoutCompletion>(
+  messageBus.subscribe<RecordGuestCheckoutCompletion>(
     'RecordGuestCheckoutCompletion',
     (command) => groupCheckoutFacade.recordGuestCheckoutCompletion(command),
   );
-  commandBus.handle<RecordGuestCheckoutFailure>(
+  messageBus.subscribe<RecordGuestCheckoutFailure>(
     'RecordGuestCheckoutFailure',
     (command) => groupCheckoutFacade.recordGuestCheckoutFailure(command),
   );

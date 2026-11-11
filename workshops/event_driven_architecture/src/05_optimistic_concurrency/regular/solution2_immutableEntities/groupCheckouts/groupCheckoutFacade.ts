@@ -1,4 +1,4 @@
-import type { CommandBus, Database, EventBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../tools';
 import {
   initiateGroupCheckout,
   recordGuestCheckout,
@@ -10,10 +10,9 @@ import { evolve, initial, type GroupCheckout } from './groupCheckout';
 
 export const GroupCheckoutFacade = (options: {
   database: Database;
-  eventBus: EventBus;
-  commandBus: CommandBus;
+  messageBus: MessageBus;
 }) => {
-  const { database, eventBus } = options;
+  const { database, messageBus } = options;
 
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
 
@@ -31,7 +30,7 @@ export const GroupCheckoutFacade = (options: {
         command.data.groupCheckoutId,
         evolve(groupCheckout, event),
       );
-      await eventBus.publish([event]);
+      await messageBus.publish([event]);
     },
     recordGuestCheckoutCompletion: async (
       command: RecordGuestCheckoutCompletion,
@@ -50,7 +49,7 @@ export const GroupCheckoutFacade = (options: {
         command.data.groupCheckoutId,
         events.reduce(evolve, groupCheckout),
       );
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
     recordGuestCheckoutFailure: async (command: RecordGuestCheckoutFailure) => {
       const existing = await groupCheckouts.get(command.data.groupCheckoutId);
@@ -67,7 +66,7 @@ export const GroupCheckoutFacade = (options: {
         command.data.groupCheckoutId,
         events.reduce(evolve, groupCheckout),
       );
-      await eventBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

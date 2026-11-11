@@ -155,6 +155,7 @@ describe('Events definition', () => {
     ];
 
     expect(events.length).toBe(5);
+    expect(new Set(events.map((event) => event.type)).size).toBe(5);
   });
 
   it('Group Checkout event types are defined', () => {
@@ -204,5 +205,6 @@ describe('Events definition', () => {
     ];
 
     expect(events.length).toBe(5);
+    expect(new Set(events.map((event) => event.type)).size).toBe(5);
   });
 });
