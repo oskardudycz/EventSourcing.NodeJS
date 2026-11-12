@@ -3,12 +3,10 @@ import { getDatabase, getMessageBus, getMessageCatcher } from '../../tools';
 import {
   configureGroupCheckouts,
   type GroupCheckoutEvent,
-  type InitiateGroupCheckout,
   type RecordGuestCheckoutCompletion,
 } from './groupCheckouts';
 import {
   configureGuestStayAccounts,
-  type CheckInGuest,
   type CheckoutGuest,
   type GuestStayAccountEvent,
 } from './guestStayAccounts';
