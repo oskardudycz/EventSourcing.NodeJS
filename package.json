@@ -4,7 +4,8 @@
   "description": "Samples of Event Sourcing in JavaScript and TypeScript",
   "scripts": {
     "lint": "npm run lint:samples:simple",
-    "lint:samples:simple": "cd ./samples/simple/ && npm run lint"
+    "lint:samples:simple": "cd ./samples/simple/ && npm run lint",
+    "test:agents": "node --test \".agents/**/*.spec.ts\" \".opencode/**/*.spec.ts\""
   },
   "repository": {
     "type": "git",
