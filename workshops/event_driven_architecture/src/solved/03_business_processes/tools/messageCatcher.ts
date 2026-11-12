@@ -1,4 +1,5 @@
-import { type Message } from './messageBus';
+import type { Message } from './messageBus';
+import { expect } from 'vitest';
 
 export type MessageCatcher = {
   readonly published: Message[];

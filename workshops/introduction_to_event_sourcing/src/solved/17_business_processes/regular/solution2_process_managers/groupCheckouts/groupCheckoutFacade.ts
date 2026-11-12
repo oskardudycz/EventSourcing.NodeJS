@@ -1,8 +1,8 @@
 import { GroupCheckout, type GroupCheckoutEvent } from '.';
 import type { CommandBus, EventStore } from '../../../tools';
-import {
-  type GuestCheckedOut,
-  type GuestCheckoutFailed,
+import type {
+  GuestCheckedOut,
+  GuestCheckoutFailed,
 } from '../guestStayAccounts';
 
 export type InitiateGroupCheckout = {

@@ -10,6 +10,7 @@ import {
   type CheckoutGuest,
   type GuestStayAccountEvent,
 } from './guestStayAccounts';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Idempotency Tests', () => {
   let now: Date;

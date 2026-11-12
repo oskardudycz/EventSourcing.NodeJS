@@ -1,5 +1,6 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { type Request, type Response, Router } from 'express';
+import type { EventStoreDBClient } from '@eventstore/db-client';
+import type { Router } from 'express';
+import type { Request, Response } from 'express';
 import { sendCreated } from '../../tools/api';
 import {
   HeaderNames,
@@ -15,7 +16,7 @@ import {
 } from '../../tools/validation';
 import { decider } from './businessLogic';
 import { CommandHandler } from './commandHandler';
-import { type PricedProductItem, type ProductItem } from './shoppingCart';
+import type { PricedProductItem, ProductItem } from './shoppingCart';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 

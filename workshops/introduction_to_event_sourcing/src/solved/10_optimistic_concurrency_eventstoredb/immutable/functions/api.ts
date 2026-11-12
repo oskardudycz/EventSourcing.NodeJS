@@ -1,5 +1,6 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { type Request, type Response, Router } from 'express';
+import type { EventStoreDBClient } from '@eventstore/db-client';
+import type { Router } from 'express';
+import type { Request, Response } from 'express';
 import { sendCreated } from '../../tools/api';
 import {
   HeaderNames,

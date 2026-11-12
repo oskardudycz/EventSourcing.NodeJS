@@ -1,37 +1,59 @@
-import {
-  PostgreSqlContainer,
-  type StartedPostgreSqlContainer,
-} from '@testcontainers/postgresql';
+import { randomUUID } from 'crypto';
+import pg from 'pg';
+import { inject } from 'vitest';
 
-let postgreSQLContainer: StartedPostgreSqlContainer | undefined;
-let instanceCounter = 0;
-
-export const getPostgreSQLConnectionString = async (
-  useTestContainers = false,
-): Promise<string> => {
-  let connectionString;
-
-  if (process.env.ES_USE_TEST_CONTAINERS === 'false' && useTestContainers) {
-    ++instanceCounter;
-    if (!postgreSQLContainer)
-      postgreSQLContainer = await new PostgreSqlContainer().start();
-
-    connectionString = postgreSQLContainer.getConnectionUri();
-  } else {
-    connectionString = 'postgresql://postgres:postgres@localhost:5432/postgres';
+declare module 'vitest' {
+  export interface ProvidedContext {
+    sharedPostgreSQLConnectionString: string;
   }
+}
 
-  return connectionString;
+export type PostgreSQLTestDatabase = {
+  connectionString: string;
+  close: () => Promise<void>;
 };
 
-export const releasePostgreSqlContainer = async () => {
-  if (--instanceCounter !== 0) return;
+const withDatabaseName = (
+  serverConnectionString: string,
+  databaseName: string,
+): string => {
+  const url = new URL(serverConnectionString);
+  url.pathname = `/${databaseName}`;
+  return url.toString();
+};
+
+const onServer = async <Result>(
+  handle: (client: pg.Client) => Promise<Result>,
+): Promise<Result> => {
+  const client = new pg.Client({
+    connectionString: inject('sharedPostgreSQLConnectionString'),
+  });
+  await client.connect();
+
   try {
-    if (postgreSQLContainer) {
-      await postgreSQLContainer.stop();
-      postgreSQLContainer = undefined;
-    }
-  } catch {
-    // mute
+    return await handle(client);
+  } finally {
+    await client.end();
   }
 };
+
+export const sharedPostgreSQLDatabase =
+  async (): Promise<PostgreSQLTestDatabase> => {
+    const databaseName = `workshop_test_${randomUUID().replaceAll('-', '')}`;
+
+    await onServer((client) =>
+      client.query(`CREATE DATABASE "${databaseName}"`),
+    );
+
+    return {
+      connectionString: withDatabaseName(
+        inject('sharedPostgreSQLConnectionString'),
+        databaseName,
+      ),
+      close: async () => {
+        await onServer((client) =>
+          client.query(`DROP DATABASE IF EXISTS "${databaseName}"`),
+        );
+      },
+    };
+  };

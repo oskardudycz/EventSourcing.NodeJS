@@ -1,11 +1,8 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
-import {
-  ANY,
-  type AppendResult,
-  EventStoreDBClient,
-  jsonEvent,
-} from '@eventstore/db-client';
+import type { EventStoreDBClient } from '@eventstore/db-client';
+import { ANY, type AppendResult, jsonEvent } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 export type Event<
   EventType extends string = string,
@@ -87,10 +84,10 @@ const appendToStream = async (
 describe('Appending events', () => {
   let eventStore: EventStoreDBClient;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     // That's how EventStoreDB client is setup
     // We're taking the connection string from container
-    eventStore = await getEventStoreDBTestClient();
+    eventStore = getEventStoreDBTestClient();
   });
 
   it('should append events to EventStoreDB', async () => {

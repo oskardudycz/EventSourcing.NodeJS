@@ -12,6 +12,7 @@ import {
   type RecordCharge,
   type RecordPayment,
 } from '.';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Guest Stay Account Idempotency Tests', () => {
   let publishedMessages: MessageCatcher;

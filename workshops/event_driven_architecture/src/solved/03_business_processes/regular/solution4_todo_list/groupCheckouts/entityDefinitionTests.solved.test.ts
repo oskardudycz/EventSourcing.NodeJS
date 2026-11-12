@@ -17,12 +17,10 @@ import {
   type GroupCheckoutFacade,
   type InitiateGroupCheckout,
 } from '.';
+import { beforeEach, describe, it } from 'vitest';
 
 type ExpectedTypes =
-  | GroupCheckoutEvent
-  | CheckoutGuest
-  | GuestCheckedOut
-  | GuestCheckoutFailed;
+  GroupCheckoutEvent | CheckoutGuest | GuestCheckedOut | GuestCheckoutFailed;
 
 describe('Group Checkout Entity Definition Tests', () => {
   let messageBus: MessageBus;
@@ -79,12 +77,10 @@ describe('Group Checkout Entity Definition Tests', () => {
           initiatedAt: now,
         },
       },
-      ...guestStayIds.map(
-        (guestStayAccountId): CheckoutGuest => ({
-          type: 'CheckoutGuest',
-          data: { guestStayAccountId, now, groupCheckoutId },
-        }),
-      ),
+      ...guestStayIds.map((guestStayAccountId): CheckoutGuest => ({
+        type: 'CheckoutGuest',
+        data: { guestStayAccountId, now, groupCheckoutId },
+      })),
     ]);
   });
 

@@ -1,5 +1,6 @@
-import { type Command } from './commandBus';
-import { type Event } from './eventStore';
+import type { Command } from './commandBus';
+import type { Event } from './eventStore';
+import { expect } from 'vitest';
 
 export type Message = Event | Command;
 

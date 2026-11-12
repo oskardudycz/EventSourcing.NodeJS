@@ -19,6 +19,7 @@ import {
   type RecordCharge,
   type RecordPayment,
 } from './guestStayAccounts';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Entity Definition Tests', () => {
   let eventStore: EventStore;

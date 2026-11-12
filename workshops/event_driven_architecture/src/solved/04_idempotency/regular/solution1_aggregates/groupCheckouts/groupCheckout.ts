@@ -55,10 +55,7 @@ export type GroupCheckoutEvent =
   | GroupCheckoutFailed;
 
 export type CheckoutStatus =
-  | 'NotExisting'
-  | 'Initiated'
-  | 'Completed'
-  | 'Failed';
+  'NotExisting' | 'Initiated' | 'Completed' | 'Failed';
 
 export type GroupCheckoutStatus = 'NotExisting' | 'Initiated' | 'Finished';
 

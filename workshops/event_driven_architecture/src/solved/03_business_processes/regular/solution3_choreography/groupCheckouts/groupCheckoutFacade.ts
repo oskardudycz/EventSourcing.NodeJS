@@ -55,8 +55,7 @@ export const GroupCheckoutFacade = (options: {
       }
 
       const command:
-        | RecordGuestCheckoutCompletion
-        | RecordGuestCheckoutFailure =
+        RecordGuestCheckoutCompletion | RecordGuestCheckoutFailure =
         event.type === 'GuestCheckedOut'
           ? {
               type: 'RecordGuestCheckoutCompletion',

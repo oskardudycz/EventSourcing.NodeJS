@@ -15,6 +15,7 @@ import {
   type ShoppingCartEvent,
   evolve,
 } from './shoppingCart';
+import { describe, it } from 'vitest';
 
 export const decide = (
   command: ShoppingCartCommand,

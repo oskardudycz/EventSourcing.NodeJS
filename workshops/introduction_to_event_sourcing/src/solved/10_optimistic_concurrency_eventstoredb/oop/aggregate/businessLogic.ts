@@ -1,4 +1,4 @@
-import { type PricedProductItem } from './shoppingCart';
+import type { PricedProductItem } from './shoppingCart';
 
 export type OpenShoppingCart = {
   type: 'OpenShoppingCart';

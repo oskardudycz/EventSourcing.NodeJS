@@ -1,4 +1,4 @@
-import { type Event } from '../../tools/events';
+import type { Event } from '../../tools/events';
 import { ShoppingCartErrors } from './businessLogic';
 import { Aggregate } from './core/aggregate';
 

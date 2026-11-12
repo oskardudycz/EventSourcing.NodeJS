@@ -1,10 +1,10 @@
-import {
-  type CheckoutStatus,
-  type GroupCheckout,
-  type GroupCheckoutCompleted,
-  type GroupCheckoutEvent,
-  type GroupCheckoutFailed,
-  type GroupCheckoutInitiated,
+import type {
+  CheckoutStatus,
+  GroupCheckout,
+  GroupCheckoutCompleted,
+  GroupCheckoutEvent,
+  GroupCheckoutFailed,
+  GroupCheckoutInitiated,
 } from './groupCheckout';
 
 export type InitiateGroupCheckout = {

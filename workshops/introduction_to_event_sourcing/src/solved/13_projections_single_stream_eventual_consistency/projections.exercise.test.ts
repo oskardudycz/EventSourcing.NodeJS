@@ -7,6 +7,7 @@ import {
 } from './projections';
 import { type DocumentsCollection, getDatabase } from './tools/database';
 import { getEventStore } from './tools/eventStore';
+import { describe, expect, it } from 'vitest';
 
 export interface ProductItem {
   productId: string;

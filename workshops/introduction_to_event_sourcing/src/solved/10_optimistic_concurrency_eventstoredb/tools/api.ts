@@ -5,7 +5,6 @@ import express, {
   type Response,
   Router,
 } from 'express';
-import 'express-async-errors';
 import http from 'http';
 import { ProblemDocument } from 'http-problem-details';
 import { EventStoreErrors } from './eventStore';

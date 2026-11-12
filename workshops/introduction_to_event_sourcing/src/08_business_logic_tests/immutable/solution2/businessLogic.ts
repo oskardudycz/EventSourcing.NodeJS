@@ -1,4 +1,4 @@
-import { type Command } from '@event-driven-io/emmett';
+import type { Command } from '@event-driven-io/emmett';
 import {
   type PricedProductItem,
   type ShoppingCart,

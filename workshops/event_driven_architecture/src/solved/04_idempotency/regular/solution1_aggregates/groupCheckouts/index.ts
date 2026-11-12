@@ -7,7 +7,7 @@ import type {
   RecordGuestCheckoutCompletion,
   RecordGuestCheckoutFailure,
 } from './groupCheckoutFacade';
-import { type GroupCheckoutInitiated } from './groupCheckout';
+import type { GroupCheckoutInitiated } from './groupCheckout';
 import { GroupCheckoutFacade } from './groupCheckoutFacade';
 import { GroupCheckoutSaga } from './groupCheckoutSaga';
 

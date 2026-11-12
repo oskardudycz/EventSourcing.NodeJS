@@ -1,14 +1,14 @@
-import { type Event } from '@event-driven-io/emmett';
+import type { Event } from '@event-driven-io/emmett';
 import {
   getMongoDBEventStore,
   type MongoDBEventStore,
 } from '@event-driven-io/emmett-mongodb';
-import type { MongoClient } from 'mongodb';
 import { v4 as uuid } from 'uuid';
 import {
-  getMongoDBTestClient,
-  releaseMongoDBContainer,
+  type MongoDBTestDatabase,
+  sharedMongoDBDatabase,
 } from '../../core/testing/mongoDB';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 export interface ProductItem {
   productId: string;
@@ -78,17 +78,16 @@ const appendToStream = async (
 
 describe('Appending events', () => {
   let eventStore: MongoDBEventStore;
-  let client: MongoClient;
+  let testDatabase: MongoDBTestDatabase;
 
   beforeAll(async () => {
-    client = await getMongoDBTestClient();
+    testDatabase = await sharedMongoDBDatabase();
 
-    eventStore = getMongoDBEventStore({ client });
+    eventStore = getMongoDBEventStore({ client: testDatabase.client });
   });
 
   afterAll(async () => {
-    await client.close();
-    await releaseMongoDBContainer();
+    await testDatabase.close();
   });
 
   it('should append events to EventStoreDB', async () => {

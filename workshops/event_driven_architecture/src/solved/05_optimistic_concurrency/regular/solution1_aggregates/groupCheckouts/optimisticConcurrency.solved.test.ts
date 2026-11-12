@@ -10,6 +10,7 @@ import {
   type GroupCheckoutEvent,
   type InitiateGroupCheckout,
 } from '.';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Optimistic Concurrency Tests', () => {
   let publishedMessages: MessageCatcher;

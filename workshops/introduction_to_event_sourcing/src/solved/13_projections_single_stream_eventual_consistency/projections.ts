@@ -4,8 +4,8 @@ import {
   type ShoppingCartShortInfo,
   ShoppingCartStatus,
 } from './projections.exercise.test';
-import { type DocumentsCollection } from './tools/database';
-import { type EventHandler } from './tools/eventStore';
+import type { DocumentsCollection } from './tools/database';
+import type { EventHandler } from './tools/eventStore';
 
 export type VersionedDocument = {
   lastProcessedPosition: number;
@@ -26,8 +26,7 @@ function sleep(time: number) {
 }
 
 export type RetryResult<T> =
-  | { shouldRetry: true }
-  | { shouldRetry: false; result: T };
+  { shouldRetry: true } | { shouldRetry: false; result: T };
 
 export const retryAgain = <T>(): RetryResult<T> => {
   return { shouldRetry: true };

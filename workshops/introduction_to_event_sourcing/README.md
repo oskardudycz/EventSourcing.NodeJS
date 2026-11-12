@@ -42,8 +42,7 @@ Follow the instructions in exercises folders.
 
 1. Install git - https://git-scm.com/downloads.
 2. Clone this repository.
-3. Install Node.js 20.10 - https://Node.js.org/en/download/ (or better using NVM).
-   - if you're using Node.js higher than v20, you can update `tsconfig.json`'s `compilerOptions.lib|target` in order to use newer JavaScript standard APIs, e.g. `Array.fromAsync`
+3. Install Node.js 24.22.1 or later - https://nodejs.org/en/download/ (or better using NVM, the version is in [.nvmrc](./.nvmrc)).
 4. Install VSCode, WebStorm or other prefered IDE.
 5. Install docker - https://docs.docker.com/engine/install/.
 6. Open the current folder in IDE.
@@ -56,7 +55,7 @@ Follow the instructions in exercises folders.
 
 ## Ensuring that all is setup correctly
 
-1. Run `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) to start PostgreSQL, EventStoreDB, MongoDB docker images.
+1. Make sure Docker is running. Tests start EventStoreDB, PostgreSQL and MongoDB containers on their own through Testcontainers.
 
 2. Run `npm run test:solved`. If all is fine then all tests should be green.
 
@@ -72,5 +71,5 @@ Follow the instructions in exercises folders.
   - Database Credentials: host: `postgres`, login: `postgres`, password: `postgres`
 
 2. You can get build watch by running `npm run build:ts:watch`.
-3. To run test for exercises run `npm run test:exercise`. For solutions run `npm run test:solved`, for all `npm run test`.
-4. Whe you're working with exercise and want to have tests running on file change run `npm run test:exercise:watch`.
+3. To run test for exercises run `npm run test:exercises`. For solutions run `npm run test:solved`, for all `npm run test`.
+4. Whe you're working with exercise and want to have tests running on file change run `npm run test:exercises:watch`.

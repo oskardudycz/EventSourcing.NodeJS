@@ -1,6 +1,6 @@
 import {
-  getPostgreSQLConnectionString,
-  releasePostgreSqlContainer,
+  type PostgreSQLTestDatabase,
+  sharedPostgreSQLDatabase,
 } from '#core/testing/postgreSQL';
 import { merge, type Event } from '@event-driven-io/emmett';
 import {
@@ -8,6 +8,7 @@ import {
   type PostgresEventStore,
 } from '@event-driven-io/emmett-postgresql';
 import { v4 as uuid } from 'uuid';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 export interface ProductItem {
   productId: string;
@@ -183,16 +184,17 @@ export const getShoppingCart = async (
 
 describe('Events definition', () => {
   let eventStore: PostgresEventStore;
+  let testDatabase: PostgreSQLTestDatabase;
 
   beforeAll(async () => {
-    const connectionString = await getPostgreSQLConnectionString();
+    testDatabase = await sharedPostgreSQLDatabase();
 
-    eventStore = getPostgreSQLEventStore(connectionString);
+    eventStore = getPostgreSQLEventStore(testDatabase.connectionString);
   });
 
   afterAll(async () => {
     await eventStore.close();
-    await releasePostgreSqlContainer();
+    await testDatabase.close();
   });
 
   it('all event types should be defined', async () => {

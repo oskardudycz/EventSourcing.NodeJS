@@ -6,6 +6,7 @@ import {
   emptyShoppingCart,
   evolve,
 } from './shoppingCart';
+import { describe, it } from 'vitest';
 
 const given = DeciderSpecification.for({
   decide,

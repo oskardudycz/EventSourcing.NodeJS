@@ -9,6 +9,7 @@ import {
   type BackgroundJobs,
 } from '../tools';
 import { GuestStayAccountFacade } from '.';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Guest Stay Account Optimistic Concurrency Tests', () => {
   let backgroundJobs: BackgroundJobs;

@@ -1,13 +1,11 @@
-import {
-  getEventStoreDBTestClient,
-  releaseEventStoreDBContainer,
-} from '#core/testing/eventStoreDB';
+import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
 import { merge, type Event } from '@event-driven-io/emmett';
 import {
   type EventStoreDBEventStore,
   getEventStoreDBEventStore,
 } from '@event-driven-io/emmett-esdb';
 import { v4 as uuid } from 'uuid';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 export interface ProductItem {
   productId: string;
@@ -184,13 +182,11 @@ export const getShoppingCart = async (
 describe('Events definition', () => {
   let eventStore: EventStoreDBEventStore;
 
-  beforeAll(async () => {
-    const client = await getEventStoreDBTestClient();
+  beforeAll(() => {
+    const client = getEventStoreDBTestClient();
 
     eventStore = getEventStoreDBEventStore(client);
   });
-
-  afterAll(() => releaseEventStoreDBContainer());
 
   it('all event types should be defined', async () => {
     const shoppingCartId = uuid();

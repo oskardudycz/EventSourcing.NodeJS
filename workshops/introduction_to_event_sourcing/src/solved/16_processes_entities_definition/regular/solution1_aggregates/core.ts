@@ -1,4 +1,4 @@
-import { type Event } from '../../tools';
+import type { Event } from '../../tools';
 
 export abstract class Aggregate<E extends Event> {
   #uncommitedEvents: E[] = [];

@@ -1,12 +1,13 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
+import type { EventStoreDBClient } from '@eventstore/db-client';
 import {
   ANY,
   type AppendResult,
-  EventStoreDBClient,
   jsonEvent,
   StreamNotFoundError,
 } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 export type Event<
   EventType extends string = string,
@@ -253,8 +254,8 @@ export const getShoppingCart = StreamAggregator(
 describe('Events definition', () => {
   let eventStore: EventStoreDBClient;
 
-  beforeAll(async () => {
-    eventStore = await getEventStoreDBTestClient();
+  beforeAll(() => {
+    eventStore = getEventStoreDBTestClient();
   });
 
   it('all event types should be defined', async () => {

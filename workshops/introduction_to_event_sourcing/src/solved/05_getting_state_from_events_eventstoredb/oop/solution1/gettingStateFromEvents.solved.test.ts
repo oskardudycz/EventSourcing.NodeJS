@@ -1,12 +1,13 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
+import type { EventStoreDBClient } from '@eventstore/db-client';
 import {
   ANY,
   type AppendResult,
-  EventStoreDBClient,
   jsonEvent,
   StreamNotFoundError,
 } from '@eventstore/db-client';
 import { v4 as uuid } from 'uuid';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 export type Event<
   EventType extends string = string,
@@ -189,7 +190,7 @@ export const readStream = async <StreamEvent extends Event>(
   eventStore: EventStoreDBClient,
   streamId: string,
 ): Promise<StreamEvent[]> => {
-  const events = [];
+  const events: StreamEvent[] = [];
   try {
     for await (const { event } of eventStore.readStream<StreamEvent>(
       streamId,
@@ -251,8 +252,8 @@ export const getShoppingCart = async (
 describe('Events definition', () => {
   let eventStore: EventStoreDBClient;
 
-  beforeAll(async () => {
-    eventStore = await getEventStoreDBTestClient();
+  beforeAll(() => {
+    eventStore = getEventStoreDBTestClient();
   });
 
   it('all event types should be defined', async () => {

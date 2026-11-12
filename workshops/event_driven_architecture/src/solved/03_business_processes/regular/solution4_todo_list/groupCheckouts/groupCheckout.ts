@@ -28,9 +28,7 @@ export type GroupCheckoutFailed = {
 };
 
 export type GroupCheckoutEvent =
-  | GroupCheckoutInitiated
-  | GroupCheckoutCompleted
-  | GroupCheckoutFailed;
+  GroupCheckoutInitiated | GroupCheckoutCompleted | GroupCheckoutFailed;
 
 export type CheckoutStatus = 'Initiated' | 'Completed' | 'Failed';
 

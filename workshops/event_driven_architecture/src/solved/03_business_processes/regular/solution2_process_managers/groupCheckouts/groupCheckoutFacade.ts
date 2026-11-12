@@ -1,8 +1,8 @@
 import { GroupCheckout } from '.';
 import type { Database, MessageBus } from '../../../tools';
-import {
-  type GuestCheckedOut,
-  type GuestCheckoutFailed,
+import type {
+  GuestCheckedOut,
+  GuestCheckoutFailed,
 } from '../guestStayAccounts';
 
 export type InitiateGroupCheckout = {

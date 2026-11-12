@@ -11,14 +11,10 @@ import type {
 import type { GroupCheckoutInitiated } from './groupCheckout';
 
 export type GroupCheckoutSagaEvent =
-  | GroupCheckoutInitiated
-  | GuestCheckedOut
-  | GuestCheckoutFailed;
+  GroupCheckoutInitiated | GuestCheckedOut | GuestCheckoutFailed;
 
 export type GroupCheckoutSagaCommand =
-  | CheckoutGuest
-  | RecordGuestCheckoutCompletion
-  | RecordGuestCheckoutFailure;
+  CheckoutGuest | RecordGuestCheckoutCompletion | RecordGuestCheckoutFailure;
 
 export const GroupCheckoutSaga = ({
   type,

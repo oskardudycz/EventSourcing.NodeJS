@@ -22,11 +22,10 @@ import {
   type GuestStayAccountEvent,
   type GuestStayAccountFacade,
 } from './guestStayAccounts';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 type ExpectedTypes =
-  | GroupCheckoutEvent
-  | GuestStayAccountEvent
-  | GuestStayAccountCommand;
+  GroupCheckoutEvent | GuestStayAccountEvent | GuestStayAccountCommand;
 
 describe('Scheduled Business Process Tests', () => {
   let database: Database;

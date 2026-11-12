@@ -1,12 +1,13 @@
-import { type Request, type Response, Router } from 'express';
+import type { Router } from 'express';
+import type { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { sendCreated } from '../../tools/api';
 import {
   assertNotEmptyString,
   assertPositiveNumber,
 } from '../../tools/validation';
-import { ShoppingCartService } from './applicationService';
-import { type PricedProductItem, type ProductItem } from './shoppingCart';
+import type { ShoppingCartService } from './applicationService';
+import type { PricedProductItem, ProductItem } from './shoppingCart';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 

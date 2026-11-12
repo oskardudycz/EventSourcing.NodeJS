@@ -1,4 +1,5 @@
-import { type Request, type Response, Router } from 'express';
+import type { Router } from 'express';
+import type { Request, Response } from 'express';
 import { sendCreated } from '../../tools/api';
 import {
   HeaderNames,
@@ -11,8 +12,8 @@ import {
   assertPositiveNumber,
   assertUnsignedBigInt,
 } from '../../tools/validation';
-import { ShoppingCartService } from './applicationService';
-import { type PricedProductItem, type ProductItem } from './shoppingCart';
+import type { ShoppingCartService } from './applicationService';
+import type { PricedProductItem, ProductItem } from './shoppingCart';
 
 export const getExpectedRevision = (request: Request): bigint => {
   const eTag = getETagFromIfMatch(request);

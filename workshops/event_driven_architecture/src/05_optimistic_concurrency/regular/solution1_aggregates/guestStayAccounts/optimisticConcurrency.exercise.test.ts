@@ -6,6 +6,7 @@ import {
   type MessageCatcher,
 } from '../../../tools';
 import { GuestStayAccountFacade } from '.';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Guest Stay Account Optimistic Concurrency Tests', () => {
   let publishedMessages: MessageCatcher;

@@ -5,7 +5,6 @@ import express, {
   type Request,
   type Response,
 } from 'express';
-import 'express-async-errors';
 import http from 'http';
 import { ProblemDocument } from 'http-problem-details';
 
