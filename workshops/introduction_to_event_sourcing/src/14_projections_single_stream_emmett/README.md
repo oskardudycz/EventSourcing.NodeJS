@@ -1,4 +1,4 @@
-# Exercise 14 - Projections
+# Exercise 14 - Projections with Emmett
 
 With the selected Emmett's storage, implement the following projections:
 

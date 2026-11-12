@@ -1,4 +1,4 @@
-# Exercise 08 - Application Logic
+# Exercise 09 - Application Logic
 
 Having the following shopping cart process:
 
@@ -11,16 +11,16 @@ Having the following shopping cart process:
 
 ![events](./assets/events.jpg)
 
-And business logic implemented in the [previous exercise](../05_business_logic/) write the application code that will _glue_ the API defined in `api.ts` files with the domain code.
+And business logic implemented in the [previous exercise](../07_business_logic/) write the application code that will _glue_ the API defined in `api.ts` files with the domain code.
 
 This time you'll use KurrentDB instead of the mocked one. Run `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) before running test code to have database set up.
 
 There are four variations:
 
-1. Classical, mutable aggregates (rich domain model): [./oop/aggregate/applicationLogic.exercise.test.ts](./oop/aggregate/applicationLogic.exercise.test.ts),
-2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [./oop/aggregate_returning_events/applicationLogic.exercise.test.ts](./oop/aggregate_returning_events/applicationLogic.exercise.test.ts),
-3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/functions/applicationLogic.exercise.test.ts](./immutable/functions/applicationLogic.exercise.test.ts),
-4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/businessLogic.exercise.test.ts](./immutable/businessLogic.exercise.test.ts),
+1. Classical, mutable aggregates (rich domain model): [./oop/aggregate/applicationLogic.solved.test.ts](./oop/aggregate/applicationLogic.solved.test.ts),
+2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [./oop/aggregate_returning_events/applicationLogic.solved.test.ts](./oop/aggregate_returning_events/applicationLogic.solved.test.ts),
+3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/functions/applicationLogic.solved.test.ts](./immutable/functions/applicationLogic.solved.test.ts),
+4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/decide/applicationLogic.solved.test.ts](./immutable/decide/applicationLogic.solved.test.ts),
 
 Select your preferred approach (or both) to solve this use case.
 

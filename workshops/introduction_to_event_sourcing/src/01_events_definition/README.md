@@ -10,4 +10,4 @@ Having the following shopping cart process:
 6. After shopping cart confirmation or cancellation, the product can no longer be added or removed from the cart.
 
 Model the events that occur during this process and the entity representing the current state of the shopping cart. Write those events in code.
-Create sample events that represent a specific shopping cart. You can do that in [eventsDefinition.test](eventsDefinition.test.ts) test file.
+Create sample events that represent a specific shopping cart. You can do that in [eventsDefinition.exercise.test.ts](eventsDefinition.exercise.test.ts) test file.

@@ -1,4 +1,4 @@
-# Exercise 07 - Business Logic Tests
+# Exercise 08 - Business Logic Tests
 
 Having the following shopping cart process:
 
@@ -23,7 +23,7 @@ See more in [Emmett documentation](https://event-driven-io.github.io/emmett/gett
 
 There are four variations:
 
-- using mutable aggregates: [./oop/solution1/businessLogic.exercise.test.ts](./oop/solution1/businessLogic.exercise.test.ts),
-- using mutable aggregates returning events: [./oop/solution2/businessLogic.exercise.test.ts](./oop/solution2/businessLogic.exercise.test.ts),
-- using fully immutable structures with functions: [./immutable/businessLogic.exercise.test.ts](./immutable/solution1/businessLogic.exercise.test.ts),
-- using fully immutable structures with decider: [./immutable/businessLogic.exercise.test.ts](./immutable/solution2/businessLogic.exercise.test.ts),
+- using mutable aggregates: [./oop/solution1/businessLogic.solved.test.ts](./oop/solution1/businessLogic.solved.test.ts),
+- using mutable aggregates returning events: [./oop/solution2/businessLogic.solved.test.ts](./oop/solution2/businessLogic.solved.test.ts),
+- using fully immutable structures with functions: [./immutable/solution1/businessLogic.solved.test.ts](./immutable/solution1/businessLogic.solved.test.ts),
+- using fully immutable structures with decider: [./immutable/solution2/businessLogic.solved.test.ts](./immutable/solution2/businessLogic.solved.test.ts),

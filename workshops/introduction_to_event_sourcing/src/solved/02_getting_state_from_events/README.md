@@ -1,13 +1,13 @@
 # Exercise 02 - Getting the current entity state from events
 
-Having a defined structure of events and an entity representing the shopping cart from the [previous exercise](../01-EventsDefinition), fill a `GetShoppingCart` function that will rebuild the current state from events.
+Having a defined structure of events and an entity representing the shopping cart from the [previous exercise](../01_events_definition/), fill a `GetShoppingCart` function that will rebuild the current state from events.
 
 If needed you can modify the events or entity structure.
 
 There are two variations:
 
-- using fully immutable structures: [immutable/gettingStateFromEvents.exercise.test.ts](./immutable/gettingStateFromEvents.exercise.test.ts),
-- using mutable entities: [oop/gettingStateFromEvents.exercise.test.ts](./oop/gettingStateFromEvents.exercise.test.ts).
+- using fully immutable structures: [immutable](./immutable/),
+- using mutable entities: [oop](./oop/).
 
 Select your preferred approach (or both) to solve this use case.
 
@@ -24,5 +24,5 @@ Read also my articles:
 2. Immutable
 
 - with an explicit product items collection management [immutable/solution1/gettingStateFromEvents.solved.test.ts](./immutable/solution1/gettingStateFromEvents.solved.test.ts).
-- with a generic merge method for managing immutable collections [immutable/solution2gettingStateFromEvents.solved.test.ts](./immutable/solution2/gettingStateFromEvents.solved.test.ts).
-- using [Immutable.js](https://immutable-js.com/) for managing immutable collections [immutable/solution2gettingStateFromEvents.solved.test.ts](./immutable/solution2/gettingStateFromEvents.solved.test.ts).
+- with a generic merge method for managing immutable collections [immutable/solution2/gettingStateFromEvents.solved.test.ts](./immutable/solution2/gettingStateFromEvents.solved.test.ts).
+- using [Immutable.js](https://immutable-js.com/) for managing immutable collections [immutable/solution3/gettingStateFromEvents.solved.test.ts](./immutable/solution3/gettingStateFromEvents.solved.test.ts).

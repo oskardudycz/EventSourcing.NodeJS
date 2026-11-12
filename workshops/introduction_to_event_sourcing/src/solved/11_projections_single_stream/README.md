@@ -1,4 +1,4 @@
-# Exercise 10 - Projections
+# Exercise 11 - Projections
 
 With the [Database](./tools/database.ts) interface representing the sample database, implement the following projections:
 
@@ -11,7 +11,7 @@ With the [Database](./tools/database.ts) interface representing the sample datab
    - total number of products
    - confirmed and canceled shopping carts should not be visible.
 
-Add event handlers registrations in [projections.exercise.test.ts](./projections.exercise.test.ts) calling [eventStore.subscribe](./tools/eventStore.ts) method.
+Add event handlers registrations in [projections.solved.test.ts](./projections.solved.test.ts) calling [eventStore.subscribe](./tools/eventStore.ts) method.
 
 If needed expand existing classes definition.
 

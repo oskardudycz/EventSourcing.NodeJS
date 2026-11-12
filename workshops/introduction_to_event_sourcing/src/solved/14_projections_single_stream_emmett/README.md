@@ -1,4 +1,4 @@
-# Exercise 14 - Projections
+# Exercise 14 - Projections with Emmett
 
 With the selected Emmett's storage, implement the following projections:
 
@@ -11,7 +11,7 @@ With the selected Emmett's storage, implement the following projections:
    - total number of products
    - confirmed and canceled shopping carts should not be visible.
 
-Define evolve function in projection definition at the bottom of [projections.exercise.test.ts](./mongodb/projections.exercise.test.ts).
+Define evolve function in projection definition at the bottom of [projections.solved.test.ts](./mongodb/projections.solved.test.ts).
 
 Read more about projections in my article:
 

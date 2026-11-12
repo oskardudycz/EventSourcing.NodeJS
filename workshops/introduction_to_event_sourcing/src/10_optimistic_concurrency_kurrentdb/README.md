@@ -1,4 +1,4 @@
-# Exercise 09 - Application Logic with Optimistic Concurrency
+# Exercise 10 - Application Logic with Optimistic Concurrency
 
 Having the following shopping cart process:
 
@@ -21,7 +21,7 @@ This time you'll use KurrentDB instead of the mocked one. Run `docker compose up
 
 There are four variations:
 
-1. Classical, mutable aggregates (rich domain model): [./oop/aggregate/applicationLogic.exercise.test.ts](./oop/aggregate/applicationLogic.exercise.test.ts),
-2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [./oop/aggregate_returning_events/applicationLogic.exercise.test.ts](./oop/aggregate_returning_events/applicationLogic.exercise.test.ts),
-3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/functions/applicationLogic.exercise.test.ts](./immutable/functions/applicationLogic.exercise.test.ts),
-4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/businessLogic.exercise.test.ts](./immutable/businessLogic.exercise.test.ts),
+1. Classical, mutable aggregates (rich domain model): [./oop/aggregate/applicationLogicWithOC.exercise.test.ts](./oop/aggregate/applicationLogicWithOC.exercise.test.ts),
+2. Mixed approach, mutable aggregates (rich domain model), returning events from methods: [./oop/aggregate_returning_events/applicationLogicWithOC.exercise.test.ts](./oop/aggregate_returning_events/applicationLogicWithOC.exercise.test.ts),
+3. Immutable, with functional command handlers composition and entities as anemic data model: [./immutable/functions/applicationLogicWithOC.exercise.test.ts](./immutable/functions/applicationLogicWithOC.exercise.test.ts),
+4. Immutable with composition using [the Decider](https://thinkbeforecoding.com/post/2021/12/17/functional-event-sourcing-decider) pattern and entities as anemic data model: [./immutable/decide/applicationLogicWithOC.exercise.test.ts](./immutable/decide/applicationLogicWithOC.exercise.test.ts),

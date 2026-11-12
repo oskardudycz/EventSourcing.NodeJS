@@ -4,26 +4,17 @@ Having a defined structure of events and an entity representing the shopping car
 
 If needed you can modify the events or entity structure.
 
-There are two variations:
+There are two variations, for each of the Emmett storages ([KurrentDB](./kurrentdb/), [PostgreSQL](./postgresql/), [MongoDB](./mongodb/)):
 
-- using mutable entities: [oop/gettingStateFromEvents.exercise.test.ts](./oop/gettingStateFromEvents.exercise.test.ts),
-- using fully immutable structures: [immutable/gettingStateFromEvents.exercise.test.ts](./immutable/gettingStateFromEvents.exercise.test.ts).
+- using mutable entities, e.g. [mongodb/oop](./mongodb/oop/),
+- using fully immutable structures, e.g. [mongodb/immutable](./mongodb/immutable/).
 
 Select your preferred approach (or both) to solve this use case. If needed you can modify entities or events.
 
 ## Solution
 
-1. Immtuable:
-
-- only primitive types in events: [immutable/solution1/gettingStateFromEvents.solved.test.ts](./immutable/solution1/gettingStateFromEvents.solved.test.ts).
-- additional mapping using types for raw payload: [immutable/solution2/gettingStateFromEvents.solved.test.ts](./immutable/solution2/gettingStateFromEvents.solved.test.ts).
-- generalised stream aggregation: [immutable/solution3/gettingStateFromEvents.solved.test.ts](./immutable/solution3/gettingStateFromEvents.solved.test.ts).
-
-2. Object-Oriented:
-
-- only primitive types in events: [oop/solution1/gettingStateFromEvents.solved.test.ts](./oop/solution1/gettingStateFromEvents.solved.test.ts).
-- additional mapping using types for raw payload: [oop/solution2/gettingStateFromEvents.solved.test.ts](./oop/solution2/gettingStateFromEvents.solved.test.ts).
-- generalised handling with repository: [oop/solution3/gettingStateFromEvents.solved.test.ts](./oop/solution3/gettingStateFromEvents.solved.test.ts).
+- only primitive types in events: [kurrentdb/immutable/solution1](./kurrentdb/immutable/solution1/gettingStateFromEvents.solved.test.ts), [kurrentdb/oop/solution1](./kurrentdb/oop/solution1/gettingStateFromEvents.solved.test.ts), [postgresql/immutable/solution1](./postgresql/immutable/solution1/gettingStateFromEvents.solved.test.ts), [postgresql/oop/solution1](./postgresql/oop/solution1/gettingStateFromEvents.solved.test.ts), [mongodb/immutable/solution1](./mongodb/immutable/solution1/gettingStateFromEvents.solved.test.ts), [mongodb/oop/solution1](./mongodb/oop/solution1/gettingStateFromEvents.solved.test.ts)
+- additional mapping using types for raw payload: [kurrentdb/immutable/solution2](./kurrentdb/immutable/solution2/gettingStateFromEvents.solved.test.ts), [kurrentdb/oop/solution2](./kurrentdb/oop/solution2/gettingStateFromEvents.solved.test.ts), [postgresql/immutable/solution2](./postgresql/immutable/solution2/gettingStateFromEvents.solved.test.ts), [postgresql/oop/solution2](./postgresql/oop/solution2/gettingStateFromEvents.solved.test.ts), [mongodb/immutable/solution2](./mongodb/immutable/solution2/gettingStateFromEvents.solved.test.ts), [mongodb/oop/solution2](./mongodb/oop/solution2/gettingStateFromEvents.solved.test.ts)
 
 Read also my articles:
 

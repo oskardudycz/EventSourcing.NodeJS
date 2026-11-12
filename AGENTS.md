@@ -13,8 +13,8 @@ Workshops:
 
 Samples (`samples/*`):
 
-- `foundations`, `simple`, `decider`: basic building blocks.
-- `eventsVersioning`, `snapshots`, `closingTheBooks`, `optimisticConcurrency`: specific Event Sourcing patterns.
+- `decider`: basic building blocks.
+- `eventsVersioning`, `snapshots`, `closingTheBooks`: specific Event Sourcing patterns.
 - `hotelManagement`, `from_crud_to_eventsourcing`, `unpeelingOnion`, `webinar`: larger examples from talks and articles.
 
 ## Agent skills

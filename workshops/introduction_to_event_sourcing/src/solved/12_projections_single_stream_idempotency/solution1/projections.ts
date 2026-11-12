@@ -3,7 +3,7 @@ import {
   type ShoppingCartEvent,
   type ShoppingCartShortInfo,
   ShoppingCartStatus,
-} from './projections.exercise.test';
+} from './projections.solved.test';
 import type { DocumentsCollection } from './tools/database';
 import type { EventHandler } from './tools/eventStore';
 

@@ -1,62 +1,109 @@
-[![Twitter Follow](https://img.shields.io/twitter/follow/oskar_at_net?style=social)](https://twitter.com/oskar_at_net) [![Github Sponsors](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/oskardudycz/)](https://github.com/sponsors/oskardudycz/) [![blog](https://img.shields.io/badge/blog-event--driven.io-brightgreen)](https://event-driven.io/?utm_source=event_sourcing_jvm) [![blog](https://img.shields.io/badge/%F0%9F%9A%80-Architecture%20Weekly-important)](https://www.architecture-weekly.com/?utm_source=event_sourcing_net)
+[<img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" height="20px" />](https://www.linkedin.com/in/oskardudycz/) [![Github Sponsors](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&link=https://github.com/sponsors/oskardudycz/)](https://github.com/sponsors/oskardudycz/) [![blog](https://img.shields.io/badge/blog-event--driven.io-brightgreen)](https://event-driven.io/?utm_source=event_sourcing_nodejs) [![blog](https://img.shields.io/badge/%F0%9F%9A%80-Architecture%20Weekly-important)](https://www.architecture-weekly.com/?utm_source=event_sourcing_nodejs)
 
-# Introduction to Event Sourcing Self-Paced Kit
+# Implementing Distributed Processes
 
-Event Sourcing is perceived as a complex pattern. Some believe that it's like Nessie, everyone's heard about it, but rarely seen it. In fact, Event Sourcing is a pretty practical and straightforward concept. It helps build predictable applications closer to business. Nowadays, storage is cheap, and information is priceless. In Event Sourcing, no data is lost.
+Distributed process management using Guest Group Checkout as the example domain.
 
-The workshop aims to build the knowledge of the general concept and its related patterns for the participants. The acquired knowledge will allow for the conscious design of architectural solutions and the analysis of associated risks.
+It was modelled and explained in detail in the [Implementing Distributed Processes Webinar](https://www.architecture-weekly.com/p/webinar-3-implementing-distributed):
 
-The emphasis will be on a pragmatic understanding of architectures and applying it in practice using KurrentDB.
+<a href="https://www.architecture-weekly.com/p/webinar-3-implementing-distributed" target="_blank"><img src="https://substackcdn.com/image/fetch/w_1920,h_1080,c_fill,f_auto,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-video.s3.amazonaws.com%2Fvideo_upload%2Fpost%2F69413446%2F526b9100-7271-4482-99e7-9559416e9848%2Ftranscoded-00624.png" alt="Implementing Distributed Processes" width="640" border="10" /></a>
 
-You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like KurrentDB.
+## Business scenario
 
-**If you'd like to get full coverage with all nuances of the private workshop, check [training page on my blog for more details](https://event-driven.io/en/training/) feel free to contact me via [email](mailto:oskar.dudycz@gmail.com).**
+**Group Checkout** is a quick way to check out all guests of the specific group. Clerk selects set of room stays based on the request from a person from the group and tries to check out all of them.
 
-Read also more in my article [Introduction to Event Sourcing - Self Paced Kit](https://event-driven.io/en/introduction_to_event_sourcing/?utm_source=event_sourcing_nodejs).
+**Rules:**
 
-## Exercises
+1. Guest can checkout only if the financial account balance is settled.
+2. Guests cannot checkout if they already checked out.
+3. Guests cannot checkout if they are not checked in.
 
-Follow the instructions in exercises folders.
+Settled means `SUM(Charges) - SUM(Payments) === 0`.
 
-1. [Events definition](./src/01_events_definition/).
-2. [Getting State from events](./src/02_getting_state_from_events/).
-3. Appending Events:
-   - [KurrentDB](./src/03_appending_events_kurrentdb/)
-4. Getting State from events
-   - [KurrentDB](./src/04_getting_state_from_events_kurrentdb/)
-5. Business logic:
-   - [General](./src/05_business_logic/)
-   - [KurrentDB](./src/06_business_logic_kurrentdb/)
-6. Optimistic Concurrency:
-   - [KurrentDB](./src/07_optimistic_concurrency_kurrentdb/)
-7. Projections:
-   - [General](./src/08_projections_single_stream/)
-   - [Idempotency](./src/09_projections_single_stream_idempotency/)
-   - [Eventual Consistency](./src/10_projections_single_stream_eventual_consistency/)
+The process spans two modules:
 
-## Prerequisites
+- **Guest Stay Account**: checking in, recording charges and payments, and checking out a single guest. A checkout ends with `GuestCheckedOut` or `GuestCheckoutFailed`.
+- **Group Checkout**: initiating the checkout of a group, tracking the result of each guest checkout, and finishing with `GroupCheckoutCompleted` or `GroupCheckoutFailed`.
 
-1. Install git - https://git-scm.com/downloads.
-2. Clone this repository.
-3. Install Node.js 18 - https://Node.js.org/en/download/ (Or better using NVM).
-4. Install VSCode, WebStorm or other prefered IDE.
-5. Install docker - https://docs.docker.com/engine/install/.
-6. Open the current folder in IDE.
+## Implementations
 
-## Setup
+The sample shows three ways to coordinate the same process. All of them use pure functions without side effects, so they're easy to test and to plug into any messaging infrastructure.
 
-1. Install NPM packages by running: `npm install`.
-2. Build source codes: `npm run build`.
-3. If you're using VSCode, you may consider [importing profile](https://code.visualstudio.com/updates/v1_75#_profiles) from the [./.vscode/Node.js.code-profile](./.vscode/Node.js.code-profile) to get all recommended plugins.
+### Saga
 
-## Ensuring that all is setup correctly
+[groupCheckoutSaga.ts](./src/sagas/groupCheckouts/groupCheckoutSaga.ts) is a stateless function that translates events into commands. It reacts to `GroupCheckoutInitiated` by sending `CheckOut` commands for each guest stay, and to `GuestCheckedOut` and `GuestCheckoutFailed` by sending commands to record the result in the group checkout:
 
-1. Run: `docker compose up` to start KurrentDB docker image.
-2. Run `npm run test:solved`. If all is fine then all tests should be green.
+```typescript
+export const GroupCheckoutSaga = ({
+  type,
+  data: event,
+}: GroupCheckoutSagaEvent):
+  GroupCheckoutSagaCommand | GroupCheckoutSagaCommand[] => {
+  switch (type) {
+    case 'GroupCheckoutInitiated': {
+      const checkoutGuestStays =
+        event.guestStayAccountIds.map<GroupCheckoutSagaCommand>((id) => {
+          return {
+            type: 'CheckOut',
+            data: {
+              guestStayAccountId: id,
+              now: event.initiatedAt,
+              groupCheckoutId: event.groupCheckoutId,
+            },
+          };
+        });
 
-## Running
+      return [
+        ...checkoutGuestStays,
+        {
+          type: 'RecordGuestCheckoutsInitiation',
+          data: {
+            groupCheckoutId: event.groupCheckoutId,
+            initiatedGuestStayIds: event.guestStayAccountIds,
+            now: event.initiatedAt,
+          },
+        },
+      ];
+    }
+    // (...) GuestCheckedOut and GuestCheckoutFailed
+  }
+};
+```
 
-1. Run: `docker compose up` to start KurrentDB docker image.You should automatically get KurrentDB UI: http://localhost:2113/
-2. You can get build watch by running `npm run build:ts:watch`.
-3. To run test for exercises run `npm run test:exercise`. For solutions run `npm run test:solved`, for all `npm run test`.
-4. Whe you're working with exercise and want to have tests running on file change run `npm run test:exercise:watch`.
+The business rules stay in the [group checkout](./src/sagas/groupCheckouts/groupCheckout.ts) and [guest stay account](./src/sagas/guestStayAccounts/guestStayAccount.ts) `decide` functions. The saga only coordinates.
+
+### Process manager
+
+[groupCheckoutProcessManager.ts](./src/processManagers/groupCheckouts/groupCheckoutProcessManager.ts) gets the event together with the current group checkout state. It decides what to do next based on both: sends `CheckOut` commands, records guest checkout results as events, and finishes the group checkout when all guest checkouts are done. It also ignores duplicated or late events, e.g. when the group checkout is already finished.
+
+### Workflow
+
+[groupCheckoutWorflow.ts](./src/workflows/groupCheckouts/groupCheckoutWorflow.ts) uses the [Workflow pattern](https://blog.bittacklr.be/the-workflow-pattern.html). It's defined by `decide`, `evolve` and `getInitialState` functions:
+
+```typescript
+export type Workflow<
+  Input extends Event | Command,
+  State,
+  Output extends Event | Command,
+> = {
+  decide: (command: Input, state: State) => WorkflowOutput<Output>[];
+  evolve: (currentState: State, event: WorkflowEvent<Output>) => State;
+  getInitialState: () => State;
+};
+```
+
+`decide` returns explicit outputs such as `send`, `publish`, `schedule`, `complete`, `accept`, `ignore` or `error`, see [workflow.ts](./src/core/workflow.ts). Thanks to that, the infrastructure knows exactly what to do with each result. The workflow also handles the group checkout timeout with the `TimeoutGroupCheckout` command.
+
+## Running the sample
+
+1. Install Node.js in the version from [.nvmrc](./.nvmrc) (or better using NVM).
+2. Install packages: `npm install`.
+3. Build: `npm run build:ts`.
+4. Run tests: `npm test`. Infrastructure tests start KurrentDB through [Testcontainers](https://testcontainers.com/), so they need Docker running.
+
+## Read more
+
+- [Saga and Process Manager - distributed processes in practice](https://event-driven.io/en/saga_process_manager_distributed_transactions/?utm_source=event_sourcing_nodejs)
+- [Event-driven distributed processes by example](https://event-driven.io/en/event_driven_distributed_processes_by_example/?utm_source=event_sourcing_nodejs)
+- [The Workflow Pattern](https://blog.bittacklr.be/the-workflow-pattern.html)
+- See also the [Event-Driven Architecture workshop](../../workshops/event_driven_architecture/) built on the same domain.

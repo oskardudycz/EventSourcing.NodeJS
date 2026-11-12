@@ -4,7 +4,7 @@ Using a defined structure of events from the [first exercise](../01_events_defin
 
 ## Prerequisites
 
-Run [docker compose](../docker-compose.yml) script from the main workshop repository to start KurrentDB instance.
+Run [docker compose](../../../docker-compose.yml) script from the main workshop repository to start KurrentDB instance.
 
 ```shell
 docker compose up

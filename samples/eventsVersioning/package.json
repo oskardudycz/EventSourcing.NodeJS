@@ -19,8 +19,9 @@
     "fix:prettier": "prettier --cache --write \"**/**/*.{json,md}\"",
     "fix:eslint": "eslint --cache \"**/*.ts\" --fix",
     "test:file": "vitest run --no-file-parallelism --reporter=verbose",
-    "test": "run-s test:unit",
-    "test:unit": "vitest run unit --passWithNoTests"
+    "test": "run-s test:unit test:int",
+    "test:unit": "vitest run unit --passWithNoTests",
+    "test:int": "vitest run int --passWithNoTests"
   },
   "repository": {
     "type": "git",

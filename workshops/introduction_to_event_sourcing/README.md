@@ -28,7 +28,7 @@ Follow the instructions in exercises folders.
    - [Emmett with various storages (PostgreSQL, KurrentDB, MongoDB)](./src/06_getting_state_from_events_emmett/)
 5. Business Logic:
    - [Writing](./src/07_business_logic/)
-   - [Testing](./src/08_business_logic/)
+   - [Testing](./src/08_business_logic_tests/)
 6. Application logic:
    - [KurrentDB](./src/09_application_logic_kurrentdb/)
 7. Optimistic Concurrency:
@@ -37,6 +37,11 @@ Follow the instructions in exercises folders.
    - [General](./src/11_projections_single_stream/)
    - [Idempotency](./src/12_projections_single_stream_idempotency/)
    - [Eventual Consistency](./src/13_projections_single_stream_eventual_consistency/)
+   - [Emmett](./src/14_projections_single_stream_emmett/)
+9. Business Processes:
+   - [Events definition](./src/15_processes_events_definition/)
+   - [Entities definition](./src/16_processes_entities_definition/)
+   - [Business processes](./src/17_business_processes/)
 
 ## Prerequisites
 
@@ -51,7 +56,7 @@ Follow the instructions in exercises folders.
 
 1. Install NPM packages by running: `npm install`.
 2. Build source codes: `npm run build`.
-3. If you're using VSCode, you may consider [importing profile](https://code.visualstudio.com/updates/v1_75#_profiles) from the [./.vscode/Node.js.code-profile](./.vscode/Node.js.code-profile) to get all recommended plugins.
+3. If you're using VSCode, install the recommended extensions listed in [.vscode/extensions.json](./.vscode/extensions.json).
 
 ## Ensuring that all is setup correctly
 

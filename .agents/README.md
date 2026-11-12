@@ -10,7 +10,7 @@ To add a skill, write `SKILL.md` with `name` and `description` in the front matt
 
 ## Change check
 
-Every sample and workshop is a separate npm project. When the agent edits a file, the hook finds the nearest folder with `package.json` below the repository root, for example `samples/simple`, and records it for the session. When the agent stops, the hook runs `npm run fix` and then `npm run build:ts` in each recorded folder. Edits outside any sample or workshop, such as the root `README.md`, do not trigger a check. The hooks do not use `git diff`, because you can have your own uncommitted changes that the agent did not make.
+Every sample and workshop is a separate npm project. When the agent edits a file, the hook finds the nearest folder with `package.json` below the repository root, for example `samples/decider`, and records it for the session. When the agent stops, the hook runs `npm run fix` and then `npm run build:ts` in each recorded folder. Edits outside any sample or workshop, such as the root `README.md`, do not trigger a check. The hooks do not use `git diff`, because you can have your own uncommitted changes that the agent did not make.
 
 ```mermaid
 flowchart TD
