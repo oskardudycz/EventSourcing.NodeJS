@@ -2,26 +2,23 @@ import { config } from '#config';
 import { getApplication } from '#core/api';
 import { disconnectFromPostgres, runPostgresMigration } from '#core/postgres';
 import { greaterOrEqual } from '#core/validation';
-import { TestResponse } from '#testing/api/testResponse';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#testing/eventStoreDB/eventStoreDBContainer';
-import { AllStreamSubscription } from '@eventstore/db-client';
-import { Application } from 'express';
-import { CartDetails } from 'src/crud/shoppingCarts/shoppingCart';
+import type { TestResponse } from '#testing/api/testResponse';
+import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import type { AllStreamSubscription } from '@kurrent/kurrentdb-client';
+import type { Application } from 'express';
+import type { CartDetails } from '../../crud/shoppingCarts/shoppingCart';
 import request from 'supertest';
-import {
-  PostgreSqlContainer,
-  StartedPostgreSqlContainer,
-} from '@testcontainers/postgresql';
+import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { disconnectFromEventStore } from '../core/streams';
 import { router } from '../shoppingCarts/routes';
 import { ShoppingCartStatus } from '../shoppingCarts/shoppingCart';
 import { runSubscription } from '../subscriptions';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('Full flow', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
+  let kurrentDBContainer: StartedKurrentDBContainer;
   let postgresContainer: StartedPostgreSqlContainer;
   let app: Application;
   let subscription: AllStreamSubscription;
@@ -29,11 +26,14 @@ describe('Full flow', () => {
   beforeAll(async () => {
     app = getApplication(router);
 
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
-    console.log(config.eventStoreDB.connectionString);
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
+    console.log(config.kurrentDB.connectionString);
 
-    postgresContainer = await new PostgreSqlContainer().start();
+    postgresContainer = await new PostgreSqlContainer(
+      'postgres:15.1-alpine',
+    ).start();
     config.postgres.connectionString = `postgres://${postgresContainer.getUsername()}:${postgresContainer.getPassword()}@localhost:${postgresContainer.getPort()}/${postgresContainer.getDatabase()}`;
     config.postgres.schemaName = 'ecommerce';
     console.log(config.postgres.connectionString);
@@ -53,7 +53,7 @@ describe('Full flow', () => {
   afterAll(async () => {
     await subscription.unsubscribe();
     await disconnectFromEventStore();
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
 
     await disconnectFromPostgres();
     await postgresContainer.stop();
@@ -76,7 +76,7 @@ describe('Full flow', () => {
         })
         .expect(201)) as TestResponse<CartDetails>;
 
-      let current = response.body as CartDetails;
+      let current = response.body;
 
       if (!response.body.id) {
         expect(false).toBeTruthy();
@@ -122,7 +122,7 @@ describe('Full flow', () => {
       });
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('createdAt');
-      current = response.body as CartDetails;
+      current = response.body;
 
       ///////////////////////////////////////////////////
       // 2. Add product item
@@ -169,7 +169,7 @@ describe('Full flow', () => {
         status: ShoppingCartStatus.Opened,
       });
       expect(response.body.updatedAt).not.toBeNull();
-      current = response.body as CartDetails;
+      current = response.body;
 
       ///////////////////////////////////////////////////
       // 3. Add another item
@@ -218,7 +218,7 @@ describe('Full flow', () => {
       expect(
         greaterOrEqual(response.body.updatedAt, current.updatedAt),
       ).toBeTruthy();
-      current = response.body as CartDetails;
+      current = response.body;
 
       ///////////////////////////////////////////////////
       // 4. Remove one item
@@ -268,7 +268,7 @@ describe('Full flow', () => {
       expect(
         greaterOrEqual(response.body.updatedAt, current.updatedAt),
       ).toBeTruthy();
-      current = response.body as CartDetails;
+      current = response.body;
 
       ///////////////////////////////////////////////////
       // 5. Confirm cart
@@ -309,7 +309,6 @@ describe('Full flow', () => {
       expect(
         greaterOrEqual(response.body.updatedAt, current.updatedAt),
       ).toBeTruthy();
-      current = response.body as CartDetails;
 
       // response = await request(app)
       //   .get(`/shopping-carts/${shoppingCartId}`)

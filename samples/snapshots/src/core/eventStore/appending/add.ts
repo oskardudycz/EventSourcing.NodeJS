@@ -1,7 +1,7 @@
-import { Event } from '../../events';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { Result } from '../../primitives';
-import { FAILED_TO_APPEND_EVENT } from '.';
+import type { Event } from '../../events';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { Result } from '../../primitives';
+import type { FAILED_TO_APPEND_EVENT } from '.';
 
 export async function add<
   Command,
@@ -11,13 +11,13 @@ export async function add<
 >(
   handle: (command: Command) => Result<StreamEvent, HANDLE_ERROR>,
   store: (
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     streamName: string,
     currentEvents: StreamEvent[],
     newEvent: StreamEvent,
-    lastSnapshotVersion?: bigint | undefined,
+    lastSnapshotVersion?: bigint,
   ) => Promise<Result<boolean, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   command: Command,
 ): Promise<

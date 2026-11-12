@@ -1,0 +1,148 @@
+import { getKurrentDBConnectionString } from '#core/testing/kurrentDB';
+import type { Event } from '@event-driven-io/emmett';
+import {
+  type EventStoreDBEventStore,
+  getEventStoreDBEventStore,
+} from '@event-driven-io/emmett-esdb';
+import { EventStoreDBClient } from '@eventstore/db-client';
+import { v4 as uuid } from 'uuid';
+import { beforeAll, describe, expect, it } from 'vitest';
+
+export interface ProductItem {
+  productId: string;
+  quantity: number;
+}
+
+export type PricedProductItem = ProductItem & {
+  unitPrice: number;
+};
+
+export type ShoppingCartOpened = Event<
+  'ShoppingCartOpened',
+  {
+    shoppingCartId: string;
+    clientId: string;
+    openedAt: Date;
+  }
+>;
+
+export type ProductItemAddedToShoppingCart = Event<
+  'ProductItemAddedToShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  }
+>;
+
+export type ProductItemRemovedFromShoppingCart = Event<
+  'ProductItemRemovedFromShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  }
+>;
+
+export type ShoppingCartConfirmed = Event<
+  'ShoppingCartConfirmed',
+  {
+    shoppingCartId: string;
+    confirmedAt: Date;
+  }
+>;
+
+export type ShoppingCartCanceled = Event<
+  'ShoppingCartCanceled',
+  {
+    shoppingCartId: string;
+    canceledAt: Date;
+  }
+>;
+
+export type ShoppingCartEvent =
+  | ShoppingCartOpened
+  | ProductItemAddedToShoppingCart
+  | ProductItemRemovedFromShoppingCart
+  | ShoppingCartConfirmed
+  | ShoppingCartCanceled;
+
+const appendToStream = async (
+  eventStore: EventStoreDBEventStore,
+  streamName: string,
+  events: ShoppingCartEvent[],
+): Promise<bigint> => {
+  const { nextExpectedStreamVersion } = await eventStore.appendToStream(
+    streamName,
+    events,
+  );
+
+  return nextExpectedStreamVersion;
+};
+
+describe('Appending events', () => {
+  let eventStore: EventStoreDBEventStore;
+
+  beforeAll(() => {
+    const client = EventStoreDBClient.connectionString(
+      getKurrentDBConnectionString(),
+    );
+
+    eventStore = getEventStoreDBEventStore(client);
+  });
+
+  it('should append events to KurrentDB', async () => {
+    const shoppingCartId = uuid();
+    const clientId = uuid();
+    const pairOfShoes: PricedProductItem = {
+      productId: uuid(),
+      quantity: 1,
+      unitPrice: 100,
+    };
+
+    const events: ShoppingCartEvent[] = [
+      // 2. Put your sample events here
+      {
+        type: 'ShoppingCartOpened',
+        data: {
+          shoppingCartId,
+          clientId,
+          openedAt: new Date(),
+        },
+      },
+      {
+        type: 'ProductItemAddedToShoppingCart',
+        data: {
+          shoppingCartId,
+          productItem: pairOfShoes,
+        },
+      },
+      {
+        type: 'ProductItemRemovedFromShoppingCart',
+        data: { shoppingCartId, productItem: pairOfShoes },
+      },
+      {
+        type: 'ShoppingCartConfirmed',
+        data: {
+          shoppingCartId,
+          confirmedAt: new Date(),
+        },
+      },
+      {
+        type: 'ShoppingCartCanceled',
+        data: {
+          shoppingCartId,
+          canceledAt: new Date(),
+        },
+      },
+    ];
+
+    const streamName = `shopping_cart-${shoppingCartId}`;
+
+    const appendedEventsCount = await appendToStream(
+      eventStore,
+      streamName,
+      events,
+    );
+
+    expect(appendedEventsCount).toBe(BigInt(events.length - 1));
+  });
+});

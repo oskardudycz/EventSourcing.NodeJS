@@ -1,9 +1,10 @@
-import { Collection, Document, Filter, MongoClient, ObjectId } from 'mongodb';
+import type { Collection, Document, Filter, MongoClient } from 'mongodb';
+import { ObjectId } from 'mongodb';
 
 export const getCollection = <T extends Document & { _id: ObjectId }>(
   mongo: MongoClient,
   collectionName: string,
-  databaseName?: string | undefined,
+  databaseName?: string,
 ) => {
   const db = mongo.db(databaseName);
   return db.collection<T>(collectionName);

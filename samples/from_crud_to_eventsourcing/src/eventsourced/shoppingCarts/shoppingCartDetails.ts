@@ -3,16 +3,19 @@
 //////////////////////////////////////
 
 import { getPostgres } from '#core/postgres';
-import { sql, Transaction } from '@databases/pg';
-import { SubscriptionResolvedEvent } from '../core/subscriptions';
+import type { Transaction } from '@databases/pg';
+import { sql } from '@databases/pg';
+import type { SubscriptionResolvedEvent } from '../core/subscriptions';
 import { cartItems, carts } from '../db';
-import {
-  isCashierShoppingCartEvent,
+import type {
   ProductItemAddedToShoppingCart,
   ProductItemRemovedFromShoppingCart,
   ShoppingCartConfirmed,
-  ShoppingCartErrors,
   ShoppingCartOpened,
+} from './shoppingCart';
+import {
+  isCashierShoppingCartEvent,
+  ShoppingCartErrors,
   ShoppingCartStatus,
 } from './shoppingCart';
 

@@ -1,10 +1,8 @@
-import {
+import type {
   AllStreamResolvedEvent,
-  EventStoreDBClient,
-  excludeSystemEvents,
-  START,
-} from '@eventstore/db-client';
-import { finished, Readable } from 'stream';
+  KurrentDBClient,
+} from '@kurrent/kurrentdb-client';
+import { excludeSystemEvents, START } from '@kurrent/kurrentdb-client';
 
 export type SubscriptionResolvedEvent = AllStreamResolvedEvent & {
   subscriptionId: string;
@@ -16,7 +14,7 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 
 export const SubscriptionToAll =
   (
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
     storeCheckpoint: (
       subscriptionId: string,
@@ -34,25 +32,23 @@ export const SubscriptionToAll =
       filter: excludeSystemEvents(),
     });
 
-    finished(
-      subscription.on('data', async (resolvedEvent: AllStreamResolvedEvent) => {
-        if (!resolvedEvent.event?.position.commit) return;
-        for (const handler of handlers) {
-          await handler({ ...resolvedEvent, subscriptionId });
+    void (async () => {
+      try {
+        for await (const resolvedEvent of subscription) {
+          if (!resolvedEvent.event?.position.commit) continue;
+          for (const handler of handlers) {
+            await handler({ ...resolvedEvent, subscriptionId });
+          }
+          await storeCheckpoint(
+            subscriptionId,
+            resolvedEvent.event?.position.commit,
+          );
         }
-        await storeCheckpoint(
-          subscriptionId,
-          resolvedEvent.event?.position.commit,
-        );
-      }) as Readable,
-      (error) => {
-        if (!error) {
-          console.info(`Stopping subscription.`);
-          return;
-        }
+        console.info(`Stopping subscription.`);
+      } catch (error) {
         console.error('Received error');
         console.error(error);
-      },
-    );
+      }
+    })();
     return subscription;
   };

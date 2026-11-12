@@ -1,16 +1,16 @@
-import { appendToStream, AppendResult } from '#core/eventStore/appending';
+import type { AppendResult } from '#core/eventStore/appending';
+import { appendToStream } from '#core/eventStore/appending';
 import { v4 as uuid } from 'uuid';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { getCurrentTime } from '#core/primitives';
-import {
-  CashierShiftEvent,
-  getCurrentCashierShiftStreamName,
-} from '../../../cashierShift/cashierShift';
+import type { CashierShiftEvent } from '../../../cashierShift/cashierShift';
+import { getCurrentCashierShiftStreamName } from '../../../cashierShift/cashierShift';
 import { setupOpenedCashierShift } from '.';
 import { registerTransaction } from './registerTransaction';
+import { expect } from 'vitest';
 
 export async function setupClosedCashierShiftWithTransactions(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   cashRegisterId: string,
   options: {
     cashierId?: string;
@@ -67,7 +67,7 @@ export async function setupClosedCashierShiftWithTransactions(
   expect(result.isError).toBeFalsy();
 
   if (result.isError) {
-    throw 'Whooops! This should not happen!';
+    throw new Error('Whooops! This should not happen!');
   }
 
   return result.value;

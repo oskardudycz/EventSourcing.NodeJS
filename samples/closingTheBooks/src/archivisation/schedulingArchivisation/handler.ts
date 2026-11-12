@@ -1,12 +1,11 @@
-import { Command } from '#core/commands';
-import { Event } from '#core/events';
-import { NO_EVENTS_FOUND, STREAM_NOT_FOUND } from '#core/eventStore/reading';
-import {
-  Result,
-  success,
-  getCurrentTime,
-  getNumberRanges,
-} from '#core/primitives';
+import type { Command } from '#core/commands';
+import type { Event } from '#core/events';
+import type {
+  NO_EVENTS_FOUND,
+  STREAM_NOT_FOUND,
+} from '#core/eventStore/reading';
+import type { Result } from '#core/primitives';
+import { success, getCurrentTime, getNumberRanges } from '#core/primitives';
 
 export type ScheduleStreamBatchArchivisation = Command<
   'schedule-batch-stream-archivisation',

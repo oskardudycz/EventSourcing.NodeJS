@@ -41,7 +41,7 @@ async function reconnect(): Promise<void> {
     try {
       await subscribe();
       resolve();
-    } catch (error) {
+    } catch {
       await reconnect();
       resolve();
     }

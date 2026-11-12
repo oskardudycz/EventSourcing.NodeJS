@@ -30,7 +30,7 @@ const env = convictConfig.get('env');
 const configFileName = `./config/${env}.json`;
 try {
   convictConfig.loadFile(configFileName);
-} catch (exc) {
+} catch {
   console.warn(`Configuration file not found ('${configFileName}')`);
 }
 

@@ -1,4 +1,4 @@
-import { Flavour } from './typing';
+import type { Flavour } from './typing';
 
 export type Event<
   EventType extends string = string,

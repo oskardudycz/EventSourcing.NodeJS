@@ -71,7 +71,7 @@ Promise.prototype.withTimeout = function <T>(timeout: number) {
     this,
     new Promise(function (_resolve, reject) {
       setTimeout(function () {
-        reject('TIMEOUT_ERROR');
+        reject(new Error('TIMEOUT_ERROR'));
       }, timeout);
     }),
   ]);

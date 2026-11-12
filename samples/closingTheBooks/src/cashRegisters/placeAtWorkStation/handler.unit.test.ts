@@ -1,8 +1,10 @@
-import { handlePlaceAtWorkStation, PlaceAtWorkStation } from './handler';
+import type { PlaceAtWorkStation } from './handler';
+import { handlePlaceAtWorkStation } from './handler';
 import { v4 as uuid } from 'uuid';
+import { describe, expect, it } from 'vitest';
 
 describe('PlaceAtWorkStation command', () => {
-  it('should place cash register at work station', async () => {
+  it('should place cash register at work station', () => {
     const command: PlaceAtWorkStation = {
       type: 'place-at-workstation',
       data: {

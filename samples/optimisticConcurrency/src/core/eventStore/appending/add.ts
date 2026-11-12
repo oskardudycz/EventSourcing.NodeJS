@@ -1,8 +1,9 @@
-import { Event } from '../../events';
-import { NO_STREAM } from '@eventstore/db-client';
-import { Result } from '../../primitives';
-import { FAILED_TO_APPEND_EVENT } from '.';
-import { AppendResult, appendToStream } from './appendToStream';
+import type { Event } from '../../events';
+import { NO_STREAM } from '@kurrent/kurrentdb-client';
+import type { Result } from '../../primitives';
+import type { FAILED_TO_APPEND_EVENT } from '.';
+import type { AppendResult } from './appendToStream';
+import { appendToStream } from './appendToStream';
 import { getEventStore } from '..';
 
 export async function add<
@@ -24,6 +25,6 @@ export async function add<
   const newEvent = handleResult.value;
 
   return appendToStream(getEventStore(), streamName, [newEvent], {
-    expectedRevision: NO_STREAM,
+    streamState: NO_STREAM,
   });
 }

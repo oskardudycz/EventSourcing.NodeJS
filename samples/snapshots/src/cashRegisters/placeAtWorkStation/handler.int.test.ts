@@ -1,32 +1,33 @@
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
+import type { StartedKurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
 import { config } from '../../../config';
-import { handlePlaceAtWorkStation, PlaceAtWorkStation } from './handler';
+import type { PlaceAtWorkStation } from './handler';
+import { handlePlaceAtWorkStation } from './handler';
 import { v4 as uuid } from 'uuid';
 import { addCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
 import {
   expectStreamToHaveNumberOfEvents,
   expectStreamToNotExist,
 } from '../../testing/assertions/streams';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('PlaceAtWorkStation command', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
-  let eventStore: EventStoreDBClient;
+  let kurrentDBContainer: StartedKurrentDBContainer;
+  let eventStore: KurrentDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
 
-    eventStore = esdbContainer.getClient();
+    eventStore = kurrentDBContainer.getClient();
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   it('should place cash register at work station', async () => {

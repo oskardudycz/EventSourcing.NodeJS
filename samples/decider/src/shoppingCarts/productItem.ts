@@ -37,7 +37,7 @@ export const removeProductItem = (
       price,
       (currentQuantity) => {
         if (!currentQuantity || currentQuantity < quantity) {
-          throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+          throw new Error(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
         }
         return currentQuantity - quantity;
       },
@@ -52,7 +52,7 @@ export const assertProductItemExists = (
   const currentQuantity = productItems.get(productId)?.get(price) ?? 0;
 
   if (currentQuantity < quantity) {
-    throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+    throw new Error(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
   }
 };
 

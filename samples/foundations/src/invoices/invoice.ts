@@ -1,9 +1,9 @@
-import { InvoiceSendMethod, Person } from './valueObjects';
+import type { InvoiceSendMethod, Person } from './valueObjects';
 import { InvoiceStatus } from './valueObjects/invoiceStatus';
 
-import { InvoiceInitiated } from './initiating/invoiceInitiated';
-import { InvoiceIssued } from './issuing/invoiceIssued';
-import { InvoiceSent } from './sending/invoiceSent';
+import type { InvoiceInitiated } from './initiating/invoiceInitiated';
+import type { InvoiceIssued } from './issuing/invoiceIssued';
+import type { InvoiceSent } from './sending/invoiceSent';
 
 export type Invoice = Readonly<{
   number: string;
@@ -60,7 +60,7 @@ export function when(
       };
     }
     default:
-      throw 'Unexpected event type';
+      throw new Error('Unexpected event type');
   }
 }
 

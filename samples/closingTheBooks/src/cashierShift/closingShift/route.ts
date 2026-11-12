@@ -1,15 +1,15 @@
-import { NextFunction, Request, Response, Router } from 'express';
-import { handleCloseShift, CloseShift } from './handler';
+import type { NextFunction, Request, Response, Router } from 'express';
+import type { CloseShift } from './handler';
+import { handleCloseShift } from './handler';
 import { updateCashierShift } from '../processCashierShift';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isCommand } from '#core/commands';
 import { isNotEmptyString } from '#core/validation';
-import {
-  getWeakETagFromIfMatch,
+import type {
   MISSING_IF_MATCH_HEADER,
-  toWeakETag,
   WRONG_WEAK_ETAG_FORMAT,
 } from '#core/http/requests';
+import { getWeakETagFromIfMatch, toWeakETag } from '#core/http/requests';
 
 export const route = (router: Router) =>
   router.delete(
@@ -73,7 +73,7 @@ function mapRequestToCommand(
     type: 'close-shift',
     data: {
       cashRegisterId: request.params.cashRegisterId,
-      cashierShiftId: request.params.id,
+      cashierShiftId: request.params.id as string,
       declaredTender: 100,
     },
     metadata: {

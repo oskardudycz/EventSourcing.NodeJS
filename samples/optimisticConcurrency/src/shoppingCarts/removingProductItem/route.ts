@@ -1,18 +1,11 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { isCommand } from '#core/commands';
 import { handleRemovingProductItemFromShoppingCart } from './handler';
 import { getShoppingCartStreamName } from '../shoppingCart';
-import {
-  isNotEmptyString,
-  isPositiveNumber,
-  ValidationError,
-} from '#core/validation';
-import {
-  getWeakETagValueFromIfMatch,
-  toWeakETag,
-  WRONG_ETAG,
-} from '#core/http/requests';
-import { RemoveProductItemFromShoppingCart } from '.';
+import type { ValidationError } from '#core/validation';
+import { isNotEmptyString, isPositiveNumber } from '#core/validation';
+import { getWeakETagValueFromIfMatch, toWeakETag } from '#core/http/requests';
+import type { RemoveProductItemFromShoppingCart } from '.';
 import { getAndUpdate } from '#core/eventStore/appending';
 import { assertUnreachable } from '#core/primitives';
 
@@ -61,7 +54,7 @@ export const route = (router: Router) =>
 
 function mapRequestToCommand(
   request: Request,
-): RemoveProductItemFromShoppingCart | ValidationError | WRONG_ETAG {
+): RemoveProductItemFromShoppingCart | ValidationError {
   if (!isNotEmptyString(request.params.shoppingCartId)) {
     return 'MISSING_SHOPPING_CARD_ID';
   }

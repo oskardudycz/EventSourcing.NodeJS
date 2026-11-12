@@ -36,7 +36,7 @@ export const assertPositiveNumber = (value: unknown): number => {
 export const assertPositiveNumberOrUndefined = (
   value: unknown,
 ): number | undefined => {
-  return value != null ? assertPositiveNumber(value) : value ?? undefined;
+  return value != null ? assertPositiveNumber(value) : (value ?? undefined);
 };
 
 export const assertUnsignedBigInt = (value: string): bigint => {
@@ -66,7 +66,7 @@ export const assertArray = (value: unknown): [] => {
 };
 
 export const assertArrayOrUndefined = (value: unknown): [] | undefined => {
-  return value != null ? assertArray(value) : value ?? undefined;
+  return value != null ? assertArray(value) : (value ?? undefined);
 };
 
 export const greaterOrEqual = (

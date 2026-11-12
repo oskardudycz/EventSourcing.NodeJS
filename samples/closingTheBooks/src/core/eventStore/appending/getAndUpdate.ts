@@ -1,9 +1,9 @@
-import { ReadFromStreamAndSnapshotsResult } from '../snapshotting/reading/';
-import { Event, StreamEvent } from '../../events';
-import { STREAM_NOT_FOUND } from '../reading';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { Result } from '../../primitives';
-import { AppendResult, FAILED_TO_APPEND_EVENT } from '.';
+import type { ReadFromStreamAndSnapshotsResult } from '../snapshotting/reading/';
+import type { Event, StreamEvent } from '../../events';
+import type { STREAM_NOT_FOUND } from '../reading';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { Result } from '../../primitives';
+import type { AppendResult, FAILED_TO_APPEND_EVENT } from '.';
 
 export async function getAndUpdate<
   Command,
@@ -12,7 +12,7 @@ export async function getAndUpdate<
   STORE_ERROR = never,
 >(
   getEvents: (
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     streamName: string,
   ) => Promise<
     Result<ReadFromStreamAndSnapshotsResult<StreamEventType>, STREAM_NOT_FOUND>
@@ -22,13 +22,13 @@ export async function getAndUpdate<
     command: Command,
   ) => Result<StreamEventType, HANDLE_ERROR>,
   store: (
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     streamName: string,
     currentEvents: StreamEvent<StreamEventType>[],
     newEvent: StreamEventType,
-    lastSnapshotVersion?: bigint | undefined,
+    lastSnapshotVersion?: bigint,
   ) => Promise<Result<AppendResult, FAILED_TO_APPEND_EVENT | STORE_ERROR>>,
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   command: Command,
 ): Promise<

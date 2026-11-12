@@ -1,8 +1,9 @@
-import { Query } from '#core/queries';
-import { failure, Result, success } from '#core/primitives';
+import type { Query } from '#core/queries';
+import type { Result } from '#core/primitives';
+import { failure, success } from '#core/primitives';
 import { executeOnMongoDB } from '#core/mongoDB';
-import { SHIFT_DOES_NOT_EXIST } from '../cashierShift';
-import { CurrentCashierShiftDetails } from './currentCashierShiftDetails';
+import type { SHIFT_DOES_NOT_EXIST } from '../cashierShift';
+import type { CurrentCashierShiftDetails } from './currentCashierShiftDetails';
 
 export type GetCurrentCashierShiftDetails = Query<
   'get-cashier-shift-details',

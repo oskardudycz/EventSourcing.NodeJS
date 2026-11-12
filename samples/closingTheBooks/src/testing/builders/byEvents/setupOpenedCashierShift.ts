@@ -1,10 +1,10 @@
-import { AppendResult } from '#core/eventStore/appending';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import type { AppendResult } from '#core/eventStore/appending';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { setupInitiatedCashierShift } from './setupInitiatedCashierShift';
 import { openedCashierShift } from './openCashierShift';
 
 export async function setupOpenedCashierShift(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   cashRegisterId: string,
   options: {
     cashierId?: string;

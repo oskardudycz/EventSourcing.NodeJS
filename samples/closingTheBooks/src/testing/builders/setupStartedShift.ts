@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { App } from 'supertest/types';
+import type { App } from 'supertest/types';
 import { v4 as uuid } from 'uuid';
 
 export async function setupStartedShift(

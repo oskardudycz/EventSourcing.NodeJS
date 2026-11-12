@@ -1,17 +1,13 @@
 import { v4 as uuid } from 'uuid';
 import { ShoppingCartStatus } from '../04_transformations/shoppingCart';
-import { EventStore, getEventStore } from '../core/eventStoreDB';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '../core/testing/eventStoreDB/eventStoreDBContainer';
-import { PricedProductItem } from '../events/events.v1';
-import {
-  Client,
-  ShoppingCart,
-  ShoppingCartEvent,
-  evolve,
-} from './shoppingCart';
+import type { EventStore } from '../core/kurrentDB';
+import { getEventStore } from '../core/kurrentDB';
+import type { StartedKurrentDBContainer } from '../core/testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '../core/testing/kurrentDB/kurrentDBContainer';
+import type { PricedProductItem } from '../events/events.v1';
+import type { Client, ShoppingCart, ShoppingCartEvent } from './shoppingCart';
+import { evolve } from './shoppingCart';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 //////////////////////////////////////////
 //// SERIALIZATION
@@ -183,13 +179,11 @@ const getShoppingCart = (
 };
 
 describe('Multiple transformations with different event types', () => {
-  jest.setTimeout(180_000);
-
-  let container: StartedEventStoreDBContainer;
+  let container: StartedKurrentDBContainer;
   let eventStore: EventStore;
 
   beforeAll(async () => {
-    container = await new EventStoreDBContainer().start();
+    container = await new KurrentDBContainer().start();
     const client = container.getClient();
     eventStore = getEventStore(client);
   });

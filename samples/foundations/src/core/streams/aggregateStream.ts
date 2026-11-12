@@ -1,4 +1,4 @@
-import { Event } from '../events';
+import type { Event } from '../events';
 
 export function aggregateStream<Aggregate, StreamEvents extends Event>(
   events: StreamEvents[],
@@ -17,7 +17,7 @@ export function aggregateStream<Aggregate, StreamEvents extends Event>(
     return <Aggregate>state;
   }
 
-  if (!check(state)) throw 'Aggregate state is not valid';
+  if (!check(state)) throw new Error('Aggregate state is not valid');
 
   return state;
 }

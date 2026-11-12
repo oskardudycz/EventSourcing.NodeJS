@@ -3,12 +3,13 @@ import {
   getMongoCollection,
   retryIfNotFound,
 } from '#core/mongoDB';
-import { SubscriptionResolvedEvent } from '#core/subscriptions';
-import { Collection, Long, MongoClient, ObjectId, UpdateResult } from 'mongodb';
+import type { SubscriptionResolvedEvent } from '#core/subscriptions';
+import type { Collection, MongoClient, UpdateResult } from 'mongodb';
+import { Long, ObjectId } from 'mongodb';
+import type { ShoppingCartEvent } from '../shoppingCart';
 import {
   isCashierShoppingCartEvent,
   ShoppingCartErrors,
-  ShoppingCartEvent,
 } from '../shoppingCart';
 
 export type PendingShoppingCart = {
@@ -173,7 +174,7 @@ const project = async (
     }
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
     }
   }
 };

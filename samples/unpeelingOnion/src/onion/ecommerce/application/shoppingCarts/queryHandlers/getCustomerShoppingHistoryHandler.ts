@@ -1,14 +1,14 @@
-import { Mapper } from '#core/mapping';
-import { QueryHandler } from '#core/queries';
-import { ShoppingCartRepository } from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
-import { ShoppingCartModel } from '../../../models/shoppingCarts/shoppingCart';
-import { CustomerShoppingHistoryItem } from '../queries/customerShoppingHistoryItem';
-import { GetCustomerShoppingHistory } from '../queries/getCustomerShoppingHistory';
+import type { Mapper } from '#core/mapping';
+import type { QueryHandler } from '#core/queries';
+import type { ShoppingCartRepository } from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
+import type { ShoppingCartModel } from '../../../models/shoppingCarts/shoppingCart';
+import type { CustomerShoppingHistoryItem } from '../queries/customerShoppingHistoryItem';
+import type { GetCustomerShoppingHistory } from '../queries/getCustomerShoppingHistory';
 
-export class GetCustomerShoppingHistoryHandler
-  implements
-    QueryHandler<GetCustomerShoppingHistory, CustomerShoppingHistoryItem[]>
-{
+export class GetCustomerShoppingHistoryHandler implements QueryHandler<
+  GetCustomerShoppingHistory,
+  CustomerShoppingHistoryItem[]
+> {
   constructor(
     private repository: ShoppingCartRepository,
     private mapper: Mapper<CustomerShoppingHistoryItem, ShoppingCartModel>,

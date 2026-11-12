@@ -1,12 +1,10 @@
-import { CommandHandler } from '#core/commands';
-import { EventBus } from '#core/events';
-import { ShoppingCartRepository } from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
-import { RemoveProductItemFromShoppingCart } from '../commands/shoppingCarts/removeProductItemFromShoppingCart';
-import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
+import type { CommandHandler } from '#core/commands';
+import type { EventBus } from '#core/events';
+import type { ShoppingCartRepository } from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
+import type { RemoveProductItemFromShoppingCart } from '../commands/shoppingCarts/removeProductItemFromShoppingCart';
+import type { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 
-export class RemoveProductItemFromShoppingCartHandler
-  implements CommandHandler<RemoveProductItemFromShoppingCart>
-{
+export class RemoveProductItemFromShoppingCartHandler implements CommandHandler<RemoveProductItemFromShoppingCart> {
   constructor(
     private repository: ShoppingCartRepository,
     private mapper: ShoppingCartMapper,

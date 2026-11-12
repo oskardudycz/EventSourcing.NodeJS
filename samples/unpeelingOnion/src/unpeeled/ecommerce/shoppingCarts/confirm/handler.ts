@@ -1,5 +1,9 @@
-import { ShoppingCart, ShoppingCartStatus } from '../shoppingCart';
-import { ShoppingCartConfirmed, ConfirmShoppingCart } from '../shoppingCart';
+import type { ShoppingCart } from '../shoppingCart';
+import { ShoppingCartStatus } from '../shoppingCart';
+import type {
+  ShoppingCartConfirmed,
+  ConfirmShoppingCart,
+} from '../shoppingCart';
 
 export const confirmShoppingCart = (
   _command: ConfirmShoppingCart,

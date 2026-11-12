@@ -1,5 +1,5 @@
-import { Command } from '#core/command';
-import { Event } from '#core/event';
+import type { Command } from '#core/command';
+import type { Event } from '#core/event';
 
 ////////////////////////////////////////////
 ////////// EVENTS
@@ -152,10 +152,7 @@ export type CheckOut = Command<
 >;
 
 export type GuestStayCommand =
-  | CheckIn
-  | RecordCharge
-  | RecordPayment
-  | CheckOut;
+  CheckIn | RecordCharge | RecordPayment | CheckOut;
 
 export const decide = (
   { type, data: command }: GuestStayCommand,

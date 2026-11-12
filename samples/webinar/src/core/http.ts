@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { assertUnsignedBigInt } from './validation';
 
 //////////////////////////////////////
@@ -6,7 +6,7 @@ import { assertUnsignedBigInt } from './validation';
 //////////////////////////////////////
 
 type WeakETag = `W/${string}`;
-type ETag = WeakETag | string;
+type ETag = string;
 
 export const WeakETagRegex = /W\/"(\d+.*)"/;
 
@@ -34,7 +34,7 @@ export const getETagFromIfMatch = (request: Request): ETag => {
   const etag = request.headers['if-match'];
 
   if (etag === undefined) {
-    throw ETagErrors.MISSING_IF_MATCH_HEADER;
+    throw new Error(ETagErrors.MISSING_IF_MATCH_HEADER);
   }
 
   return etag;
@@ -44,7 +44,7 @@ export const getWeakETagValueFromIfMatch = (request: Request): WeakETag => {
   const etag = getETagFromIfMatch(request);
 
   if (!isWeakETag(etag)) {
-    throw ETagErrors.WRONG_WEAK_ETAG_FORMAT;
+    throw new Error(ETagErrors.WRONG_WEAK_ETAG_FORMAT);
   }
 
   return getWeakETagValue(etag);

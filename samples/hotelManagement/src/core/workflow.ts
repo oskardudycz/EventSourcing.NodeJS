@@ -1,5 +1,5 @@
-import { Command } from './command';
-import { Event } from './event';
+import type { Command } from './command';
+import type { Event } from './event';
 
 /// Inspired by https://blog.bittacklr.be/the-workflow-pattern.html
 

@@ -4,7 +4,7 @@
 #  Use Build image with label `builder
 ########################################
 # use 
-FROM node:lts-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Setup working directory for project
 WORKDIR /app
@@ -12,6 +12,7 @@ WORKDIR /app
 COPY ./package.json ./
 COPY ./package-lock.json ./
 COPY ./tsconfig.json ./
+COPY ./tsdown.config.ts ./
 
 # install node modules
 # use `npm ci` instead of `npm install`
@@ -20,9 +21,11 @@ RUN npm ci
 
 # Copy project files
 COPY src ./src
+COPY config ./config
+COPY config.ts ./
 
 # Build project
-RUN npm run build:ts
+RUN npm run build:bundle
 
 # sets environment to production
 # and removes packages from devDependencies
@@ -34,13 +37,15 @@ RUN npm prune --production
 #  Use other build image as the final one
 #    that won't have source codes
 ########################################
-FROM node:lts-alpine
+FROM node:24-alpine
 
 # Setup working directory for project
 WORKDIR /app
 
 # Copy published in previous stage binaries
 # from the `builder` image
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/config ./config
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 

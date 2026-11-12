@@ -2,16 +2,32 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnPaste": false,
   "editor.formatOnSave": true,
-
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.organizeImports": "explicit",
+    "source.fixAll.eslint": "explicit",
+    "source.addMissingImports": "always"
   },
-
+  "js/ts.experimental.useTsgo": true,
+  "[typescript]": {
+    "editor.formatOnSave": false
+  },
   "editor.tabSize": 2,
-
   "files.exclude": {
     "node_modules/": true,
-    "dist/": true
+    "**/node_modules/": true,
+    "**/dist/": true,
+    "**/lib/": true,
+    "**/*.tsbuildinfo": true
   },
-  "files.eol": "\n"
+  "files.eol": "\n",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
+  "debug.javascript.terminalOptions": {
+    "nodeVersionHint": 24
+  },
+  "terminal.integrated.environmentChangesRelaunch": true
 }

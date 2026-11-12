@@ -1,17 +1,14 @@
 import { getEventStore } from '#core/eventStore';
-import { STREAM_NOT_FOUND } from '#core/eventStore/reading';
+import type { STREAM_NOT_FOUND } from '#core/eventStore/reading';
 import { readEventsFromSnapshotInSeparateStream } from '#core/eventStore/snapshotting';
-import { Result } from '#core/primitives';
-import {
-  FAILED_TO_APPEND_EVENT,
-  getAndUpdate,
-} from '#core/eventStore/appending';
-import {
-  appendEventAndSnapshotToStreamWithPrefix,
-  FAILED_TO_APPEND_SNAPSHOT,
-} from '#core/eventStore/snapshotting';
-import { CashRegisterEvent } from '../cashRegister';
-import { buildSnapshot, CashRegisterSnapshoted } from '../snapshot';
+import type { Result } from '#core/primitives';
+import type { FAILED_TO_APPEND_EVENT } from '#core/eventStore/appending';
+import { getAndUpdate } from '#core/eventStore/appending';
+import type { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
+import { appendEventAndSnapshotToStreamWithPrefix } from '#core/eventStore/snapshotting';
+import type { CashRegisterEvent } from '../cashRegister';
+import type { CashRegisterSnapshoted } from '../snapshot';
+import { buildSnapshot } from '../snapshot';
 
 export async function updateCashRegister<Command, TError = never>(
   streamName: string,

@@ -5,10 +5,9 @@
  * Checksum: y9bx1e/dkKoQ6cZLYfVReBKjL6maRcGBzOTM4OXOp3+ABIAtvVRDnGf7o5QgfQW0hkzseDc+ytkmNCIBMgbt3w==
  */
 
-/* eslint-disable */
 // tslint:disable
 
-import Cart from './cart';
+import type Cart from './cart';
 
 interface CartItem {
   cartId: Cart['id'];
@@ -34,7 +33,7 @@ interface CartItem {
   sku: string;
   updatedAt: Date | null;
 }
-export default CartItem;
+export type { CartItem as default };
 
 interface CartItem_InsertParameters {
   cartId: Cart['id'];

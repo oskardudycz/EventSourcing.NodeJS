@@ -1,16 +1,13 @@
-import { Result, success } from '#core/primitives';
-import { StreamEvent } from '#core/events';
-import {
-  getCurrentCashierShiftStreamName,
-  SHIFT_ALREADY_INITIALIZED,
-} from '../cashierShift';
-import {
-  handleInitializeCashRegisterShift,
-  InitializeCashRegisterShift,
-} from './handler';
+import type { Result } from '#core/primitives';
+import { success } from '#core/primitives';
+import type { StreamEvent } from '#core/events';
+import type { SHIFT_ALREADY_INITIALIZED } from '../cashierShift';
+import { getCurrentCashierShiftStreamName } from '../cashierShift';
+import type { InitializeCashRegisterShift } from './handler';
+import { handleInitializeCashRegisterShift } from './handler';
 import { isPlacedAtWorkStation } from '../../cashRegisters/placeAtWorkStation';
 import { addCashierShift } from '../processCashierShift';
-import { FAILED_TO_APPEND_EVENT } from '#core/eventStore/appending';
+import type { FAILED_TO_APPEND_EVENT } from '#core/eventStore/appending';
 
 export async function handleCashRegisterPlacedAtWorkStation(
   streamEvent: StreamEvent,

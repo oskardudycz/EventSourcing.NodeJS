@@ -1,14 +1,17 @@
-import { EventStoreDBClient, FORWARDS, START } from '@eventstore/db-client';
-import { ReadStreamOptions } from '@eventstore/db-client/dist/streams';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import { FORWARDS, START } from '@kurrent/kurrentdb-client';
+import type { ReadStreamOptions } from '@kurrent/kurrentdb-client';
 
-import { Event, StreamEvent } from '../../events';
-import { readFromStream, STREAM_NOT_FOUND } from '.';
-import { failure, Result, success } from '../../primitives';
+import type { Event, StreamEvent } from '../../events';
+import type { STREAM_NOT_FOUND } from '.';
+import { readFromStream } from '.';
+import type { Result } from '../../primitives';
+import { failure, success } from '../../primitives';
 
 export type NO_EVENTS_FOUND = 'NO_EVENTS_FOUND';
 
 export async function readFirstEventFromStream<StreamEventType extends Event>(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   options?: ReadStreamOptions,
 ): Promise<

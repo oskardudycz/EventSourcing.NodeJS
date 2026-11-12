@@ -1,16 +1,14 @@
-import {
-  ErrorType,
-  EventStoreDBClient,
-  StreamNotFoundError,
-} from '@eventstore/db-client';
-import { GetStreamMetadataOptions } from '@eventstore/db-client/dist/streams';
-import { STREAM_NOT_FOUND, METADATA_NOT_FOUND } from './';
-import { failure, Result, success } from '../../primitives';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import { StreamNotFoundError } from '@kurrent/kurrentdb-client';
+import type { GetStreamMetadataOptions } from '@kurrent/kurrentdb-client';
+import type { STREAM_NOT_FOUND, METADATA_NOT_FOUND } from './';
+import type { Result } from '../../primitives';
+import { failure, success } from '../../primitives';
 
 export async function readStreamMetadata<
   StreamMetadata extends Record<string, unknown>,
 >(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   options?: GetStreamMetadataOptions,
 ): Promise<Result<StreamMetadata, STREAM_NOT_FOUND | METADATA_NOT_FOUND>> {

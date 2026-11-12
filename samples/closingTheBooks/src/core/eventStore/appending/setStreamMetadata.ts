@@ -1,15 +1,16 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { AppendToStreamOptions } from '@eventstore/db-client/dist/streams';
-import { AppendResult } from '.';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { AppendToStreamOptions } from '@kurrent/kurrentdb-client';
+import type { AppendResult } from '.';
 
-import { failure, Result, success } from '../../primitives';
+import type { Result } from '../../primitives';
+import { failure, success } from '../../primitives';
 
 export type FAILED_TO_SET_STREAM_METADATA = 'FAILED_TO_SET_STREAM_METADATA';
 
 export async function setStreamMetadata<
   StreamMetadata extends Record<string, unknown>,
 >(
-  client: EventStoreDBClient,
+  client: KurrentDBClient,
   streamName: string,
   metadata: StreamMetadata,
   options?: AppendToStreamOptions,

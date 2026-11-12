@@ -1,13 +1,25 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
+import type { ParamsDictionary } from 'express-serve-static-core';
 import { isCommand } from '#core/commands';
-import { handleRegisterTransaction, RegisterTransaction } from './handler';
+import type { RegisterTransaction } from './handler';
+import { handleRegisterTransaction } from './handler';
 import { updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
+
+type RegisterTransactionRequest = Request<
+  ParamsDictionary,
+  unknown,
+  Partial<{ amount: unknown }>
+>;
 
 export const route = (router: Router) =>
   router.post(
     '/cash-registers/:id/transactions',
-    async function (request: Request, response: Response, next: NextFunction) {
+    async function (
+      request: RegisterTransactionRequest,
+      response: Response,
+      next: NextFunction,
+    ) {
       try {
         const command = mapRequestToCommand(request);
 
@@ -46,7 +58,7 @@ export const route = (router: Router) =>
   );
 
 function mapRequestToCommand(
-  request: Request,
+  request: RegisterTransactionRequest,
 ): RegisterTransaction | 'MISSING_CASH_REGISTER_ID' | 'MISSING_AMOUNT' {
   if (typeof request.params.id !== 'string') {
     return 'MISSING_CASH_REGISTER_ID';

@@ -2,14 +2,15 @@
 /// ShoppingCartDetails projection
 //////////////////////////////////////
 
-import { Collection, MongoClient, ObjectId, UpdateResult } from 'mongodb';
+import type { Collection, MongoClient, UpdateResult } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { EmptyUpdateResult, getMongoCollection } from '../../core/mongoDB';
-import { SubscriptionResolvedEvent } from '../../core/subscriptions';
-import { PricedProductItem } from '../productItem';
+import type { SubscriptionResolvedEvent } from '../../core/subscriptions';
+import type { PricedProductItem } from '../productItem';
+import type { ShoppingCartEvent } from '../shoppingCart';
 import {
   isCashierShoppingCartEvent,
   ShoppingCartErrors,
-  ShoppingCartEvent,
 } from '../shoppingCart';
 
 export const ShoppingCartStatus = {
@@ -152,7 +153,7 @@ const project = async (
     }
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
     }
   }
 };

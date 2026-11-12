@@ -1,13 +1,11 @@
 import { getPostgres } from '#core/postgres';
 import { retryPromise } from '#core/retries';
-import { Transaction } from '@databases/pg';
-import {
+import type { Transaction } from '@databases/pg';
+import type {
   AllStreamResolvedEvent,
-  EventStoreDBClient,
-  excludeSystemEvents,
-  START,
-} from '@eventstore/db-client';
-import { finished, Readable } from 'stream';
+  KurrentDBClient,
+} from '@kurrent/kurrentdb-client';
+import { excludeSystemEvents, START } from '@kurrent/kurrentdb-client';
 import { subscriptionCheckpoints } from '../db';
 import { getEventStore } from './streams';
 
@@ -21,7 +19,7 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 
 export const SubscriptionToAll =
   (
-    getEventStore: () => EventStoreDBClient,
+    getEventStore: () => KurrentDBClient,
     loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
@@ -36,27 +34,22 @@ export const SubscriptionToAll =
         filter: excludeSystemEvents(),
       });
 
-      finished(
-        subscription.on(
-          'data',
-          async (resolvedEvent: AllStreamResolvedEvent) => {
+      void (async () => {
+        try {
+          for await (const resolvedEvent of subscription) {
             for (const handler of handlers) {
               await handler({ ...resolvedEvent, subscriptionId });
             }
-          },
-        ) as Readable,
-        (error) => {
-          if (!error) {
-            console.info(`Stopping subscription.`);
-            return;
           }
+          console.info(`Stopping subscription.`);
+        } catch (error) {
           console.error(
             `Received error: %s. Retrying.`,
             error ?? 'UNEXPECTED ERROR',
           );
           throw error;
-        },
-      );
+        }
+      })();
       console.info('Subscription is running');
 
       return subscription;

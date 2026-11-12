@@ -1,13 +1,13 @@
 import { getEventStore } from '../..';
-import { Event, StreamEvent } from '../../../events';
-import { STREAM_NOT_FOUND } from '../../reading';
-import { Result } from '../../../primitives';
-import {
+import type { Event, StreamEvent } from '../../../events';
+import type { STREAM_NOT_FOUND } from '../../reading';
+import type { Result } from '../../../primitives';
+import type {
   FAILED_TO_APPEND_SNAPSHOT,
-  readEventsFromSnapshotInSeparateStream,
   SnapshotEvent,
   SNAPSHOT_CREATION_SKIPPED,
 } from '..';
+import { readEventsFromSnapshotInSeparateStream } from '..';
 import { snapshotOnSubscription } from './snapshotOnSubscription';
 import { appendSnapshotToStreamWithPrefix } from '../appending';
 

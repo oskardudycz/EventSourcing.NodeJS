@@ -1,10 +1,11 @@
-import { Mapper } from '#core/mapping';
-import { ShoppingCartModel } from '../../../models/shoppingCarts/shoppingCart';
+import type { Mapper } from '#core/mapping';
+import type { ShoppingCartModel } from '../../../models/shoppingCarts/shoppingCart';
 import { CustomerShoppingHistoryItem } from '../queries/customerShoppingHistoryItem';
 
-export class CustomerShoppingHistoryMapper
-  implements Mapper<CustomerShoppingHistoryItem, ShoppingCartModel>
-{
+export class CustomerShoppingHistoryMapper implements Mapper<
+  CustomerShoppingHistoryItem,
+  ShoppingCartModel
+> {
   toModel(_aggregate: CustomerShoppingHistoryItem): ShoppingCartModel {
     throw Error('Not implemented');
   }

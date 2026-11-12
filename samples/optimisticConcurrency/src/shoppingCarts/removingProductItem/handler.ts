@@ -1,16 +1,17 @@
-import { StreamEvent } from '#core/events';
-import { Command } from '#core/commands';
-import { failure, Result, success } from '#core/primitives';
-import {
+import type { StreamEvent } from '#core/events';
+import type { Command } from '#core/commands';
+import type { Result } from '#core/primitives';
+import { failure, success } from '#core/primitives';
+import type {
   ProductItemRemovedFromShoppingCart,
   ShoppingCart,
   ShoppingCartEvent,
-  ShoppingCartStatus,
   SHOPPING_CARD_CLOSED,
-  when,
 } from '..';
+import { ShoppingCartStatus, when } from '..';
 import { aggregateStream } from '#core/streams';
-import { findProductItem, ProductItem } from '../productItems';
+import type { ProductItem } from '../productItems';
+import { findProductItem } from '../productItems';
 
 export type RemoveProductItemFromShoppingCart = Command<
   'remove-product-item-from-shopping-cart',

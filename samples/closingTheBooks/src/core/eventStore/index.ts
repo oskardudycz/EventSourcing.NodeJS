@@ -1,12 +1,12 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
+import { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { config } from '#config';
 
-export function getEventStore(): EventStoreDBClient {
-  if (!config.eventStoreDB.connectionString) {
-    throw 'EventStoreDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
+export function getEventStore(): KurrentDBClient {
+  if (!config.kurrentDB.connectionString) {
+    throw new Error(
+      'KurrentDB connection string not set. Please define "KURRENTDB_CONNECTION_STRING" environment variable',
+    );
   }
 
-  return EventStoreDBClient.connectionString(
-    config.eventStoreDB.connectionString,
-  );
+  return KurrentDBClient.connectionString(config.kurrentDB.connectionString);
 }

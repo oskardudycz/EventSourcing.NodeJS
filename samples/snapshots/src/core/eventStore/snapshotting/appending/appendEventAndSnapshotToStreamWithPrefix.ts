@@ -1,12 +1,12 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { Event } from '../../../events';
-import {
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { Event } from '../../../events';
+import type {
   FAILED_TO_APPEND_SNAPSHOT,
   SnapshotEvent,
   SNAPSHOT_CREATION_SKIPPED,
 } from '..';
-import { FAILED_TO_APPEND_EVENT } from '../../appending/appendToStream';
-import { Result } from '../../../primitives';
+import type { FAILED_TO_APPEND_EVENT } from '../../appending/appendToStream';
+import type { Result } from '../../../primitives';
 import { appendEventAndExternalSnapshot } from './appendEventAndExternalSnapshot';
 import { appendSnapshotToStreamWithPrefix } from './appendSnapshotToStreamWithPrefix';
 
@@ -21,7 +21,7 @@ export async function appendEventAndSnapshotToStreamWithPrefix<
     lastSnapshotVersion: bigint | undefined;
     streamName: string;
   }) => Result<SnapshotStreamEvent, SNAPSHOT_CREATION_SKIPPED>,
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   currentEvents: StreamEvent[],
   event: StreamEvent,

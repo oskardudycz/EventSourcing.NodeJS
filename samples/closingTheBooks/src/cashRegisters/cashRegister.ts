@@ -1,7 +1,7 @@
-import { PlacedAtWorkStation } from './placeAtWorkStation';
+import type { PlacedAtWorkStation } from './placeAtWorkStation';
 import { aggregateStream } from '#core/streams';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
-import { StreamEvent } from '#core/events';
+import type { StreamEvent } from '#core/events';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -53,7 +53,7 @@ export function when(
 }
 
 export function isCashRegister(
-  cashRegister: any,
+  cashRegister: Partial<CashRegister>,
 ): cashRegister is CashRegister {
   return (
     cashRegister !== undefined &&
@@ -65,7 +65,9 @@ export function isCashRegister(
   );
 }
 
-export function isCashRegisterEvent(event: any): event is CashRegisterEvent {
+export function isCashRegisterEvent(event: {
+  type: string;
+}): event is CashRegisterEvent {
   switch (event.type) {
     case 'placed-at-workstation':
       return true;

@@ -1,12 +1,10 @@
-import { CommandHandler } from '#core/commands';
-import { EventBus } from '#core/events';
-import { ShoppingCartRepository } from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
-import { AddProductItemToShoppingCart } from '../commands/shoppingCarts/addProductItemToShoppingCart';
-import { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
+import type { CommandHandler } from '#core/commands';
+import type { EventBus } from '#core/events';
+import type { ShoppingCartRepository } from '../../../infrastructure/shoppingCarts/shoppingCartRepository';
+import type { AddProductItemToShoppingCart } from '../commands/shoppingCarts/addProductItemToShoppingCart';
+import type { ShoppingCartMapper } from '../mappers/shoppingCartMapper';
 
-export class AddProductItemToShoppingCartHandler
-  implements CommandHandler<AddProductItemToShoppingCart>
-{
+export class AddProductItemToShoppingCartHandler implements CommandHandler<AddProductItemToShoppingCart> {
   constructor(
     private repository: ShoppingCartRepository,
     private mapper: ShoppingCartMapper,

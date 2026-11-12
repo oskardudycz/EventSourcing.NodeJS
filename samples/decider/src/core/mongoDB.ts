@@ -3,22 +3,13 @@
 //////////////////////////////////////
 
 import { config } from '#config';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import {
-  MongoClient,
-  Collection,
-  ObjectId,
-  UpdateResult,
-  Document,
-} from 'mongodb';
-import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
-import { getEventStore } from './streams';
-import {
-  Checkpoint,
-  EventHandler,
-  SubscriptionResolvedEvent,
-  SubscriptionToAll,
-} from './subscriptions';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { Collection, UpdateResult, Document } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
+import type { RetryOptions } from './retries';
+import { DEFAULT_RETRY_OPTIONS, retryPromise } from './retries';
+import type { Checkpoint } from './subscriptions';
+import { SubscriptionToAll } from './subscriptions';
 
 let mongoClient: MongoClient;
 let isOpened = false;
@@ -27,7 +18,9 @@ export const getMongoDB = async (
   connectionString?: string,
 ): Promise<MongoClient> => {
   if (!connectionString && !config.mongoDB.connectionString) {
-    throw 'MongoDB connection string not set. Please define "MONGODB_CONNECTION_STRING" environment variable';
+    throw new Error(
+      'MongoDB connection string not set. Please define "MONGODB_CONNECTION_STRING" environment variable',
+    );
   }
 
   if (!mongoClient) {
@@ -92,7 +85,7 @@ export const assertUpdated = async (
   const result = await update();
 
   if (result.modifiedCount === 0) {
-    throw MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT;
+    throw new Error(MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT);
   }
 
   return result;
@@ -104,7 +97,7 @@ export const assertFound = async <T>(
   const result = await find();
 
   if (result === null) {
-    throw MongoDBErrors.DOCUMENT_NOT_FOUND;
+    throw new Error(MongoDBErrors.DOCUMENT_NOT_FOUND);
   }
 
   return result;
@@ -178,7 +171,7 @@ export const mongoObjectId = () => {
 };
 
 export const SubscriptionToAllWithMongoCheckpoints = (
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   mongo: MongoClient,
 ) =>
   SubscriptionToAll(

@@ -1,10 +1,8 @@
-import {
+import type {
   AllStreamResolvedEvent,
-  EventStoreDBClient,
-  excludeSystemEvents,
-  START,
-} from '@eventstore/db-client';
-import { finished, Readable } from 'stream';
+  KurrentDBClient,
+} from '@kurrent/kurrentdb-client';
+import { excludeSystemEvents, START } from '@kurrent/kurrentdb-client';
 
 export type SubscriptionResolvedEvent = AllStreamResolvedEvent & {
   subscriptionId: string;
@@ -16,7 +14,7 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 
 export const SubscriptionToAll =
   (
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
@@ -30,19 +28,17 @@ export const SubscriptionToAll =
       filter: excludeSystemEvents(),
     });
 
-    finished(
-      subscription.on('data', async (resolvedEvent: AllStreamResolvedEvent) => {
-        for (const handler of handlers) {
-          await handler({ ...resolvedEvent, subscriptionId });
+    void (async () => {
+      try {
+        for await (const resolvedEvent of subscription) {
+          for (const handler of handlers) {
+            await handler({ ...resolvedEvent, subscriptionId });
+          }
         }
-      }) as Readable,
-      (error) => {
-        if (!error) {
-          console.info(`Stopping subscription.`);
-          return;
-        }
+        console.info(`Stopping subscription.`);
+      } catch (error) {
         console.error(`Received error: ${JSON.stringify(error)}.`);
-      },
-    );
+      }
+    })();
     return subscription;
   };

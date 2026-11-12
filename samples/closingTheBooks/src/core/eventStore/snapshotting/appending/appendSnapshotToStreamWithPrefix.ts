@@ -1,13 +1,15 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { FAILED_TO_APPEND_SNAPSHOT, SnapshotEvent } from '..';
-import { AppendResult, appendToStream } from '../../appending/appendToStream';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { FAILED_TO_APPEND_SNAPSHOT, SnapshotEvent } from '..';
+import type { AppendResult } from '../../appending/appendToStream';
+import { appendToStream } from '../../appending/appendToStream';
 import { addSnapshotPrefix } from '..';
-import { failure, Result } from '../../../primitives';
+import type { Result } from '../../../primitives';
+import { failure } from '../../../primitives';
 
 export async function appendSnapshotToStreamWithPrefix<
   SnapshotStreamEvent extends SnapshotEvent,
 >(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   snapshot: SnapshotStreamEvent,
   streamName: string,
   lastSnapshotVersion?: bigint,
@@ -15,7 +17,7 @@ export async function appendSnapshotToStreamWithPrefix<
   const snapshotStreamName = addSnapshotPrefix(streamName);
 
   if (!lastSnapshotVersion) {
-    eventStore.setStreamMetadata(snapshotStreamName, { maxCount: 1 });
+    await eventStore.setStreamMetadata(snapshotStreamName, { maxCount: 1 });
   }
 
   const result = await appendToStream(eventStore, snapshotStreamName, [

@@ -1,5 +1,5 @@
-import { Request, Response } from 'express';
-import { ParamsDictionary } from 'express-serve-static-core';
+import type { Request, Response } from 'express';
+import type { ParamsDictionary } from 'express-serve-static-core';
 import { assertUnsignedBigInt } from './validation';
 
 export type ApiRequest = Request<

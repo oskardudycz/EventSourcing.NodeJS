@@ -1,5 +1,5 @@
-import { ObjectId } from 'mongodb';
-import { ProductItem } from '../../common/shoppingCarts/productItem';
+import type { ObjectId } from 'mongodb';
+import type { ProductItem } from '../../common/shoppingCarts/productItem';
 
 export class ShoppingCartModel {
   constructor(

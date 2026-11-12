@@ -1,15 +1,17 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { ReadFromStreamAndSnapshotsResult, SnapshotEvent } from '..';
-import { Event } from '../../../events';
-import { Result, success } from '../../../primitives';
-import { readFromStream, STREAM_NOT_FOUND } from '../../reading';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { ReadFromStreamAndSnapshotsResult, SnapshotEvent } from '..';
+import type { Event } from '../../../events';
+import type { Result } from '../../../primitives';
+import { success } from '../../../primitives';
+import type { STREAM_NOT_FOUND } from '../../reading';
+import { readFromStream } from '../../reading';
 import { getLastSnapshotVersionFromStreamMetadata } from './';
 
 export async function readEventsFromSnapshotInTheSameStream<
   StreamEvent extends Event,
   SnapshotStreamEvent extends SnapshotEvent,
 >(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
 ): Promise<
   Result<

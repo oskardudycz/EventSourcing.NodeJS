@@ -1,4 +1,5 @@
-import express, { Application } from 'express';
+import type { Application } from 'express';
+import express from 'express';
 import { cashRegisterRouter } from './cashRegisters';
 import { cashierShiftRouter } from './cashierShift';
 import { handleErrors } from '#core/http/middlewares';

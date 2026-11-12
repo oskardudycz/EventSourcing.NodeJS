@@ -1,11 +1,12 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { failure, Result, success } from '../../../primitives';
-import { STREAM_NOT_FOUND } from '../../reading';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { Result } from '../../../primitives';
+import { failure, success } from '../../../primitives';
+import type { STREAM_NOT_FOUND } from '../../reading';
 import { readStreamMetadata } from '../../reading/readStreamMetadata';
-import { SnapshotMetadata } from '../snapshotEvent';
+import type { SnapshotMetadata } from '../snapshotEvent';
 
 export async function getLastSnapshotVersionFromStreamMetadata(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
 ): Promise<Result<bigint | undefined, STREAM_NOT_FOUND>> {
   const streamMetadata = await readStreamMetadata<SnapshotMetadata>(

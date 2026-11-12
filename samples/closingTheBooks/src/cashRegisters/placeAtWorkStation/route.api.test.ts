@@ -1,22 +1,22 @@
 import request from 'supertest';
 import isUUID from 'validator/lib/isUUID';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#testing/eventStoreDB/eventStoreDBContainer';
+import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
 import { config } from '#config';
 import app from '../../app';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('POST /cash-register/', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
+  let kurrentDBContainer: StartedKurrentDBContainer;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   it('should place cash register at work station', async () => {
@@ -25,12 +25,13 @@ describe('POST /cash-register/', () => {
       .send({ workstation: 'WS#1' })
       .expect(201)
       .expect('Content-Type', /json/)
-      .expect(async (res) => {
-        expect(res.body).toHaveProperty('id');
-        expect(isUUID(res.body.id)).toBeTruthy();
+      .expect((res) => {
+        const body = res.body as { id: string };
+        expect(body).toHaveProperty('id');
+        expect(isUUID(body.id)).toBeTruthy();
 
         expect(res.headers['location']).toBeDefined();
-        expect(res.headers['location']).toBe(`/cash-registers/${res.body.id}`);
+        expect(res.headers['location']).toBe(`/cash-registers/${body.id}`);
 
         expect(res.headers['etag']).toBeDefined();
         expect(res.headers['etag']).toMatch(/W\/"\d+.*"/);

@@ -1,6 +1,6 @@
 import { getApplication } from '#core/api';
 import { EventBusFactory } from '#core/events';
-import { MongoClient } from 'mongodb';
+import type { MongoClient } from 'mongodb';
 import { configureShoppingCartsModule } from './shoppingCarts';
 
 const initApp = (mongo: MongoClient) => {

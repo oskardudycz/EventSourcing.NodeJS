@@ -1,20 +1,31 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
+import type { ParamsDictionary } from 'express-serve-static-core';
 import { isCommand } from '#core/commands';
-import { handleRegisterTransaction, RegisterTransaction } from './handler';
+import type { RegisterTransaction } from './handler';
+import { handleRegisterTransaction } from './handler';
 import { updateCashierShift } from '../processCashierShift';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
-import {
-  getWeakETagFromIfMatch,
+import type {
   MISSING_IF_MATCH_HEADER,
-  toWeakETag,
   WRONG_WEAK_ETAG_FORMAT,
 } from '#core/http/requests';
+import { getWeakETagFromIfMatch, toWeakETag } from '#core/http/requests';
+
+type RegisterTransactionRequest = Request<
+  ParamsDictionary,
+  unknown,
+  Partial<{ amount: unknown }>
+>;
 
 export const route = (router: Router) =>
   router.post(
     '/cash-registers/:cashRegisterId/shifts/current/transactions',
-    async function (request: Request, response: Response, next: NextFunction) {
+    async function (
+      request: RegisterTransactionRequest,
+      response: Response,
+      next: NextFunction,
+    ) {
       try {
         const command = mapRequestToCommand(request);
 
@@ -54,7 +65,7 @@ export const route = (router: Router) =>
   );
 
 function mapRequestToCommand(
-  request: Request,
+  request: RegisterTransactionRequest,
 ):
   | RegisterTransaction
   | 'MISSING_CASH_REGISTER_ID'

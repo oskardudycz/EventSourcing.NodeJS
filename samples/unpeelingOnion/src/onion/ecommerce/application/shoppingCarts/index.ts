@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import type { MongoClient } from 'mongodb';
 import { registerCommandHandler } from '#core/commands';
 import { registerQueryHandler } from '#core/queries';
 import { OpenShoppingCart } from '../shoppingCarts/commands/shoppingCarts/openShoppingCart';

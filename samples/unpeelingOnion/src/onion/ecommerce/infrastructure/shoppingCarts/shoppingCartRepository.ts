@@ -1,6 +1,7 @@
-import { MongoDbRepository, Repository } from '#core/mongo/repository';
-import { MongoClient } from 'mongodb';
-import { ShoppingCartModel } from '../../models/shoppingCarts/shoppingCart';
+import type { Repository } from '#core/mongo/repository';
+import { MongoDbRepository } from '#core/mongo/repository';
+import type { MongoClient } from 'mongodb';
+import type { ShoppingCartModel } from '../../models/shoppingCarts/shoppingCart';
 
 export interface ShoppingCartRepository extends Repository<ShoppingCartModel> {
   findAllByCustomerId(customerId: string): Promise<ShoppingCartModel[]>;

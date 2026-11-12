@@ -1,4 +1,5 @@
-import { Result, success } from './result';
+import type { Result } from './result';
+import { success } from './result';
 import { switchError, switchErrorAsync } from './switchError';
 
 export function pipe<T1, R1, R2>(
@@ -28,9 +29,9 @@ export function pipe<T1, R1, R2, R3, R4, R5>(
 ): (arg?: T1) => R5;
 
 export function pipe(
-  fn1: (...args: any[]) => any,
-  ...fns: Array<(a: any) => any>
-): (a: any) => any {
+  fn1: (arg?: unknown) => unknown,
+  ...fns: Array<(arg: unknown) => unknown>
+): (arg?: unknown) => unknown {
   return fns.reduce((prevFn, nextFn) => (value) => nextFn(prevFn(value)), fn1);
 }
 
@@ -83,12 +84,15 @@ export function pipeResult<
 ): (arg?: T1) => Result<R5, E1 | E2 | E3 | E4 | E5>;
 
 export function pipeResult(
-  fn1: (...args: any[]) => any,
-  ...fns: Array<(a: any) => any>
-): (a: any) => any {
+  fn1: (arg?: unknown) => Result<unknown, unknown>,
+  ...fns: Array<(arg: unknown) => Result<unknown, unknown>>
+): (arg?: unknown) => Result<unknown, unknown> {
   return fns
-    .map((f) => switchError(f))
-    .reduce((prevFn, nextFn) => (value) => nextFn(prevFn(value)), fn1);
+    .map((f) => switchError<unknown, unknown, unknown, unknown>(f))
+    .reduce<(arg?: unknown) => Result<unknown, unknown>>(
+      (prevFn, nextFn) => (value) => nextFn(prevFn(value)),
+      fn1,
+    );
 }
 
 export function pipeResultAsync<T1, R1, R2, E1 = never, E2 = never>(
@@ -171,12 +175,15 @@ export function pipeResultAsync<
 ): (arg?: T1) => Promise<Result<R5, E1 | E2 | E3 | E4 | E5 | E6>>;
 
 export function pipeResultAsync(
-  fn1: (...args: any[]) => any,
-  ...fns: Array<(a: any) => any>
-): (a: any) => any {
+  fn1: (arg?: unknown) => Promise<Result<unknown, unknown>>,
+  ...fns: Array<(arg: unknown) => Promise<Result<unknown, unknown>>>
+): (arg?: unknown) => Promise<Result<unknown, unknown>> {
   return fns
-    .map((f) => switchErrorAsync(f))
-    .reduce((prevFn, nextFn) => (value) => nextFn(prevFn(value)), fn1);
+    .map((f) => switchErrorAsync<unknown, unknown, unknown, unknown>(f))
+    .reduce<(arg?: unknown) => Promise<Result<unknown, unknown>>>(
+      (prevFn, nextFn) => (value) => nextFn(prevFn(value)),
+      fn1,
+    );
 }
 
 export function forwardInputsAsResults<I, R = never, E = never>(

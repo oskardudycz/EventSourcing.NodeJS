@@ -1,6 +1,7 @@
-import { NextFunction, Request, Response } from 'express';
-import { ETag, ETagErrors, toWeakETag } from './eTag';
-import { AppendResult } from './streams';
+import type { NextFunction, Request, Response } from 'express';
+import type { ETag } from './eTag';
+import { ETagErrors, toWeakETag } from './eTag';
+import type { AppendResult } from './streams';
 
 //////////////////////////////////////
 /// ETAG
@@ -10,7 +11,7 @@ export const getETagFromIfMatch = (request: Request): ETag => {
   const etag = request.headers['if-match'];
 
   if (etag === undefined) {
-    throw ETagErrors.MISSING_IF_MATCH_HEADER;
+    throw new Error(ETagErrors.MISSING_IF_MATCH_HEADER);
   }
 
   return etag;

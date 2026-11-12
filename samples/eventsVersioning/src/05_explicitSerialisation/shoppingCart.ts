@@ -1,5 +1,5 @@
 import { merge } from '#core/utils';
-import { PricedProductItem } from '../events/events.v1';
+import type { PricedProductItem } from '../events/events.v1';
 
 export type Client = {
   id: string;

@@ -1,11 +1,8 @@
-import {
-  EventStoreDBClient,
-  NO_STREAM,
-  Position,
-  STREAM_EXISTS,
-} from '@eventstore/db-client';
-import { failure, Result, success } from '../../primitives';
-import { Event } from '../../events';
+import type { KurrentDBClient, Position } from '@kurrent/kurrentdb-client';
+import { NO_STREAM, STREAM_EXISTS } from '@kurrent/kurrentdb-client';
+import type { Result } from '../../primitives';
+import { failure, success } from '../../primitives';
+import type { Event } from '../../events';
 import { readLastEventFromStream } from '../reading';
 import { appendToStream } from '../appending';
 import { getCurrentTime } from '../../primitives';
@@ -26,7 +23,7 @@ export function getCheckpointStreamPrefix(subscriptionId: string) {
 }
 
 export async function storeCheckpoint(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   subscriptionId: string,
   position: bigint,
 ): Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>> {
@@ -44,7 +41,7 @@ export async function storeCheckpoint(
   };
 
   let result = await appendToStream(eventStore, streamName, [event], {
-    expectedRevision: STREAM_EXISTS,
+    streamState: STREAM_EXISTS,
   });
 
   if (!result.isError) {
@@ -58,7 +55,7 @@ export async function storeCheckpoint(
   if (!wasMetadataSet) return failure('FAILED_TO_STORE_CHECKPOINT');
 
   result = await appendToStream(eventStore, streamName, [event], {
-    expectedRevision: NO_STREAM,
+    streamState: NO_STREAM,
   });
 
   if (result.isError) return failure('FAILED_TO_STORE_CHECKPOINT');
@@ -67,7 +64,7 @@ export async function storeCheckpoint(
 }
 
 export async function loadCheckpoint(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   subscriptionId: string,
 ): Promise<Result<Position | undefined>> {
   const streamName = getCheckpointStreamPrefix(subscriptionId);

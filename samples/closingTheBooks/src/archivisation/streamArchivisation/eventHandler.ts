@@ -1,14 +1,13 @@
-import { Result, success } from '#core/primitives';
-import { StreamEvent } from '#core/events';
-import {
-  FAILED_TO_APPEND_EVENT,
-  setStreamMetadata,
-} from '#core/eventStore/appending';
-import {
+import type { Result } from '#core/primitives';
+import { success } from '#core/primitives';
+import type { StreamEvent } from '#core/events';
+import type { FAILED_TO_APPEND_EVENT } from '#core/eventStore/appending';
+import { setStreamMetadata } from '#core/eventStore/appending';
+import type {
   NO_EVENTS_FOUND,
-  readFromStream,
   STREAM_NOT_FOUND,
 } from '#core/eventStore/reading';
+import { readFromStream } from '#core/eventStore/reading';
 import { isStreamBatchArchivisationScheduled } from '../schedulingArchivisation/handler';
 import { getEventStore } from '#core/eventStore';
 
@@ -57,6 +56,7 @@ export async function handleStreamBatchArchivisationScheduled(
   return success(true);
 }
 
-async function copyEventsToColdStorage(_events: StreamEvent[]): Promise<void> {
+function copyEventsToColdStorage(_events: StreamEvent[]): Promise<void> {
   console.log('copy it somewhere nice and let them rest in peace');
+  return Promise.resolve();
 }

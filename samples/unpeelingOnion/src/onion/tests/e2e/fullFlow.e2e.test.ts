@@ -1,14 +1,13 @@
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 // import { greaterOrEqual } from '#core/validation';
-import { TestResponse } from '#testing/api/testResponse';
-import {
-  MongoDBContainer,
-  StartedMongoDBContainer,
-} from '@testcontainers/mongodb';
+import type { TestResponse } from '#testing/api/testResponse';
+import type { StartedMongoDBContainer } from '@testcontainers/mongodb';
+import { MongoDBContainer } from '@testcontainers/mongodb';
 import { disconnectFromMongoDB } from '#core/mongodb';
-import { Application } from 'express';
+import type { Application } from 'express';
 import initApp from '../../ecommerce/app';
 import { ShoppingCartStatus } from '../../ecommerce/domain/shoppingCarts/shoppingCartStatus';
 import { MongoClient } from 'mongodb';
@@ -93,7 +92,7 @@ describe('Full flow', () => {
         quantity: 2,
         productId: '123',
       };
-      response = await request(app)
+      await request(app)
         .post(
           `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items`,
         )
@@ -131,7 +130,7 @@ describe('Full flow', () => {
         productId: '456',
         quantity: 1,
       };
-      response = await request(app)
+      await request(app)
         .post(
           `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items`,
         )
@@ -171,7 +170,7 @@ describe('Full flow', () => {
         productId: '123',
         quantity: 1,
       };
-      response = await request(app)
+      await request(app)
         .delete(
           `/customers/${customerId}/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`,
         )
@@ -212,7 +211,7 @@ describe('Full flow', () => {
         line2: 'line 2',
       };
 
-      response = await request(app)
+      await request(app)
         .post(
           `/customers/${customerId}/shopping-carts/${shoppingCartId}/confirm`,
         )

@@ -1,5 +1,5 @@
 import { getApplication } from '#core/api';
-import { MongoClient } from 'mongodb';
+import type { MongoClient } from 'mongodb';
 import registerHandlers from './application/shoppingCarts';
 import controllers from './controllers';
 

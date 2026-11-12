@@ -1,4 +1,5 @@
-import { Collection, Document, Filter, MongoClient, ObjectId } from 'mongodb';
+import type { Collection, Document, Filter, MongoClient } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { getCollection } from '.';
 
 export interface Repository<T> {
@@ -7,15 +8,15 @@ export interface Repository<T> {
   find(id: string): Promise<T | null>;
 }
 
-export abstract class MongoDbRepository<T extends Document & { _id: ObjectId }>
-  implements Repository<T>
-{
+export abstract class MongoDbRepository<
+  T extends Document & { _id: ObjectId },
+> implements Repository<T> {
   protected collection: Collection<T>;
 
   constructor(
     mongo: MongoClient,
     collectionName: string,
-    databaseName?: string | undefined,
+    databaseName?: string,
   ) {
     this.collection = getCollection<T>(mongo, collectionName, databaseName);
   }

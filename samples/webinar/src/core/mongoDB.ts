@@ -2,21 +2,17 @@
 /// MongoDB
 //////////////////////////////////////
 
-import {
-  MongoClient,
-  Collection,
-  Document,
-  ObjectId,
-  UpdateResult,
-} from 'mongodb';
-import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
+import type { Collection, Document, ObjectId, UpdateResult } from 'mongodb';
+import { MongoClient } from 'mongodb';
+import type { RetryOptions } from './retries';
+import { DEFAULT_RETRY_OPTIONS, retryPromise } from './retries';
 import { getEventStore } from './streams';
-import {
+import type {
   Checkpoint,
   EventHandler,
   SubscriptionResolvedEvent,
-  SubscriptionToAll,
 } from './subscriptions';
+import { SubscriptionToAll } from './subscriptions';
 
 let mongoClient: MongoClient;
 
@@ -70,7 +66,7 @@ export const assertUpdated = async (
   const result = await update();
 
   if (result.modifiedCount === 0) {
-    throw MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT;
+    throw new Error(MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT);
   }
 
   return result;
@@ -82,7 +78,7 @@ export const assertFound = async <T>(
   const result = await find();
 
   if (result === null) {
-    throw MongoDBErrors.DOCUMENT_NOT_FOUND;
+    throw new Error(MongoDBErrors.DOCUMENT_NOT_FOUND);
   }
 
   return result;

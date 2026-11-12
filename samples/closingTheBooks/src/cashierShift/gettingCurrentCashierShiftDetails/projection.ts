@@ -1,11 +1,12 @@
 import { executeOnMongoDB } from '#core/mongoDB';
-import { Result, success } from '#core/primitives';
-import { Event, StreamEvent } from '#core/events';
+import type { Result } from '#core/primitives';
+import { success } from '#core/primitives';
+import type { Event, StreamEvent } from '#core/events';
 import { CashierShiftStatus } from '../cashierShift';
-import { ShiftOpened } from '../openingShift';
-import { TransactionRegistered } from '../registeringTransaction';
-import { ShiftClosed } from '../closingShift';
-import { CurrentCashierShiftDetails } from './currentCashierShiftDetails';
+import type { ShiftOpened } from '../openingShift';
+import type { TransactionRegistered } from '../registeringTransaction';
+import type { ShiftClosed } from '../closingShift';
+import type { CurrentCashierShiftDetails } from './currentCashierShiftDetails';
 
 export async function projectShiftOpened(
   event: ShiftOpened,
@@ -74,9 +75,7 @@ export async function projectShiftClosed(
 }
 
 type CashierShiftDetailsEvent =
-  | ShiftOpened
-  | TransactionRegistered
-  | ShiftClosed;
+  ShiftOpened | TransactionRegistered | ShiftClosed;
 
 function isCashierShiftDetailsEvent(
   event: Event,
@@ -107,6 +106,6 @@ export async function projectToCurrentCashierShiftDetails(
     case 'shift-closed':
       return projectShiftClosed(event);
     default:
-      throw `Unknown event type`;
+      throw new Error(`Unknown event type`);
   }
 }

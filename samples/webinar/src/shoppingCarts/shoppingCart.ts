@@ -2,16 +2,12 @@
 /// Shopping Carts
 //////////////////////////////////////
 
-import {
-  JSONEventType,
-  ResolvedEvent,
-  StreamingRead,
-} from '@eventstore/db-client';
+import type { JSONEventType, ResolvedEvent } from '@kurrent/kurrentdb-client';
 import { StreamAggregator } from '#core/streams';
+import type { ProductItem } from './productItem';
 import {
   addProductItem,
   assertProductItemExists,
-  ProductItem,
   removeProductItem,
 } from './productItem';
 
@@ -105,7 +101,7 @@ export const toShoppingCartStreamName = (shoppingCartId: string) =>
 
 export const assertShoppingCartIsNotClosed = (shoppingCart: ShoppingCart) => {
   if (shoppingCart.status !== ShoppingCartStatus.Opened) {
-    throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+    throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
   }
 };
 
@@ -118,7 +114,8 @@ export const getShoppingCart = StreamAggregator<
   ShoppingCartEvent
 >((currentState, event) => {
   if (event.type === 'shopping-cart-opened') {
-    if (currentState != null) throw ShoppingCartErrors.OPENED_EXISTING_CART;
+    if (currentState != null)
+      throw new Error(ShoppingCartErrors.OPENED_EXISTING_CART);
     return {
       id: event.data.shoppingCartId,
       clientId: event.data.clientId,
@@ -128,7 +125,7 @@ export const getShoppingCart = StreamAggregator<
     };
   }
 
-  if (currentState == null) throw ShoppingCartErrors.CART_NOT_FOUND;
+  if (currentState == null) throw new Error(ShoppingCartErrors.CART_NOT_FOUND);
 
   switch (event.type) {
     case 'product-item-added-to-shopping-cart':
@@ -155,7 +152,7 @@ export const getShoppingCart = StreamAggregator<
       };
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
     }
   }
 });
@@ -193,7 +190,7 @@ export type AddProductItemToShoppingCart = {
 };
 
 export const addProductItemToShoppingCart = async (
-  events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
+  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId, productItem }: AddProductItemToShoppingCart,
 ): Promise<ProductItemAddedToShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
@@ -219,7 +216,7 @@ export type RemoveProductItemFromShoppingCart = {
 };
 
 export const removeProductItemFromShoppingCart = async (
-  events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
+  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart,
 ): Promise<ProductItemRemovedFromShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
@@ -246,7 +243,7 @@ export type ConfirmShoppingCart = {
 };
 
 export const confirmShoppingCart = async (
-  events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
+  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId }: ConfirmShoppingCart,
 ): Promise<ShoppingCartConfirmed> => {
   const shoppingCart = await getShoppingCart(events);

@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../app';
+import { describe, it } from 'vitest';
 
 describe('GET /', () => {
   it('should return greeting "Hello World!"', () => {

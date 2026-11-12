@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { App } from 'supertest/types';
+import type { App } from 'supertest/types';
 
 export async function setupCashRegister(app: App): Promise<string> {
   let cashRegisterId: string = '';

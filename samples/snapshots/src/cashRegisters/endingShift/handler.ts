@@ -1,14 +1,11 @@
-import { Command } from '#core/commands';
-import { Event } from '#core/events';
-import { failure, Result, success } from '#core/primitives';
+import type { Command } from '#core/commands';
+import type { Event } from '#core/events';
+import type { Result } from '#core/primitives';
+import { failure, success } from '#core/primitives';
 import { getCurrentTime } from '#core/primitives';
 import { aggregateStream } from '#core/streams';
-import {
-  CashRegister,
-  CashRegisterEvent,
-  isCashRegister,
-  when,
-} from '../cashRegister';
+import type { CashRegister, CashRegisterEvent } from '../cashRegister';
+import { isCashRegister, when } from '../cashRegister';
 
 export type ShiftNotStarted = 'SHIFT_NOT_STARTED';
 

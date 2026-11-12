@@ -1,11 +1,11 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
 import { removeProductItemFromShoppingCart } from './handler';
-import { RemoveProductItemFromShoppingCart } from '../shoppingCart';
+import type { RemoveProductItemFromShoppingCart } from '../shoppingCart';
 import { getShoppingCart, store } from '../storage';
-import { Collection } from 'mongodb';
-import { ShoppingCartModel } from '../storage/';
-import { EventBus } from '#core/events';
+import type { Collection } from 'mongodb';
+import type { ShoppingCartModel } from '../storage/';
+import type { EventBus } from '#core/events';
 
 export const removeProductItemFromShoppingCartRoute = (
   carts: Collection<ShoppingCartModel>,

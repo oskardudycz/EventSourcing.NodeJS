@@ -1,7 +1,7 @@
 version: '3'
 services:
   #######################################################
-  #  EventStoreDB - Event Store
+  #  KurrentDB - Event Store
   #######################################################
   mongo:
     image: mongo:6.0.12

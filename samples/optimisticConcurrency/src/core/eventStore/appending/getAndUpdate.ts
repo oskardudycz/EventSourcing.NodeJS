@@ -1,9 +1,10 @@
-import { Event, StreamEvent } from '../../events';
-import { Command } from '../../commands';
-import { readFromStream, STREAM_NOT_FOUND } from '../reading';
+import type { Event, StreamEvent } from '../../events';
+import type { Command } from '../../commands';
+import type { STREAM_NOT_FOUND } from '../reading';
+import { readFromStream } from '../reading';
 import { appendToStream } from '../appending';
-import { Result } from '../../primitives';
-import { AppendResult, FAILED_TO_APPEND_EVENT } from '.';
+import type { Result } from '../../primitives';
+import type { AppendResult, FAILED_TO_APPEND_EVENT } from '.';
 import { getEventStore } from '..';
 
 export async function getAndUpdate<
@@ -39,6 +40,6 @@ export async function getAndUpdate<
     : undefined;
 
   return appendToStream(eventStore, streamName, [newEvent], {
-    expectedRevision,
+    streamState: expectedRevision,
   });
 }

@@ -1,13 +1,12 @@
 import { getEventStore } from '#core/eventStore';
-import { CashierShiftEvent } from '../cashierShift';
-import { Result } from '#core/primitives';
-import {
-  add,
+import type { CashierShiftEvent } from '../cashierShift';
+import type { Result } from '#core/primitives';
+import type {
   AppendResult,
-  appendToStream,
   FAILED_TO_APPEND_EVENT,
 } from '#core/eventStore/appending';
-import { NO_STREAM } from '@eventstore/db-client';
+import { add, appendToStream } from '#core/eventStore/appending';
+import { NO_STREAM } from '@kurrent/kurrentdb-client';
 
 export async function addCashierShift<Command, TError = never>(
   streamName: string,
@@ -24,7 +23,7 @@ export async function addCashierShift<Command, TError = never>(
       _lastSnapshotVersion,
     ) =>
       appendToStream(eventStore, streamName, [newEvent], {
-        expectedRevision: NO_STREAM,
+        streamState: NO_STREAM,
       }),
     getEventStore(),
     streamName,

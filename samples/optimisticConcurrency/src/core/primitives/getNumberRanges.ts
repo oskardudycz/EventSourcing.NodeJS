@@ -15,9 +15,9 @@ export function getNumberRanges(
 ): Range[] {
   const difference = to - from;
 
-  if (to < 0 || from < 0 || difference < 0) throw WRONG_RANGE;
+  if (to < 0 || from < 0 || difference < 0) throw new Error(WRONG_RANGE);
 
-  if (chunkSize < 0) throw WRONG_CHUNK_SIZE;
+  if (chunkSize < 0) throw new Error(WRONG_CHUNK_SIZE);
 
   const chunkSizeBI = BigInt(chunkSize);
   let currentFrom = from;

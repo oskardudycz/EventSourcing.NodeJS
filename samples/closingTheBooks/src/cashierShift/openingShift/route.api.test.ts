@@ -1,29 +1,29 @@
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#testing/eventStoreDB/eventStoreDBContainer';
+import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
 import app from '../../app';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { setupInitiatedCashierShift } from '#testing/builders/byEvents/setupInitiatedCashierShift';
 import { toWeakETag } from '#core/http/requests';
+import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
 describe('POST /cash-registers/:cashRegisterId/shifts/current', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
-  let eventStore: EventStoreDBClient;
+  let kurrentDBContainer: StartedKurrentDBContainer;
+  let eventStore: KurrentDBClient;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
-    console.log(config.eventStoreDB.connectionString);
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
+    console.log(config.kurrentDB.connectionString);
 
-    eventStore = esdbContainer.getClient();
+    eventStore = kurrentDBContainer.getClient();
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   describe('For existing cash register', () => {

@@ -2,13 +2,12 @@
 /// Getting the state from events
 //////////////////////////////////////
 
-import {
-  EventStoreDBClient,
+import type {
   EventType,
   RecordedEvent,
   ResolvedEvent,
-  StreamingRead,
-} from '@eventstore/db-client';
+} from '@kurrent/kurrentdb-client';
+import { KurrentDBClient } from '@kurrent/kurrentdb-client';
 
 export type ApplyEvent<Entity, E extends EventType> = (
   currentState: Entity | undefined,
@@ -20,27 +19,27 @@ export const StreamAggregator =
     when: ApplyEvent<Entity, StreamEvents>,
   ) =>
   async (
-    eventStream: StreamingRead<ResolvedEvent<StreamEvents>>,
+    eventStream: AsyncIterableIterator<ResolvedEvent<StreamEvents>>,
   ): Promise<Entity> => {
     let currentState: Entity | undefined = undefined;
     for await (const { event } of eventStream) {
       if (!event) continue;
       currentState = when(currentState, event);
     }
-    if (currentState == null) throw 'oh no';
+    if (currentState == null) throw new Error('oh no');
     return currentState;
   };
 
 //////////////////////////////////////
-/// ESDB
+/// KurrentDB
 //////////////////////////////////////
 
-let eventStore: EventStoreDBClient;
+let eventStore: KurrentDBClient;
 
 export const getEventStore = (connectionString?: string) => {
   if (!eventStore) {
-    eventStore = EventStoreDBClient.connectionString(
-      connectionString ?? 'esdb://localhost:2113?tls=false',
+    eventStore = KurrentDBClient.connectionString(
+      connectionString ?? 'kurrentdb://localhost:2113?tls=false',
     );
   }
 

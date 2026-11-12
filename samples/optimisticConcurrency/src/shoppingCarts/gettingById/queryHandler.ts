@@ -1,8 +1,10 @@
-import { Query } from '#core/queries';
-import { failure, Result, success } from '#core/primitives';
+import type { Query } from '#core/queries';
+import type { Result } from '#core/primitives';
+import { failure, success } from '#core/primitives';
 import { getMongoCollection, retryIfNotFound } from '#core/mongoDB';
-import { SHIFT_DOES_NOT_EXIST } from '../shoppingCart';
-import { ShoppingCartDetails, SHOPPING_CART_DETAILS } from '.';
+import type { SHIFT_DOES_NOT_EXIST } from '../shoppingCart';
+import type { ShoppingCartDetails } from '.';
+import { SHOPPING_CART_DETAILS } from '.';
 
 export type GetShoppingCartDetails = Query<
   'get-shopping-cart-details',

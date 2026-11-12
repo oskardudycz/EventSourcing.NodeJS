@@ -8,15 +8,18 @@ import {
   retryIfNotUpdated,
   toObjectId,
 } from '../core/mongoDB';
-import { SubscriptionResolvedEvent } from '../core/subscriptions';
-import { ProductItem, addProductItem, removeProductItem } from './productItem';
-import {
-  isCashierShoppingCartEvent,
+import type { SubscriptionResolvedEvent } from '../core/subscriptions';
+import type { ProductItem } from './productItem';
+import { addProductItem, removeProductItem } from './productItem';
+import type {
   ProductItemAddedToShoppingCart,
   ProductItemRemovedFromShoppingCart,
   ShoppingCartConfirmed,
-  ShoppingCartErrors,
   ShoppingCartOpened,
+} from './shoppingCart';
+import {
+  isCashierShoppingCartEvent,
+  ShoppingCartErrors,
   ShoppingCartStatus,
 } from './shoppingCart';
 
@@ -56,7 +59,7 @@ export const projectToShoppingCartItem = (
       return projectShoppingCartConfirmed(event, streamRevision);
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
     }
   }
 };

@@ -1,4 +1,5 @@
-import express, { Application } from 'express';
+import type { Application } from 'express';
+import express from 'express';
 import { shoppingCartRouter } from './shoppingCarts';
 import { handleErrors } from '#core/http/middlewares';
 

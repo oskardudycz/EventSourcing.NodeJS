@@ -1,18 +1,9 @@
-import { Command } from '#core/command';
-import { Event } from '#core/event';
-import {
-  Workflow,
-  WorkflowEvent,
-  WorkflowOutput,
-  accept,
-  complete,
-  error,
-  ignore,
-  publish,
-  send,
-} from '#core/workflow';
+import type { Command } from '#core/command';
+import type { Event } from '#core/event';
+import type { Workflow, WorkflowEvent, WorkflowOutput } from '#core/workflow';
+import { accept, complete, error, ignore, publish, send } from '#core/workflow';
 import { Map } from 'immutable';
-import {
+import type {
   CheckOut,
   GuestCheckedOut,
   GuestCheckoutFailed,

@@ -6,9 +6,9 @@ Event Sourcing is perceived as a complex pattern. Some believe that it's like Ne
 
 The workshop aims to build the knowledge of the general concept and its related patterns for the participants. The acquired knowledge will allow for the conscious design of architectural solutions and the analysis of associated risks.
 
-The emphasis will be on a pragmatic understanding of architectures and applying it in practice using EventStoreDB.
+The emphasis will be on a pragmatic understanding of architectures and applying it in practice using KurrentDB.
 
-You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like EventStoreDB.
+You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like KurrentDB.
 
 **If you'd like to get full coverage with all nuances of the private workshop, check [training page on my blog for more details](https://event-driven.io/en/training/) feel free to contact me via [email](mailto:oskar@event-driven.io).**
 
@@ -21,18 +21,18 @@ Follow the instructions in exercises folders.
 1. [Events definition](./src/01_events_definition/).
 2. [Getting State from events](./src/02_getting_state_from_events/).
 3. Appending Events:
-   - [Raw EventStoreDB](./src/03_appending_events_eventstoredb/)
-   - [Emmett with various storages (PostgreSQL, EventStoreDB, MongoDB)](./src/04_appending_events_emmett/)
+   - [Raw KurrentDB](./src/03_appending_events_kurrentdb/)
+   - [Emmett with various storages (PostgreSQL, KurrentDB, MongoDB)](./src/04_appending_events_emmett/)
 4. Getting State from events
-   - [Raw EventStoreDB](./src/05_getting_state_from_events_eventstoredb/)
-   - [Emmett with various storages (PostgreSQL, EventStoreDB, MongoDB)](./src/06_getting_state_from_events_emmett/)
+   - [Raw KurrentDB](./src/05_getting_state_from_events_kurrentdb/)
+   - [Emmett with various storages (PostgreSQL, KurrentDB, MongoDB)](./src/06_getting_state_from_events_emmett/)
 5. Business Logic:
    - [Writing](./src/07_business_logic/)
    - [Testing](./src/08_business_logic/)
 6. Application logic:
-   - [EventStoreDB](./src/09_application_logic_eventstoredb/)
+   - [KurrentDB](./src/09_application_logic_kurrentdb/)
 7. Optimistic Concurrency:
-   - [EventStoreDB](./src/10_optimistic_concurrency_eventstoredb/)
+   - [KurrentDB](./src/10_optimistic_concurrency_kurrentdb/)
 8. Projections:
    - [General](./src/11_projections_single_stream/)
    - [Idempotency](./src/12_projections_single_stream_idempotency/)
@@ -55,15 +55,15 @@ Follow the instructions in exercises folders.
 
 ## Ensuring that all is setup correctly
 
-1. Make sure Docker is running. Tests start EventStoreDB, PostgreSQL and MongoDB containers on their own through Testcontainers.
+1. Make sure Docker is running. Tests start KurrentDB, PostgreSQL and MongoDB containers on their own through Testcontainers.
 
 2. Run `npm run test:solved`. If all is fine then all tests should be green.
 
 ## Running
 
-1. Run: `docker compose up` to start EventStoreDB docker image.You should automatically get:
+1. Run: `docker compose up` to start KurrentDB Docker image.You should automatically get:
 
-- EventStoreDB UI: http://localhost:2113/
+- KurrentDB UI: http://localhost:2113/
 - Mongo Express UI: http://localhost:8081/
   - UI Credentials: login: `admin`, password: `pass`
 - PgAdmin: http://localhost:5050/

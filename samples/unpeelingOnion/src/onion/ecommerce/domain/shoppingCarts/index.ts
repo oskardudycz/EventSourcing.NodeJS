@@ -1,5 +1,5 @@
 import { Aggregate } from '#core/aggregates';
-import { ProductItem } from '../../common/shoppingCarts/productItem';
+import type { ProductItem } from '../../common/shoppingCarts/productItem';
 import { ProductItemAddedToShoppingCart } from './events/productItemAddedToShoppingCart';
 import { ProductItemRemovedFromShoppingCart } from './events/productItemRemovedFromShoppingCart';
 import { ShoppingCartConfirmed } from './events/shoppingCartConfirmed';

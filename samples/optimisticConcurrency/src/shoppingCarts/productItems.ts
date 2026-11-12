@@ -38,7 +38,7 @@ export function removeProductItem(
 
   const newQuantity = (currentProductItem?.quantity ?? 0) - quantity;
 
-  if (newQuantity < 0) throw 'PRODUCT_ITEM_NOT_FOUND';
+  if (newQuantity < 0) throw new Error('PRODUCT_ITEM_NOT_FOUND');
 
   if (newQuantity === 0)
     return productItems.filter((pi) => pi.productId !== productId);

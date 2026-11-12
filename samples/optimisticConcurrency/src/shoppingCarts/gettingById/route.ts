@@ -1,7 +1,9 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { isQuery } from '#core/queries';
-import { isNotEmptyString, ValidationError } from '#core/validation';
-import { GetShoppingCartDetails, getShoppingCartDetails } from './queryHandler';
+import type { ValidationError } from '#core/validation';
+import { isNotEmptyString } from '#core/validation';
+import type { GetShoppingCartDetails } from './queryHandler';
+import { getShoppingCartDetails } from './queryHandler';
 import { toWeakETag } from '#core/http/requests';
 import { assertUnreachable } from '#core/primitives';
 

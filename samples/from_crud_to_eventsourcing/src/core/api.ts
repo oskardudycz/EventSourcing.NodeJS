@@ -1,4 +1,5 @@
-import express, { Application, Router } from 'express';
+import type { Application, Router } from 'express';
+import express from 'express';
 import http from 'http';
 
 export const getApplication = (router: Router) => {

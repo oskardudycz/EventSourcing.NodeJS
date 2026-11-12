@@ -1,29 +1,27 @@
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import { Subscription } from '#core/eventStore/subscribing';
+import type { Subscription } from '#core/eventStore/subscribing';
 import { setupCashRegister } from '#testing/builders/setupCashRegister';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#testing/eventStoreDB/eventStoreDBContainer';
-import {
-  MongoDBContainer,
-  StartedMongoDBContainer,
-} from '@testcontainers/mongodb';
+import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import type { StartedMongoDBContainer } from '@testcontainers/mongodb';
+import { MongoDBContainer } from '@testcontainers/mongodb';
 import { retry } from '#testing/retries';
 import app from '../app';
 import { getSubscription } from '../getSubscription';
 import { toWeakETag } from '#core/http/requests';
+import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
 describe('Full flow', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
+  let kurrentDBContainer: StartedKurrentDBContainer;
   let mongodbContainer: StartedMongoDBContainer;
   let subscription: Subscription;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
 
     mongodbContainer = await new MongoDBContainer('mongo:6.0.12').start();
     config.mongoDB.connectionString = mongodbContainer.getConnectionString();
@@ -42,7 +40,7 @@ describe('Full flow', () => {
 
   afterAll(async () => {
     await subscription.unsubscribe();
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
     await mongodbContainer.stop();
   });
 

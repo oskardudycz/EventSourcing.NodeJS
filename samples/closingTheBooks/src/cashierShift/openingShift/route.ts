@@ -1,20 +1,31 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
+import type { ParamsDictionary } from 'express-serve-static-core';
 import { isCommand } from '#core/commands';
-import { OpenShift, handleOpenShift } from './handler';
+import type { OpenShift } from './handler';
+import { handleOpenShift } from './handler';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
-import {
-  getWeakETagFromIfMatch,
+import type {
   MISSING_IF_MATCH_HEADER,
-  toWeakETag,
   WRONG_WEAK_ETAG_FORMAT,
 } from '#core/http/requests';
+import { getWeakETagFromIfMatch, toWeakETag } from '#core/http/requests';
 import { updateCashierShift } from '../processCashierShift';
+
+type OpenShiftRequest = Request<
+  ParamsDictionary,
+  unknown,
+  Partial<{ cashierId: unknown; float: unknown }>
+>;
 
 export const route = (router: Router) =>
   router.post(
     '/cash-registers/:cashRegisterId/shifts/current',
-    async function (request: Request, response: Response, next: NextFunction) {
+    async function (
+      request: OpenShiftRequest,
+      response: Response,
+      next: NextFunction,
+    ) {
       try {
         const command = mapRequestToCommand(request);
 
@@ -55,7 +66,7 @@ export const route = (router: Router) =>
   );
 
 function mapRequestToCommand(
-  request: Request,
+  request: OpenShiftRequest,
 ):
   | OpenShift
   | 'MISSING_CASH_REGISTER_ID'

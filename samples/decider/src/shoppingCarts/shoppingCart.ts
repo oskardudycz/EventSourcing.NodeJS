@@ -2,15 +2,14 @@
 /// Shopping Carts
 //////////////////////////////////////
 
+import type { PricedProductItem, ProductItems } from './productItem';
 import {
   addProductItem,
   assertProductItemExists,
-  PricedProductItem,
-  ProductItems,
   removeProductItem,
 } from './productItem';
 import { Map } from 'immutable';
-import { Decider } from '#core/decider';
+import type { Decider } from '#core/decider';
 
 //////////////////////////////////////
 /// Events
@@ -172,7 +171,7 @@ const decide = (
   switch (type) {
     case 'OpenShoppingCart': {
       if (shoppingCart.status != 'Empty') {
-        throw ShoppingCartErrors.CART_ALREADY_EXISTS;
+        throw new Error(ShoppingCartErrors.CART_ALREADY_EXISTS);
       }
       return {
         type: 'ShoppingCartOpened',
@@ -186,7 +185,7 @@ const decide = (
 
     case 'AddProductItemToShoppingCart': {
       if (shoppingCart.status !== 'Pending') {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
       return {
         type: 'ProductItemAddedToShoppingCart',
@@ -199,7 +198,7 @@ const decide = (
 
     case 'RemoveProductItemFromShoppingCart': {
       if (shoppingCart.status !== 'Pending') {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       assertProductItemExists(shoppingCart.productItems, command.productItem);
@@ -215,7 +214,7 @@ const decide = (
 
     case 'ConfirmShoppingCart': {
       if (shoppingCart.status !== 'Pending') {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       return {
@@ -229,7 +228,7 @@ const decide = (
 
     case 'CancelShoppingCart': {
       if (shoppingCart.status !== 'Pending') {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       return {
@@ -242,7 +241,7 @@ const decide = (
     }
     default: {
       const _: never = command;
-      throw ShoppingCartErrors.UNKNOWN_COMMAND_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_COMMAND_TYPE);
     }
   }
 };

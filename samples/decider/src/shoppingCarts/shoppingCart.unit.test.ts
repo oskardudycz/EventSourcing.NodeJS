@@ -1,6 +1,7 @@
 import { CommandHandlerSpecification } from '#testing/unit/specification';
 import { ShoppingCartErrors, decider } from './shoppingCart';
 import { v4 as uuid } from 'uuid';
+import { describe, it } from 'vitest';
 
 describe('ShoppingCart', () => {
   describe('When not initialised', () => {
@@ -46,7 +47,9 @@ describe('ShoppingCart', () => {
           },
         })
         .thenThrows(
-          (error: unknown) => error === ShoppingCartErrors.CART_ALREADY_EXISTS,
+          (error: unknown) =>
+            error instanceof Error &&
+            error.message === String(ShoppingCartErrors.CART_ALREADY_EXISTS),
         );
     });
   });

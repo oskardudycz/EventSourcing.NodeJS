@@ -1,5 +1,5 @@
 import tables from '@databases/pg-typed';
-import DatabaseSchema from './__generated__';
+import type DatabaseSchema from './__generated__';
 import databaseSchema from './__generated__/schema.json';
 
 const {

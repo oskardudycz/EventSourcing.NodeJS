@@ -1,17 +1,18 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { Event } from '../../../events';
-import {
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { Event } from '../../../events';
+import type {
   FAILED_TO_APPEND_SNAPSHOT,
-  ignoreSnapshotSkipped,
   SnapshotEvent,
   SNAPSHOT_CREATION_SKIPPED,
 } from '..';
-import {
+import { ignoreSnapshotSkipped } from '..';
+import type {
   AppendResult,
-  appendToStream,
   FAILED_TO_APPEND_EVENT,
 } from '../../appending/appendToStream';
-import { Result, success } from '../../../primitives';
+import { appendToStream } from '../../appending/appendToStream';
+import type { Result } from '../../../primitives';
+import { success } from '../../../primitives';
 import { pipeResultAsync } from '../../../primitives/pipe';
 
 export async function appendEventAndExternalSnapshot<
@@ -30,7 +31,7 @@ export async function appendEventAndExternalSnapshot<
     lastSnapshotVersion: bigint | undefined;
     streamName: string;
   }) => Result<SnapshotStreamEvent, SNAPSHOT_CREATION_SKIPPED>,
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   currentEvents: StreamEvent[],
   lastSnapshotVersion: bigint | undefined,
@@ -41,18 +42,20 @@ export async function appendEventAndExternalSnapshot<
   return ignoreSnapshotSkipped(
     await pipeResultAsync(
       () => appendToStream(eventStore, streamName, [event]),
-      async ({ nextExpectedRevision: currentStreamVersion }) =>
-        tryBuildSnapshot({
-          currentEvents,
-          currentStreamVersion,
-          lastSnapshotVersion,
-          streamName,
-          newEvent: event,
-        }),
+      ({ nextExpectedRevision: currentStreamVersion }) =>
+        Promise.resolve(
+          tryBuildSnapshot({
+            currentEvents,
+            currentStreamVersion,
+            lastSnapshotVersion,
+            streamName,
+            newEvent: event,
+          }),
+        ),
       async (snapshot) => {
         return appendSnapshot(snapshot, streamName, lastSnapshotVersion);
       },
-      async (_) => success(true),
+      () => Promise.resolve(success(true)),
     )(),
   );
 }

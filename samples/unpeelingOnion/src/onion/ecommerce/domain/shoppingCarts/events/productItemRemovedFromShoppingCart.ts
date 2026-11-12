@@ -1,5 +1,5 @@
 import { Event } from '#core/events';
-import { ProductItem } from '../../../common/shoppingCarts/productItem';
+import type { ProductItem } from '../../../common/shoppingCarts/productItem';
 
 export class ProductItemRemovedFromShoppingCart extends Event {
   constructor(

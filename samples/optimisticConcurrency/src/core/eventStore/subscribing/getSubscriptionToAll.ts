@@ -1,21 +1,21 @@
-import {
+import type {
   AllStreamResolvedEvent,
   AllStreamSubscription,
-  EventStoreDBClient,
-  excludeSystemEvents,
+  KurrentDBClient,
   Position,
-  START,
-} from '@eventstore/db-client';
-import { SubscribeToAllOptions } from '@eventstore/db-client/dist/streams';
-import { ReadableOptions } from 'stream';
+} from '@kurrent/kurrentdb-client';
+import { excludeSystemEvents, START } from '@kurrent/kurrentdb-client';
+import type { SubscribeToAllOptions } from '@kurrent/kurrentdb-client';
+import type { ReadableOptions } from 'stream';
 import { v4 as uuid } from 'uuid';
-import { Event, StreamEvent } from '../../events';
-import { Result, success } from '../../primitives';
-import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
+import type { Event, StreamEvent } from '../../events';
+import type { Result } from '../../primitives';
+import { success } from '../../primitives';
+import type { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 import { Subscription } from './subscription';
 
 export function getSubscriptionToAll<TError = never>(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   loadCheckpoint: (
     subscriptionId: string,
   ) => Promise<Result<Position | undefined>>,

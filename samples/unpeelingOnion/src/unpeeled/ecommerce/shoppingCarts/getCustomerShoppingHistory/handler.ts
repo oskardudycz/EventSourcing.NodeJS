@@ -1,5 +1,5 @@
-import { Collection } from 'mongodb';
-import { ShoppingCartModel } from '../storage/';
+import type { Collection } from 'mongodb';
+import type { ShoppingCartModel } from '../storage/';
 
 export const findAllByCustomerId = async (
   carts: Collection<ShoppingCartModel>,

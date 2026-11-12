@@ -1,32 +1,29 @@
-import { Event } from '#core/event';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#core/testing/eventStoreDB/eventStoreDBContainer';
-import {
+import type { Event } from '#core/event';
+import type { StartedKurrentDBContainer } from '#core/testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#core/testing/kurrentDB/kurrentDBContainer';
+import type {
   EventData,
   EventTypeToRecordedEvent,
-  jsonEvent,
-} from '@eventstore/db-client';
+} from '@kurrent/kurrentdb-client';
+import { jsonEvent } from '@kurrent/kurrentdb-client';
 import { v4 as uuid } from 'uuid';
-import { EventStore, getEventStore } from '../core/eventStoreDB';
-import { ShoppingCartOpened as ShoppingCartOpenedV1 } from '../events/events.v1';
-import {
+import type { EventStore } from '../core/kurrentDB';
+import { getEventStore } from '../core/kurrentDB';
+import type { ShoppingCartOpened as ShoppingCartOpenedV1 } from '../events/events.v1';
+import type {
   ShoppingCart,
   ShoppingCartEvent,
   ShoppingCartOpened,
   ShoppingCartOpenedWithStatus,
-  ShoppingCartStatus,
-  evolve,
 } from './shoppingCart';
+import { ShoppingCartStatus, evolve } from './shoppingCart';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 export type ShoppingCartOpenedObsoleteVersions =
-  | ShoppingCartOpenedV1
-  | ShoppingCartOpened;
+  ShoppingCartOpenedV1 | ShoppingCartOpened;
 
 export type ShoppingCartPayload =
-  | ShoppingCartOpenedObsoleteVersions
-  | ShoppingCartEvent;
+  ShoppingCartOpenedObsoleteVersions | ShoppingCartEvent;
 
 export type ShoppingCartOpenedAllCompatible = Omit<
   ShoppingCartOpenedV1,
@@ -149,13 +146,11 @@ const getShoppingCart = (
 };
 
 describe('Multiple transformations with different event types', () => {
-  jest.setTimeout(180_000);
-
-  let container: StartedEventStoreDBContainer;
+  let container: StartedKurrentDBContainer;
   let eventStore: EventStore;
 
   beforeAll(async () => {
-    container = await new EventStoreDBContainer().start();
+    container = await new KurrentDBContainer().start();
     const client = container.getClient();
     eventStore = getEventStore(client);
   });

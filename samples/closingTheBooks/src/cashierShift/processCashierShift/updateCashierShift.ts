@@ -1,16 +1,17 @@
 import { getEventStore } from '#core/eventStore';
-import { readFromStream, STREAM_NOT_FOUND } from '#core/eventStore/reading';
-import { Result, success } from '#core/primitives';
-import {
+import type { STREAM_NOT_FOUND } from '#core/eventStore/reading';
+import { readFromStream } from '#core/eventStore/reading';
+import type { Result } from '#core/primitives';
+import { success } from '#core/primitives';
+import type {
   AppendResult,
-  appendToStream,
   FAILED_TO_APPEND_EVENT,
-  getAndUpdate,
 } from '#core/eventStore/appending';
-import { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
-import { StreamEvent } from '#core/events';
-import { Command } from '#core/commands';
-import { CashierShiftEvent } from '../cashierShift';
+import { appendToStream, getAndUpdate } from '#core/eventStore/appending';
+import type { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
+import type { StreamEvent } from '#core/events';
+import type { Command } from '#core/commands';
+import type { CashierShiftEvent } from '../cashierShift';
 
 export async function updateCashierShift<
   TCommand extends Command,
@@ -55,7 +56,7 @@ export async function updateCashierShift<
         : undefined;
 
       return appendToStream(eventStore, streamName, [newEvent], {
-        expectedRevision,
+        streamState: expectedRevision,
       });
     },
     getEventStore(),

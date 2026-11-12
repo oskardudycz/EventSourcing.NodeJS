@@ -1,4 +1,5 @@
 import { getGreeting } from './getGreeting';
+import { describe, expect, it } from 'vitest';
 
 describe('getGreeting', () => {
   it('should return greeting "Hello World!"', () => {

@@ -8,10 +8,12 @@ import {
   assertStringOrUndefined,
 } from '#core/validation';
 import { anyOf, not } from '@databases/pg-typed';
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { Router } from 'express';
 import { cartItems, carts } from '../db';
-import { Cart_InsertParameters } from '../db/__generated__';
-import { CartDetails, ShoppingCartStatus } from './shoppingCart';
+import type { Cart_InsertParameters } from '../db/__generated__';
+import type { CartDetails } from './shoppingCart';
+import { ShoppingCartStatus } from './shoppingCart';
 
 //////////////////////////////////////
 /// Routes
@@ -122,7 +124,7 @@ router.post(
 const getShoppingCartFromRequest = (request: CartUpsertRequest): CartUpsert => {
   const id =
     'id' in request.body
-      ? assertPositiveNumberOrUndefined(request.body.id) ?? {}
+      ? (assertPositiveNumberOrUndefined(request.body.id) ?? {})
       : {};
 
   return {
