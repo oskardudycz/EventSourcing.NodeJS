@@ -1,9 +1,10 @@
 import { isCashRegisterEvent } from '../cashRegister';
-import { Result, success } from '#core/primitives';
+import type { Result } from '#core/primitives';
+import { success } from '#core/primitives';
 import { buildSnapshot, shouldDoSnapshot } from '../snapshot';
-import { STREAM_NOT_FOUND } from '#core/eventStore/reading';
-import { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
-import { Event } from '#core/events';
+import type { STREAM_NOT_FOUND } from '#core/eventStore/reading';
+import type { FAILED_TO_APPEND_SNAPSHOT } from '#core/eventStore/snapshotting';
+import type { Event } from '#core/events';
 import { snapshotOnSubscriptionToStreamWithPrefix } from '#core/eventStore/snapshotting/subscribing';
 
 export async function storeCashRegisterSnapshotOnSubscription(

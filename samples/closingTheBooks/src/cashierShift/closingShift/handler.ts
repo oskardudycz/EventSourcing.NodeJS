@@ -1,14 +1,17 @@
-import { Command } from '#core/commands';
-import { Event, StreamEvent } from '#core/events';
-import { failure, Result, success } from '#core/primitives';
+import type { Command } from '#core/commands';
+import type { Event, StreamEvent } from '#core/events';
+import type { Result } from '#core/primitives';
+import { failure, success } from '#core/primitives';
 import { getCurrentTime } from '#core/primitives';
-import {
+import type {
   CashierShiftEvent,
+  SHIFT_ALREADY_CLOSED,
+  SHIFT_NOT_OPENED,
+} from '../cashierShift';
+import {
   CashierShiftStatus,
   getCashierShiftFrom,
   isCashierShift,
-  SHIFT_ALREADY_CLOSED,
-  SHIFT_NOT_OPENED,
 } from '../cashierShift';
 
 export type CloseShift = Command<

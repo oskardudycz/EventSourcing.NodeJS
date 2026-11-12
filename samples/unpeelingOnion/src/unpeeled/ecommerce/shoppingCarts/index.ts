@@ -1,14 +1,14 @@
-import { EventBus } from '#core/events';
+import type { EventBus } from '#core/events';
 import { getCollection } from '#core/mongo';
 import { Router } from 'express';
-import { MongoClient } from 'mongodb';
+import type { MongoClient } from 'mongodb';
 import { addProductItemToShoppingCartRoute } from './addProductItem/route';
 import { confirmShoppingCartRoute } from './confirm/route';
 import { getShoppingCartByIdRoute } from './getById/route';
 import { getCustomerShoppingHistoryRoute } from './getCustomerShoppingHistory/route';
 import { openShoppingCartRoute } from './open/route';
 import { removeProductItemFromShoppingCartRoute } from './removeProductItem/route';
-import { ShoppingCartModel } from './storage/';
+import type { ShoppingCartModel } from './storage/';
 
 export const configureShoppingCartsModule = (
   mongo: MongoClient,

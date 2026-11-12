@@ -1,15 +1,16 @@
 //////////////////////////////////////
-/// ESDB
+/// KurrentDB
 //////////////////////////////////////
 
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { Command, Decider, Event } from './decider';
-import { ETag } from './eTag';
-import { AppendResult, appendToStream, readStream } from './streams';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { Command, Decider, Event } from './decider';
+import type { ETag } from './eTag';
+import type { AppendResult } from './streams';
+import { appendToStream, readStream } from './streams';
 
 export const CommandHandler =
   <State, CommandType extends Command, EventType extends Event>(
-    getEventStore: () => EventStoreDBClient,
+    getEventStore: () => KurrentDBClient,
     toStreamId: (recordId: string) => string,
     decider: Decider<State, CommandType, EventType>,
   ) =>

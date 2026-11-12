@@ -1,17 +1,18 @@
-import { ErrorType, EventStoreDBClient } from '@eventstore/db-client';
-import { ReadStreamOptions } from '@eventstore/db-client/dist/streams';
-import { STREAM_NOT_FOUND } from '.';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import { StreamNotFoundError } from '@kurrent/kurrentdb-client';
+import type { ReadStreamOptions } from '@kurrent/kurrentdb-client';
+import type { STREAM_NOT_FOUND } from '.';
 
-import { Event, StreamEvent } from '../../events';
-import { failure, Result, success } from '../../primitives';
-import { isErrorWithType } from '../errors';
+import type { Event, StreamEvent } from '../../events';
+import type { Result } from '../../primitives';
+import { failure, success } from '../../primitives';
 
 export type ReadFromStreamOptions = {
   toPosition?: bigint;
 } & ReadStreamOptions;
 
 export async function readFromStream<StreamEventType extends Event>(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   options?: ReadFromStreamOptions,
 ): Promise<Result<StreamEvent<StreamEventType>[], STREAM_NOT_FOUND>> {
@@ -45,7 +46,7 @@ export async function readFromStream<StreamEventType extends Event>(
 
     return success(events);
   } catch (error) {
-    if (isErrorWithType(error) && error.type == ErrorType.STREAM_NOT_FOUND) {
+    if (error instanceof StreamNotFoundError) {
       return failure('STREAM_NOT_FOUND');
     }
 

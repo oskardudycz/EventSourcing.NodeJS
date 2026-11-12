@@ -5,7 +5,7 @@ export async function resubscribeOnError<T>(
 ): Promise<T> {
   try {
     return await subscribe();
-  } catch (error) {
+  } catch {
     return await resubscribe(subscribe);
   }
 }

@@ -1,8 +1,9 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { assertNotEmptyString } from '#core/validation';
-import { Collection } from 'mongodb';
-import { ShoppingCartModel } from '../storage/';
-import { findAllByCustomerId, GetCustomerShoppingHistory } from './handler';
+import type { Collection } from 'mongodb';
+import type { ShoppingCartModel } from '../storage/';
+import type { GetCustomerShoppingHistory } from './handler';
+import { findAllByCustomerId } from './handler';
 
 export const getCustomerShoppingHistoryRoute = (
   carts: Collection<ShoppingCartModel>,

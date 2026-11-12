@@ -1,6 +1,7 @@
-import { Command } from '#core/commands';
-import { getCurrentTime, Result, success } from '#core/primitives';
-import { ShoppingCartOpened } from '..';
+import type { Command } from '#core/commands';
+import type { Result } from '#core/primitives';
+import { getCurrentTime, success } from '#core/primitives';
+import type { ShoppingCartOpened } from '..';
 
 export type OpenShoppingCart = Command<
   'open-shopping-cart',

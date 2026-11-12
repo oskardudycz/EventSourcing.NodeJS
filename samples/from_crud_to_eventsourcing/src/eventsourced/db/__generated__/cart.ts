@@ -5,7 +5,6 @@
  * Checksum: 0OvlfSgZv11FyArXCyvsrCfcTiNTab41CoKglaL91AoeZobHl7RDyPfBgT8GuXHzQNQ0OmILNrSrUISfTtoTHw==
  */
 
-/* eslint-disable */
 // tslint:disable
 
 interface Cart {
@@ -61,7 +60,7 @@ interface Cart {
   updatedAt: Date | null;
   userId: number | null;
 }
-export default Cart;
+export type { Cart as default };
 
 interface Cart_InsertParameters {
   /**

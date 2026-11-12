@@ -3,26 +3,27 @@
 //////////////////////////////////////
 
 import {
-  EventStoreDBClient,
+  KurrentDBClient,
   jsonEvent,
   NO_STREAM,
   StreamNotFoundError,
   WrongExpectedVersionError,
-} from '@eventstore/db-client';
-import { Event } from './decider';
-import { ETag, getWeakETagValue, toWeakETag } from './eTag';
+} from '@kurrent/kurrentdb-client';
+import type { Event } from './decider';
+import type { ETag } from './eTag';
+import { getWeakETagValue, toWeakETag } from './eTag';
 import { assertBigInt } from './validation';
 
 //////////////////////////////////////
-/// ESDB
+/// KurrentDB
 //////////////////////////////////////
 
-let eventStore: EventStoreDBClient;
+let eventStore: KurrentDBClient;
 
 export const getEventStore = (connectionString?: string) => {
   if (!eventStore) {
-    eventStore = EventStoreDBClient.connectionString(
-      connectionString ?? 'esdb://localhost:2113?tls=false',
+    eventStore = KurrentDBClient.connectionString(
+      connectionString ?? 'kurrentdb://localhost:2113?tls=false',
     );
   }
 
@@ -30,10 +31,10 @@ export const getEventStore = (connectionString?: string) => {
 };
 
 export const readStream = async <EventType extends Event>(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamId: string,
 ): Promise<EventType[]> => {
-  const events = [];
+  const events: EventType[] = [];
   try {
     for await (const { event } of eventStore.readStream<EventType>(streamId)) {
       if (!event) continue;
@@ -61,7 +62,7 @@ export type AppendResult =
   | { expected: ETag; actual: ETag; successful: false };
 
 export const appendToStream = async (
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamId: string,
   eTag: ETag | undefined,
   ...events: Event[]
@@ -71,7 +72,7 @@ export const appendToStream = async (
       streamId,
       events.map(jsonEvent),
       {
-        expectedRevision: eTag ? getExpectedRevisionFromETag(eTag) : NO_STREAM,
+        streamState: eTag ? getExpectedRevisionFromETag(eTag) : NO_STREAM,
       },
     );
 
@@ -83,8 +84,8 @@ export const appendToStream = async (
     if (error instanceof WrongExpectedVersionError) {
       return {
         successful: false,
-        expected: toWeakETag(error.expectedVersion),
-        actual: toWeakETag(error.actualVersion),
+        expected: toWeakETag(error.expectedState),
+        actual: toWeakETag(error.actualState),
       };
     }
     throw error;

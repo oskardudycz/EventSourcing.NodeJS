@@ -1,10 +1,10 @@
-import { ShiftOpened } from './openingShift';
-import { TransactionRegistered } from './registeringTransaction';
-import { ShiftClosed } from './closingShift';
+import type { ShiftOpened } from './openingShift';
+import type { TransactionRegistered } from './registeringTransaction';
+import type { ShiftClosed } from './closingShift';
 import { aggregateStream } from '#core/streams';
 import { isNotEmptyString, isPositiveNumber } from '#core/validation';
-import { CashRegisterShiftInitialized } from './initalizeCashRegisterShift/handler';
-import { StreamEvent } from '#core/events';
+import type { CashRegisterShiftInitialized } from './initalizeCashRegisterShift/handler';
+import type { StreamEvent } from '#core/events';
 
 /**
  * System used to key in purchases; also makes mathematical calculations and records payments
@@ -93,7 +93,7 @@ export function when(
         startedAt: event.data.startedAt,
         revision: streamRevision,
       };
-    case 'transaction-registered':
+    case 'transaction-registered': {
       const currentFloat = isCashierShift(currentState)
         ? currentState.float
         : 0;
@@ -102,6 +102,7 @@ export function when(
         float: currentFloat + event.data.amount,
         revision: streamRevision,
       };
+    }
     case 'shift-closed':
       return {
         ...currentState,
@@ -131,7 +132,7 @@ export function isCashierShift(
     isNotEmptyString(cashierShift.cashierId) &&
     isNotEmptyString(cashierShift.cashRegisterId) &&
     isNotEmptyString(cashierShift.status) &&
-    Object.values(CashierShiftStatus).includes(cashierShift.status!)
+    Object.values(CashierShiftStatus).includes(cashierShift.status)
   );
 }
 
@@ -146,7 +147,9 @@ export function isInitiatedCashierShift(
   );
 }
 
-export function isCashierShiftEvent(event: any): event is CashierShiftEvent {
+export function isCashierShiftEvent(event: {
+  type: string;
+}): event is CashierShiftEvent {
   switch (event.type) {
     case 'shift-started':
     case 'transaction-registered':

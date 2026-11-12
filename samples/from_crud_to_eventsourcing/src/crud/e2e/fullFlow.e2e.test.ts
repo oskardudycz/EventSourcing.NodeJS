@@ -2,18 +2,18 @@ import { config } from '#config';
 import { getApplication } from '#core/api';
 import { disconnectFromPostgres, runPostgresMigration } from '#core/postgres';
 import { greaterOrEqual } from '#core/validation';
-import { Application } from 'express';
+import type { Application } from 'express';
 import request from 'supertest';
-import {
-  PostgreSqlContainer,
-  StartedPostgreSqlContainer,
-} from '@testcontainers/postgresql';
+import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { v4 as uuid } from 'uuid';
 import { router } from '../shoppingCarts/routes';
-import { CartDetails, ShoppingCartStatus } from '../shoppingCarts/shoppingCart';
+import type { CartDetails } from '../shoppingCarts/shoppingCart';
+import { ShoppingCartStatus } from '../shoppingCarts/shoppingCart';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('Full flow', () => {
-  // let esdbContainer: StartedEventStoreDBContainer;
+  // let kurrentDBContainer: StartedKurrentDBContainer;
   let postgresContainer: StartedPostgreSqlContainer;
   const sessionId = uuid();
   let app: Application;
@@ -21,10 +21,12 @@ describe('Full flow', () => {
   beforeAll(async () => {
     app = getApplication(router);
 
-    // esdbContainer = await new EventStoreDBContainer().start();
-    // config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    // kurrentDBContainer = await new KurrentDBContainer().start();
+    // config.kurrentDB.connectionString = kurrentDBContainer.getConnectionString();
 
-    postgresContainer = await new PostgreSqlContainer().start();
+    postgresContainer = await new PostgreSqlContainer(
+      'postgres:15.1-alpine',
+    ).start();
     config.postgres.connectionString = `postgres://${postgresContainer.getUsername()}:${postgresContainer.getPassword()}@localhost:${postgresContainer.getPort()}/${postgresContainer.getDatabase()}`;
     config.postgres.schemaName = 'ecommerce';
     console.log(config.postgres.connectionString);

@@ -1,5 +1,6 @@
-import { EventStoreDBClient, jsonEvent } from '@eventstore/db-client';
+import { KurrentDBClient, jsonEvent } from '@kurrent/kurrentdb-client';
 import { v4 as uuid } from 'uuid';
+import { describe, expect, it } from 'vitest';
 
 async function delay(ms: number) {
   await new Promise<void>((resolve) => setTimeout(() => resolve(), ms));
@@ -7,8 +8,8 @@ async function delay(ms: number) {
 
 describe('cashier', () => {
   it.skip('should store snapshot in the same process', async () => {
-    const client = EventStoreDBClient.connectionString(
-      'esdb://127.0.0.1:2113?tls=false&throwOnAppendFailure=false',
+    const client = KurrentDBClient.connectionString(
+      'kurrentdb://127.0.0.1:2113?tls=false&throwOnAppendFailure=false',
     );
 
     const number = '1007';
@@ -43,11 +44,11 @@ describe('cashier', () => {
       },
     });
 
-    let result = await client.appendToStream(orderId, [orderPlaced]);
+    await client.appendToStream(orderId, [orderPlaced]);
     await delay(100);
-    result = await client.appendToStream(orderId, [paymentMade]);
+    await client.appendToStream(orderId, [paymentMade]);
     await delay(100);
-    result = await client.appendToStream(orderId, [orderCompleted]);
+    const result = await client.appendToStream(orderId, [orderCompleted]);
 
     expect(result.success).toBeTruthy();
 

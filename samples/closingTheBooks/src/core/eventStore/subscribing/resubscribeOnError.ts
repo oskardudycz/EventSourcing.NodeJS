@@ -5,7 +5,7 @@ export async function resubscribeOnError<T>(
 ): Promise<T> {
   try {
     return await subscribe();
-  } catch (error) {
+  } catch {
     return await resubscribe(subscribe);
   }
 }
@@ -20,9 +20,8 @@ async function resubscribe<T>(subscribe: () => Promise<T>): Promise<T> {
       result = await subscribe();
     } catch (error) {
       console.error(
-        `Received error while reconnecting: ${
-          error ?? 'UNEXPECTED ERROR'
-        }. Reconnecting.`,
+        `Received error while reconnecting: %s. Reconnecting.`,
+        error ?? 'UNEXPECTED ERROR',
       );
     }
   } while (!result);

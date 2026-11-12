@@ -1,9 +1,11 @@
 import { isErrorWithType } from '#core/eventStore/errors';
-import { ErrorType, EventStoreDBClient } from '@eventstore/db-client';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import { ErrorType } from '@kurrent/kurrentdb-client';
 import { asyncSize, asyncIsEmpty } from 'iter-tools-es';
+import { expect } from 'vitest';
 
 export async function expectStreamToNotExist(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
 ) {
   try {
@@ -20,7 +22,7 @@ export async function expectStreamToNotExist(
 }
 
 export async function expectStreamToHaveNumberOfEvents(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   expectedNumberOfEvents: number,
 ) {

@@ -1,19 +1,16 @@
-import {
-  EventStoreDBClient,
-  excludeSystemEvents,
-  Position,
-  START,
-} from '@eventstore/db-client';
-import { SubscribeToAllOptions } from '@eventstore/db-client/dist/streams';
-import { ReadableOptions } from 'node:stream';
+import type { KurrentDBClient, Position } from '@kurrent/kurrentdb-client';
+import { excludeSystemEvents, START } from '@kurrent/kurrentdb-client';
+import type { SubscribeToAllOptions } from '@kurrent/kurrentdb-client';
+import type { ReadableOptions } from 'stream';
 
-import { Event } from '../../events';
+import type { Event } from '../../events';
 import { pipeResultAsync } from '../../primitives/pipe';
-import { Result, success } from '../../primitives';
-import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
+import type { Result } from '../../primitives';
+import { success } from '../../primitives';
+import type { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 
 export async function subscribeToAll<StreamEvent extends Event, TError = never>(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   loadCheckpoint: (
     subscriptionId: string,
   ) => Promise<Result<Position | undefined>>,
@@ -29,10 +26,10 @@ export async function subscribeToAll<StreamEvent extends Event, TError = never>(
   options?: SubscribeToAllOptions,
   readableOptions?: ReadableOptions,
 ): Promise<Result<boolean>> {
-  return new Promise<Result<boolean>>(async (resolve, reject) => {
-    try {
-      await pipeResultAsync(loadCheckpoint, async (currentPosition) => {
-        return success(
+  return new Promise<Result<boolean>>((resolve, reject) => {
+    pipeResultAsync(loadCheckpoint, (currentPosition) => {
+      return Promise.resolve(
+        success(
           eventStore
             .subscribeToAll(
               {
@@ -80,25 +77,26 @@ export async function subscribeToAll<StreamEvent extends Event, TError = never>(
                 throw error;
               }
             })
-            .on('error', async (error) => {
-              console.error(`Received error: ${error ?? 'UNEXPECTED ERROR'}.`);
+            .on('error', (error) => {
+              console.error(`Received error: %s.`, error ?? 'UNEXPECTED ERROR');
               reject(error);
             })
-            .on('close', async () => {
+            .on('close', () => {
               console.error(`Subscription closed.`);
-              reject();
+              reject(new Error('Subscription closed.'));
             })
             .on('end', () => {
               console.info(`Received 'end' event. Stopping subscription.`);
               resolve(success(true));
             }),
-        );
-      })(subscriptionId);
-    } catch (error) {
+        ),
+      );
+    })(subscriptionId).catch((error: Error) => {
       console.error(
-        `Received error while subscribing: ${error ?? 'UNEXPECTED ERROR'}.`,
+        `Received error while subscribing: %s.`,
+        error ?? 'UNEXPECTED ERROR',
       );
       reject(error);
-    }
+    });
   });
 }

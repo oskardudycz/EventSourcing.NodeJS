@@ -1,35 +1,33 @@
 //////////////////////////////////////
-/// ESDB
+/// KurrentDB
 //////////////////////////////////////
 
-import {
+import type {
   AppendResult,
-  EventStoreDBClient,
-  jsonEvent,
+  KurrentDBClient,
   JSONEventType,
-  NO_STREAM,
   ResolvedEvent,
-  StreamingRead,
-} from '@eventstore/db-client';
+} from '@kurrent/kurrentdb-client';
+import { jsonEvent, NO_STREAM } from '@kurrent/kurrentdb-client';
 
 export const create =
   <Command, StreamEvent extends JSONEventType>(
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     handle: (command: Command) => StreamEvent,
   ) =>
   (streamName: string, command: Command): Promise<AppendResult> => {
     const event = handle(command);
 
     return eventStore.appendToStream(streamName, jsonEvent(event), {
-      expectedRevision: NO_STREAM,
+      streamState: NO_STREAM,
     });
   };
 
 export const update =
   <Command, StreamEvent extends JSONEventType>(
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     handle: (
-      events: StreamingRead<ResolvedEvent<StreamEvent>>,
+      events: AsyncIterableIterator<ResolvedEvent<StreamEvent>>,
       command: Command,
     ) => Promise<StreamEvent>,
   ) =>
@@ -45,6 +43,6 @@ export const update =
     const eventData = jsonEvent(event);
 
     return eventStore.appendToStream(streamName, eventData, {
-      expectedRevision,
+      streamState: expectedRevision,
     });
   };

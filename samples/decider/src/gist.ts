@@ -1,36 +1,21 @@
-import express, {
-  Application,
-  Router,
-  NextFunction,
-  Request,
-  Response,
-} from 'express';
+import type { Application, NextFunction, Request, Response } from 'express';
+import express, { Router } from 'express';
 import http from 'http';
+import type { AllStreamResolvedEvent } from '@kurrent/kurrentdb-client';
 import {
-  AllStreamResolvedEvent,
-  EventStoreDBClient,
+  KurrentDBClient,
   excludeSystemEvents,
   jsonEvent,
   NO_STREAM,
   START,
   StreamNotFoundError,
   WrongExpectedVersionError,
-} from '@eventstore/db-client';
+} from '@kurrent/kurrentdb-client';
 import { Map } from 'immutable';
-import { finished, Readable } from 'stream';
-import {
-  DEFAULT_RETRY_OPTIONS,
-  RetryOptions,
-  retryPromise,
-} from '#core/retries';
-import {
-  MongoClient,
-  Collection,
-  Long,
-  ObjectId,
-  UpdateResult,
-  Document,
-} from 'mongodb';
+import type { RetryOptions } from '#core/retries';
+import { DEFAULT_RETRY_OPTIONS, retryPromise } from '#core/retries';
+import type { Collection, UpdateResult, Document } from 'mongodb';
+import { MongoClient, Long, ObjectId } from 'mongodb';
 
 //////////////////////////////////////
 /// Events
@@ -165,7 +150,7 @@ export const removeProductItem = (
       price,
       (currentQuantity) => {
         if (!currentQuantity || currentQuantity < quantity) {
-          throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+          throw new Error(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
         }
         return currentQuantity - quantity;
       },
@@ -233,7 +218,7 @@ const decide = (
   switch (type) {
     case 'OpenShoppingCart': {
       if (shoppingCart.status != 'Empty') {
-        throw ShoppingCartErrors.CART_ALREADY_EXISTS;
+        throw new Error(ShoppingCartErrors.CART_ALREADY_EXISTS);
       }
       return {
         type: 'ShoppingCartOpened',
@@ -247,7 +232,7 @@ const decide = (
 
     case 'AddProductItemToShoppingCart': {
       if (shoppingCart.status !== 'Pending') {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
       return {
         type: 'ProductItemAddedToShoppingCart',
@@ -260,7 +245,7 @@ const decide = (
 
     case 'RemoveProductItemFromShoppingCart': {
       if (shoppingCart.status !== 'Pending') {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       assertProductItemExists(shoppingCart.productItems, command.productItem);
@@ -276,7 +261,7 @@ const decide = (
 
     case 'ConfirmShoppingCart': {
       if (shoppingCart.status !== 'Pending') {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       return {
@@ -290,7 +275,7 @@ const decide = (
 
     case 'CancelShoppingCart': {
       if (shoppingCart.status !== 'Pending') {
-        throw ShoppingCartErrors.CART_IS_ALREADY_CLOSED;
+        throw new Error(ShoppingCartErrors.CART_IS_ALREADY_CLOSED);
       }
 
       return {
@@ -303,7 +288,7 @@ const decide = (
     }
     default: {
       const _: never = command;
-      throw ShoppingCartErrors.UNKNOWN_COMMAND_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_COMMAND_TYPE);
     }
   }
 };
@@ -315,7 +300,7 @@ export const assertProductItemExists = (
   const currentQuantity = productItems.get(productId)?.get(price) ?? 0;
 
   if (currentQuantity < quantity) {
-    throw ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND;
+    throw new Error(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
   }
 };
 
@@ -392,15 +377,15 @@ export type Decider<
 };
 
 //////////////////////////////////////
-/// ESDB
+/// KurrentDB
 //////////////////////////////////////
 
-let eventStore: EventStoreDBClient;
+let eventStore: KurrentDBClient;
 
 export const getEventStore = (connectionString?: string) => {
   if (!eventStore) {
-    eventStore = EventStoreDBClient.connectionString(
-      connectionString ?? 'esdb://localhost:2113?tls=false',
+    eventStore = KurrentDBClient.connectionString(
+      connectionString ?? 'kurrentdb://localhost:2113?tls=false',
     );
   }
 
@@ -408,10 +393,10 @@ export const getEventStore = (connectionString?: string) => {
 };
 
 export const readStream = async <EventType extends Event>(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamId: string,
 ): Promise<EventType[]> => {
-  const events = [];
+  const events: EventType[] = [];
   try {
     for await (const { event } of eventStore.readStream<EventType>(streamId)) {
       if (!event) continue;
@@ -439,7 +424,7 @@ export type AppendResult =
   | { expected: ETag; actual: ETag; successful: false };
 
 export const appendToStream = async (
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamId: string,
   eTag: ETag | undefined,
   ...events: Event[]
@@ -449,7 +434,7 @@ export const appendToStream = async (
       streamId,
       events.map(jsonEvent),
       {
-        expectedRevision: eTag ? getExpectedRevisionFromETag(eTag) : NO_STREAM,
+        streamState: eTag ? getExpectedRevisionFromETag(eTag) : NO_STREAM,
       },
     );
 
@@ -461,8 +446,8 @@ export const appendToStream = async (
     if (error instanceof WrongExpectedVersionError) {
       return {
         successful: false,
-        expected: toWeakETag(error.expectedVersion),
-        actual: toWeakETag(error.actualVersion),
+        expected: toWeakETag(error.expectedState),
+        actual: toWeakETag(error.actualState),
       };
     }
     throw error;
@@ -490,7 +475,7 @@ export const isWeakETag = (etag: ETag): etag is WeakETag => {
 export const getWeakETagValue = (etag: ETag): string => {
   const result = WeakETagRegex.exec(etag);
   if (result === null || result.length === 0) {
-    throw ETagErrors.WRONG_WEAK_ETAG_FORMAT;
+    throw new Error(ETagErrors.WRONG_WEAK_ETAG_FORMAT);
   }
   return result[1];
 };
@@ -513,7 +498,7 @@ export const getETagFromIfMatch = (request: Request): ETag => {
   const etag = request.headers['if-match'];
 
   if (etag === undefined) {
-    throw ETagErrors.MISSING_IF_MATCH_HEADER;
+    throw new Error(ETagErrors.MISSING_IF_MATCH_HEADER);
   }
 
   return etag;
@@ -531,7 +516,7 @@ export const enum ValidationErrors {
 
 export const assertNotEmptyString = (value: unknown): string => {
   if (typeof value !== 'string' || value.length === 0) {
-    throw ValidationErrors.NOT_A_NONEMPTY_STRING;
+    throw new Error(ValidationErrors.NOT_A_NONEMPTY_STRING);
   }
   return value;
 };
@@ -539,12 +524,13 @@ export const assertNotEmptyString = (value: unknown): string => {
 export const assertPositiveNumber = (
   value: string | number | undefined,
 ): number => {
-  if (value === undefined) throw ValidationErrors.NOT_A_POSITIVE_NUMBER;
+  if (value === undefined)
+    throw new Error(ValidationErrors.NOT_A_POSITIVE_NUMBER);
 
   const number = typeof value === 'number' ? value : Number(value);
 
   if (number <= 0) {
-    throw ValidationErrors.NOT_A_POSITIVE_NUMBER;
+    throw new Error(ValidationErrors.NOT_A_POSITIVE_NUMBER);
   }
   return number;
 };
@@ -556,7 +542,7 @@ export const assertBigInt = (value: string): bigint => {
 export const assertUnsignedBigInt = (value: string): bigint => {
   const number = assertBigInt(value);
   if (number < 0) {
-    throw ValidationErrors.NOT_AN_UNSIGNED_BIGINT;
+    throw new Error(ValidationErrors.NOT_AN_UNSIGNED_BIGINT);
   }
   return number;
 };
@@ -567,7 +553,7 @@ export const assertUnsignedBigInt = (value: string): bigint => {
 
 export const CommandHandler =
   <State, CommandType extends Command, EventType extends Event>(
-    getEventStore: () => EventStoreDBClient,
+    getEventStore: () => KurrentDBClient,
     toStreamId: (recordId: string) => string,
     decider: Decider<State, CommandType, EventType>,
   ) =>
@@ -787,7 +773,7 @@ export type EventHandler = (event: SubscriptionResolvedEvent) => Promise<void>;
 
 export const SubscriptionToAll =
   (
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     loadCheckpoint: (subscriptionId: string) => Promise<bigint | undefined>,
   ) =>
   async (subscriptionId: string, handlers: EventHandler[]) => {
@@ -801,21 +787,19 @@ export const SubscriptionToAll =
       filter: excludeSystemEvents(),
     });
 
-    finished(
-      subscription.on('data', async (resolvedEvent: AllStreamResolvedEvent) => {
-        for (const handler of handlers) {
-          await handler({ ...resolvedEvent, subscriptionId });
+    void (async () => {
+      try {
+        for await (const resolvedEvent of subscription) {
+          for (const handler of handlers) {
+            await handler({ ...resolvedEvent, subscriptionId });
+          }
         }
-      }) as Readable,
-      (error) => {
-        if (!error) {
-          console.info(`Stopping subscription.`);
-          return;
-        }
+        console.info(`Stopping subscription.`);
+      } catch (error) {
         console.error('Received error');
         console.error(error);
-      },
-    );
+      }
+    })();
     return subscription;
   };
 
@@ -912,7 +896,7 @@ export const assertUpdated = async (
   const result = await update();
 
   if (result.modifiedCount === 0) {
-    throw MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT;
+    throw new Error(MongoDBErrors.FAILED_TO_UPDATE_DOCUMENT);
   }
 
   return result;
@@ -924,7 +908,7 @@ export const assertFound = async <T>(
   const result = await find();
 
   if (result === null) {
-    throw MongoDBErrors.DOCUMENT_NOT_FOUND;
+    throw new Error(MongoDBErrors.DOCUMENT_NOT_FOUND);
   }
 
   return result;
@@ -1148,7 +1132,7 @@ export const projectShoppingCartDetails = async (
     }
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
     }
   }
 };
@@ -1331,7 +1315,7 @@ export const project = async (
     }
     default: {
       const _: never = event;
-      throw ShoppingCartErrors.UNKNOWN_EVENT_TYPE;
+      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
     }
   }
 };

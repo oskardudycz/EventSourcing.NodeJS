@@ -1,4 +1,4 @@
-import { Result } from './result';
+import type { Result } from './result';
 
 export function switchError<T = never, E = never, R = never, E2 = never>(
   f: (input: T) => Result<R, E2>,

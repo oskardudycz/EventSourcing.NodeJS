@@ -12,6 +12,13 @@ export function isCommand<
   CommandType extends string = string,
   CommandData extends Record<string, unknown> = Record<string, unknown>,
   CommandMetadata extends Record<string, unknown> = Record<string, unknown>,
->(event: any): event is Command<CommandType, CommandData, CommandMetadata> {
-  return typeof event.type !== 'undefined' && typeof event.data !== 'undefined';
+>(
+  command: unknown,
+): command is Command<CommandType, CommandData, CommandMetadata> {
+  return (
+    typeof command === 'object' &&
+    command !== null &&
+    'type' in command &&
+    'data' in command
+  );
 }

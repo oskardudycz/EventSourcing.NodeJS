@@ -1,15 +1,10 @@
-import {
-  Collection,
-  Document,
-  Filter,
-  Long,
-  ObjectId,
-  UpdateResult,
-} from 'mongodb';
-import { Event } from '#core/decider';
+import type { Collection, Document, Filter, UpdateResult } from 'mongodb';
+import { Long, ObjectId } from 'mongodb';
+import type { Event } from '#core/decider';
 import { mongoObjectId, retryIfNotFound } from '#core/mongoDB';
-import { SubscriptionResolvedEvent } from '#core/subscriptions';
-import { AllStreamRecordedEvent } from '@eventstore/db-client';
+import type { SubscriptionResolvedEvent } from '#core/subscriptions';
+import type { AllStreamRecordedEvent } from '@kurrent/kurrentdb-client';
+import { expect } from 'vitest';
 
 type HasRevisionOrPosition = { revision: number } | { position: number | Long };
 type DocumentWithRevisionOrPosition = Document & HasRevisionOrPosition;
@@ -116,7 +111,7 @@ const assertUpdated = async <Doc extends DocumentWithRevisionOrPosition>(
       ? { revision: expected.revision as number }
       : {}),
     ...('position' in expected
-      ? { position: Long.fromBigInt(expected.position as bigint) }
+      ? { position: Long.fromValue(expected.position as number | Long) }
       : {}),
   } as unknown as Filter<Doc>;
 

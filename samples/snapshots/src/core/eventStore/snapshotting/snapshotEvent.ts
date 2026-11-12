@@ -1,4 +1,4 @@
-import { Event } from '../../events';
+import type { Event } from '../../events';
 
 export type SnapshotMetadata = Readonly<{
   snapshottedStreamVersion: string;

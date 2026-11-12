@@ -1,16 +1,17 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { SnapshotEvent } from '..';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { SnapshotEvent } from '..';
 import { readLastEventFromStream } from '../../reading';
 import { addSnapshotPrefix } from '..';
-import { failure, Result } from '../../../primitives';
-import { StreamEvent } from '#core/events';
+import type { Result } from '../../../primitives';
+import { failure } from '../../../primitives';
+import type { StreamEvent } from '#core/events';
 
 export type NO_SHAPSHOT_FOUND = 'NO_SHAPSHOT_FOUND';
 
 export async function readSnapshotFromSeparateStream<
   SnapshotStreamEvent extends SnapshotEvent,
 >(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
   buildSnapshotStreamName?: (streamName: string) => string,
 ): Promise<Result<StreamEvent<SnapshotStreamEvent>, NO_SHAPSHOT_FOUND>> {

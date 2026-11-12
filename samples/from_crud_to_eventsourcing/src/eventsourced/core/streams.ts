@@ -3,20 +3,19 @@
 //////////////////////////////////////
 
 import { config } from '#config';
-import {
-  EventStoreDBClient,
+import type {
   EventType,
   RecordedEvent,
   ResolvedEvent,
-  StreamingRead,
-} from '@eventstore/db-client';
+} from '@kurrent/kurrentdb-client';
+import { KurrentDBClient } from '@kurrent/kurrentdb-client';
 
 export const StreamAggregator =
   <Entity, StreamEvents extends EventType>(
     when: (currentState: Entity, event: RecordedEvent<StreamEvents>) => Entity,
   ) =>
   async (
-    eventStream: StreamingRead<ResolvedEvent<StreamEvents>>,
+    eventStream: AsyncIterableIterator<ResolvedEvent<StreamEvents>>,
   ): Promise<Entity> => {
     let currentState = {} as Entity;
     for await (const { event } of eventStream) {
@@ -27,21 +26,21 @@ export const StreamAggregator =
   };
 
 //////////////////////////////////////
-/// ESDB
+/// KurrentDB
 //////////////////////////////////////
 
-let eventStore: EventStoreDBClient;
+let eventStore: KurrentDBClient;
 
-export function getEventStore(): EventStoreDBClient {
-  if (!config.eventStoreDB.connectionString) {
+export function getEventStore(): KurrentDBClient {
+  if (!config.kurrentDB.connectionString) {
     throw new Error(
-      'EventStoreDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable',
+      'KurrentDB connection string not set. Please define "KURRENTDB_CONNECTION_STRING" environment variable',
     );
   }
 
   if (!eventStore) {
-    eventStore = EventStoreDBClient.connectionString(
-      config.eventStoreDB.connectionString,
+    eventStore = KurrentDBClient.connectionString(
+      config.kurrentDB.connectionString,
     );
   }
 

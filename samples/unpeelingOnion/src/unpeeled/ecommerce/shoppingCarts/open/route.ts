@@ -1,13 +1,13 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { mongoObjectId } from '#core/mongodb';
 import { assertNotEmptyString } from '#core/validation';
 import { openShoppingCart } from './handler';
-import { OpenShoppingCart } from '../shoppingCart';
+import type { OpenShoppingCart } from '../shoppingCart';
 import { sendCreated } from '#core/http';
 import { store } from '../storage';
-import { Collection } from 'mongodb';
-import { ShoppingCartModel } from '../storage/';
-import { EventBus } from '#core/events';
+import type { Collection } from 'mongodb';
+import type { ShoppingCartModel } from '../storage/';
+import type { EventBus } from '#core/events';
 
 export const openShoppingCartRoute = (
   carts: Collection<ShoppingCartModel>,

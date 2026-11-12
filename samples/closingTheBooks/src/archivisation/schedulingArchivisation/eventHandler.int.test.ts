@@ -1,36 +1,34 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#testing/eventStoreDB/eventStoreDBContainer';
+import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { getCurrentTime } from '#core/primitives';
 import {
   getArchivisationForStreamName,
   getArchivisationScheduleStreamName,
 } from '../../archivisation';
-import {
-  handleStreamArchivisationScheduled,
-  StreamArchivisationScheduled,
-} from './eventHandler';
+import type { StreamArchivisationScheduled } from './eventHandler';
+import { handleStreamArchivisationScheduled } from './eventHandler';
 import { getCurrentCashierShiftStreamName } from '../../cashierShift/cashierShift';
 import { setupOpenedCashierShiftWithPreviousClosed } from '#testing/builders/byEvents';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('StreamArchivisationScheduled event', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
-  let eventStore: EventStoreDBClient;
+  let kurrentDBContainer: StartedKurrentDBContainer;
+  let eventStore: KurrentDBClient;
   const cashRegisterId = uuid();
   const currentCashierShiftStreamName =
     getCurrentCashierShiftStreamName(cashRegisterId);
   let archiveBeforeRevision: string;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
 
-    eventStore = esdbContainer.getClient();
+    eventStore = kurrentDBContainer.getClient();
 
     const result = await setupOpenedCashierShiftWithPreviousClosed(
       eventStore,
@@ -41,7 +39,7 @@ describe('StreamArchivisationScheduled event', () => {
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   it('should trigger schedule stream copying', async () => {

@@ -1,4 +1,4 @@
-import { StreamEvent } from '../events';
+import type { StreamEvent } from '../events';
 
 export function aggregateStream<Aggregate, StreamEvents extends StreamEvent>(
   events: StreamEvents[],

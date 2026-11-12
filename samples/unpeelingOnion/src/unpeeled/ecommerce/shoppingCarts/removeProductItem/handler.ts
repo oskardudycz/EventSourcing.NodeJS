@@ -1,5 +1,6 @@
-import { ShoppingCart, ShoppingCartStatus } from '../shoppingCart';
-import {
+import type { ShoppingCart } from '../shoppingCart';
+import { ShoppingCartStatus } from '../shoppingCart';
+import type {
   ProductItemRemovedFromShoppingCart,
   RemoveProductItemFromShoppingCart,
 } from '../shoppingCart';

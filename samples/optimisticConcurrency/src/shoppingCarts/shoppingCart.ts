@@ -1,5 +1,6 @@
-import { Event, StreamEvent } from '#core/events';
-import { ProductItem, addProductItem, removeProductItem } from './productItems';
+import type { Event, StreamEvent } from '#core/events';
+import type { ProductItem } from './productItems';
+import { addProductItem, removeProductItem } from './productItems';
 
 export type ShoppingCartOpened = Event<
   'shopping-cart-opened',

@@ -1,11 +1,12 @@
-import { Mapper } from '#core/mapping';
+import type { Mapper } from '#core/mapping';
 import { ObjectId } from 'mongodb';
 import { ShoppingCart } from '../../../domain/shoppingCarts';
 import { ShoppingCartModel } from '../../../models/shoppingCarts/shoppingCart';
 
-export class ShoppingCartMapper
-  implements Mapper<ShoppingCart, ShoppingCartModel>
-{
+export class ShoppingCartMapper implements Mapper<
+  ShoppingCart,
+  ShoppingCartModel
+> {
   toModel(aggregate: ShoppingCart): ShoppingCartModel {
     return new ShoppingCartModel(
       new ObjectId(aggregate.id),

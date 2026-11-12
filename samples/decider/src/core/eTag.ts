@@ -3,7 +3,7 @@
 //////////////////////////////////////
 
 export type WeakETag = `W/${string}`;
-export type ETag = WeakETag | string;
+export type ETag = string;
 
 export const WeakETagRegex = /W\/"(-?\d+.*)"/;
 
@@ -19,7 +19,7 @@ export const isWeakETag = (etag: ETag): etag is WeakETag => {
 export const getWeakETagValue = (etag: ETag): string => {
   const result = WeakETagRegex.exec(etag);
   if (result === null || result.length === 0) {
-    throw ETagErrors.WRONG_WEAK_ETAG_FORMAT;
+    throw new Error(ETagErrors.WRONG_WEAK_ETAG_FORMAT);
   }
   return result[1];
 };

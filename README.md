@@ -25,7 +25,7 @@ Tutorial, practical samples and other resources about Event Sourcing in NodeJS. 
   - [Node.js project configuration](#nodejs-project-configuration)
     - [General configuration](#general-configuration)
     - [VSCode debug configuration](#vscode-debug-configuration)
-    - [Unit tests with Jest](#unit-tests-with-jest)
+    - [Unit tests with Vitest](#unit-tests-with-vitest)
     - [API tests with SuperTest](#api-tests-with-supertest)
     - [Continuous Integration - Run tests with Github Actions](#continuous-integration---run-tests-with-github-actions)
     - [Continuous Delivery - Build Docker image and publish to Docker Hub and GitHub Container Registry](#continuous-delivery---build-docker-image-and-publish-to-docker-hub-and-github-container-registry)
@@ -483,7 +483,7 @@ class EventStore {
 }
 ```
 
-In the further samples, I'll use [EventStoreDB](https://developers.eventstore.com/). It's the battle-tested OSS database created and maintained by the Event Sourcing authorities. It supports many dev environments via gRPC clients, including NodeJS.
+In the further samples, I'll use [KurrentDB](https://docs.kurrent.io/). It's the battle-tested OSS database created and maintained by the Event Sourcing authorities. It supports many dev environments via gRPC clients, including NodeJS.
 
 Read more in my article:
 
@@ -552,7 +552,7 @@ Event Sourcing is perceived as a complex pattern. Some believe that it's like Ne
 
 The workshop aims to build the knowledge of the general concept and its related patterns for the participants. The acquired knowledge will allow for the conscious design of architectural solutions and the analysis of associated risks.
 
-You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like EventStoreDB.
+You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like KurrentDB.
 
 **If you'd like to get full coverage with all nuances of the private workshop, check [training page on my blog for more details](https://event-driven.io/en/training/) feel free to contact me via [email](mailto:oskar.dudycz@gmail.com).**
 
@@ -562,21 +562,25 @@ Read also more in my article [Introduction to Event Sourcing - Self Paced Kit](h
 
 Follow the instructions in exercises folders.
 
-1. [Events definition](./workshops/src/01_events_definition/).
-2. [Getting State from events](./workshops/src/02_getting_state_from_events/).
+1. [Events definition](./workshops/introduction_to_event_sourcing/src/01_events_definition/).
+2. [Getting State from events](./workshops/introduction_to_event_sourcing/src/02_getting_state_from_events/).
 3. Appending Events:
-   - [EventStoreDB](./workshops/src/03_appending_events_eventstoredb/)
+   - [Raw KurrentDB](./workshops/introduction_to_event_sourcing/src/03_appending_events_kurrentdb/)
+   - [Emmett with various storages (PostgreSQL, KurrentDB, MongoDB)](./workshops/introduction_to_event_sourcing/src/04_appending_events_emmett/)
 4. Getting State from events
-   - [EventStoreDB](./workshops/src/04_getting_state_from_events_eventstoredb/)
-5. Business logic:
-   - [General](./workshops/src/05_business_logic/)
-   - [EventStoreDB](./workshops/src/06_business_logic_eventstoredb/)
-6. Optimistic Concurrency:
-   - [EventStoreDB](./workshops/src/07_optimistic_concurrency_eventstoredb/)
-7. Projections:
-   - [General](./src/workshops/08_projections_single_stream/)
-   - [Idempotency](./workshops/src/09_projections_single_stream_idempotency/)
-   - [Eventual Consistency](./workshops/src/10_projections_single_stream_eventual_consistency/)
+   - [Raw KurrentDB](./workshops/introduction_to_event_sourcing/src/05_getting_state_from_events_kurrentdb/)
+   - [Emmett with various storages (PostgreSQL, KurrentDB, MongoDB)](./workshops/introduction_to_event_sourcing/src/06_getting_state_from_events_emmett/)
+5. Business Logic:
+   - [Writing](./workshops/introduction_to_event_sourcing/src/07_business_logic/)
+   - [Testing](./workshops/introduction_to_event_sourcing/src/08_business_logic/)
+6. Application logic:
+   - [KurrentDB](./workshops/introduction_to_event_sourcing/src/09_application_logic_kurrentdb/)
+7. Optimistic Concurrency:
+   - [KurrentDB](./workshops/introduction_to_event_sourcing/src/10_optimistic_concurrency_kurrentdb/)
+8. Projections:
+   - [General](./workshops/introduction_to_event_sourcing/src/11_projections_single_stream/)
+   - [Idempotency](./workshops/introduction_to_event_sourcing/src/12_projections_single_stream_idempotency/)
+   - [Eventual Consistency](./workshops/introduction_to_event_sourcing/src/13_projections_single_stream_eventual_consistency/)
 
 
 ## Node.js project configuration
@@ -593,100 +597,112 @@ Follow the instructions in exercises folders.
    ```bash
    npm i express
    ```
-4. [TypeScript](typescriptlang.org/) - We'll be doing Type Driven Development
-   - install together with types for `Node.js` and `Express` and [TS Node](https://github.com/TypeStrong/ts-node)
-   ```bash
-   npm i -D typescript @types/express @types/node ts-node
-   ```
-   - you can also install TypeScript compiler globally by running:
-   ```bash
-   npm i -g typescript
-   ```
-   - add TypeScript compiler buid command to NPM:
+   - mark the project as ECMAScript Modules and set the minimum Node.js version in [package.json](./samples/simple/package.json), and the exact version in [.nvmrc](./samples/simple/.nvmrc):
    ```json
    {
-     "scripts": {
-       "build:ts": "tsc"
+     "type": "module",
+     "engines": {
+       "node": ">=24.22.1"
      }
    }
    ```
-   - if you installed `tsc` globally you can init TypeScript config by running:
+4. [TypeScript](https://www.typescriptlang.org/) - We'll be doing Type Driven Development
+   - install it together with types for `Node.js` and `Express`. We're using TypeScript 7 native compiler (`tsgo`) for builds and TypeScript 6 for tools that still need the JavaScript compiler API (e.g. ESLint):
    ```bash
-   tsc --init
+   npm i -D typescript@npm:@typescript/typescript6 @typescript/native@npm:typescript@^7 @types/express @types/node
    ```
-   - or you can just create the [tsconfig.json](./samples/simple/tsconfig.json) file, e.g.:
+   - add TypeScript compiler build command to NPM:
    ```json
    {
+     "scripts": {
+       "build:ts": "tsc -b",
+       "build:ts:watch": "tsc -b --watch"
+     }
+   }
+   ```
+   - create the [tsconfig.json](./samples/simple/tsconfig.json) file, e.g.:
+   ```json
+   {
+     "exclude": ["**/node_modules", "**/tmp", "**/dist", "**/lib"],
      "compilerOptions": {
-       "target": "es2020",
-       "module": "commonjs",
+       "target": "ESNext",
+       "verbatimModuleSyntax": true,
+       "module": "ESNext",
+       "lib": ["ESNext"],
        "outDir": "./dist",
+       "rootDir": "./src",
        "strict": true,
        "strictNullChecks": true,
-       "noUnusedLocals": true,
        "noImplicitReturns": true,
+       "moduleResolution": "bundler",
+       "types": ["node"],
        "esModuleInterop": true,
+       "rewriteRelativeImportExtensions": true,
+       "resolveJsonModule": true,
+       "moduleDetection": "force",
        "skipLibCheck": true,
        "forceConsistentCasingInFileNames": true
      },
-     "include": ["./src"]
+     "include": ["./src/**/*"]
    }
    ```
 5. [ESLint](https://eslint.org) - We'd like to have static code analysis:
 
-   - install using [npx](https://blog.npmjs.org/post/162869356040/introducing-npx-an-npm-package-runner) and going through wizard. This will generate install all packages and generate needed files (suggested is to use ECMA Modules, TypeScript, )
+   - install together with [typescript-eslint](https://typescript-eslint.io):
 
    ```bash
-   npx eslint --init
-
-   √ How would you like to use ESLint? · style
-   √ What type of modules does your project use? · esm
-   √ Which framework does your project use? · none
-   √ Does your project use TypeScript? · No / Yes
-   √ Where does your code run? · node
-   √ How would you like to define a style for your project? · guide
-   √ Which style guide do you want to follow? · standard
-   √ What format do you want your config file to be in? · JSON
+   npm i -D eslint @eslint/js globals @typescript-eslint/eslint-plugin @typescript-eslint/parser
    ```
 
-   - or using the `npm`:
+   - add [eslint.config.mjs](./samples/simple/eslint.config.mjs) with the flat ESLint configuration. Ignored files are defined there too:
 
-   ```bash
-   npm i -D @typescript-eslint/eslint-plugin eslint-config-standard eslint eslint-plugin-import eslint-plugin-node eslint-plugin-promise @typescript-eslint/parser
-   ```
+   ```javascript
+   import js from '@eslint/js';
+   import typescriptEslint from '@typescript-eslint/eslint-plugin';
+   import globals from 'globals';
 
-   - this should generate [.eslintrc.json](./samples/simple/.eslintrc.json) file with ESLint configuration:
-
-   ```json
-   {
-     "env": {
-       "es2023": true,
-       "node": true
+   export default [
+     {
+       ignores: [
+         'vitest.config.ts',
+         'tsdown.config.ts',
+         'eslint.config.mjs',
+         '**/dist/',
+         '**/node_modules',
+         '**/*.d.ts',
+       ],
      },
-     "extends": ["standard"],
-     "parser": "@typescript-eslint/parser",
-     "parserOptions": {
-       "ecmaVersion": 2023,
-       "sourceType": "module"
+     js.configs.recommended,
+     ...typescriptEslint.configs['flat/recommended'],
+     ...typescriptEslint.configs['flat/recommended-type-checked'],
+     {
+       languageOptions: {
+         globals: {
+           ...globals.node,
+         },
+         parserOptions: {
+           project: './tsconfig.json',
+         },
+       },
+       rules: {
+         'no-unused-vars': 'off',
+         '@typescript-eslint/no-unused-vars': [
+           'error',
+           {
+             varsIgnorePattern: '^_',
+             argsIgnorePattern: '^_',
+           },
+         ],
+         '@typescript-eslint/consistent-type-imports': [
+           'error',
+           {
+             prefer: 'type-imports',
+             fixStyle: 'separate-type-imports',
+           },
+         ],
+       },
      },
-     "plugins": ["@typescript-eslint"],
-     "rules": {}
-   }
-   ```
-
-   - add [.eslintignore](./samples/simple/.eslintignore) to configure exclusion for files that we don't want to analyse:
-
-   ```bash
-   /node_modules/*
-
-   # build artifacts
-   dist/*coverage/*
-
-   # data definition files
-   **/*.d.ts
-
-   # custom definition files
-   /src/types/
+   ];
    ```
 
 6. [Prettier](https://prettier.io), as we aim to write pretty code:
@@ -701,39 +717,29 @@ Follow the instructions in exercises folders.
      "singleQuote": true
    }
    ```
-   - add Prettier plugin to [.eslintrc.json](./samples/simple/.eslintrc.json) to make sure that then collide with each other:
-   ```json
-   {
-       "env": {
-           "es2020": true,
-           "node": true
-       },
-       "extends": [
-           "plugin:@typescript-eslint/recommended", <-- updated
-           "prettier/@typescript-eslint", <-- added
-           "plugin:prettier/recommended" <-- added
-       ],
-       "parser": "@typescript-eslint/parser",
-       "parserOptions": {
-           "ecmaVersion": 2023,
-           "sourceType": "module"
-       },
-       "plugins": [
-           "@typescript-eslint"
-       ],
-       "rules": {
-       }
-   }
+   - add Prettier plugin to [eslint.config.mjs](./samples/simple/eslint.config.mjs) to make sure that they don't collide with each other. ESLint formats TypeScript files, Prettier formats the rest:
+   ```javascript
+   import js from '@eslint/js';
+   import typescriptEslint from '@typescript-eslint/eslint-plugin';
+   import prettierRecommended from 'eslint-plugin-prettier/recommended'; // <-- added
+   import globals from 'globals';
+
+   export default [
+     // (...)
+     ...typescriptEslint.configs['flat/recommended-type-checked'],
+     prettierRecommended, // <-- added
+     // (...)
+   ];
    ```
    - if you're using VSCode, I recommend to install [Prettier plugin](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-7. Define tasks for ESLint and Prettier in [package.json](./samples/simple/package.json):
+7. Define tasks for ESLint and Prettier in [package.json](./samples/simple/package.json). We're using [npm-run-all2](https://github.com/bcomnes/npm-run-all2) (`npm i -D npm-run-all2`) to run them one after another:
    - checks:
    ```json
    {
      "scripts": {
-       "lint": "npm run lint:eslint && npm run lint:prettier",
-       "lint:prettier": "prettier --check \"src/**/**/!(*.d).{ts,json,md}\"",
-       "lint:eslint": "eslint src/**/*.ts"
+       "lint": "run-s lint:eslint lint:prettier",
+       "lint:prettier": "prettier --cache --check \"**/**/*.{json,md}\"",
+       "lint:eslint": "eslint --cache \"**/*.ts\""
      }
    }
    ```
@@ -741,8 +747,9 @@ Follow the instructions in exercises folders.
    ```json
    {
      "scripts": {
-       "lint:eslint": "eslint src/**/*.ts",
-       "prettier:fix": "prettier --write \"src/**/**/!(*.d).{ts,json,md}\""
+       "fix": "run-s fix:eslint fix:prettier",
+       "fix:prettier": "prettier --cache --write \"**/**/*.{json,md}\"",
+       "fix:eslint": "eslint --cache \"**/*.ts\" --fix"
      }
    }
    ```
@@ -763,7 +770,8 @@ Follow the instructions in exercises folders.
    ```
 9. To make sure that all is working fine we'll create the new app (e.g. in the `src/index.ts`)
     ```typescript
-    import express, { Application, Request, Response } from "express";
+    import type { Application, Request, Response } from "express";
+    import express from "express";
     import http from "http";
     
     const app: Application = express();
@@ -783,16 +791,16 @@ Follow the instructions in exercises folders.
     ```
     This will create an Express application that will be listening on port `5000` and return the JSON (with dummy data greeting with `"Hello World!"`). 
 
-10. [Nodemon](https://nodemon.io/) to have hot-reload of the running Express server code. 
+10. [tsx](https://tsx.is/) to run TypeScript code directly and have hot-reload of the running Express server code. 
     - install:
     ```bash
-    npm i -D nodemon
+    npm i -D tsx
     ```
-    - add script to [package.json](./samples/simple/package.json) to run Express server with Nodemon:
+    - add script to [package.json](./samples/simple/package.json) to run Express server in watch mode:
     ```json
     {
       "scripts": {
-        "dev:start": "nodemon src/index.ts",
+        "dev:start": "tsx watch src/index.ts",
       }
     }
     ```
@@ -829,45 +837,47 @@ To not need to synchronise two separate configurations, we'll reuse the existing
 
 As we have TypeScript configured, then we don't need any additional setup. We're reusing the native node debugging capabilities by using the `--inspect-brk=9229` parameter. Read more in the [Node.js documentation](https://Node.js.org/en/docs/guides/debugging-getting-started/)
 
-### Unit tests with Jest
+To use the TypeScript 7 native language service in VSCode, install the [TypeScript Native Preview](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.native-preview) extension and enable it in [settings.json](./samples/simple/.vscode/settings.json):
 
-1. Install [Jest](https://jestjs.io/) together with [ts-jest](https://kulshekhar.github.io/ts-jest/) package and needed typings to make it work with TypeScript.
+```json
+{
+  "js/ts.experimental.useTsgo": true
+}
+```
+
+Recommended extensions are listed in [extensions.json](./samples/simple/.vscode/extensions.json).
+
+### Unit tests with Vitest
+
+1. Install [Vitest](https://vitest.dev/). It runs TypeScript files directly, so no additional transformer is needed.
 
 ```bash
-npm i -D jest @types/jest ts-jest
+npm i -D vitest
 ```
 
-2. Configure Jest with using npx installer:
+2. Add [vitest.config.ts](./samples/simple/vitest.config.ts) with the Vitest configuration. It tells Vitest where are our test files and to resolve the `paths` from `tsconfig.json`:
 
-```bash
-npx ts-jest config:init
-```
+```typescript
+import { defineConfig } from 'vitest/config';
 
-3. This will create [jest.config.js](./samples/simple/jest.config.js) with Jest needed configuration:
+const localMaxWorkers = process.env.CI ? {} : { maxWorkers: '50%' };
 
-```javascript
-module.exports = {
-  preset: "ts-jest",
-  testEnvironment: "node",
-};
-```
-
-We'll update it to match our configuration. Without that it'll match both source `ts` files and generated `js` running tests twice.
-
-```javascript
-module.exports = {
-  preset: "ts-jest",
-  testEnvironment: "node",
-  // tells Jest where are our test files
-  roots: ["<rootDir>/src"],
-  // tells Jest to use only TypeScript files
-  transform: {
-    "^.+\\.(ts|tsx)$": "ts-jest",
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true,
   },
-};
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/lib/**'],
+    hookTimeout: 30_000,
+    testTimeout: 30_000,
+    ...localMaxWorkers,
+  },
+});
 ```
 
-1. Let's add some dummy code to make sure that our tests are working. This can be e.g. `src/greetings/getGreeting.ts`
+3. Let's add some dummy code to make sure that our tests are working. This can be e.g. `src/greetings/getGreeting.ts`
 
 ```typescript
 export function getGreeting() {
@@ -877,10 +887,11 @@ export function getGreeting() {
 }
 ```
 
-5. Let's add also some dummy unit test running this code. I'll put it in the same directory, as in my opinion it makes easier development and focus on the specific test instead of jumping from one place to another. In this case it will be `src/greetings/getGreetings.unit.test.ts`
+4. Let's add also some dummy unit test running this code. I'll put it in the same directory, as in my opinion it makes easier development and focus on the specific test instead of jumping from one place to another. In this case it will be `src/greetings/getGreetings.unit.test.ts`. Test functions are imported explicitly from `vitest`:
 
 ```typescript
 import { getGreeting } from "./getGreeting";
+import { describe, expect, it } from "vitest";
 
 describe("getGreeting", () => {
   it('should return greeting "Hello World!"', () => {
@@ -892,12 +903,12 @@ describe("getGreeting", () => {
 });
 ```
 
-6. To run Jest we need to add new NPM script to [package.json](./samples/simple/package.json):
+5. To run Vitest we need to add new NPM script to [package.json](./samples/simple/package.json):
 
 ```json
 {
   "scripts": {
-    "test:unit": "jest unit"
+    "test:unit": "vitest run unit --passWithNoTests"
   }
 }
 ```
@@ -908,35 +919,25 @@ Now you can run them with:
 npm run test:unit
 ```
 
-Jest will be smart enough to find by convention all files with `.unit.test.ts` suffix. 7. To be able to debug our tests we have to add new debug configurations to [launch.json](./samples/simple/.vscode/launch.json). We'll be using `watch` settings, so we don't have re-run tests when we updated logic or test code.
+Vitest will run all test files with `unit` in their path, so all files with `.unit.test.ts` suffix. Running `npx vitest` without `run` starts it in watch mode.
+
+6. To be able to debug our tests we have to add new debug configuration to [launch.json](./samples/simple/.vscode/launch.json). It runs the currently opened test file. You can also install the [Vitest extension](https://marketplace.visualstudio.com/items?itemName=vitest.explorer) to run and debug tests from the editor.
 
 ```json
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Jest all tests",
+      "name": "Debug Current Test File",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
-      "args": ["--verbose", "-i", "--no-cache", "--watchAll"],
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "${file}", "--no-file-parallelism"],
+      "smartStep": true,
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
-    },
-    {
-      "name": "Jest current test",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
-      "args": [
-        "${fileBasename}",
-        "--verbose",
-        "-i",
-        "--no-cache",
-        "--watchAll"
-      ],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "cwd": "${workspaceFolder}"
     }
   ]
 }
@@ -955,7 +956,8 @@ npm i -D supertest @types/supertest
 `SuperTest` takes as input Express application. We have to structure our code to return it, e.g.
 
 ```typescript
-import express, { Application, Request, Response } from "express";
+import type { Application, Request, Response } from "express";
+import express from "express";
 import { getGreeting } from "./greetings/getGreeting";
 
 const app: Application = express();
@@ -989,6 +991,7 @@ Let's create the test for the default route. For that, create a file, e.g. `getG
 ```typescript
 import request from "supertest";
 import app from "../app";
+import { describe, it } from "vitest";
 
 describe("GET /", () => {
   it('should return greeting "Hello World!"', () => {
@@ -1007,9 +1010,9 @@ As the final step we'll add a separate NPM script to [package.json](./samples/si
 ```json
 {
   "scripts": {
-    "test": "npm run test:unit && npm run test:api", // <-- added
-    "test:unit": "jest unit",
-    "test:api": "jest api" // <-- added
+    "test": "run-s test:unit test:api", // <-- added
+    "test:unit": "vitest run unit --passWithNoTests",
+    "test:api": "vitest run api --passWithNoTests" // <-- added
   }
 }
 ```
@@ -1018,7 +1021,7 @@ As the final step we'll add a separate NPM script to [package.json](./samples/si
 
 It's important to have your changes be verified during the pull request process. We'll use GitHub Actions as a sample of how to do that. You need to create the [.github/workflows](./.github/workflows) folder and putt there new file (e.g. [samples_simple.yml](./.github/workflows/samples_simple.yml)). This file will contain YAML configuration for your action:
 
-The simplest setup will look like this:
+The simplest setup will look like this. It takes the Node.js version from the `.nvmrc` file, so you have it defined in one place:
 
 ```yaml
 name: Node.js Continuous Integration
@@ -1040,11 +1043,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20.10.x
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - name: Use Node.js
+        uses: actions/setup-node@v6
         with:
-          node-version: 20.10.x
+          node-version-file: ./samples/simple/.nvmrc
+          cache: "npm"
+          cache-dependency-path: "./samples/simple/package-lock.json"
       # install dependencies based on the package log
       - run: npm ci
       # run linting (ESlint and Prettier)
@@ -1083,12 +1088,12 @@ jobs:
         # selected operation systems to run Continuous Integration
         os: [windows-latest, ubuntu-latest, macos-latest]
         # selected node version to run Continuous Integration
-        node-version: [18.x, 20.10.x]
+        node-version: [24.x, 26.x]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           # use the node version defined in matrix above
           node-version: ${{ matrix.node-version }}
@@ -1110,11 +1115,30 @@ Docker allows creating lightweight images with preconfigured services. Thanks to
 
 #### Image
 
-The basis of the Docker configuration is an image definition. It's defined as the text file and usually named by convention as `Dockerfile`. It starts with information of which base image we'll be using and then customisation. Most of the technologies provide various types of base images. We'll use `node:lts-alpine`. Which represent the latest Long-Term Support version. Alpine type of image is recommended as usually the smallest with a minimum set of dependencies.
+The basis of the Docker configuration is an image definition. It's defined as the text file and usually named by convention as `Dockerfile`. It starts with information of which base image we'll be using and then customisation. Most of the technologies provide various types of base images. We'll use `node:24-alpine`, matching the Node.js version from `.nvmrc`. Alpine type of image is recommended as usually the smallest with a minimum set of dependencies.
 
 The best practice for building the docker image is to use [multistage build](https://docs.docker.com/develop/develop-images/multistage-build/) feature. It allows to use at the first image with all build dependencies, build artefacts and copy it to the final _"smaller"_ image.
 
 Each line in the Dockerfile will create a separate _layer_. Such _layer_ is immutable, and if the file, if this line was not changed or, e.g. copied file in this file, was not changed, it won't be rebuilt and reused. That's why it's essential to at first copy files that are changed rarely (e.g. `package.json` file and running installing node modules), then copy source codes.
+
+Node.js can't run ES Modules with extensionless relative imports, so for the image we bundle the code with [tsdown](https://tsdown.dev/) (`npm i -D tsdown`). Its configuration is in [tsdown.config.ts](./samples/simple/tsdown.config.ts), and it's run by the `build:bundle` NPM script:
+
+```typescript
+import { defineConfig } from 'tsdown';
+
+export default defineConfig({
+  format: ['esm'],
+  fixedExtension: false,
+  target: 'esnext',
+  outDir: 'dist',
+  entry: ['src/index.ts'],
+  sourcemap: true,
+  deps: {
+    skipNodeModulesBundle: true,
+  },
+  tsconfig: 'tsconfig.json',
+});
+```
 
 [Sample Dockerfile](./samples/simple/Dockerfile) looks like:
 
@@ -1125,7 +1149,7 @@ Each line in the Dockerfile will create a separate _layer_. Such _layer_ is immu
 #  Use Build image with label `builder
 ########################################
 # use
-FROM node:lts-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Setup working directory for project
 WORKDIR /app
@@ -1133,6 +1157,7 @@ WORKDIR /app
 COPY ./package.json ./
 COPY ./package-lock.json ./
 COPY ./tsconfig.json ./
+COPY ./tsdown.config.ts ./
 
 # install node modules
 # use `npm ci` instead of `npm install`
@@ -1143,7 +1168,7 @@ RUN npm ci
 COPY src ./src
 
 # Build project
-RUN npm run build:ts
+RUN npm run build:bundle
 
 # sets environment to production
 # and removes packages from devDependencies
@@ -1155,13 +1180,14 @@ RUN npm prune --production
 #  Use other build image as the final one
 #    that won't have source codes
 ########################################
-FROM node:lts-alpine
+FROM node:24-alpine
 
 # Setup working directory for project
 WORKDIR /app
 
 # Copy published in previous stage binaries
 # from the `builder` image
+COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 

@@ -1,24 +1,24 @@
 import request from 'supertest';
 import app from '../../app';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
+import type { StartedKurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
 import { config } from '../../../config';
 import { v4 as uuid } from 'uuid';
 import { setupCashRegister } from '../../testing/builders/setupCashRegister';
+import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
 describe('POST /cash-registers/:id/shifts', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
+  let kurrentDBContainer: StartedKurrentDBContainer;
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
-    console.log(config.eventStoreDB.connectionString);
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
+    console.log(config.kurrentDB.connectionString);
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   describe('For existing cash register', () => {

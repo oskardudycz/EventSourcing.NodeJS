@@ -90,7 +90,7 @@ describe('Appending events', () => {
     await testDatabase.close();
   });
 
-  it('should append events to EventStoreDB', async () => {
+  it('should append events to MongoDB', async () => {
     const shoppingCartId = uuid();
     const clientId = uuid();
     const pairOfShoes: PricedProductItem = {

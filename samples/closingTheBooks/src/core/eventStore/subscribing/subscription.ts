@@ -1,30 +1,35 @@
-import { Readable } from 'stream';
-import { Result, success } from '../../primitives';
+import type {
+  AllStreamResolvedEvent,
+  ReadableSubscription,
+} from '@kurrent/kurrentdb-client';
+import type { Result } from '../../primitives';
+import { success } from '../../primitives';
 import { resubscribeOnError } from './resubscribeOnError';
 
-export type ESDBSubscription = Readable & {
-  unsubscribe(): Promise<void>;
-};
+export type KurrentDBSubscription =
+  ReadableSubscription<AllStreamResolvedEvent>;
 
 export class Subscription {
-  private subscription: ESDBSubscription | undefined = undefined;
-  constructor(private onSubscribe: () => Promise<Result<ESDBSubscription>>) {}
+  private subscription: KurrentDBSubscription | undefined = undefined;
+  constructor(
+    private onSubscribe: () => Promise<Result<KurrentDBSubscription>>,
+  ) {}
 
   public subscribe(): Promise<Result<boolean>> {
-    return resubscribeOnError(() => {
-      return new Promise<Result<boolean>>(async (resolve, reject) => {
-        const subscriptionResult = await this.onSubscribe();
+    return resubscribeOnError(async () => {
+      const subscriptionResult = await this.onSubscribe();
 
+      return new Promise<Result<boolean>>((resolve, reject) => {
         if (subscriptionResult.isError) return subscriptionResult;
 
         this.subscription = subscriptionResult.value;
 
         this.subscription
-          .on('error', async (error) => {
-            console.error(`Received error: ${error ?? 'UNEXPECTED ERROR'}.`);
+          .on('error', (error) => {
+            console.error(`Received error: %s.`, error ?? 'UNEXPECTED ERROR');
             reject(error);
           })
-          .on('close', async () => {
+          .on('close', () => {
             console.info(`Subscription closed.`);
             resolve(success(false));
           })

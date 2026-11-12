@@ -1,16 +1,27 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
+import type { ParamsDictionary } from 'express-serve-static-core';
 import { addCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
-import { PlaceAtWorkStation } from '.';
+import type { PlaceAtWorkStation } from '.';
 import { handlePlaceAtWorkStation } from './handler';
 import { v4 as uuid } from 'uuid';
 import { isCommand } from '#core/commands';
 import { sendCreated } from '#core/http/responses';
 
+type PlaceAtWorkStationRequest = Request<
+  ParamsDictionary,
+  unknown,
+  Partial<{ workstation: unknown }>
+>;
+
 export const route = (router: Router) =>
   router.post(
     '/cash-registers/',
-    async function (request: Request, response: Response, next: NextFunction) {
+    async function (
+      request: PlaceAtWorkStationRequest,
+      response: Response,
+      next: NextFunction,
+    ) {
       try {
         const command = mapRequestToCommand(request);
 
@@ -33,7 +44,7 @@ export const route = (router: Router) =>
   );
 
 function mapRequestToCommand(
-  request: Request,
+  request: PlaceAtWorkStationRequest,
 ): PlaceAtWorkStation | 'MISSING_WORKSTATION' {
   if (typeof request.body.workstation !== 'string') {
     return 'MISSING_WORKSTATION';

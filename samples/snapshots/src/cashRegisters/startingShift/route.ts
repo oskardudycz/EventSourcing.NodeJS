@@ -1,13 +1,25 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
+import type { ParamsDictionary } from 'express-serve-static-core';
 import { isCommand } from '#core/commands';
-import { StartShift, handleStartShift } from './handler';
+import type { StartShift } from './handler';
+import { handleStartShift } from './handler';
 import { updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
+
+type StartShiftRequest = Request<
+  ParamsDictionary,
+  unknown,
+  Partial<{ cashierId: unknown }>
+>;
 
 export const route = (router: Router) =>
   router.post(
     '/cash-registers/:id/shifts',
-    async function (request: Request, response: Response, next: NextFunction) {
+    async function (
+      request: StartShiftRequest,
+      response: Response,
+      next: NextFunction,
+    ) {
       try {
         const command = mapRequestToCommand(request);
 
@@ -45,7 +57,7 @@ export const route = (router: Router) =>
   );
 
 function mapRequestToCommand(
-  request: Request,
+  request: StartShiftRequest,
 ): StartShift | 'MISSING_CASH_REGISTER_ID' | 'MISSING_CASHIER_ID' {
   if (typeof request.params.id !== 'string') {
     return 'MISSING_CASH_REGISTER_ID';

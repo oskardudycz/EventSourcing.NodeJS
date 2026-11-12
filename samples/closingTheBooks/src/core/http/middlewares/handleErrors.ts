@@ -1,13 +1,25 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 export function handleErrors(
-  err: any,
+  err: unknown,
   _req: Request,
   res: Response,
   _next: NextFunction,
 ) {
-  return res.status(err?.status ?? 500).json({
+  return res.status(hasStatus(err) ? err.status : 500).json({
     status: 'error',
-    message: err?.message,
+    message: hasMessage(err) ? err.message : undefined,
   });
 }
+
+const hasStatus = (error: unknown): error is { status: number } =>
+  typeof error === 'object' &&
+  error !== null &&
+  'status' in error &&
+  typeof error.status === 'number';
+
+const hasMessage = (error: unknown): error is { message: string } =>
+  typeof error === 'object' &&
+  error !== null &&
+  'message' in error &&
+  typeof error.message === 'string';

@@ -1,13 +1,11 @@
-import {
+import type {
   SnapshotEvent,
   SNAPSHOT_CREATION_SKIPPED,
 } from '#core/eventStore/snapshotting';
-import { failure, Result, success } from '#core/primitives';
-import {
-  CashRegister,
-  CashRegisterEvent,
-  getCashRegisterFrom,
-} from '../cashRegister';
+import type { Result } from '#core/primitives';
+import { failure, success } from '#core/primitives';
+import type { CashRegister, CashRegisterEvent } from '../cashRegister';
+import { getCashRegisterFrom } from '../cashRegister';
 
 export type CashRegisterSnapshoted = SnapshotEvent<
   'cash-register-snapshoted',

@@ -1,5 +1,5 @@
 import { Command } from '#core/commands';
-import { ProductItem } from '../../../../common/shoppingCarts/productItem';
+import type { ProductItem } from '../../../../common/shoppingCarts/productItem';
 
 export class RemoveProductItemFromShoppingCart extends Command {
   constructor(

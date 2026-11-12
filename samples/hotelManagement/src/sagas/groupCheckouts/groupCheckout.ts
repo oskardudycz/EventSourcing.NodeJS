@@ -3,8 +3,8 @@
 ///////////////////////////////////////////
 
 import { Map } from 'immutable';
-import { Event } from '#core/event';
-import { Command } from '#core/command';
+import type { Event } from '#core/event';
+import type { Command } from '#core/command';
 
 export type GroupCheckoutInitiated = Event<
   'GroupCheckoutInitiated',

@@ -1,10 +1,11 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { ReadFromStreamAndSnapshotsResult } from '../../snapshotting/reading/';
-import { Event, StreamEvent } from '../../../events';
-import { ReadFromStreamOptions, STREAM_NOT_FOUND } from '../../reading';
-import { Result, success } from '../../../primitives';
-import { AppendResult } from '../../appending';
-import {
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
+import type { ReadFromStreamAndSnapshotsResult } from '../../snapshotting/reading/';
+import type { Event, StreamEvent } from '../../../events';
+import type { ReadFromStreamOptions, STREAM_NOT_FOUND } from '../../reading';
+import type { Result } from '../../../primitives';
+import { success } from '../../../primitives';
+import type { AppendResult } from '../../appending';
+import type {
   FAILED_TO_APPEND_SNAPSHOT,
   SnapshotEvent,
   SNAPSHOT_CREATION_SKIPPED,
@@ -15,7 +16,7 @@ export async function snapshotOnSubscription<
   SnapshotStreamEvent extends SnapshotEvent = StreamEventType & SnapshotEvent,
 >(
   getEvents: (
-    eventStore: EventStoreDBClient,
+    eventStore: KurrentDBClient,
     streamName: string,
     readEventsOptions?: ReadFromStreamOptions,
   ) => Promise<
@@ -41,7 +42,7 @@ export async function snapshotOnSubscription<
     lastSnapshotVersion: bigint | undefined;
     streamName: string;
   }) => Result<SnapshotStreamEvent, SNAPSHOT_CREATION_SKIPPED>,
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   newEvent: StreamEventType,
   {
     position,

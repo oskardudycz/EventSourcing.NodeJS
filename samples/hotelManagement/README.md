@@ -6,9 +6,9 @@ Event Sourcing is perceived as a complex pattern. Some believe that it's like Ne
 
 The workshop aims to build the knowledge of the general concept and its related patterns for the participants. The acquired knowledge will allow for the conscious design of architectural solutions and the analysis of associated risks.
 
-The emphasis will be on a pragmatic understanding of architectures and applying it in practice using EventStoreDB.
+The emphasis will be on a pragmatic understanding of architectures and applying it in practice using KurrentDB.
 
-You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like EventStoreDB.
+You can do the workshop as a self-paced kit. That should give you a good foundation for starting your journey with Event Sourcing and learning tools like KurrentDB.
 
 **If you'd like to get full coverage with all nuances of the private workshop, check [training page on my blog for more details](https://event-driven.io/en/training/) feel free to contact me via [email](mailto:oskar.dudycz@gmail.com).**
 
@@ -21,14 +21,14 @@ Follow the instructions in exercises folders.
 1. [Events definition](./src/01_events_definition/).
 2. [Getting State from events](./src/02_getting_state_from_events/).
 3. Appending Events:
-   - [EventStoreDB](./src/03_appending_events_eventstoredb/)
+   - [KurrentDB](./src/03_appending_events_kurrentdb/)
 4. Getting State from events
-   - [EventStoreDB](./src/04_getting_state_from_events_eventstoredb/)
+   - [KurrentDB](./src/04_getting_state_from_events_kurrentdb/)
 5. Business logic:
    - [General](./src/05_business_logic/)
-   - [EventStoreDB](./src/06_business_logic_eventstoredb/)
+   - [KurrentDB](./src/06_business_logic_kurrentdb/)
 6. Optimistic Concurrency:
-   - [EventStoreDB](./src/07_optimistic_concurrency_eventstoredb/)
+   - [KurrentDB](./src/07_optimistic_concurrency_kurrentdb/)
 7. Projections:
    - [General](./src/08_projections_single_stream/)
    - [Idempotency](./src/09_projections_single_stream_idempotency/)
@@ -51,12 +51,12 @@ Follow the instructions in exercises folders.
 
 ## Ensuring that all is setup correctly
 
-1. Run: `docker compose up` to start EventStoreDB docker image.
+1. Run: `docker compose up` to start KurrentDB docker image.
 2. Run `npm run test:solved`. If all is fine then all tests should be green.
 
 ## Running
 
-1. Run: `docker compose up` to start EventStoreDB docker image.You should automatically get EventStoreDB UI: http://localhost:2113/
+1. Run: `docker compose up` to start KurrentDB docker image.You should automatically get KurrentDB UI: http://localhost:2113/
 2. You can get build watch by running `npm run build:ts:watch`.
 3. To run test for exercises run `npm run test:exercise`. For solutions run `npm run test:solved`, for all `npm run test`.
 4. Whe you're working with exercise and want to have tests running on file change run `npm run test:exercise:watch`.

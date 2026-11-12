@@ -1,14 +1,19 @@
-import { Readable } from 'stream';
-import { Result, success } from '../../primitives';
+import type {
+  AllStreamResolvedEvent,
+  ReadableSubscription,
+} from '@kurrent/kurrentdb-client';
+import type { Result } from '../../primitives';
+import { success } from '../../primitives';
 import { resubscribeOnError } from './resubscribeOnError';
 
-export type ESDBSubscription = Readable & {
-  unsubscribe(): Promise<void>;
-};
+export type KurrentDBSubscription =
+  ReadableSubscription<AllStreamResolvedEvent>;
 
 export class Subscription {
-  private subscription: ESDBSubscription | undefined = undefined;
-  constructor(private onSubscribe: () => Promise<Result<ESDBSubscription>>) {}
+  private subscription: KurrentDBSubscription | undefined = undefined;
+  constructor(
+    private onSubscribe: () => Promise<Result<KurrentDBSubscription>>,
+  ) {}
 
   public subscribe(): Promise<Result<boolean>> {
     return resubscribeOnError(async () => {

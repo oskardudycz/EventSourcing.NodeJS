@@ -1,14 +1,13 @@
 import { getEventStore } from '#core/eventStore';
-import { CashRegisterEvent } from '../cashRegister';
-import { STREAM_NOT_FOUND } from '#core/eventStore/reading';
-import { Result } from '#core/primitives';
-import {
-  add,
-  appendToStream,
+import type { CashRegisterEvent } from '../cashRegister';
+import type { STREAM_NOT_FOUND } from '#core/eventStore/reading';
+import type { Result } from '#core/primitives';
+import type {
   AppendResult,
   FAILED_TO_APPEND_EVENT,
 } from '#core/eventStore/appending';
-import { NO_STREAM } from '@eventstore/db-client';
+import { add, appendToStream } from '#core/eventStore/appending';
+import { NO_STREAM } from '@kurrent/kurrentdb-client';
 
 export async function addCashRegister<Command, TError = never>(
   streamName: string,
@@ -27,7 +26,7 @@ export async function addCashRegister<Command, TError = never>(
       _lastSnapshotVersion,
     ) =>
       appendToStream(eventStore, streamName, [newEvent], {
-        expectedRevision: NO_STREAM,
+        streamState: NO_STREAM,
       }),
     getEventStore(),
     streamName,

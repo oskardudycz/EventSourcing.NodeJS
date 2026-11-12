@@ -1,16 +1,17 @@
-import { NextFunction, Request, Response, Router } from 'express';
-import { CommandBus } from '#core/commands';
+import type { NextFunction, Request, Response } from 'express';
+import { Router } from 'express';
+import type { CommandBus } from '#core/commands';
 import { sendCreated } from '#core/http';
 import { mongoObjectId } from '#core/mongodb';
-import { QueryBus } from '#core/queries';
+import type { QueryBus } from '#core/queries';
 import { OpenShoppingCart } from '../application/shoppingCarts/commands/shoppingCarts/openShoppingCart';
 import { GetShoppingCartById } from '../application/shoppingCarts/queries/getShoppingCartById';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
-import { AddProductItemToShoppingCartRequest } from '../requests/shoppingCarts/addProductItemToShoppingCartRequest';
+import type { AddProductItemToShoppingCartRequest } from '../requests/shoppingCarts/addProductItemToShoppingCartRequest';
 import { AddProductItemToShoppingCart } from '../application/shoppingCarts/commands/shoppingCarts/addProductItemToShoppingCart';
 import { ProductItem } from '../common/shoppingCarts/productItem';
 import { RemoveProductItemFromShoppingCart } from '../application/shoppingCarts/commands/shoppingCarts/removeProductItemFromShoppingCart';
-import { RemoveProductItemFromShoppingCartRequest } from '../requests/shoppingCarts/removeProductItemFromShoppingCartRequest.ts';
+import type { RemoveProductItemFromShoppingCartRequest } from '../requests/shoppingCarts/removeProductItemFromShoppingCartRequest';
 import { ConfirmShoppingCart } from '../application/shoppingCarts/commands/shoppingCarts/confirmShoppingCart';
 import { GetCustomerShoppingHistory } from '../application/shoppingCarts/queries/getCustomerShoppingHistory';
 

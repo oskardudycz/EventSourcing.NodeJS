@@ -1,4 +1,4 @@
-import { Event } from '../events';
+import type { Event } from '../events';
 export abstract class Aggregate {
   protected uncomittedEvents: Event[] = [];
 

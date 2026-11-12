@@ -1,9 +1,11 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { isCommand } from '#core/commands';
-import { openShoppingCart, OpenShoppingCart } from './handler';
+import type { OpenShoppingCart } from './handler';
+import { openShoppingCart } from './handler';
 import { getShoppingCartStreamName } from '../shoppingCart';
-import { isNotEmptyString, ValidationError } from '#core/validation';
+import type { ValidationError } from '#core/validation';
+import { isNotEmptyString } from '#core/validation';
 import { toWeakETag } from '#core/http/requests';
 import { add } from '#core/eventStore/appending';
 import { assertUnreachable } from '#core/primitives';

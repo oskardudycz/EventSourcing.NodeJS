@@ -1,13 +1,14 @@
-import {
+import type {
   EventData,
-  EventStoreDBClient,
-  jsonEvent,
+  KurrentDBClient,
   Position,
-} from '@eventstore/db-client';
-import { AppendToStreamOptions } from '@eventstore/db-client/dist/streams';
+} from '@kurrent/kurrentdb-client';
+import { jsonEvent } from '@kurrent/kurrentdb-client';
+import type { AppendToStreamOptions } from '@kurrent/kurrentdb-client';
 
-import { Event } from '../../events';
-import { failure, Result, success } from '../../primitives';
+import type { Event } from '../../events';
+import type { Result } from '../../primitives';
+import { failure, success } from '../../primitives';
 
 export interface AppendResult {
   /**
@@ -15,7 +16,7 @@ export interface AppendResult {
    */
   nextExpectedRevision: bigint;
   /**
-   * The logical record position in the EventStoreDB transaction file.
+   * The logical record position in the KurrentDB transaction file.
    */
   position?: Position;
 }
@@ -23,7 +24,7 @@ export interface AppendResult {
 export type FAILED_TO_APPEND_EVENT = 'FAILED_TO_APPEND_EVENT';
 
 export async function appendToStream<StreamEvent extends Event>(
-  client: EventStoreDBClient,
+  client: KurrentDBClient,
   streamName: string,
   events: StreamEvent[],
   options?: AppendToStreamOptions,

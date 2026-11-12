@@ -23,29 +23,16 @@
       "port": 9229
     },
     {
-      "name": "Jest all tests",
+      "name": "Debug Current Test File",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
-      "args": ["--verbose", "-i", "--no-cache", "--watchAll"],
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "${file}", "--no-file-parallelism"],
+      "smartStep": true,
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
-    },
-    {
-      "name": "Jest current test",
-      "type": "node",
-      "request": "launch",
-      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
-      "args": [
-        "--verbose",
-        "-i",
-        "--no-cache",
-        "--runTestsByPath",
-        "${relativeFile}",
-        "--watchAll"
-      ],
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "cwd": "${workspaceFolder}"
     }
   ]
 }

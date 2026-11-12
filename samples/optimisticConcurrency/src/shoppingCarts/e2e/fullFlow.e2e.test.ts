@@ -1,29 +1,27 @@
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import { Subscription } from '#core/eventStore/subscribing';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#testing/eventStoreDB/eventStoreDBContainer';
-import {
-  MongoDBContainer,
-  StartedMongoDBContainer,
-} from '@testcontainers/mongodb';
+import type { Subscription } from '#core/eventStore/subscribing';
+import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import type { StartedMongoDBContainer } from '@testcontainers/mongodb';
+import { MongoDBContainer } from '@testcontainers/mongodb';
 import app from '../../app';
 import { getSubscription } from '../../getSubscription';
 import { disconnectFromMongoDB } from '#core/mongoDB';
-import { TestResponse } from '#testing/api/testResponse';
+import type { TestResponse } from '#testing/api/testResponse';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('Full flow', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
+  let kurrentDBContainer: StartedKurrentDBContainer;
   let mongodbContainer: StartedMongoDBContainer;
   let subscription: Subscription;
   const clientId = uuid();
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
 
     mongodbContainer = await new MongoDBContainer('mongo:6.0.12').start();
     config.mongoDB.connectionString = mongodbContainer.getConnectionString();
@@ -48,7 +46,7 @@ describe('Full flow', () => {
     }
     await disconnectFromMongoDB();
     await mongodbContainer.stop();
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   describe('Shopping Cart', () => {

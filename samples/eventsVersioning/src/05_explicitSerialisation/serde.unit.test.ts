@@ -1,7 +1,8 @@
 import { v4 as uuid } from 'uuid';
 import { ShoppingCartStatus } from '../04_transformations/shoppingCart';
-import { PricedProductItem } from '../events/events.v1';
-import { Client, ShoppingCartEvent } from './shoppingCart';
+import type { PricedProductItem } from '../events/events.v1';
+import type { Client, ShoppingCartEvent } from './shoppingCart';
+import { describe, expect, it } from 'vitest';
 
 //////////////////////////////////////////
 //// SERIALIZATION

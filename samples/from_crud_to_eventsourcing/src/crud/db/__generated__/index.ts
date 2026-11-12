@@ -5,17 +5,18 @@
  * Checksum: Th4HMdHeUPmTIANaulYByY22NeagyeH6Q7D4brKBw2ESBdZX4m0BaRyk+r15DxApW+N/RqZXshECcAVqiQBAnQ==
  */
 
-/* eslint-disable */
 // tslint:disable
 
-import Cart, { Cart_InsertParameters } from './cart';
-import CartItem, { CartItem_InsertParameters } from './cart_item';
+import type Cart from './cart';
+import type { Cart_InsertParameters } from './cart';
+import type CartItem from './cart_item';
+import type { CartItem_InsertParameters } from './cart_item';
 
 interface DatabaseSchema {
   cart: { record: Cart; insert: Cart_InsertParameters };
   cart_item: { record: CartItem; insert: CartItem_InsertParameters };
 }
-export default DatabaseSchema;
+export type { DatabaseSchema as default };
 
 function serializeValue(
   _tableName: string,

@@ -1,10 +1,10 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
-import { AddProductItemToShoppingCart } from '../shoppingCart';
+import type { AddProductItemToShoppingCart } from '../shoppingCart';
 import { getShoppingCart, store } from '../storage';
-import { Collection } from 'mongodb';
-import { ShoppingCartModel } from '../storage/';
-import { EventBus } from '#core/events';
+import type { Collection } from 'mongodb';
+import type { ShoppingCartModel } from '../storage/';
+import type { EventBus } from '#core/events';
 import { addProductItemToShoppingCart } from './handler';
 
 export const addProductItemToShoppingCartRoute = (

@@ -1,4 +1,5 @@
-import express, { Application, Request, Response } from 'express';
+import type { Application, Request, Response } from 'express';
+import express from 'express';
 import { getGreeting } from './greetings/getGreeting';
 
 const app: Application = express();

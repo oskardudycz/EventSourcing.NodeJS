@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { assertNotEmptyString } from '#core/validation';
-import { Collection } from 'mongodb';
-import { ShoppingCartModel } from '../storage/';
+import type { Collection } from 'mongodb';
+import type { ShoppingCartModel } from '../storage/';
 import { getById } from '#core/mongo';
 
 export const getShoppingCartByIdRoute = (

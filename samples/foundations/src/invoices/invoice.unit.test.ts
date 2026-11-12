@@ -1,10 +1,12 @@
 import { aggregateStream } from '../core/streams';
-import { InvoiceInitiated } from './initiating/invoiceInitiated';
-import { Invoice, InvoiceEvent, isInvoice, when } from './invoice';
-import { InvoiceIssued } from './issuing/invoiceIssued';
-import { InvoiceSent } from './sending/invoiceSent';
+import type { InvoiceInitiated } from './initiating/invoiceInitiated';
+import type { Invoice, InvoiceEvent } from './invoice';
+import { isInvoice, when } from './invoice';
+import type { InvoiceIssued } from './issuing/invoiceIssued';
+import type { InvoiceSent } from './sending/invoiceSent';
 import { InvoiceSendMethod } from './valueObjects';
 import { InvoiceStatus } from './valueObjects/invoiceStatus';
+import { describe, expect, it } from 'vitest';
 
 describe('invoice', () => {
   it('should get proper state when all events are aggregated', () => {

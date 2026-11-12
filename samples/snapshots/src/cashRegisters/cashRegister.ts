@@ -1,8 +1,8 @@
-import { PlacedAtWorkStation } from './placeAtWorkStation';
-import { ShiftStarted } from './startingShift';
-import { TransactionRegistered } from './registeringTransaction';
-import { ShiftEnded } from './endingShift';
-import { CashRegisterSnapshoted } from './snapshot';
+import type { PlacedAtWorkStation } from './placeAtWorkStation';
+import type { ShiftStarted } from './startingShift';
+import type { TransactionRegistered } from './registeringTransaction';
+import type { ShiftEnded } from './endingShift';
+import type { CashRegisterSnapshoted } from './snapshot';
 import { aggregateStream } from '#core/streams';
 
 /**
@@ -74,16 +74,16 @@ export function when(
   }
 }
 
-function isNotEmptyString(value: any): boolean {
+function isNotEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
 }
 
-function isPositiveNumber(value: any): boolean {
+function isPositiveNumber(value: unknown): value is number {
   return typeof value === 'number' && value >= 0;
 }
 
 export function isCashRegister(
-  cashRegister: any,
+  cashRegister: Partial<CashRegister>,
 ): cashRegister is CashRegister {
   return (
     cashRegister !== undefined &&
@@ -95,7 +95,9 @@ export function isCashRegister(
   );
 }
 
-export function isCashRegisterEvent(event: any): event is CashRegisterEvent {
+export function isCashRegisterEvent(event: {
+  type: string;
+}): event is CashRegisterEvent {
   switch (event.type) {
     case 'placed-at-workstation':
     case 'shift-started':

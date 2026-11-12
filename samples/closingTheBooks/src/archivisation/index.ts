@@ -1,10 +1,11 @@
-import {
+import type {
   STREAM_NOT_FOUND,
   NO_EVENTS_FOUND,
-  readFirstEventFromStream,
 } from '#core/eventStore/reading';
-import { Result, success } from '#core/primitives';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import { readFirstEventFromStream } from '#core/eventStore/reading';
+import type { Result } from '#core/primitives';
+import { success } from '#core/primitives';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 
 export function getArchivisationScheduleStreamName(): string {
   return 'archivisation-scheduled';
@@ -15,7 +16,7 @@ export function getArchivisationForStreamName(streamName: string): string {
 }
 
 export async function getStreamRevisionOfTheFirstEventToArchive(
-  eventStore: EventStoreDBClient,
+  eventStore: KurrentDBClient,
   streamName: string,
 ): Promise<Result<bigint, STREAM_NOT_FOUND | NO_EVENTS_FOUND>> {
   const firstEvent = await readFirstEventFromStream(eventStore, streamName);

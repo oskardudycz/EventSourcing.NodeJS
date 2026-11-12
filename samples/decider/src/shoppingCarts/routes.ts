@@ -1,15 +1,15 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { Router } from 'express';
 import { CommandHandler } from '#core/commandHandling';
 import { HTTPHandler } from '#core/http';
 import { getEventStore } from '#core/streams';
 import { assertNotEmptyString, assertPositiveNumber } from '#core/validation';
-import {
-  decider,
+import type {
   ShoppingCart,
   ShoppingCartCommand,
   ShoppingCartEvent,
-  toShoppingCartStreamId,
 } from './shoppingCart';
+import { decider, toShoppingCartStreamId } from './shoppingCart';
 import { getMongoDB, mongoObjectId } from '#core/mongoDB';
 import { getProductPrice } from './productItem';
 import { toWeakETag } from '#core/eTag';

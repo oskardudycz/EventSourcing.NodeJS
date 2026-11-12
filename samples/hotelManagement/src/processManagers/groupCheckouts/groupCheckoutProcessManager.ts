@@ -1,22 +1,19 @@
-import { Command } from '#core/command';
-import { Map } from 'immutable';
-import {
+import type { Command } from '#core/command';
+import type { Map } from 'immutable';
+import type {
   CheckOut,
   GuestCheckedOut,
   GuestCheckoutFailed,
 } from '../guestStayAccounts/guestStayAccount';
-import {
+import type {
   GroupCheckout,
   GroupCheckoutEvent,
   GroupCheckoutInitiated,
-  GuestStayStatus,
-  isAlreadyClosed,
 } from './groupCheckout';
+import { GuestStayStatus, isAlreadyClosed } from './groupCheckout';
 
 export type GroupCheckoutProcessManagerEvent =
-  | GroupCheckoutInitiated
-  | GuestCheckedOut
-  | GuestCheckoutFailed;
+  GroupCheckoutInitiated | GuestCheckedOut | GuestCheckoutFailed;
 
 export type GroupCheckoutProcessingResult = CheckOut | GroupCheckoutEvent;
 

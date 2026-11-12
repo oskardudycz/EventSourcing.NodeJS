@@ -5,14 +5,14 @@
  * Checksum: mvr5LM1sWe/moDBCkVf9yIA5oRVpoFynR61yYthzr8gpysl3Q1Wemk9fgb6cFGEWwbDmjScHBGd5y+J4az/CRQ==
  */
 
-/* eslint-disable */
 // tslint:disable
 
-import Cart, { Cart_InsertParameters } from './cart';
-import CartItem, { CartItem_InsertParameters } from './cart_item';
-import SubscriptionCheckpoint, {
-  SubscriptionCheckpoint_InsertParameters,
-} from './subscription_checkpoint';
+import type Cart from './cart';
+import type { Cart_InsertParameters } from './cart';
+import type CartItem from './cart_item';
+import type { CartItem_InsertParameters } from './cart_item';
+import type SubscriptionCheckpoint from './subscription_checkpoint';
+import type { SubscriptionCheckpoint_InsertParameters } from './subscription_checkpoint';
 
 interface DatabaseSchema {
   cart: { record: Cart; insert: Cart_InsertParameters };
@@ -22,7 +22,7 @@ interface DatabaseSchema {
     insert: SubscriptionCheckpoint_InsertParameters;
   };
 }
-export default DatabaseSchema;
+export type { DatabaseSchema as default };
 
 function serializeValue(
   _tableName: string,

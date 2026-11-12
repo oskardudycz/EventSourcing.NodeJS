@@ -1,4 +1,4 @@
-import { Event } from '#core/event';
+import type { Event } from '#core/event';
 
 export interface ProductItem {
   productId: string;

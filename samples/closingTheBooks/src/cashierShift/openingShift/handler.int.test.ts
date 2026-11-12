@@ -1,31 +1,30 @@
-import { EventStoreDBClient } from '@eventstore/db-client';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#testing/eventStoreDB/eventStoreDBContainer';
+import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { updateCashierShift } from '../processCashierShift';
-import {
-  CashierShiftEvent,
-  getCurrentCashierShiftStreamName,
-} from '../cashierShift';
-import { handleOpenShift, OpenShift } from '.';
+import type { CashierShiftEvent } from '../cashierShift';
+import { getCurrentCashierShiftStreamName } from '../cashierShift';
+import type { OpenShift } from '.';
+import { handleOpenShift } from '.';
 import { appendToStream } from '#core/eventStore/appending';
 import { getCurrentTime } from '#core/primitives';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('OpenShift command', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
-  let eventStore: EventStoreDBClient;
+  let kurrentDBContainer: StartedKurrentDBContainer;
+  let eventStore: KurrentDBClient;
   const cashRegisterId = uuid();
   const streamName = getCurrentCashierShiftStreamName(cashRegisterId);
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
 
-    eventStore = esdbContainer.getClient();
+    eventStore = kurrentDBContainer.getClient();
 
     const result = await appendToStream<CashierShiftEvent>(
       eventStore,
@@ -44,7 +43,7 @@ describe('OpenShift command', () => {
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   it('should open current shift for initiating, cash register with closed shift', async () => {

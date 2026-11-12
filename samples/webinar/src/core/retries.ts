@@ -54,5 +54,5 @@ export const retryPromise = async <T = never>(
     }
   } while (retryCount == maxRetries);
 
-  throw '[retry] Exceeded max retry count';
+  throw new Error('[retry] Exceeded max retry count');
 };

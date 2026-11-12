@@ -1,5 +1,5 @@
 import { isErrorWithStatusAndMessage } from '#core/eventStore/errors';
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 export function handleErrors(
   err: unknown,
@@ -14,7 +14,7 @@ export function handleErrors(
 }
 
 function mapStatus(error: unknown): number {
-  if (error === 'TIMEOUT_ERROR') return 504;
+  if (error instanceof Error && error.message === 'TIMEOUT_ERROR') return 504;
 
   return isErrorWithStatusAndMessage(error) ? error.status : 500;
 }

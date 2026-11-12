@@ -21,7 +21,7 @@ export default defineConfig({
           include: ['src/**/*.test.ts'],
           exclude: [
             ...exclude,
-            'src/**/*eventstoredb/**',
+            'src/**/*kurrentdb/**',
             'src/**/postgresql/**',
             'src/**/mongodb/**',
           ],
@@ -30,10 +30,10 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: 'eventstoredb',
-          include: ['src/**/*eventstoredb/**/*.test.ts'],
+          name: 'kurrentdb',
+          include: ['src/**/*kurrentdb/**/*.test.ts'],
           exclude,
-          globalSetup: ['./src/core/testing/eventStoreDB/globalSetup.ts'],
+          globalSetup: ['./src/core/testing/kurrentDB/globalSetup.ts'],
         },
       },
       {

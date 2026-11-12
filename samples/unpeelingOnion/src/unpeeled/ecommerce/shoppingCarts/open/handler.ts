@@ -1,4 +1,4 @@
-import { OpenShoppingCart, ShoppingCartOpened } from '../shoppingCart';
+import type { OpenShoppingCart, ShoppingCartOpened } from '../shoppingCart';
 
 export const openShoppingCart = (
   command: OpenShoppingCart,

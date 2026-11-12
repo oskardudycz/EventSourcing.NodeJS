@@ -1,7 +1,9 @@
 import { getById } from '#core/mongo';
-import { Collection, ObjectId } from 'mongodb';
-import { ProductItem, ShoppingCart, ShoppingCartStatus } from '../shoppingCart';
-import { ShoppingCartEvent } from '../shoppingCart';
+import type { Collection } from 'mongodb';
+import { ObjectId } from 'mongodb';
+import type { ProductItem, ShoppingCart } from '../shoppingCart';
+import { ShoppingCartStatus } from '../shoppingCart';
+import type { ShoppingCartEvent } from '../shoppingCart';
 
 export type ShoppingCartModel = {
   _id: ObjectId;

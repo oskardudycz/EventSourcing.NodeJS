@@ -1,8 +1,9 @@
-import { Request } from 'express';
-import { failure, Result, success } from '../../primitives';
+import type { Request } from 'express';
+import type { Result } from '../../primitives';
+import { failure, success } from '../../primitives';
 
 export type WeakETag = string;
-export type ETag = WeakETag | string;
+export type ETag = WeakETag;
 
 export const WeakETagRegex = /W\/"(\d+.*)"/;
 export type WRONG_WEAK_ETAG_FORMAT = 'WRONG_WEAK_ETAG_FORMAT';
@@ -16,7 +17,7 @@ export function getWeakETagValue(etag: ETag): string {
   return WeakETagRegex.exec(etag)![1];
 }
 
-export function toWeakETag(value: any): WeakETag {
+export function toWeakETag(value: number | bigint | string): WeakETag {
   return `W/"${value}"`;
 }
 
@@ -28,7 +29,7 @@ export function getETagFromIfMatch(
   if (etag === undefined) {
     return failure('MISSING_IF_MATCH_HEADER');
   }
-  return success(<ETag>etag);
+  return success(etag);
 }
 
 export function getWeakETagFromIfMatch(
@@ -38,7 +39,7 @@ export function getWeakETagFromIfMatch(
 
   if (etag.isError) return etag;
 
-  if (!isWeakETag(etag.value)) return fail('WRONG_WEAK_ETAG_FORMAT');
+  if (!isWeakETag(etag.value)) return failure('WRONG_WEAK_ETAG_FORMAT');
 
   const eTagValue = getWeakETagValue(etag.value);
 

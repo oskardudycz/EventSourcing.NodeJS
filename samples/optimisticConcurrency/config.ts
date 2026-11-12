@@ -10,12 +10,13 @@ const convictConfig = convict({
     arg: 'nodeEnv',
     env: 'NODE_ENV',
   },
-  eventStoreDB: {
+  kurrentDB: {
     connectionString: {
       format: String,
-      default: 'esdb://localhost:2113?tls=false&throwOnAppendFailure=false',
-      arg: 'ESDB_CONNECTION_STRING',
-      env: 'ESDB_CONNECTION_STRING',
+      default:
+        'kurrentdb://localhost:2113?tls=false&throwOnAppendFailure=false',
+      arg: 'KURRENTDB_CONNECTION_STRING',
+      env: 'KURRENTDB_CONNECTION_STRING',
     },
   },
   mongoDB: {

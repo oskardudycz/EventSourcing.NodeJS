@@ -1,9 +1,12 @@
-import { MongoClient, Collection, Document } from 'mongodb';
+import type { Collection, Document } from 'mongodb';
+import { MongoClient } from 'mongodb';
 import { config } from '#config';
 
 export function getMongoDB(connectionString?: string): MongoClient {
   if (!connectionString && !config.mongoDB.connectionString) {
-    throw 'MongoDB connection string not set. Please define "MONGODB_CONNECTION_STRING" environment variable';
+    throw new Error(
+      'MongoDB connection string not set. Please define "MONGODB_CONNECTION_STRING" environment variable',
+    );
   }
 
   console.log(config.mongoDB.connectionString);

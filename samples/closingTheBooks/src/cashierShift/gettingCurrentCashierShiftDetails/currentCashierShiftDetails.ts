@@ -1,4 +1,4 @@
-import { CashierShiftStatus } from '../cashierShift';
+import type { CashierShiftStatus } from '../cashierShift';
 
 export const CurrentCashierShiftDetailsCollection =
   'currentCashierShiftDetails';

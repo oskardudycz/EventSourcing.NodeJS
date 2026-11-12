@@ -1,6 +1,7 @@
-import { Event } from '#core/event';
-import { ShoppingCartOpened as ShoppingCartOpenedV1 } from 'src/events/events.v1';
+import type { Event } from '#core/event';
+import type { ShoppingCartOpened as ShoppingCartOpenedV1 } from '../events/events.v1';
 import { v4 as uuid } from 'uuid';
+import { describe, expect, it } from 'vitest';
 
 export type ShoppingCartOpened = Event<
   'ShoppingCartOpened',

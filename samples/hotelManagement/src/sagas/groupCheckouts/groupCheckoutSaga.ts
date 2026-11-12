@@ -1,9 +1,9 @@
-import {
+import type {
   CheckOut,
   GuestCheckedOut,
   GuestCheckoutFailed,
 } from '../guestStayAccounts/guestStayAccount';
-import {
+import type {
   GroupCheckoutInitiated,
   RecordGuestCheckoutCompletion,
   RecordGuestCheckoutFailure,
@@ -11,9 +11,7 @@ import {
 } from './groupCheckout';
 
 export type GroupCheckoutSagaEvent =
-  | GroupCheckoutInitiated
-  | GuestCheckedOut
-  | GuestCheckoutFailed;
+  GroupCheckoutInitiated | GuestCheckedOut | GuestCheckoutFailed;
 
 export type GroupCheckoutSagaCommand =
   | CheckOut
@@ -25,8 +23,7 @@ export const GroupCheckoutSaga = ({
   type,
   data: event,
 }: GroupCheckoutSagaEvent):
-  | GroupCheckoutSagaCommand
-  | GroupCheckoutSagaCommand[] => {
+  GroupCheckoutSagaCommand | GroupCheckoutSagaCommand[] => {
   switch (type) {
     case 'GroupCheckoutInitiated': {
       const checkoutGuestStays =

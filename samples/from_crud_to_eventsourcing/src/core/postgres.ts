@@ -3,9 +3,11 @@
 //////////////////////////////////////
 
 import { config } from '#config';
-import createConnectionPool, { ConnectionPool } from '@databases/pg';
+import type { ConnectionPool } from '@databases/pg';
+import createConnectionPool from '@databases/pg';
 import { execSync } from 'child_process';
-import { DEFAULT_RETRY_OPTIONS, RetryOptions, retryPromise } from './retries';
+import type { RetryOptions } from './retries';
+import { DEFAULT_RETRY_OPTIONS, retryPromise } from './retries';
 
 let db: ConnectionPool;
 

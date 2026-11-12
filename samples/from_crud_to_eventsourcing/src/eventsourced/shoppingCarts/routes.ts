@@ -10,22 +10,26 @@ import {
   assertPositiveNumber,
   assertStringOrUndefined,
 } from '#core/validation';
-import { not, WhereCondition } from '@databases/pg-typed';
-import { NextFunction, Request, Response, Router } from 'express';
+import type { WhereCondition } from '@databases/pg-typed';
+import { not } from '@databases/pg-typed';
+import type { NextFunction, Request, Response } from 'express';
+import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { create, update } from '../core/commandHandling';
 import { getEventStore } from '../core/streams';
 import { cartItems, carts } from '../db';
-import { Cart } from '../db/__generated__';
+import type { Cart } from '../db/__generated__';
 import { getPricedProductItem } from './productItem';
-import {
+import type {
   AddProductItemToShoppingCart,
-  addProductItemToShoppingCart,
   ConfirmShoppingCart,
+  ShoppingCartEvent,
+} from './shoppingCart';
+import {
+  addProductItemToShoppingCart,
   confirmShoppingCart,
   openShoppingCart,
   removeProductItemFromShoppingCart,
-  ShoppingCartEvent,
   toShoppingCartStreamName,
 } from './shoppingCart';
 import { getUserData } from './user';
@@ -40,7 +44,7 @@ export const router = Router();
 // Open Shopping cart
 ///////////////////////////////
 router.post(
-  '/v2/shopping-carts/:shoppingCartId?',
+  '/v2/shopping-carts{/:shoppingCartId}',
   async (request: Request, response: Response, next: NextFunction) => {
     try {
       const shoppingCartId =

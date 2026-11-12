@@ -1,6 +1,7 @@
-import { Command } from '#core/commands';
-import { Event } from '#core/events';
-import { Result, success, getCurrentTime } from '#core/primitives';
+import type { Command } from '#core/commands';
+import type { Event } from '#core/events';
+import type { Result } from '#core/primitives';
+import { success, getCurrentTime } from '#core/primitives';
 
 export type InitializeCashRegisterShift = Command<
   'initialize-cash-register-shift',

@@ -1,10 +1,8 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response, Router } from 'express';
 import { isQuery } from '#core/queries';
 import { isNotEmptyString } from '#core/validation';
-import {
-  GetCurrentCashierShiftDetails,
-  handleGetCashierShift,
-} from './queryHandler';
+import type { GetCurrentCashierShiftDetails } from './queryHandler';
+import { handleGetCashierShift } from './queryHandler';
 import { toWeakETag } from '#core/http/requests';
 
 export const route = (router: Router) =>
@@ -24,11 +22,10 @@ export const route = (router: Router) =>
         if (result.isError) {
           switch (result.error) {
             case 'SHIFT_DOES_NOT_EXIST':
-              next({ status: 404 });
+              return next({ status: 404 });
             default:
-              next({ status: 500 });
+              return next({ status: 500 });
           }
-          return;
         }
 
         response.set('ETag', toWeakETag(result.value.revision));

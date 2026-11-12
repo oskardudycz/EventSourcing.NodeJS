@@ -1,32 +1,31 @@
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '#testing/eventStoreDB/eventStoreDBContainer';
+import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { config } from '#config';
-import { CloseShift, handleCloseShift } from './handler';
+import type { CloseShift } from './handler';
+import { handleCloseShift } from './handler';
 import { v4 as uuid } from 'uuid';
 import { updateCashierShift } from '../processCashierShift';
-import {
-  CashierShiftEvent,
-  getCurrentCashierShiftStreamName,
-} from '../cashierShift';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import type { CashierShiftEvent } from '../cashierShift';
+import { getCurrentCashierShiftStreamName } from '../cashierShift';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { appendToStream } from '#core/eventStore/appending';
 import { getCurrentTime } from '#core/primitives';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('ClosingShift command', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
-  let eventStore: EventStoreDBClient;
+  let kurrentDBContainer: StartedKurrentDBContainer;
+  let eventStore: KurrentDBClient;
   const cashRegisterId = uuid();
   const cashierId = uuid();
   const streamName = getCurrentCashierShiftStreamName(cashRegisterId);
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
 
-    eventStore = esdbContainer.getClient();
+    eventStore = kurrentDBContainer.getClient();
 
     const result = await appendToStream<CashierShiftEvent>(
       eventStore,
@@ -55,7 +54,7 @@ describe('ClosingShift command', () => {
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   it('should close the shift for existing, opened cash register shift', async () => {

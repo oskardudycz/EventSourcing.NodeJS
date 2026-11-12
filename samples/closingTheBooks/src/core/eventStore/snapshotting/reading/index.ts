@@ -4,7 +4,7 @@ export * from './readEventsFromSnapshotInTheSameStream';
 export * from './readSnapshotFromSeparateStream';
 export * from './getLastSnapshotVersionFromStreamMetadata';
 
-import { Event, StreamEvent } from '../../../events';
+import type { Event, StreamEvent } from '../../../events';
 
 export type ReadFromStreamAndSnapshotsResult<
   StreamEventType extends Event = Event,

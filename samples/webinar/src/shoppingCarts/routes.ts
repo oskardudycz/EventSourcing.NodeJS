@@ -1,4 +1,5 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { create, update } from '#core/commandHandling';
 import {

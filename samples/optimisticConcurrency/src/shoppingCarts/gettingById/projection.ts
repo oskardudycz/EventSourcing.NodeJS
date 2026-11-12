@@ -4,16 +4,18 @@ import {
   retryIfNotFound,
   retryIfNotUpdated,
 } from '#core/mongoDB';
-import { assertUnreachable, Result, success } from '#core/primitives';
-import { Event, StreamEvent } from '#core/events';
-import {
+import type { Result } from '#core/primitives';
+import { assertUnreachable, success } from '#core/primitives';
+import type { Event, StreamEvent } from '#core/events';
+import type {
   ProductItemAddedToShoppingCart,
   ProductItemRemovedFromShoppingCart,
   ShoppingCartConfirmed,
   ShoppingCartOpened,
-  ShoppingCartStatus,
 } from '..';
-import { ShoppingCartDetails, SHOPPING_CART_DETAILS } from '.';
+import { ShoppingCartStatus } from '..';
+import type { ShoppingCartDetails } from '.';
+import { SHOPPING_CART_DETAILS } from '.';
 import { addProductItem, removeProductItem } from '../productItems';
 
 export async function projectToShoppingCartDetails(

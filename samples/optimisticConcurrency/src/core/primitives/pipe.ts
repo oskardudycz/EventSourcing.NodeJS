@@ -1,4 +1,5 @@
-import { Result, success } from './result';
+import type { Result } from './result';
+import { success } from './result';
 import { switchError, switchErrorAsync } from './switchError';
 
 /* eslint @typescript-eslint/no-explicit-any: 0 */

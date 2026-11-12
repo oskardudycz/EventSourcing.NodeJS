@@ -1,10 +1,8 @@
-import { MongoClient, Collection, UpdateResult, Document } from 'mongodb';
+import type { Collection, UpdateResult, Document } from 'mongodb';
+import { MongoClient } from 'mongodb';
 import { config } from '#config';
-import {
-  DEFAULT_RETRY_OPTIONS,
-  RetryOptions,
-  retryPromise,
-} from '#core/http/requests';
+import type { RetryOptions } from '#core/http/requests';
+import { DEFAULT_RETRY_OPTIONS, retryPromise } from '#core/http/requests';
 
 let mongoClient: MongoClient;
 let isOpened = false;
@@ -13,7 +11,9 @@ export async function getMongoDB(
   connectionString?: string,
 ): Promise<MongoClient> {
   if (connectionString ?? !config.mongoDB.connectionString) {
-    throw 'MongoDB connection string not set. Please define "ESDB_CONNECTION_STRING" environment variable';
+    throw new Error(
+      'MongoDB connection string not set. Please define "MONGODB_CONNECTION_STRING" environment variable',
+    );
   }
 
   if (!mongoClient) {
@@ -66,7 +66,7 @@ export async function assertUpdated(
   const result = await update();
 
   if (result.modifiedCount === 0) {
-    throw 'FAILED_TO_UPDATE_DOCUMENT';
+    throw new Error('FAILED_TO_UPDATE_DOCUMENT');
   }
 
   return result;
@@ -87,7 +87,7 @@ export async function assertFound<T>(
   const result = await find();
 
   if (result === null) {
-    throw 'DOCUMENT_NOT_FOUND';
+    throw new Error('DOCUMENT_NOT_FOUND');
   }
 
   return result;

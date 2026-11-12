@@ -1,6 +1,7 @@
-import { Request } from 'express';
-import { ParamsDictionary } from 'express-serve-static-core';
-import { failure, Result, success } from '../../primitives';
+import type { Request } from 'express';
+import type { ParamsDictionary } from 'express-serve-static-core';
+import type { Result } from '../../primitives';
+import { failure, success } from '../../primitives';
 
 export type ApiRequest = Request<
   Record<string, unknown> | ParamsDictionary,
@@ -10,7 +11,7 @@ export type ApiRequest = Request<
 >;
 
 export type WeakETag = `W/${string}`;
-export type ETag = WeakETag | string;
+export type ETag = string;
 
 export const WeakETagRegex = /W\/"(\d+.*)"/;
 
@@ -27,7 +28,7 @@ export function getWeakETagValue(etag: ETag): string {
   const weak = WeakETagRegex.exec(etag);
   if (weak == null || weak.length == 0)
     throw new Error('WRONG_WEAK_ETAG_FORMAT');
-  return weak[1] as WeakETag;
+  return weak[1];
 }
 
 export function toWeakETag(value: number | bigint | string): WeakETag {
@@ -52,7 +53,7 @@ export function getWeakETagValueFromIfMatch(
 
   if (etag.isError) return etag;
 
-  if (!isWeakETag(etag.value)) return fail('WRONG_WEAK_ETAG_FORMAT');
+  if (!isWeakETag(etag.value)) return failure('WRONG_WEAK_ETAG_FORMAT');
 
   const eTagValue = getWeakETagValue(etag.value);
 

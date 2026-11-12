@@ -1,14 +1,15 @@
-import {
-  EventStoreDBClient,
+import type {
+  KurrentDBClient,
   Position,
   StreamSubscription,
-} from '@eventstore/db-client';
-import { SubscribeToStreamOptions } from '@eventstore/db-client/dist/streams';
+} from '@kurrent/kurrentdb-client';
+import type { SubscribeToStreamOptions } from '@kurrent/kurrentdb-client';
 
-import { Event, StreamEvent } from '../../events';
+import type { Event, StreamEvent } from '../../events';
 import { pipeResultAsync } from '../../primitives/pipe';
-import { Result, success } from '../../primitives';
-import { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
+import type { Result } from '../../primitives';
+import { success } from '../../primitives';
+import type { FAILED_TO_STORE_CHECKPOINT } from './checkpoints';
 
 export async function subscribeToStream(
   loadCheckpoint: (
@@ -18,7 +19,7 @@ export async function subscribeToStream(
     subscriptionId: string,
     revision: bigint,
   ) => Promise<Result<true, FAILED_TO_STORE_CHECKPOINT>>,
-  client: EventStoreDBClient,
+  client: KurrentDBClient,
   streamName: string,
   subscriptionId: string,
   handleEvent: (event: StreamEvent) => Promise<void>,

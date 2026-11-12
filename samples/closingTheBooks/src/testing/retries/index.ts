@@ -1,4 +1,4 @@
-import request from 'supertest';
+import type request from 'supertest';
 import { sleep } from '#core/primitives';
 
 export async function retry(
@@ -12,7 +12,7 @@ export async function retry(
     if (retriesLeft > 0) {
       await sleep(delay);
 
-      await retry(test, --retriesLeft, delay);
+      await retry(test, retriesLeft - 1, delay);
 
       return;
     }

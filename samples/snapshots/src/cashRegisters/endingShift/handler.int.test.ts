@@ -1,36 +1,34 @@
-import {
-  EventStoreDBContainer,
-  StartedEventStoreDBContainer,
-} from '../../testing/eventStoreDB/eventStoreDBContainer';
+import type { StartedKurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
+import { KurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
 import { config } from '../../../config';
-import { EndShift, handleEndShift } from './handler';
-import {
-  handlePlaceAtWorkStation,
-  PlaceAtWorkStation,
-} from '../placeAtWorkStation/handler';
+import type { EndShift } from './handler';
+import { handleEndShift } from './handler';
+import type { PlaceAtWorkStation } from '../placeAtWorkStation/handler';
+import { handlePlaceAtWorkStation } from '../placeAtWorkStation/handler';
 import { v4 as uuid } from 'uuid';
 import { addCashRegister, updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
-import { EventStoreDBClient } from '@eventstore/db-client';
+import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { addSnapshotPrefix } from '#core/eventStore/snapshotting';
 import { expectStreamToHaveNumberOfEvents } from '../../testing/assertions/streams';
-import { handleStartShift, StartShift } from '../startingShift';
-import {
-  handleRegisterTransaction,
-  RegisterTransaction,
-} from '../registeringTransaction';
+import type { StartShift } from '../startingShift';
+import { handleStartShift } from '../startingShift';
+import type { RegisterTransaction } from '../registeringTransaction';
+import { handleRegisterTransaction } from '../registeringTransaction';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('EndShift command', () => {
-  let esdbContainer: StartedEventStoreDBContainer;
-  let eventStore: EventStoreDBClient;
+  let kurrentDBContainer: StartedKurrentDBContainer;
+  let eventStore: KurrentDBClient;
   const cashRegisterId = uuid();
   const streamName = getCashRegisterStreamName(cashRegisterId);
 
   beforeAll(async () => {
-    esdbContainer = await new EventStoreDBContainer().start();
-    config.eventStoreDB.connectionString = esdbContainer.getConnectionString();
+    kurrentDBContainer = await new KurrentDBContainer().start();
+    config.kurrentDB.connectionString =
+      kurrentDBContainer.getConnectionString();
 
-    eventStore = esdbContainer.getClient();
+    eventStore = kurrentDBContainer.getClient();
 
     const placeAtWorkStation: PlaceAtWorkStation = {
       type: 'place-at-workstation',
@@ -78,7 +76,7 @@ describe('EndShift command', () => {
   });
 
   afterAll(async () => {
-    await esdbContainer.stop();
+    await kurrentDBContainer.stop();
   });
 
   it('should end shift for existing, starting cash register shift', async () => {

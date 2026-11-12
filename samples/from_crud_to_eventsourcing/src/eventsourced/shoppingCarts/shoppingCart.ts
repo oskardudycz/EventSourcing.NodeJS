@@ -2,22 +2,20 @@
 /// Shopping Carts
 //////////////////////////////////////
 
-import {
+import type {
   JSONEventType,
   JSONRecordedEvent,
   RecordedEvent,
   ResolvedEvent,
-  StreamingRead,
-} from '@eventstore/db-client';
+} from '@kurrent/kurrentdb-client';
 import { StreamAggregator } from '../core/streams';
+import type { PricedProductItem, ProductItem } from './productItem';
 import {
   addProductItem,
   assertProductItemExists,
-  PricedProductItem,
-  ProductItem,
   removeProductItem,
 } from './productItem';
-import { User } from './user';
+import type { User } from './user';
 
 //////////////////////////////////////
 /// Events
@@ -199,7 +197,7 @@ export type AddProductItemToShoppingCart = {
 
 export const addProductItemToShoppingCart = async (
   getPricedProduct: (productItem: ProductItem) => Promise<PricedProductItem>,
-  events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
+  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId, productItem }: AddProductItemToShoppingCart,
 ): Promise<ProductItemAddedToShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
@@ -228,7 +226,7 @@ export type RemoveProductItemFromShoppingCart = {
 };
 
 export const removeProductItemFromShoppingCart = async (
-  events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
+  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart,
 ): Promise<ProductItemRemovedFromShoppingCart> => {
   const shoppingCart = await getShoppingCart(events);
@@ -266,7 +264,7 @@ export type ConfirmShoppingCart = {
 
 export const confirmShoppingCart = async (
   getUserData: (userId: number) => Promise<User | undefined>,
-  events: StreamingRead<ResolvedEvent<ShoppingCartEvent>>,
+  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
   { shoppingCartId, additionalInfo, userId }: ConfirmShoppingCart,
 ): Promise<ShoppingCartConfirmed> => {
   const shoppingCart = await getShoppingCart(events);
@@ -277,7 +275,7 @@ export const confirmShoppingCart = async (
   const user = await getUserData(userId);
 
   if (!user) {
-    throw ShoppingCartErrors.USER_DOES_NOT_EXISTS;
+    throw new Error(ShoppingCartErrors.USER_DOES_NOT_EXISTS);
   }
 
   return {

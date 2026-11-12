@@ -1,15 +1,16 @@
 import { MongoDBContainer } from '@testcontainers/mongodb';
 import { MongoClient } from 'mongodb';
 import { mongoObjectId } from '#core/mongoDB';
+import type { ShoppingCartDetails } from './shoppingCartDetails';
 import {
   getShoppingCartsCollection,
   projectToShoppingCartDetails,
-  ShoppingCartDetails,
   ShoppingCartStatus,
 } from './shoppingCartDetails';
-import { ShoppingCartEvent } from '../shoppingCart';
-import { PricedProductItem } from 'src/gist';
+import type { ShoppingCartEvent } from '../shoppingCart';
+import type { PricedProductItem } from '../../gist';
 import { Spec } from '#testing/mongoDB/mongoDbProjectionTests';
+import { afterAll, beforeAll, describe, it } from 'vitest';
 
 describe('Shopping Cart details', () => {
   let mongo: MongoClient;

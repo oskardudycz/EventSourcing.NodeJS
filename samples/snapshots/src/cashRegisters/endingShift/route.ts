@@ -1,5 +1,6 @@
-import { NextFunction, Request, Response, Router } from 'express';
-import { handleEndShift, EndShift } from './handler';
+import type { NextFunction, Request, Response, Router } from 'express';
+import type { EndShift } from './handler';
+import { handleEndShift } from './handler';
 import { updateCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
 import { isCommand } from '#core/commands';
