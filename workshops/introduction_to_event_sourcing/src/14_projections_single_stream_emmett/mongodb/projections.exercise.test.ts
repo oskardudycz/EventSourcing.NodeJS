@@ -1,6 +1,6 @@
 import {
-  getMongoDBTestClient,
-  releaseMongoDBContainer,
+  type MongoDBTestDatabase,
+  sharedMongoDBDatabase,
 } from '#core/testing/mongoDB';
 import { projections, type Event } from '@event-driven-io/emmett';
 import {
@@ -13,8 +13,8 @@ import {
   type MongoDBEventStore,
   type MongoDBReadModel,
 } from '@event-driven-io/emmett-mongodb';
-import { MongoClient } from 'mongodb';
 import { v4 as uuid } from 'uuid';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 export interface ProductItem {
   productId: string;
@@ -100,20 +100,19 @@ export type ShoppingCartShortInfo = {
 
 describe('Getting state from events', () => {
   let eventStore: MongoDBEventStore;
-  let client: MongoClient;
+  let testDatabase: MongoDBTestDatabase;
 
   beforeAll(async () => {
-    client = await getMongoDBTestClient();
+    testDatabase = await sharedMongoDBDatabase();
 
     eventStore = getMongoDBEventStore({
-      client: client,
+      client: testDatabase.client,
       projections: projections.inline([detailsProjection, shortInfoProjection]),
     });
   });
 
   afterAll(async () => {
-    await client.close();
-    await releaseMongoDBContainer();
+    await testDatabase.close();
   });
 
   it('Should return the state from the sequence of events', async () => {
@@ -166,7 +165,7 @@ describe('Getting state from events', () => {
     const clientId = uuid();
     const otherClientId = uuid();
 
-    const database = client.db();
+    const database = testDatabase.client.db();
 
     const shoppingCartStreams = database.collection<
       EventStream<ShoppingCartEvent>

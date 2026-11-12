@@ -4,8 +4,8 @@ import {
   type ShoppingCartShortInfo,
   ShoppingCartStatus,
 } from './projections.exercise.test';
-import { type DocumentsCollection } from './tools/database';
-import { type EventHandler } from './tools/eventStore';
+import type { DocumentsCollection } from './tools/database';
+import type { EventHandler } from './tools/eventStore';
 
 export type VersionedDocument = {
   lastProcessedPosition: number;

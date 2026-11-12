@@ -74,7 +74,7 @@ export const getEventStore = () => {
       const current = streams.get(streamId) ?? [];
 
       for (const event of events)
-        for (const middleware of middlewares) middleware(event as Event);
+        for (const middleware of middlewares) middleware(event);
 
       const eventEnvelopes: RecordedEvent[] = events.map((event, index) => {
         return {

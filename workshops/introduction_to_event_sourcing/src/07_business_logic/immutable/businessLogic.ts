@@ -1,7 +1,7 @@
-import {
-  type PricedProductItem,
-  type ShoppingCart,
-  type ShoppingCartEvent,
+import type {
+  PricedProductItem,
+  ShoppingCart,
+  ShoppingCartEvent,
 } from './shoppingCart';
 
 //////////////////////////////////////

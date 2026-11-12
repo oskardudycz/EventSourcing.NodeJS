@@ -29,16 +29,14 @@ export const GroupCheckoutFacade = (options: { messageBus: MessageBus }) => {
             initiatedAt: command.now,
           },
         },
-        ...command.guestStayIds.map(
-          (guestStayAccountId): CheckoutGuest => ({
-            type: 'CheckoutGuest',
-            data: {
-              guestStayAccountId,
-              now: command.now,
-              groupCheckoutId: command.groupCheckoutId,
-            },
-          }),
-        ),
+        ...command.guestStayIds.map((guestStayAccountId): CheckoutGuest => ({
+          type: 'CheckoutGuest',
+          data: {
+            guestStayAccountId,
+            now: command.now,
+            groupCheckoutId: command.groupCheckoutId,
+          },
+        })),
       ]);
     },
   };

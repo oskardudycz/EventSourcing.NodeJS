@@ -15,6 +15,7 @@ import {
   type RecordCharge,
   type RecordPayment,
 } from '.';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Guest Stay Account Entity Definition Tests', () => {
   let database: Database;

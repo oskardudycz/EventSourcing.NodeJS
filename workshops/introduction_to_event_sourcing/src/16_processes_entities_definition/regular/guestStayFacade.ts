@@ -40,10 +40,7 @@ export type CheckoutGuest = {
 };
 
 export type GuestStayAccountCommand =
-  | CheckInGuest
-  | RecordCharge
-  | RecordPayment
-  | CheckoutGuest;
+  CheckInGuest | RecordCharge | RecordPayment | CheckoutGuest;
 
 export type InitiateGroupCheckout = {
   type: 'InitiateGroupCheckout';

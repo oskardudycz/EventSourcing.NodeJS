@@ -19,6 +19,7 @@ import {
   ShoppingCartStatus,
   getShoppingCart,
 } from './shoppingCart';
+import { describe, expect, it } from 'vitest';
 
 describe('Business logic', () => {
   it('Should handle commands correctly', () => {

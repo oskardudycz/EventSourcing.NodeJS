@@ -1,4 +1,4 @@
-import { type Decider } from './decider';
+import type { Decider } from './decider';
 import {
   type PricedProductItem,
   type ShoppingCart,

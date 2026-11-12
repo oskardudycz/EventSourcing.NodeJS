@@ -18,6 +18,7 @@ import {
   type RecordPayment,
   GuestStayAccountFacade,
 } from '.';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Guest Stay Account Entity Definition Tests', () => {
   let backgroundJobs: BackgroundJobs;

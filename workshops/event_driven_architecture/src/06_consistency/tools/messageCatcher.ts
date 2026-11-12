@@ -1,4 +1,5 @@
-import { type Message } from './messageBus';
+import type { Message } from './messageBus';
+import { expect } from 'vitest';
 
 export type MessageCatcher = {
   readonly published: Message[];
@@ -44,7 +45,9 @@ export const getMessageCatcher = (): MessageCatcher => {
       expectedMessages: ExpectedTypes[],
     ): void => {
       expect(messages.length).toBe(expectedMessages.length);
-      expect(messages).toEqual(expect.arrayContaining(expectedMessages));
+      expect(messages).toEqual(
+        expect.arrayContaining<Message>(expectedMessages),
+      );
     },
   };
 };

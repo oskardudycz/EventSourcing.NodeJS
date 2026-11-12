@@ -61,10 +61,7 @@ export type GroupCheckoutEvent =
   | GroupCheckoutFailed;
 
 export type CheckoutStatus =
-  | 'NotExisting'
-  | 'Initiated'
-  | 'Completed'
-  | 'Failed';
+  'NotExisting' | 'Initiated' | 'Completed' | 'Failed';
 
 export class GroupCheckout extends ProcessManager<
   CheckoutGuest,

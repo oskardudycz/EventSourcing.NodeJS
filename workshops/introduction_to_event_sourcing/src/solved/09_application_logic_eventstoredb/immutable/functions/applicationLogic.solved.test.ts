@@ -1,21 +1,22 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { type Application } from 'express';
+import type { EventStoreDBClient } from '@eventstore/db-client';
+import type { Application } from 'express';
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { getApplication } from '../../tools/api';
 import { getEventStore } from '../../tools/eventStore';
-import { type TestResponse } from '../../tools/testing';
+import type { TestResponse } from '../../tools/testing';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
 import { ShoppingCartErrors } from './businessLogic';
-import { type ShoppingCartEvent } from './shoppingCart';
+import type { ShoppingCartEvent } from './shoppingCart';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('Application logic', () => {
   let app: Application;
   let eventStoreDB: EventStoreDBClient;
 
-  beforeAll(async () => {
-    eventStoreDB = await getEventStoreDBTestClient();
+  beforeAll(() => {
+    eventStoreDB = getEventStoreDBTestClient();
     app = getApplication(shoppingCartApi(eventStoreDB));
   });
 

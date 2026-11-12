@@ -13,6 +13,7 @@ import {
   type GroupCheckoutInitiated,
   type InitiateGroupCheckout,
 } from '.';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Entity Definition Tests', () => {
   let database: Database;
@@ -72,12 +73,10 @@ describe('Group Checkout Entity Definition Tests', () => {
           initiatedAt: now,
         },
       },
-      ...guestStayIds.map(
-        (guestStayAccountId): CheckoutGuest => ({
-          type: 'CheckoutGuest',
-          data: { guestStayAccountId, now, groupCheckoutId },
-        }),
-      ),
+      ...guestStayIds.map((guestStayAccountId): CheckoutGuest => ({
+        type: 'CheckoutGuest',
+        data: { guestStayAccountId, now, groupCheckoutId },
+      })),
     ]);
   });
 

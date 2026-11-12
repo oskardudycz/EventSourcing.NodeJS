@@ -1,5 +1,6 @@
-import { type Event } from '@event-driven-io/emmett';
+import type { Event } from '@event-driven-io/emmett';
 import { v4 as uuid } from 'uuid';
+import { describe, expect, it } from 'vitest';
 
 export interface ProductItem {
   productId: string;

@@ -5,6 +5,7 @@ import {
 } from './projections';
 import { getDatabase } from './tools/database';
 import { getEventStore } from './tools/eventStore';
+import { describe, expect, it } from 'vitest';
 
 export type Event<
   EventType extends string = string,

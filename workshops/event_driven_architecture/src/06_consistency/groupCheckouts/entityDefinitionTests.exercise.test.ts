@@ -11,6 +11,7 @@ import {
   type BackgroundJobs,
 } from '../tools';
 import { GroupCheckoutFacade, type InitiateGroupCheckout } from '.';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Entity Definition Tests', () => {
   let backgroundJobs: BackgroundJobs;

@@ -8,19 +8,20 @@ import {
   type MessageBus,
   type MessageCatcher,
 } from '../../tools';
+import type { GroupCheckoutFacade } from './groupCheckouts';
 import {
   configureGroupCheckouts,
-  GroupCheckoutFacade,
   type GroupCheckoutCommand,
   type GroupCheckoutEvent,
   type InitiateGroupCheckout,
 } from './groupCheckouts';
+import type { GuestStayAccountFacade } from './guestStayAccounts';
 import {
   configureGuestStayAccounts,
-  GuestStayAccountFacade,
   type GuestStayAccountCommand,
   type GuestStayAccountEvent,
 } from './guestStayAccounts';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 type ExpectedTypes =
   | GroupCheckoutEvent

@@ -1,11 +1,11 @@
-import {
-  type AddProductItemToShoppingCart,
-  type CancelShoppingCart,
-  type ConfirmShoppingCart,
-  type OpenShoppingCart,
-  type RemoveProductItemFromShoppingCart,
+import type {
+  AddProductItemToShoppingCart,
+  CancelShoppingCart,
+  ConfirmShoppingCart,
+  OpenShoppingCart,
+  RemoveProductItemFromShoppingCart,
 } from './businessLogic';
-import { type Repository } from './core/repository';
+import type { Repository } from './core/repository';
 import { ApplicationService } from './core/service';
 import { ShoppingCart, type ShoppingCartEvent } from './shoppingCart';
 

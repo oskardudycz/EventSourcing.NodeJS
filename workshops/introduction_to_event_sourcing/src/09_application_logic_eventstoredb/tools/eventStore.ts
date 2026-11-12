@@ -1,10 +1,6 @@
-import {
-  ANY,
-  EventStoreDBClient,
-  StreamNotFoundError,
-  jsonEvent,
-} from '@eventstore/db-client';
-import { type Event } from './events';
+import type { EventStoreDBClient } from '@eventstore/db-client';
+import { ANY, StreamNotFoundError, jsonEvent } from '@eventstore/db-client';
+import type { Event } from './events';
 
 export const getEventStore = (eventStore: EventStoreDBClient) => {
   return {

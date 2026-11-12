@@ -1,6 +1,6 @@
-import { type EventStore } from '../../../tools/eventStore';
-import { type Event } from '../../../tools/events';
-import { Aggregate } from './aggregate';
+import type { EventStore } from '../../../tools/eventStore';
+import type { Event } from '../../../tools/events';
+import type { Aggregate } from './aggregate';
 
 export interface Repository<Entity> {
   find(id: string): Promise<Entity>;
@@ -10,8 +10,7 @@ export interface Repository<Entity> {
 export class EventStoreRepository<
   Entity extends Aggregate<StreamEvent>,
   StreamEvent extends Event,
-> implements Repository<Entity>
-{
+> implements Repository<Entity> {
   constructor(
     private eventStore: EventStore,
     private getInitialState: () => Entity,

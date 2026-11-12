@@ -34,7 +34,7 @@ Each exercise has a full implementation in the [solved](./src/solved/) folder. S
 
 1. Install git - https://git-scm.com/downloads.
 2. Clone this repository.
-3. Install Node.js 20.11.1 or later - https://nodejs.org/en/download/ (or better using NVM, the version is in [.nvmrc](./.nvmrc)).
+3. Install Node.js 24.22.1 or later - https://nodejs.org/en/download/ (or better using NVM, the version is in [.nvmrc](./.nvmrc)).
 4. Install VSCode, WebStorm or other preferred IDE.
 5. Open the current folder in IDE.
 
@@ -49,6 +49,6 @@ Everything runs in memory, so you don't need Docker.
 ## Running
 
 1. To run the tests of the exercises, run `npm run test:exercises`. For solutions run `npm run test:solved`.
-2. To run the tests of the exercise you're working on, pass its folder, e.g. `npx jest src/01_events_definition`.
+2. To run the tests of the exercise you're working on, pass its folder, e.g. `npx vitest run src/01_events_definition`.
 3. When you're working on an exercise and want the tests to rerun on file change, run `npm run test:exercises:watch`.
 4. You can get build watch by running `npm run build:ts:watch`.

@@ -15,6 +15,7 @@ import type {
   RecordPayment,
 } from './guestStayAccounts';
 import { GuestStayFacade, type InitiateGroupCheckout } from './guestStayFacade';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Entity Definition Tests', () => {
   let database: Database;

@@ -1,5 +1,6 @@
 import { v4 as uuid } from 'uuid';
-import { type ShoppingCartEvent } from '../oop/gettingStateFromEvents.exercise.test';
+import type { ShoppingCartEvent } from '../oop/gettingStateFromEvents.exercise.test';
+import { describe, expect, it } from 'vitest';
 
 export type Event<
   EventType extends string = string,

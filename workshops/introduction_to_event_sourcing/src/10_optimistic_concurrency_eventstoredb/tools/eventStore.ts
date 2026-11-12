@@ -1,12 +1,12 @@
+import type { EventStoreDBClient } from '@eventstore/db-client';
 import {
   ANY,
-  EventStoreDBClient,
   NO_STREAM,
   StreamNotFoundError,
   jsonEvent,
 } from '@eventstore/db-client';
 import { WrongExpectedVersion } from '@eventstore/db-client/generated/shared_pb';
-import { type Event } from './events';
+import type { Event } from './events';
 
 export interface EventStore {
   aggregateStream<Entity, E extends Event>(
@@ -112,7 +112,9 @@ export const getEventStore = (eventStore: EventStoreDBClient): EventStore => {
         return appendResult.nextExpectedRevision;
       } catch (error) {
         if (error instanceof WrongExpectedVersion) {
-          throw new Error(EventStoreErrors.WrongExpectedRevision);
+          throw new Error(EventStoreErrors.WrongExpectedRevision, {
+            cause: error,
+          });
         }
 
         throw error;

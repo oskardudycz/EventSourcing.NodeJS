@@ -1,44 +1,44 @@
-import {
-  MongoDBContainer,
-  type StartedMongoDBContainer,
-} from '@testcontainers/mongodb';
+import { randomUUID } from 'crypto';
 import { MongoClient } from 'mongodb';
+import { inject } from 'vitest';
 
-let mongoDBContainer: StartedMongoDBContainer | undefined;
-let instanceCounter = 0;
-
-export const getMongoDBTestClient = async (
-  useTestContainers = false,
-): Promise<MongoClient> => {
-  let connectionString;
-
-  if (process.env.ES_USE_TEST_CONTAINERS === 'false' && useTestContainers) {
-    ++instanceCounter;
-    if (!mongoDBContainer)
-      mongoDBContainer = await new MongoDBContainer().start();
-
-    connectionString = mongoDBContainer.getConnectionString();
-  } else {
-    connectionString = 'mongodb://localhost:27017/';
+declare module 'vitest' {
+  export interface ProvidedContext {
+    sharedMongoDBConnectionString: string;
   }
+}
 
-  const client = new MongoClient(connectionString, {
-    directConnection: true,
-  });
-
-  await client.connect();
-
-  return client;
+export type MongoDBTestDatabase = {
+  client: MongoClient;
+  close: () => Promise<void>;
 };
 
-export const releaseMongoDBContainer = async () => {
-  if (--instanceCounter !== 0) return;
-  try {
-    if (mongoDBContainer) {
-      await mongoDBContainer.stop();
-      mongoDBContainer = undefined;
-    }
-  } catch {
-    // mute
-  }
+const withDatabaseName = (
+  serverConnectionString: string,
+  databaseName: string,
+): string => {
+  const url = new URL(serverConnectionString);
+  url.pathname = `/${databaseName}`;
+  return url.toString();
+};
+
+export const sharedMongoDBDatabase = async (): Promise<MongoDBTestDatabase> => {
+  const databaseName = `workshop_test_${randomUUID().replaceAll('-', '')}`;
+
+  const client = new MongoClient(
+    withDatabaseName(inject('sharedMongoDBConnectionString'), databaseName),
+    { directConnection: true },
+  );
+  await client.connect();
+
+  return {
+    client,
+    close: async () => {
+      try {
+        await client.db().dropDatabase();
+      } finally {
+        await client.close();
+      }
+    },
+  };
 };

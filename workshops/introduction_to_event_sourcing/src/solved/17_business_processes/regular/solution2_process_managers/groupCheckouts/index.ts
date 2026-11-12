@@ -1,7 +1,7 @@
 import type { CommandBus, EventStore } from '../../../tools';
-import {
-  type GuestCheckedOut,
-  type GuestCheckoutFailed,
+import type {
+  GuestCheckedOut,
+  GuestCheckoutFailed,
 } from '../guestStayAccounts';
 import { GroupCheckoutFacade } from './groupCheckoutFacade';
 

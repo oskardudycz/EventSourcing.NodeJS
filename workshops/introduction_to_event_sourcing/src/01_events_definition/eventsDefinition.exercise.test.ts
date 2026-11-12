@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 // 1. Define your events and entity here
 
 describe('Events definition', () => {

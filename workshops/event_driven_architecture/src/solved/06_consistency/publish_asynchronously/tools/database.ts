@@ -131,7 +131,9 @@ const collection = <T>(
         });
         return Promise.resolve();
       } catch (error) {
-        return Promise.reject(error as Error);
+        return Promise.reject(
+          error instanceof Error ? error : new Error(String(error)),
+        );
       }
     },
     delete: (id: string): Promise<void> => {
@@ -139,7 +141,9 @@ const collection = <T>(
         write(toFullId(id), { type: 'delete' });
         return Promise.resolve();
       } catch (error) {
-        return Promise.reject(error as Error);
+        return Promise.reject(
+          error instanceof Error ? error : new Error(String(error)),
+        );
       }
     },
     get: (id: string): Promise<Versioned<T> | null> => {

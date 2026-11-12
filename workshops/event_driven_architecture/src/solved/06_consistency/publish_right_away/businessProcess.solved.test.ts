@@ -11,19 +11,20 @@ import {
   runBackgroundJobsUntilIdle,
   type BackgroundJobs,
 } from './tools';
+import type { GroupCheckoutFacade } from './groupCheckouts';
 import {
   configureGroupCheckouts,
-  GroupCheckoutFacade,
   type GroupCheckoutCommand,
   type GroupCheckoutEvent,
   type InitiateGroupCheckout,
 } from './groupCheckouts';
+import type { GuestStayAccountFacade } from './guestStayAccounts';
 import {
   configureGuestStayAccounts,
-  GuestStayAccountFacade,
   type GuestStayAccountCommand,
   type GuestStayAccountEvent,
 } from './guestStayAccounts';
+import { beforeEach, describe, it } from 'vitest';
 
 type ExpectedTypes =
   | GroupCheckoutEvent

@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { getDatabase, type Event } from '../../../tools';
 import { Projection } from './projection';
+import { describe, expect, it } from 'vitest';
 
 type Counter = { id: string; count: number };
 

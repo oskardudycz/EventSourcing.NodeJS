@@ -14,6 +14,7 @@ import {
   type RecordGuestCheckoutCompletion,
   type RecordGuestCheckoutFailure,
 } from '.';
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Idempotency Tests', () => {
   let backgroundJobs: BackgroundJobs;

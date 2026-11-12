@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import type { GroupCheckoutEvent } from './groupCheckouts';
 import type { GuestStayAccountEvent } from './guestStayAccounts';
+import { describe, expect, it } from 'vitest';
 
 describe('Events definition', () => {
   const guestId = uuid();

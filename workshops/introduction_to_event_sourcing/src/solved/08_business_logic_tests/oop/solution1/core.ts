@@ -1,4 +1,4 @@
-import { type Event } from '@event-driven-io/emmett';
+import type { Event } from '@event-driven-io/emmett';
 
 export abstract class Aggregate<EventType extends Event> {
   #uncommitedEvents: EventType[] = [];

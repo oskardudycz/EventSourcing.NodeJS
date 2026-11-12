@@ -27,21 +27,20 @@ jobs:
       matrix:
         # selected operation systems to run CI
         os: [ubuntu-latest] #, windows-latest, macos-latest]
-        # selected node version to run CI
-        node-version: [20.10.x]
 
     steps:
       - name: Check Out Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Start containers
         run: docker compose -f "docker-compose.yml" up -d
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v6
         with:
-          # use the node version defined in matrix above
-          node-version: ${{ matrix.node-version }}
+          node-version-file: ./workshops/event_driven_architecture/.nvmrc
+          cache: "npm"
+          cache-dependency-path: "./workshops/event_driven_architecture/package-lock.json"
 
       - name: Install dependencies
         run: npm ci

@@ -12,9 +12,7 @@ import {
 } from './groupCheckout';
 
 export type GroupCheckoutToDoListEvent =
-  | GroupCheckoutEvent
-  | GuestCheckedOut
-  | GuestCheckoutFailed;
+  GroupCheckoutEvent | GuestCheckedOut | GuestCheckoutFailed;
 
 export const GroupCheckoutProjection = (
   collection: DocumentsCollection<GroupCheckout>,

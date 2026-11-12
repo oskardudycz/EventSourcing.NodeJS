@@ -1,4 +1,5 @@
-import { type Event } from './eventStore';
+import type { Event } from './eventStore';
+import { expect } from 'vitest';
 
 export type EventCatcher = {
   catchMessage: (event: Event) => void;

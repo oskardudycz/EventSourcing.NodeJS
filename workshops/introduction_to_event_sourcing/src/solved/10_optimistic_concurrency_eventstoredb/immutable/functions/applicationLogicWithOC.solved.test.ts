@@ -1,6 +1,6 @@
 import { getEventStoreDBTestClient } from '#core/testing/eventStoreDB';
-import { EventStoreDBClient } from '@eventstore/db-client';
-import { type Application } from 'express';
+import type { EventStoreDBClient } from '@eventstore/db-client';
+import type { Application } from 'express';
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { getApplication } from '../../tools/api';
@@ -14,14 +14,15 @@ import {
 } from '../../tools/testing';
 import { mapShoppingCartStreamId, shoppingCartApi } from './api';
 import { ShoppingCartErrors } from './businessLogic';
-import { type ShoppingCartEvent } from './shoppingCart';
+import type { ShoppingCartEvent } from './shoppingCart';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('Application logic with optimistic concurrency', () => {
   let app: Application;
   let eventStoreDB: EventStoreDBClient;
 
-  beforeAll(async () => {
-    eventStoreDB = await getEventStoreDBTestClient();
+  beforeAll(() => {
+    eventStoreDB = getEventStoreDBTestClient();
     app = getApplication(shoppingCartApi(eventStoreDB));
   });
 
@@ -117,7 +118,7 @@ describe('Application logic with optimistic concurrency', () => {
     // 6. Try Cancel Cart
     ///////////////////////////////////////////////////
 
-    response = await request(app)
+    await request(app)
       .delete(`/clients/${clientId}/shopping-carts/${shoppingCartId}`)
       .set(HeaderNames.IF_MATCH, toWeakETag(currentRevision))
       .expect((response) => {

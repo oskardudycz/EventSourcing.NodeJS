@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid';
+import { describe, expect, it } from 'vitest';
 
 ////////////////////////////////////////
 ///// Guest Stay Account Events ////////

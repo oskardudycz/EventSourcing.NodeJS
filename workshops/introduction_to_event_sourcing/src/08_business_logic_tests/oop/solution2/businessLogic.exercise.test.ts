@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   type ShoppingCartEvent,
 } from './shoppingCart';
+import { describe, it } from 'vitest';
 
 const decide = (
   { type, data }: ShoppingCartCommand,

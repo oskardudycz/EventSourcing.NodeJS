@@ -1,11 +1,12 @@
-import { type Request, type Response, Router } from 'express';
+import type { Router } from 'express';
+import type { Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { sendCreated } from '../../tools/api';
 import {
   assertNotEmptyString,
   assertPositiveNumber,
 } from '../../tools/validation';
-import { type PricedProductItem, type ProductItem } from './shoppingCart';
+import type { PricedProductItem, ProductItem } from './shoppingCart';
 
 export const mapShoppingCartStreamId = (id: string) => `shopping_cart-${id}`;
 
@@ -14,6 +15,7 @@ export const shoppingCartApi = (router: Router) => {
   router.post(
     '/clients/:clientId/shopping-carts/',
     (request: Request, response: Response) => {
+      // eslint-disable-next-line no-useless-assignment
       const shoppingCartId = uuid();
       const _clientId = assertNotEmptyString(request.params.clientId);
 
