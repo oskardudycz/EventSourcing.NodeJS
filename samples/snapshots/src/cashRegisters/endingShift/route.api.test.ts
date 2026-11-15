@@ -1,24 +1,14 @@
 import request from 'supertest';
 import app from '../../app';
-import type { StartedKurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
 import { config } from '../../../config';
 import { setupCashRegister } from '../../testing/builders/setupCashRegister';
 import { setupStartedShift } from '../../testing/builders/setupStartedShift';
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { beforeAll, beforeEach, describe, inject, it } from 'vitest';
 
 describe('DELETE /cash-registers/:id/shifts', () => {
-  let kurrentDBContainer: StartedKurrentDBContainer;
-
-  beforeAll(async () => {
-    kurrentDBContainer = await new KurrentDBContainer().start();
-    config.kurrentDB.connectionString =
-      kurrentDBContainer.getConnectionString();
+  beforeAll(() => {
+    config.kurrentDB.connectionString = inject('kurrentDBConnectionString');
     console.log(config.kurrentDB.connectionString);
-  });
-
-  afterAll(async () => {
-    await kurrentDBContainer.stop();
   });
 
   describe('For existing cash register', () => {

@@ -1,15 +1,29 @@
-version: '3'
+name: eventsourcing
+
 services:
   #######################################################
-  #  KurrentDB - Event Store
+  #  MongoDB
   #######################################################
-  mongo:
-    image: mongo:6.0.12
+  mongodb:
+    profiles: [ mongodb, mongodb-all, all, all-no-ui, ci, sample ]
+    image: mongo:9.0.8
+    command: ['--replSet', 'rs0', '--bind_ip_all', '--port', '27017']
     ports:
-      - '27017:27017'
+      - '${MONGODB_PORT:-27017}:27017'
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      # initialises the single-node replica set on the first check
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongodb:27017' }] }).ok }"]
+      interval: 5s
+      timeout: 10s
+      retries: 100
     networks:
-      - mongo
+      - mongodb
 
 networks:
-  mongo:
+  mongodb:
     driver: bridge
+
+volumes:
+  mongodb-data:

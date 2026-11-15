@@ -1,22 +1,12 @@
 import request from 'supertest';
 import app from '../../app';
-import type { StartedKurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '../../testing/kurrentDB/kurrentDBContainer';
 import { config } from '../../../config';
 import isUUID from 'validator/lib/isUUID';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, inject, it } from 'vitest';
 
 describe('POST /cash-register/', () => {
-  let kurrentDBContainer: StartedKurrentDBContainer;
-
-  beforeAll(async () => {
-    kurrentDBContainer = await new KurrentDBContainer().start();
-    config.kurrentDB.connectionString =
-      kurrentDBContainer.getConnectionString();
-  });
-
-  afterAll(async () => {
-    await kurrentDBContainer.stop();
+  beforeAll(() => {
+    config.kurrentDB.connectionString = inject('kurrentDBConnectionString');
   });
 
   it('should place cash register at work station', async () => {

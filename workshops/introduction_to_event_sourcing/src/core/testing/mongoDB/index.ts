@@ -5,6 +5,7 @@ import { inject } from 'vitest';
 declare module 'vitest' {
   export interface ProvidedContext {
     sharedMongoDBConnectionString: string;
+    keepMongoDBTestDatabases: boolean;
   }
 }
 
@@ -35,7 +36,8 @@ export const sharedMongoDBDatabase = async (): Promise<MongoDBTestDatabase> => {
     client,
     close: async () => {
       try {
-        await client.db().dropDatabase();
+        if (!inject('keepMongoDBTestDatabases'))
+          await client.db().dropDatabase();
       } finally {
         await client.close();
       }

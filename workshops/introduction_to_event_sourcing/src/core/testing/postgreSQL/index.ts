@@ -5,6 +5,7 @@ import { inject } from 'vitest';
 declare module 'vitest' {
   export interface ProvidedContext {
     sharedPostgreSQLConnectionString: string;
+    keepPostgreSQLTestDatabases: boolean;
   }
 }
 
@@ -51,6 +52,8 @@ export const sharedPostgreSQLDatabase =
         databaseName,
       ),
       close: async () => {
+        if (inject('keepPostgreSQLTestDatabases')) return;
+
         await onServer((client) =>
           client.query(`DROP DATABASE IF EXISTS "${databaseName}"`),
         );

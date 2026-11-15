@@ -1,4 +1,4 @@
-import type { Cart, CartItem } from '../db/__generated__';
+import type { Cart, CartItem } from '../../db';
 
 export type CartDetails = Cart & {
   items: CartItem[];

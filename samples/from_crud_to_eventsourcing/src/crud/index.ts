@@ -1,6 +1,6 @@
 import { startAPI } from '#core/api';
-import { disconnectFromPostgres } from '#core/postgres';
-import { router } from './shoppingCarts/routes';
+import { disconnectFromPostgres, runPostgresMigrations } from '#core/postgres';
+import { shoppingCartsRouter } from './shoppingCarts/routes';
 
 //////////////////////////////////////////////////////////
 /// Make sure that we dispose Postgres connection pool
@@ -12,4 +12,6 @@ process.once('SIGTERM', disconnectFromPostgres);
 /// API
 //////////////////////////////////////////////////////////
 
-startAPI(router);
+await runPostgresMigrations();
+
+startAPI(shoppingCartsRouter(() => new Date()));

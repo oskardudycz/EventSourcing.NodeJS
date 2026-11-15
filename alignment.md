@@ -8,11 +8,11 @@ Compared:
 
 All three use the same domain (guest stay accounts and group checkout) and the same test scenarios. The differences are in scope, messaging, scaffolding, naming and docs.
 
-State on 2026-11-11:
+State on 2026-11-15 (compared by test names, files and READMEs; test suites not re-run for this check):
 
-- **Node.js**: uncommitted. The single message bus is in place in 02–06. The 03–06 tests are split into per-module files (section 3). `tsc` is clean, ESLint has 19 errors (unused imports left by the split). Solved: 58 suites, 225 tests green.
-- **.NET**: uncommitted (148 modified, 18 deleted, 12 new files). The single message bus is in place in 02–06. The tests keep the old layout. Solutions: 192 tests green.
-- **JVM**: clean, last commit `675f2d5`. Not re-run for this check.
+- **Node.js**: `main` at `0ca1564`. Since 2026-11-13 the workshop only got the KurrentDB rename in Docker Compose and the fixed 05 README links.
+- **.NET**: `migrated_to_kurrentdb` at `261afb2b`, plus 96 uncommitted workshop files: FluentAssertions replaced by Shouldly, xUnit v3 (`TestContext.Current.CancellationToken` in every call), `dotnet test --project` in the README. No test added or removed. The any-order assertion in 05 and 06 now compares messages as type name plus JSON, ignoring order.
+- **JVM**: `migrated_to_kurrentdb` at `f0ad6d7`, plus 17 uncommitted workshop files: Docker Compose project name and port variables, Grafana LGTM always on, JDK 22 through a Gradle toolchain, Kafka/RabbitMQ test infrastructure. No exercise test changed.
 
 ## 1. Scope
 
@@ -76,9 +76,11 @@ The "bus delivers every message twice" test asserts the full message list in all
 
 ## 3. Test layout and setup
 
-### Where the tests are (03–06)
+### Where the tests are
 
-Example: 04, aggregates variant. Each variant folder holds `groupCheckouts/` and `guestStayAccounts/`.
+**03 (exercise and every solution): aligned.** All three keep the entity tests next to the code: `groupCheckouts/` (5 tests) and `guestStayAccounts/` (6 tests) in each variant folder, with the business process tests at the variant root. The test names are the same in all three; only the casing differs.
+
+**04–06: not aligned.** Only Node.js has tests next to the code. .NET and JVM keep one flat file for each kind. Example: 04, aggregates variant.
 
 | | Node.js `04_idempotency/regular/solution1_aggregates/` | .NET `04-Idempotency/Version1-Aggregates/` | JVM `e04_idempotency/solution1_aggregates/` |
 | --- | --- | --- | --- |
@@ -86,22 +88,23 @@ Example: 04, aggregates variant. Each variant folder holds `groupCheckouts/` and
 | Guest stay entity | `guestStayAccounts/entityDefinitionTests.exercise.test.ts` | `EntityDefinitionTests.cs` | `EntityDefinitionTests.java` |
 | Group checkout entity | `groupCheckouts/entityDefinitionTests.exercise.test.ts` | one initiation test in `EntityDefinitionTests.cs` (Version1 only) | none |
 | Idempotency | `groupCheckouts/idempotency.exercise.test.ts`, `guestStayAccounts/idempotency.exercise.test.ts`, plus `idempotency.exercise.test.ts` with only the bus test | `IdempotencyTests.cs` | `IdempotencyTests.java` |
-| Optimistic concurrency (05, 06) | `groupCheckouts/optimisticConcurrency.*.test.ts`, `guestStayAccounts/optimisticConcurrency.*.test.ts` | `OptimisticConcurrencyTests.cs` | `OptimisticConcurrencyTests.java` |
+| Optimistic concurrency (05, 06) | `groupCheckouts/optimisticConcurrency.exercise.test.ts`, `guestStayAccounts/optimisticConcurrency.exercise.test.ts` | `OptimisticConcurrencyTests.cs` | `OptimisticConcurrencyTests.java` |
 
-Node.js is the only one with tests next to the code. The agreed plan is to design this in JVM first and port it, so Node.js is ahead of the reference.
+To align 04–06, JVM (the reference) has to get the 03 layout first: the 5 group checkout entity tests in `groupcheckouts/`, the guest stay tests in `gueststayaccounts/`, and the idempotency and optimistic concurrency tests split by module. Then .NET follows, and its Version1 `GroupCheckoutForMultipleGuestStay_ShouldBeInitiated` test goes, as it did in 03.
 
-### Test counts for each variant
+### Test counts for each variant (exercises)
 
-| Tests | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| Business process | 4 | 4 | 4 (solved to-do list: 5, plus 1 scheduled) |
-| Guest stay entity | 6 | 6 | 6 |
-| Group checkout entity | 5 | 1 in Version1, 0 in Version2 | 0 |
-| Idempotency, 04–05 | 4 group + 4 guest stay + 1 bus = 9 | 9 | 9 |
-| Idempotency, 06 | 3 group | 3 | 3 |
-| Optimistic concurrency, 05–06 | 3 group + 2 guest stay = 5 | 5 | 5 |
+| Tests | 03 | 04 | 05 | 06 |
+| --- | --- | --- | --- | --- |
+| Business process | 4 / 4 / 4 | 4 / 4 / 4 | 4 / 4 / 4 | 4 / 4 / 4 |
+| Guest stay entity | 6 / 6 / 6 | 6 / 6 / 6 | 6 / 6 / 6 | 6 / 6 / 6 |
+| Group checkout entity | 5 / 5 / 5 | **5 / 1 in Version1, 0 in Version2 / 0** | same as 04 | same as 04 |
+| Idempotency | – | 9 / 9 / 9 | 9 / 9 / 9 | 3 / 3 / 3 |
+| Optimistic concurrency | – | – | 5 / 5 / 5 | 5 / 5 / 5 |
 
-The 5 Node.js group checkout entity tests go through `GroupCheckoutFacade`:
+Each cell is Node.js / .NET / JVM. Apart from the group checkout entity tests, the names match in every exercise.
+
+The 5 group checkout entity tests go through `GroupCheckoutFacade`:
 
 1. initiating group checkout succeeds,
 2. recording guest checkout completion succeeds,
@@ -109,9 +112,18 @@ The 5 Node.js group checkout entity tests go through `GroupCheckoutFacade`:
 4. recording last guest checkout completion completes group checkout,
 5. recording last guest checkout after failure fails group checkout.
 
-The .NET Version1 test, `GroupCheckoutForMultipleGuestStay_ShouldBeInitiated`, initiates through `GuestStayFacade`, the same as the 02 test. Node.js dropped that test from 03–06.
+### Test counts for the 03 solutions
 
-Test names match across the repos; only the casing differs (`group checkout is initiated once for the same id`, `GroupCheckoutIsInitiatedOnceForTheSameId`, `groupCheckoutIsInitiatedOnceForTheSameId`).
+| Solution | Node.js | .NET | JVM |
+| --- | --- | --- | --- |
+| Sagas, aggregates | – | 4 + 5 + 6 | 4 + 5 + 6 |
+| Sagas, immutable entities | 4 + 5 + 6 (`solution1_saga`) | 4 + 5 + 6 | 4 + 5 + 6 |
+| Process managers | 4 + 5 + 6 | 4 + 5 + 6 | 4 + 5 + 6 |
+| Choreography | 4 + 5 + 6 | 4 + 5 + 6 | 4 + 5 + 6 |
+| To-do list | 5 + 1 scheduled + 5 projection + 5 + 6 | same | same |
+| Transactions | – | – | 4 + 0 + 6 (no group checkout entity) |
+
+Business process + group checkout entity + guest stay entity. JVM also has the Kafka and RabbitMQ saga tests and their infrastructure tests (routing, retries, dead letters, metadata).
 
 ### Setup
 
@@ -125,6 +137,8 @@ Test names match across the repos; only the casing differs (`group checkout is i
 | Test file suffix | `.exercise.test.ts`, `.solved.test.ts` | – | – |
 
 ### Exercise test results (failures are expected; each exercise is a starting point)
+
+From 2026-11-11, before the 01–03 alignment; not re-run since.
 
 | Exercise | Node.js | .NET |
 | --- | --- | --- |
@@ -188,13 +202,14 @@ This waits on the test design for background jobs and the duplicate-delivery loo
 
 ## 5. Exercise 01: Events definition
 
+Aligned, apart from the CI marker and the given data.
+
 | | Node.js | .NET | JVM |
 | --- | --- | --- | --- |
-| README | Group checkout description, rules, notes | Group checkout description | Group checkout description, rules, notes |
-| Assertion | exactly 5 events and 5 distinct types | `>= 5` events and `>= 5` distinct types | exactly 5 events and 5 distinct types |
+| README | Group checkout description, rules, notes, test link | same | same |
+| Assertion | exactly 5 events and 5 distinct types | same | same |
 | Given data in test | None | None | Pre-declared IDs (`guestStayId`, `groupCheckoutId`, `clerkId`) |
 | Skipped in CI | No marker | `[Trait("Category","SkipCI")]` | `@Tag("Exercise")` |
-
 
 ## 6. Exercise 02: Entities definition
 
@@ -202,29 +217,32 @@ Same seven tests in all three: check-in, charge, payment, payment with charge, c
 
 | | Node.js | .NET | JVM |
 | --- | --- | --- | --- |
-| README | None | ✅ | ✅ |
+| README | ✅ with test link | ✅ with test link | ✅ with test link |
+| README title | "Entity Definition" | "Entities Definition" | "Entity Definition" |
 | Command payload | `guestId`, `roomId`, `chargeId`, `paymentId` | id, amount, time; `ChargeId`/`PaymentId` only from 04 | id, amount, time; `chargeId`/`paymentId` only from 04 |
 | Money type | `number` | `decimal` | `double` |
 | Facade scaffolding | Only `recordCharge` shows the load/store pattern | Only `RecordCharge` shows it | `recordCharge`, `recordPayment`, `checkOutGuest` all show it |
+| Extra starting point | `emmett/` with its own copy of the 7 tests and 2 event type tests, no solution | – | – |
 
 The exercise gives you the events, which partly spoils 01. That's the same in all three, so it may be intended.
 
 ## 7. Exercise 03: Business processes
 
-Same four tests everywhere: no payments → complete, all settled → complete, one settled and the rest unsettled → fail, all unsettled → fail.
+Same four business process tests everywhere: no payments → complete, all settled → complete, one settled and the rest unsettled → fail, all unsettled → fail. Plus the 5 group checkout and 6 guest stay entity tests in the module folders.
 
 | | Node.js | .NET | JVM |
 | --- | --- | --- | --- |
-| README | None | ✅ | ✅ including "Commands and events on one message bus" |
-| `GroupCheckout` entity | Given (events and status) | **Not given**: only events | Given as an empty shell |
-| `GroupCheckoutFacade` | Given, every method a TODO that loads, stores, publishes, then throws | Given, same shape | Given, same shape |
-| Wiring | `configureGroupCheckouts` throws "Configure group checkouts handlers here"; `configureGuestStayAccounts` subscribes `CheckoutGuest` | `GroupCheckoutsConfig` / `GuestStayAccountsConfig`, same | `GroupCheckoutsConfig` / `GuestStayAccountsConfig`, same |
-| Entity tests | guest stay 6 + group checkout 5, in the module folders | same | same |
-| Commands in the exercise's expected messages | `CheckoutGuest` and `RecordGuestCheckoutCompletion` / `Failure` | `CheckOutGuest` only; the 03 solutions and 04+ include `RecordGuestCheckoutCompletion` | `CheckOutGuest` and `RecordGuestCheckoutCompletion` / `Failure` |
+| README | ✅ including "Commands and events on one message bus" | same | same |
+| `GroupCheckout` entity | events only (no class in Node.js) | empty class, events in `GroupCheckoutEvent.cs` | empty class, events in `GroupCheckoutEvent.java` |
+| `GroupCheckoutFacade` | Given, every method a TODO that loads, stores, publishes, then throws | same shape | same shape |
+| Wiring | `configureGroupCheckouts` throws "Configure group checkouts handlers here"; `configureGuestStayAccounts` subscribes `CheckoutGuest` | `GroupCheckoutsConfig` / `GuestStayAccountsConfig`, same | same as .NET |
+| Commands in the exercise's expected messages | `CheckoutGuest` and `RecordGuestCheckoutCompletion` / `Failure` | **`CheckOutGuest` only**; the 03 solutions and 04+ include `RecordGuestCheckoutCompletion` / `Failure` | `CheckOutGuest` and `RecordGuestCheckoutCompletion` / `Failure` |
 
 The Node.js ES-workshop copy (`17_business_processes/regular/solution2_immutableEntities`) still appends to `guestStayAccountId`.
 
 ## 8. Naming differences
+
+Unchanged.
 
 | Concept | Node.js | .NET | JVM |
 | --- | --- | --- | --- |
@@ -242,16 +260,38 @@ Node.js and JVM agree on the group checkout events; .NET is the outlier.
 
 ## 9. Docs
 
-- **Node.js**: workshop README lists 01–06. Exercise READMEs exist for 01 (wrong content), 04, 05, 06 and solved 06; 02 and 03 have none. The ES workshop still carries the older 15–17 copy, which uses an event store instead of `Database` + `EventBus`.
-- **.NET**: workshop README and a README for each exercise 01–06, plus solved 06. `00-Modelling` is an empty project without one.
-- **JVM**: workshop README and a README for each exercise 01–06, plus solved 03 and 06 (Grafana instructions). `plan.md`, `todo.md` and `spec-spring-messaging.md` sit at the workshop root.
+Every repo has a workshop README and a README for each exercise 01–06, with the same headings. Solved READMEs: Node.js and .NET have 06; JVM has 03 (Grafana) and 06.
+
+Test file links in the exercise READMEs:
+
+| Exercise | Node.js | .NET | JVM |
+| --- | --- | --- | --- |
+| 01 | ✅ | ✅ | ✅ |
+| 02 | ✅ | ✅ | ✅ |
+| 03 | **names `businessProcess.exercise.test.ts` without a link** | ✅ business process and group checkout entity tests | ✅ same as .NET |
+| 04 | **links only the bus test file** (`idempotency.exercise.test.ts`), not the module files | ✅ | ✅ |
+| 05 | ✅ group checkouts and guest stay accounts files | ✅ | ✅ |
+| 06 | – | – | – |
+
+The link labels differ: Node.js "aggregates" / "immutable entities", .NET "Aggregates" / "Immutable Entities", JVM "DDD Aggregate" / "Functional Decider". The 02 title is "Entity Definition" in all three.
+
+The JVM workshop README links each exercise folder; the Node.js and .NET ones don't.
+
+Other:
+
+- **Node.js**: the ES workshop still carries the older 15–17 copy, which uses an event store instead of `Database` + message bus.
+- **.NET**: `00-Modelling` is an empty project without a README.
+- **JVM**: `plan.md`, `todo.md` and `spec-spring-messaging.md` sit at the workshop root.
 
 ## 10. To do
 
-1. READMEs: explain the test layout and link the test files in every repo.
-2. Port the 04/05 idempotency changes to 06 in all three, after settling the background jobs test design.
-3. Decide whether Node.js 06 gets the aggregates variant, or .NET/JVM 06 split by outbox style like Node.js.
-4. Node.js: decide on the 02 `emmett` starting point (no solution) and the ES-workshop 15–17 copy.
-5. .NET: decide on `00-Modelling`; decide whether the 01 test checks exactly 5 event types (JVM, Node.js) or at least 5.
-6. Optional: Node.js 03 aggregates saga; naming alignment for the .NET group checkout events.
-7. Node.js: fix the 16 ESLint errors in the 04 and 05 `idempotency` tests.
+Done since 2026-11-11: 01 asserts exactly 5 events everywhere; 01–03 READMEs, file names and to-do list aligned; 03 tests next to the code in all three; Node.js ESLint errors fixed; .NET Aspire 13.6.5. Done since 2026-11-13: .NET 03 exercise expects `RecordGuestCheckoutCompletion` / `Failure`; 03–05 READMEs link the test files in .NET and JVM; Node.js 05 links fixed; 02 title aligned.
+
+1. 04–06 test layout: move JVM to the 03 layout (group checkout entity tests, tests split by module), then .NET. Node.js already has it.
+2. Commit the .NET (Shouldly, xUnit v3) and JVM (Docker Compose, toolchain) workshop changes, and re-run all three solution suites.
+3. READMEs: Node.js 03 (link the business process and group checkout entity tests) and 04 (link the module idempotency files, not only the bus file); 06 in all three. Decide whether to align the variant link labels.
+4. Port the 04/05 idempotency changes to 06 in all three, after settling the background jobs test design.
+5. Decide whether Node.js 06 gets the aggregates variant, or .NET/JVM 06 split by outbox style like Node.js.
+6. Node.js: Emmett solution for 02 (on hold); decide on the stray `emmett/eventsDefinition.emmett.exercise.test.ts` and the ES-workshop 15–17 copy.
+7. .NET: decide on `00-Modelling`.
+8. Optional: Node.js 03 aggregates saga; naming alignment for the .NET group checkout events.

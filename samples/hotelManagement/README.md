@@ -100,6 +100,7 @@ export type Workflow<
 2. Install packages: `npm install`.
 3. Build: `npm run build:ts`.
 4. Run tests: `npm test`. Infrastructure tests start KurrentDB through [Testcontainers](https://testcontainers.com/), so they need Docker running.
+5. To see the events that tests store, start Docker Compose: in the folder of [docker-compose.yml](./docker-compose.yml), run `docker compose --profile all up`. Infrastructure tests then use this KurrentDB automatically instead of starting their own, and you can browse the events in the KurrentDB UI at http://localhost:2113/. Stop Docker Compose to go back to Testcontainers.
 
 ## Read more
 

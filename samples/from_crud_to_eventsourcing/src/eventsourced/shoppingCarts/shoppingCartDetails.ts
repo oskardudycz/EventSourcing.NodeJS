@@ -2,147 +2,90 @@
 /// ShoppingCartDetails projection
 //////////////////////////////////////
 
-import { getPostgres } from '#core/postgres';
-import type { Transaction } from '@databases/pg';
-import { sql } from '@databases/pg';
-import type { SubscriptionResolvedEvent } from '../core/subscriptions';
-import { cartItems, carts } from '../db';
+import { SQL } from '@event-driven-io/dumbo';
+import { postgreSQLRawSQLProjection } from '@event-driven-io/emmett-postgresql';
 import type {
   ProductItemAddedToShoppingCart,
   ProductItemRemovedFromShoppingCart,
   ShoppingCartConfirmed,
+  ShoppingCartEvent,
   ShoppingCartOpened,
 } from './shoppingCart';
-import {
-  isCashierShoppingCartEvent,
-  ShoppingCartErrors,
-  ShoppingCartStatus,
-} from './shoppingCart';
+import { ShoppingCartErrors, ShoppingCartStatus } from './shoppingCart';
 
-export const getShoppingCarts = () => carts(getPostgres());
-export const getShoppingCartItemss = () => cartItems(getPostgres());
-
-export const projectToShoppingCartItem = (
-  db: Transaction,
-  resolvedEvent: SubscriptionResolvedEvent,
-): Promise<void> => {
-  if (
-    resolvedEvent.event === undefined ||
-    !isCashierShoppingCartEvent(resolvedEvent.event)
-  )
-    return Promise.resolve();
-
-  const { event } = resolvedEvent;
-  const streamRevision = Number(event.revision);
-
-  switch (event.type) {
-    case 'shopping-cart-opened':
-      return projectShoppingCartOpened(db, event, streamRevision);
-    case 'product-item-added-to-shopping-cart':
-      return projectProductItemAddedToShoppingCart(db, event, streamRevision);
-    case 'product-item-removed-from-shopping-cart':
-      return projectProductItemRemovedFromShoppingCart(
-        db,
-        event,
-        streamRevision,
-      );
-    case 'shopping-cart-confirmed':
-      return projectShoppingCartConfirmed(db, event, streamRevision);
-    default: {
-      const _: never = event;
-      throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
-    }
-  }
-};
-
-export const projectShoppingCartOpened = async (
-  db: Transaction,
-  event: ShoppingCartOpened,
-  streamRevision: number,
-): Promise<void> => {
-  const shoppingCarts = carts(db);
-
-  await shoppingCarts.insertOrIgnore({
-    sessionId: event.data.shoppingCartId,
-    createdAt: new Date(event.data.openedAt),
-    status: ShoppingCartStatus.Opened,
-    revision: streamRevision,
+export const shoppingCartDetailsProjection =
+  postgreSQLRawSQLProjection<ShoppingCartEvent>({
+    name: 'shopping_cart_details',
+    canHandle: [
+      'shopping-cart-opened',
+      'product-item-added-to-shopping-cart',
+      'product-item-removed-from-shopping-cart',
+      'shopping-cart-confirmed',
+    ],
+    evolve: (event) => {
+      switch (event.type) {
+        case 'shopping-cart-opened':
+          return projectShoppingCartOpened(event);
+        case 'product-item-added-to-shopping-cart':
+          return projectProductItemAddedToShoppingCart(event);
+        case 'product-item-removed-from-shopping-cart':
+          return projectProductItemRemovedFromShoppingCart(event);
+        case 'shopping-cart-confirmed':
+          return projectShoppingCartConfirmed(event);
+        default: {
+          const _: never = event;
+          throw new Error(ShoppingCartErrors.UNKNOWN_EVENT_TYPE);
+        }
+      }
+    },
   });
-};
 
-export const projectProductItemAddedToShoppingCart = async (
-  db: Transaction,
-  event: ProductItemAddedToShoppingCart,
-  streamRevision: number,
-): Promise<void> => {
-  const {
+export const projectShoppingCartOpened = ({
+  data: { shoppingCartId, openedAt },
+}: ShoppingCartOpened): SQL =>
+  SQL`
+    INSERT INTO "ecommerce"."cart" ("sessionId", "status", "createdAt")
+    VALUES (${shoppingCartId}, ${ShoppingCartStatus.Opened}, ${openedAt})
+    ON CONFLICT ("sessionId") DO NOTHING;`;
+
+export const projectProductItemAddedToShoppingCart = ({
+  data: {
     shoppingCartId,
     productItem: { productId, quantity, discount, price, sku },
     addedAt,
-  } = event.data;
+  },
+}: ProductItemAddedToShoppingCart): SQL[] => [
+  SQL`
+    INSERT INTO "ecommerce"."cart_item" AS ci ("cartId", "productId", "sku", "price", "discount", "quantity", "createdAt")
+    VALUES (
+      (SELECT "id" FROM "ecommerce"."cart" WHERE "sessionId" = ${shoppingCartId}),
+      ${productId}, ${sku}, ${price}, ${discount}, ${quantity}, ${addedAt}
+    )
+    ON CONFLICT ("cartId", "productId") DO UPDATE SET "quantity" = EXCLUDED."quantity" + ci."quantity", "updatedAt" = ${addedAt};`,
+  updateCartUpdatedAt(shoppingCartId, addedAt),
+];
 
-  const { wasApplied, cartId } = await wasAlreadyApplied(
-    db,
-    shoppingCartId,
-    new Date(addedAt),
-    streamRevision,
-  );
-
-  if (wasApplied) return;
-
-  const shoppingCartsItems = cartItems(db);
-
-  await db.query(
-    sql`
-    INSERT INTO ${shoppingCartsItems.tableId} as ci ("cartId", "productId", "sku", "price", "discount", "quantity", "createdAt")
-    VALUES (${cartId}, ${productId}, ${sku}, ${price}, ${discount}, ${quantity}, ${addedAt})
-    ON CONFLICT ("cartId", "productId") DO UPDATE SET "quantity" = EXCLUDED."quantity" + ci."quantity", "updatedAt" = ${addedAt};
-    `,
-  );
-};
-
-export const projectProductItemRemovedFromShoppingCart = async (
-  db: Transaction,
-  event: ProductItemRemovedFromShoppingCart,
-  streamRevision: number,
-): Promise<void> => {
-  const {
+export const projectProductItemRemovedFromShoppingCart = ({
+  data: {
     shoppingCartId,
     productItem: { productId, quantity },
     removedAt,
-  } = event.data;
-
-  const { wasApplied, cartId } = await wasAlreadyApplied(
-    db,
-    shoppingCartId,
-    new Date(removedAt),
-    streamRevision,
-  );
-
-  if (wasApplied) return;
-
-  const shoppingCartsItems = cartItems(db);
-
-  await db.query(
-    sql`
-    UPDATE ${shoppingCartsItems.tableId}
+  },
+}: ProductItemRemovedFromShoppingCart): SQL[] => [
+  SQL`
+    UPDATE "ecommerce"."cart_item"
     SET "quantity" = "quantity" - ${quantity}, "updatedAt" = ${removedAt}
-    WHERE "cartId" = ${cartId} AND "productId" = ${productId};
-    
-    DELETE FROM ${shoppingCartsItems.tableId}
-    WHERE "cartId" = ${cartId} AND "productId" = ${productId} AND "quantity" = 0;
-    `,
-  );
-};
+    WHERE "cartId" = (SELECT "id" FROM "ecommerce"."cart" WHERE "sessionId" = ${shoppingCartId})
+      AND "productId" = ${productId};`,
+  SQL`
+    DELETE FROM "ecommerce"."cart_item"
+    WHERE "cartId" = (SELECT "id" FROM "ecommerce"."cart" WHERE "sessionId" = ${shoppingCartId})
+      AND "productId" = ${productId} AND "quantity" = 0;`,
+  updateCartUpdatedAt(shoppingCartId, removedAt),
+];
 
-export const projectShoppingCartConfirmed = async (
-  db: Transaction,
-  event: ShoppingCartConfirmed,
-  streamRevision: number,
-): Promise<void> => {
-  const shoppingCarts = carts(db);
-
-  const {
+export const projectShoppingCartConfirmed = ({
+  data: {
     shoppingCartId,
     user: {
       id: userId,
@@ -153,45 +96,30 @@ export const projectShoppingCartConfirmed = async (
       email,
       address,
     },
-    additionalInfo,
+    additionalInfo: { content, line1, line2 },
     confirmedAt,
-  } = event.data;
+  },
+}: ShoppingCartConfirmed): SQL =>
+  SQL`
+    UPDATE "ecommerce"."cart"
+    SET "userId" = ${userId},
+      "firstName" = ${firstName},
+      "lastName" = ${lastName},
+      "middleName" = ${middleName ?? null},
+      "mobile" = ${mobile ?? null},
+      "email" = ${email},
+      "content" = ${content ?? null},
+      "line1" = ${line1 ?? null},
+      "line2" = ${line2 ?? null},
+      "city" = ${address.city},
+      "province" = ${address.province},
+      "country" = ${address.country},
+      "status" = ${ShoppingCartStatus.Confirmed},
+      "updatedAt" = ${confirmedAt}
+    WHERE "sessionId" = ${shoppingCartId};`;
 
-  await shoppingCarts.update(
-    { sessionId: shoppingCartId, revision: streamRevision - 1 },
-    {
-      revision: streamRevision,
-      userId,
-      firstName,
-      lastName,
-      middleName,
-      mobile,
-      email,
-      ...additionalInfo,
-      ...address,
-      status: ShoppingCartStatus.Confirmed,
-      updatedAt: new Date(confirmedAt),
-    },
-  );
-};
-
-const wasAlreadyApplied = async (
-  db: Transaction,
-  shoppingCartId: string,
-  updatedAt: Date,
-  streamRevision: number,
-) => {
-  const shoppingCarts = carts(db);
-  const result = await shoppingCarts.update(
-    { sessionId: shoppingCartId, revision: streamRevision - 1 },
-    {
-      revision: streamRevision,
-      updatedAt,
-    },
-  );
-
-  return {
-    wasApplied: result.length === 0,
-    cartId: result.length > 0 ? result[0].id : undefined,
-  };
-};
+const updateCartUpdatedAt = (shoppingCartId: string, updatedAt: string): SQL =>
+  SQL`
+    UPDATE "ecommerce"."cart"
+    SET "updatedAt" = ${updatedAt}
+    WHERE "sessionId" = ${shoppingCartId};`;

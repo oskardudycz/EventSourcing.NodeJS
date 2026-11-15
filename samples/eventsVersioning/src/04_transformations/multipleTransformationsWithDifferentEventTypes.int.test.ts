@@ -1,6 +1,4 @@
 import type { Event } from '#core/event';
-import type { StartedKurrentDBContainer } from '#core/testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '#core/testing/kurrentDB/kurrentDBContainer';
 import type {
   EventData,
   EventTypeToRecordedEvent,
@@ -17,7 +15,8 @@ import type {
   ShoppingCartOpenedWithStatus,
 } from './shoppingCart';
 import { ShoppingCartStatus, evolve } from './shoppingCart';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { getKurrentDBTestClient } from '#core/testing/kurrentDB';
 
 export type ShoppingCartOpenedObsoleteVersions =
   ShoppingCartOpenedV1 | ShoppingCartOpened;
@@ -146,17 +145,11 @@ const getShoppingCart = (
 };
 
 describe('Multiple transformations with different event types', () => {
-  let container: StartedKurrentDBContainer;
   let eventStore: EventStore;
 
-  beforeAll(async () => {
-    container = await new KurrentDBContainer().start();
-    const client = container.getClient();
+  beforeAll(() => {
+    const client = getKurrentDBTestClient();
     eventStore = getEventStore(client);
-  });
-
-  afterAll(() => {
-    return container.stop();
   });
 
   it('should read new event schema using transformations', async () => {

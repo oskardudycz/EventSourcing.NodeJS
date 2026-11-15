@@ -10,15 +10,6 @@ const convictConfig = convict({
     arg: 'nodeEnv',
     env: 'NODE_ENV',
   },
-  kurrentDB: {
-    connectionString: {
-      format: String,
-      default:
-        'kurrentdb://localhost:2113?tls=false&throwOnAppendFailure=false',
-      arg: 'KURRENTDB_CONNECTION_STRING',
-      env: 'KURRENTDB_CONNECTION_STRING',
-    },
-  },
   postgres: {
     connectionString: {
       format: String,

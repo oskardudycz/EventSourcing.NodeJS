@@ -8,7 +8,7 @@ Using a defined structure of events from the [first exercise](../01_events_defin
 
 ## Prerequisities
 
-1. Run: `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) to start KurrentDB Docker image.You should automatically get:
+1. Tests start their own database containers. To see the data, start Docker Compose from the main workshop folder (`docker compose --profile all up`, for Mac `docker compose -f docker-compose.arm.yml --profile all up`). Tests then use these containers automatically. Stop it to go back. You get:
 
 - KurrentDB UI: http://localhost:2113/
 - Mongo Express UI: http://localhost:8081/

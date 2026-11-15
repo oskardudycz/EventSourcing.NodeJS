@@ -1,8 +1,9 @@
-import { startAPI } from '#core/api';
-import { disconnectFromPostgres } from '#core/postgres';
-import { disconnectFromEventStore } from './core/streams';
-import { router } from './shoppingCarts/routes';
-import { runSubscription } from './subscriptions';
+import { disconnectFromPostgres, runPostgresMigrations } from '#core/postgres';
+import { getApplication, startAPI } from '@event-driven-io/emmett-expressjs';
+import { disconnectFromEventStore, getEventStore } from './core/eventStore';
+import { shoppingCartApi } from './shoppingCarts/api';
+import { getPricedProductItem } from './shoppingCarts/productItem';
+import { getUserData } from './shoppingCarts/user';
 
 //////////////////////////////////////////////////////////
 /// Make sure that we dispose Postgres connection pool
@@ -15,12 +16,17 @@ process.once('SIGTERM', disconnectFromEventStore);
 /// API
 //////////////////////////////////////////////////////////
 
-startAPI(router);
+await runPostgresMigrations();
 
-//////////////////////////////////////////////////////////
-/// Run
-//////////////////////////////////////////////////////////
+const application = getApplication({
+  apis: [
+    shoppingCartApi(
+      getEventStore(),
+      getPricedProductItem,
+      getUserData,
+      () => new Date(),
+    ),
+  ],
+});
 
-(async () => {
-  await runSubscription();
-})().catch(console.error);
+startAPI(application, { port: 5000 });

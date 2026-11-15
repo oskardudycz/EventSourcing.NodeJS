@@ -1,345 +1,234 @@
 import { config } from '#config';
-import { getApplication } from '#core/api';
-import { disconnectFromPostgres, runPostgresMigration } from '#core/postgres';
-import { greaterOrEqual } from '#core/validation';
-import type { TestResponse } from '#testing/api/testResponse';
-import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
-import type { AllStreamSubscription } from '@kurrent/kurrentdb-client';
-import type { Application } from 'express';
-import type { CartDetails } from '../../crud/shoppingCarts/shoppingCart';
-import request from 'supertest';
-import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
-import { disconnectFromEventStore } from '../core/streams';
-import { router } from '../shoppingCarts/routes';
+import { disconnectFromPostgres, runPostgresMigrations } from '#core/postgres';
+import type {
+  E2EResponseAssert,
+  TestRequest,
+} from '@event-driven-io/emmett-expressjs';
+import {
+  ApiE2ESpecification,
+  expectResponse,
+  getApplication,
+} from '@event-driven-io/emmett-expressjs';
+import type { Response } from 'supertest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
+import { disconnectFromEventStore, getEventStore } from '../core/eventStore';
+import { shoppingCartApi } from '../shoppingCarts/api';
+import { getPricedProductItem } from '../shoppingCarts/productItem';
 import { ShoppingCartStatus } from '../shoppingCarts/shoppingCart';
-import { runSubscription } from '../subscriptions';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { getUserData } from '../shoppingCarts/user';
 
-describe('Full flow', () => {
-  let kurrentDBContainer: StartedKurrentDBContainer;
-  let postgresContainer: StartedPostgreSqlContainer;
-  let app: Application;
-  let subscription: AllStreamSubscription;
+describe('Shopping cart flow', () => {
+  it('opens shopping cart', () =>
+    given()
+      .when(openShoppingCart)
+      .then([
+        (response) => {
+          expect(response.headers['etag']).toBe('W/"1"');
+          expect(response.headers['location']).toBe(
+            `/v2/shopping-carts/${shoppingCartId}`,
+          );
+        },
+      ]));
+
+  it('shows opened shopping cart', () =>
+    given(openShoppingCart)
+      .when(getShoppingCartDetails)
+      .then([
+        expectShoppingCart('W/"1"', {
+          ...emptyCart,
+          items: [],
+          status: ShoppingCartStatus.Opened,
+          createdAt: commandTime(0),
+          updatedAt: null,
+        }),
+      ]));
+
+  it('adds product item to opened shopping cart', () =>
+    given(openShoppingCart)
+      .when(addTwoPairsOfShoes)
+      .then([expectResponse(200, { headers: { etag: 'W/"2"' } })]));
+
+  it('shows shopping cart with added product item', () =>
+    given(openShoppingCart, addTwoPairsOfShoes)
+      .when(getShoppingCartDetails)
+      .then([
+        expectShoppingCart('W/"2"', {
+          ...emptyCart,
+          items: [twoPairsOfShoes],
+          status: ShoppingCartStatus.Opened,
+          createdAt: commandTime(0),
+          updatedAt: commandTime(1),
+        }),
+      ]));
+
+  it('shows shopping cart with two different product items', () =>
+    given(openShoppingCart, addTwoPairsOfShoes, addTShirt)
+      .when(getShoppingCartDetails)
+      .then([
+        expectShoppingCart('W/"3"', {
+          ...emptyCart,
+          items: [twoPairsOfShoes, tShirt],
+          status: ShoppingCartStatus.Opened,
+          createdAt: commandTime(0),
+          updatedAt: commandTime(2),
+        }),
+      ]));
+
+  it('shows shopping cart after removing pair of shoes', () =>
+    given(openShoppingCart, addTwoPairsOfShoes, addTShirt, removePairOfShoes)
+      .when(getShoppingCartDetails)
+      .then([
+        expectShoppingCart('W/"4"', {
+          ...emptyCart,
+          items: [pairOfShoes, tShirt],
+          status: ShoppingCartStatus.Opened,
+          createdAt: commandTime(0),
+          updatedAt: commandTime(3),
+        }),
+      ]));
+
+  it('shows confirmed shopping cart', () =>
+    given(
+      openShoppingCart,
+      addTwoPairsOfShoes,
+      addTShirt,
+      removePairOfShoes,
+      confirmShoppingCart,
+    )
+      .when(getShoppingCartDetails)
+      .then([
+        expectShoppingCart('W/"5"', {
+          items: [pairOfShoes, tShirt],
+          status: ShoppingCartStatus.Confirmed,
+          userId,
+          ...confirmedData,
+          createdAt: commandTime(0),
+          updatedAt: commandTime(4),
+        }),
+      ]));
+
+  let given: ApiE2ESpecification;
+  let shoppingCartId: string;
+  let eTag: string;
 
   beforeAll(async () => {
-    app = getApplication(router);
-
-    kurrentDBContainer = await new KurrentDBContainer().start();
-    config.kurrentDB.connectionString =
-      kurrentDBContainer.getConnectionString();
-    console.log(config.kurrentDB.connectionString);
-
-    postgresContainer = await new PostgreSqlContainer(
-      'postgres:15.1-alpine',
-    ).start();
-    config.postgres.connectionString = `postgres://${postgresContainer.getUsername()}:${postgresContainer.getPassword()}@localhost:${postgresContainer.getPort()}/${postgresContainer.getDatabase()}`;
+    config.postgres.connectionString = inject('postgreSQLConnectionString');
     config.postgres.schemaName = 'ecommerce';
     console.log(config.postgres.connectionString);
 
-    runPostgresMigration({
-      connectionString: config.postgres.connectionString,
-      migrationsPath: './src/crud/migrations/',
-    });
-    runPostgresMigration({
-      connectionString: config.postgres.connectionString,
-      migrationsPath: './src/eventsourced/migrations/',
-    });
+    await runPostgresMigrations();
 
-    subscription = await runSubscription();
+    given = ApiE2ESpecification.for(getEventStore, (eventStore) => {
+      let commandNumber = 0;
+
+      return getApplication({
+        apis: [
+          shoppingCartApi(
+            eventStore,
+            getPricedProductItem,
+            getUserData,
+            () => new Date(commandTime(commandNumber++)),
+          ),
+        ],
+      });
+    });
   });
 
   afterAll(async () => {
-    await subscription.unsubscribe();
     await disconnectFromEventStore();
-    await kurrentDBContainer.stop();
-
     await disconnectFromPostgres();
-    await postgresContainer.stop();
   });
 
-  describe('Shopping Cart', () => {
-    let shoppingCartId: number;
-    let currentRevision: string;
-    let lastRevision: string;
-    // const firstProductId: string = uuid();
+  const rememberETag = (response: Response) => {
+    eTag = response.headers['etag'];
+  };
 
-    it('should go through whole flow successfuly', async () => {
-      ///////////////////////////////////////////////////
-      // 1. Open Shopping Cart
-      ///////////////////////////////////////////////////
-      let response = (await request(app)
-        .post(`/v2/shopping-carts`)
-        .send({
-          status: ShoppingCartStatus.Opened,
-        })
-        .expect(201)) as TestResponse<CartDetails>;
+  const openShoppingCart: TestRequest = (request) =>
+    request
+      .post('/v2/shopping-carts')
+      .expect(201)
+      .expect((response) => {
+        shoppingCartId = (response.body as { id: string }).id;
+        rememberETag(response);
+      });
 
-      let current = response.body;
+  const addTwoPairsOfShoes: TestRequest = (request) =>
+    request
+      .post(`/v2/shopping-carts/${shoppingCartId}/product-items`)
+      .set('If-Match', eTag)
+      .send(twoPairsOfShoes)
+      .expect(200)
+      .expect(rememberETag);
 
-      if (!response.body.id) {
-        expect(false).toBeTruthy();
-        return;
-      }
-      expect(response.body.id).toBeDefined();
-      expect(response.headers['etag']).toBeDefined();
-      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
+  const addTShirt: TestRequest = (request) =>
+    request
+      .post(`/v2/shopping-carts/${shoppingCartId}/product-items`)
+      .set('If-Match', eTag)
+      .send(tShirt)
+      .expect(200)
+      .expect(rememberETag);
 
-      expect(response.headers['location']).toBeDefined();
-      expect(response.headers['location']).toBe(
-        `/v2/shopping-carts/${current.id}`,
-      );
+  const removePairOfShoes: TestRequest = (request) =>
+    request
+      .delete(
+        `/v2/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`,
+      )
+      .set('If-Match', eTag)
+      .expect(200)
+      .expect(rememberETag);
 
-      currentRevision = response.headers['etag'];
-      shoppingCartId = response.body.id;
+  const confirmShoppingCart: TestRequest = (request) =>
+    request
+      .put(`/v2/users/${userId}/shopping-carts/${shoppingCartId}`)
+      .set('If-Match', eTag)
+      .send(confirmedData)
+      .expect(200)
+      .expect(rememberETag);
 
-      response = await request(app)
-        .get(`/v2/shopping-carts/${shoppingCartId}`)
-        //.set('If-Not-Match', lastRevision)
-        .expect(200);
+  const getShoppingCartDetails: TestRequest = (request) =>
+    request.get(`/v2/shopping-carts/${shoppingCartId}`);
 
-      expect(response.headers['etag']).toBe(currentRevision);
-      lastRevision = response.headers['etag'];
-
+  const expectShoppingCart =
+    (
+      expectedETag: string,
+      expected: Record<string, unknown>,
+    ): E2EResponseAssert =>
+    (response) => {
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['etag']).toBe(expectedETag);
       expect(response.body).toMatchObject({
         sessionId: shoppingCartId,
-        city: null,
-        content: null,
-        country: null,
-        email: null,
-        firstName: null,
-        items: [],
-        lastName: null,
-        line1: null,
-        line2: null,
-        middleName: null,
-        mobile: null,
-        province: null,
-        updatedAt: null,
-        userId: null,
-        status: ShoppingCartStatus.Opened,
+        ...expected,
       });
-      expect(response.body).toHaveProperty('id');
-      expect(response.body).toHaveProperty('createdAt');
-      current = response.body;
-
-      ///////////////////////////////////////////////////
-      // 2. Add product item
-      ///////////////////////////////////////////////////
-      const twoPairsOfShoes = {
-        quantity: 2,
-        productId: 123,
-      };
-      response = await request(app)
-        .post(`/v2/shopping-carts/${shoppingCartId}/product-items`)
-        .set('If-Match', currentRevision)
-        .send(twoPairsOfShoes)
-        .expect(200);
-
-      expect(response.headers['etag']).toBeDefined();
-      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
-      currentRevision = response.headers['etag'];
-
-      response = await request(app)
-        .get(`/v2/shopping-carts/${shoppingCartId}`)
-        .set('If-Not-Match', lastRevision)
-        .expect(200);
-
-      expect(response.headers['etag']).toBe(currentRevision);
-      lastRevision = response.headers['etag'];
-
-      expect(response.body).toMatchObject({
-        id: current.id,
-        createdAt: current.createdAt,
-        sessionId: shoppingCartId,
-        city: null,
-        content: null,
-        country: null,
-        email: null,
-        firstName: null,
-        items: [twoPairsOfShoes],
-        lastName: null,
-        line1: null,
-        line2: null,
-        middleName: null,
-        mobile: null,
-        province: null,
-        userId: null,
-        status: ShoppingCartStatus.Opened,
-      });
-      expect(response.body.updatedAt).not.toBeNull();
-      current = response.body;
-
-      ///////////////////////////////////////////////////
-      // 3. Add another item
-      ///////////////////////////////////////////////////
-      const tShirt = {
-        productId: 456,
-        quantity: 1,
-      };
-      response = await request(app)
-        .post(`/v2/shopping-carts/${shoppingCartId}/product-items`)
-        .set('If-Match', currentRevision)
-        .send(tShirt)
-        .expect(200);
-
-      expect(response.headers['etag']).toBeDefined();
-      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
-      currentRevision = response.headers['etag'];
-
-      response = await request(app)
-        .get(`/v2/shopping-carts/${shoppingCartId}`)
-        .set('If-Not-Match', lastRevision)
-        .expect(200);
-
-      expect(response.headers['etag']).toBe(currentRevision);
-      lastRevision = response.headers['etag'];
-
-      expect(response.body).toMatchObject({
-        id: current.id,
-        createdAt: current.createdAt,
-        sessionId: shoppingCartId,
-        city: null,
-        content: null,
-        country: null,
-        email: null,
-        firstName: null,
-        items: [twoPairsOfShoes, tShirt],
-        lastName: null,
-        line1: null,
-        line2: null,
-        middleName: null,
-        mobile: null,
-        province: null,
-        userId: null,
-        status: ShoppingCartStatus.Opened,
-      });
-      expect(
-        greaterOrEqual(response.body.updatedAt, current.updatedAt),
-      ).toBeTruthy();
-      current = response.body;
-
-      ///////////////////////////////////////////////////
-      // 4. Remove one item
-      ///////////////////////////////////////////////////
-      const pairOfShoes = {
-        productId: 123,
-        quantity: 1,
-      };
-      response = await request(app)
-        .delete(
-          `/v2/shopping-carts/${shoppingCartId}/product-items?productId=${pairOfShoes.productId}&quantity=${pairOfShoes.quantity}`,
-        )
-        .set('If-Match', currentRevision)
-        .expect(200);
-
-      expect(response.headers['etag']).toBeDefined();
-      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
-      currentRevision = response.headers['etag'];
-
-      response = await request(app)
-        .get(`/v2/shopping-carts/${shoppingCartId}`)
-        .set('If-Not-Match', lastRevision)
-        .expect(200);
-
-      expect(response.headers['etag']).toBe(currentRevision);
-      lastRevision = response.headers['etag'];
-
-      expect(response.body).toMatchObject({
-        id: current.id,
-        createdAt: current.createdAt,
-        sessionId: shoppingCartId,
-        city: null,
-        content: null,
-        country: null,
-        email: null,
-        firstName: null,
-        items: [pairOfShoes, tShirt],
-        lastName: null,
-        line1: null,
-        line2: null,
-        middleName: null,
-        mobile: null,
-        province: null,
-        userId: null,
-        status: ShoppingCartStatus.Opened,
-      });
-      expect(
-        greaterOrEqual(response.body.updatedAt, current.updatedAt),
-      ).toBeTruthy();
-      current = response.body;
-
-      ///////////////////////////////////////////////////
-      // 5. Confirm cart
-      ///////////////////////////////////////////////////
-      const userId = 1694;
-      const confirmedData = {
-        content: 'Some content',
-        line1: 'line 1',
-        line2: 'line 2',
-      };
-
-      response = await request(app)
-        .put(`/v2/users/${userId}/shopping-carts/${shoppingCartId}`)
-        .set('If-Match', currentRevision)
-        .send(confirmedData)
-        .expect(200);
-
-      expect(response.headers['etag']).toBeDefined();
-      expect(response.headers['etag']).toMatch(/W\/"\d+.*"/);
-      currentRevision = response.headers['etag'];
-
-      response = await request(app)
-        .get(`/v2/shopping-carts/${shoppingCartId}`)
-        .set('If-Not-Match', lastRevision)
-        .expect(200);
-
-      expect(response.headers['etag']).toBe(currentRevision);
-      lastRevision = response.headers['etag'];
-
-      expect(response.body).toMatchObject({
-        id: current.id,
-        createdAt: current.createdAt,
-        sessionId: shoppingCartId,
-        items: [pairOfShoes, tShirt],
-        status: ShoppingCartStatus.Confirmed,
-        ...confirmedData,
-      });
-      expect(
-        greaterOrEqual(response.body.updatedAt, current.updatedAt),
-      ).toBeTruthy();
-
-      // response = await request(app)
-      //   .get(`/shopping-carts/${shoppingCartId}`)
-      //   .expect(200);
-
-      // const { updatedAt, ...currentWithoutUpdatedAt } = current;
-
-      // expect(response.body).toMatchObject({
-      //   ...currentWithoutUpdatedAt,
-      //   ...confirmedData,
-      //   items: [pairOfShoes, tShirt],
-      // });
-      // expect(response.body.updatedAt > updatedAt).toBeTruthy();
-
-      // current = response.body;
-
-      // // 4. Try to add product item
-      // // It should fail, as cart is already confirmed
-      // await request(app)
-      //   .post(`/shopping-carts/${shoppingCartId}`)
-      //   .send({
-      //     ...current,
-      //     items: [twoPairsOfShoes, tShirt],
-      //   })
-      //   .expect(412);
-
-      // response = await request(app)
-      //   .get(`/shopping-carts/${shoppingCartId}`)
-      //   .expect(200);
-
-      // expect(response.body).toMatchObject(current);
-    });
-  });
+      expect(typeof (response.body as { id: unknown }).id).toBe('number');
+    };
 });
+
+const startedAt = Date.now();
+const commandTime = (commandNumber: number) =>
+  new Date(startedAt + commandNumber * 1000).toJSON();
+
+const twoPairsOfShoes = { productId: 123, quantity: 2 };
+const tShirt = { productId: 456, quantity: 1 };
+const pairOfShoes = { productId: 123, quantity: 1 };
+const userId = 1694;
+const confirmedData = {
+  content: 'Some content',
+  line1: 'line 1',
+  line2: 'line 2',
+};
+
+const emptyCart = {
+  city: null,
+  content: null,
+  country: null,
+  email: null,
+  firstName: null,
+  lastName: null,
+  line1: null,
+  line2: null,
+  middleName: null,
+  mobile: null,
+  province: null,
+  userId: null,
+};

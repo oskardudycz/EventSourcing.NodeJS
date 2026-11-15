@@ -1,8 +1,7 @@
+import { getEventStore } from '#core/eventStore';
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
-import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
 import { config } from '#config';
 import app from '../../app';
 import {
@@ -10,23 +9,16 @@ import {
   setupOpenedCashierShift,
 } from '#testing/builders/byEvents';
 import { toWeakETag } from '#core/http/requests';
-import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
+import { beforeAll, beforeEach, describe, inject, it } from 'vitest';
 
 describe('POST /cash-registers/:cashRegisterId/shifts/current/transactions', () => {
-  let kurrentDBContainer: StartedKurrentDBContainer;
   let eventStore: KurrentDBClient;
 
-  beforeAll(async () => {
-    kurrentDBContainer = await new KurrentDBContainer().start();
-    config.kurrentDB.connectionString =
-      kurrentDBContainer.getConnectionString();
+  beforeAll(() => {
+    config.kurrentDB.connectionString = inject('kurrentDBConnectionString');
     console.log(config.kurrentDB.connectionString);
 
-    eventStore = kurrentDBContainer.getClient();
-  });
-
-  afterAll(async () => {
-    await kurrentDBContainer.stop();
+    eventStore = getEventStore();
   });
 
   describe('For existing cash register', () => {

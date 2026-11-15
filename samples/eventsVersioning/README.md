@@ -448,6 +448,7 @@ Composing the patterns described above can support such a case. For example, wit
 2. Install packages: `npm install`.
 3. Run all tests: `npm test`. Integration tests start KurrentDB through [Testcontainers](https://testcontainers.com/), so they need Docker running.
 4. Run only unit tests with `npm run test:unit`, or only integration tests with `npm run test:int`.
+5. To see the events that tests store, start Docker Compose: in the folder of [docker-compose.yml](./docker-compose.yml), run `docker compose --profile all up`. Integration tests then use this KurrentDB automatically instead of starting their own, and you can browse the events in the KurrentDB UI at http://localhost:2113/. Stop Docker Compose to go back to Testcontainers.
 
 ## Summary
 

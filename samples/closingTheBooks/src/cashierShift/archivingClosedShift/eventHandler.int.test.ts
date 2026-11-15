@@ -1,31 +1,23 @@
+import { getEventStore } from '#core/eventStore';
 import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
-import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
+import type { StreamArchivisationScheduled } from '../../archivisation/schedulingArchivisation/eventHandler';
 import type { ShiftOpened } from '../openingShift';
 import { handleCashierShiftOpened } from './eventHandler';
 import { getCurrentTime } from '#core/primitives';
 import { getArchivisationScheduleStreamName } from '../../archivisation';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, inject, it } from 'vitest';
 
 describe('ShiftOpened event', () => {
-  let kurrentDBContainer: StartedKurrentDBContainer;
   let eventStore: KurrentDBClient;
   const cashRegisterId = uuid();
 
-  beforeAll(async () => {
-    kurrentDBContainer = await new KurrentDBContainer().start();
-    config.kurrentDB.connectionString =
-      kurrentDBContainer.getConnectionString();
+  beforeAll(() => {
+    config.kurrentDB.connectionString = inject('kurrentDBConnectionString');
 
-    eventStore = kurrentDBContainer.getClient();
-  });
-
-  afterAll(async () => {
-    await kurrentDBContainer.stop();
+    eventStore = getEventStore();
   });
 
   it('should trigger closed shift archivisation', async () => {
@@ -53,13 +45,21 @@ describe('ShiftOpened event', () => {
       return;
     }
 
-    const archivisationScheduleStreamName =
-      getArchivisationScheduleStreamName();
+    const cashierShiftStreamName =
+      getCurrentCashierShiftStreamName(cashRegisterId);
+    const scheduledForThisShift: unknown[] = [];
 
-    await expectStreamToHaveNumberOfEvents(
-      eventStore,
-      archivisationScheduleStreamName,
-      1,
-    );
+    for await (const { event } of eventStore.readStream(
+      getArchivisationScheduleStreamName(),
+    )) {
+      if (
+        event?.type === 'stream-archivisation-scheduled' &&
+        (event.data as StreamArchivisationScheduled['data']).streamName ===
+          cashierShiftStreamName
+      )
+        scheduledForThisShift.push(event);
+    }
+
+    expect(scheduledForThisShift).toHaveLength(1);
   });
 });
