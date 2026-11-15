@@ -1,11 +1,9 @@
 import request from 'supertest';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 // import { greaterOrEqual } from '#core/validation';
 import type { TestResponse } from '#testing/api/testResponse';
-import type { StartedMongoDBContainer } from '@testcontainers/mongodb';
-import { MongoDBContainer } from '@testcontainers/mongodb';
 import { disconnectFromMongoDB } from '#core/mongodb';
 import type { Application } from 'express';
 import initApp from '../../ecommerce/app';
@@ -14,14 +12,12 @@ import { MongoClient } from 'mongodb';
 
 describe('Full flow', () => {
   let app: Application;
-  let mongodbContainer: StartedMongoDBContainer;
 
-  beforeAll(async () => {
-    mongodbContainer = await new MongoDBContainer('mongo:6.0.12').start();
-    config.mongoDB.connectionString = mongodbContainer.getConnectionString();
+  beforeAll(() => {
+    config.mongoDB.connectionString = inject('mongoDBConnectionString');
     console.log(config.mongoDB.connectionString);
     app = initApp(
-      new MongoClient(mongodbContainer.getConnectionString(), {
+      new MongoClient(config.mongoDB.connectionString, {
         directConnection: true,
       }),
     );
@@ -29,7 +25,6 @@ describe('Full flow', () => {
 
   afterAll(async () => {
     await disconnectFromMongoDB();
-    await mongodbContainer.stop();
   });
 
   describe('Shopping Cart', () => {

@@ -1,31 +1,23 @@
+import { getEventStore } from '#core/eventStore';
 import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { handleCashRegisterPlacedAtWorkStation } from './eventHandler';
 import { getCurrentTime } from '#core/primitives';
 import type { PlacedAtWorkStation } from '../../cashRegisters/placeAtWorkStation';
 import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import { getCashRegisterStreamName } from '../../cashRegisters/cashRegister';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, inject, it } from 'vitest';
 
 describe('PlacedAtWorkStation event', () => {
-  let kurrentDBContainer: StartedKurrentDBContainer;
   let eventStore: KurrentDBClient;
   const cashRegisterId = uuid();
 
-  beforeAll(async () => {
-    kurrentDBContainer = await new KurrentDBContainer().start();
-    config.kurrentDB.connectionString =
-      kurrentDBContainer.getConnectionString();
+  beforeAll(() => {
+    config.kurrentDB.connectionString = inject('kurrentDBConnectionString');
 
-    eventStore = kurrentDBContainer.getClient();
-  });
-
-  afterAll(async () => {
-    await kurrentDBContainer.stop();
+    eventStore = getEventStore();
   });
 
   it('should iniate current cashier shift stream', async () => {

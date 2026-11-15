@@ -1,29 +1,21 @@
+import { getEventStore } from '#core/eventStore';
 import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { v4 as uuid } from 'uuid';
 import { config } from '#config';
-import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import type { PlaceAtWorkStation } from './handler';
 import { handlePlaceAtWorkStation } from './handler';
 import { addCashRegister } from '../processCashRegister';
 import { getCashRegisterStreamName } from '../cashRegister';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, inject, it } from 'vitest';
 
 describe('PlaceAtWorkStation command', () => {
-  let kurrentDBContainer: StartedKurrentDBContainer;
   let eventStore: KurrentDBClient;
 
-  beforeAll(async () => {
-    kurrentDBContainer = await new KurrentDBContainer().start();
-    config.kurrentDB.connectionString =
-      kurrentDBContainer.getConnectionString();
+  beforeAll(() => {
+    config.kurrentDB.connectionString = inject('kurrentDBConnectionString');
 
-    eventStore = kurrentDBContainer.getClient();
-  });
-
-  afterAll(async () => {
-    await kurrentDBContainer.stop();
+    eventStore = getEventStore();
   });
 
   it('should place cash register at work station', async () => {

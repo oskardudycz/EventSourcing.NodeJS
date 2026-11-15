@@ -16,7 +16,6 @@ export class KurrentDBContainer extends GenericContainer {
     runProjections = true,
     isInsecure = true,
     emptyDatabase = true,
-    withoutReuse = false,
   ) {
     super(image);
 
@@ -44,8 +43,6 @@ export class KurrentDBContainer extends GenericContainer {
     };
 
     this.withEnvironment(environment).withExposedPorts(...this.tcpPorts);
-
-    if (!withoutReuse) this.withReuse();
   }
 
   async start(): Promise<StartedKurrentDBContainer> {

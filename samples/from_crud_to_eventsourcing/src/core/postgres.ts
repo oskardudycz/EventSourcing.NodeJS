@@ -3,106 +3,45 @@
 //////////////////////////////////////
 
 import { config } from '#config';
-import type { ConnectionPool } from '@databases/pg';
-import createConnectionPool from '@databases/pg';
-import { execSync } from 'child_process';
-import type { RetryOptions } from './retries';
-import { DEFAULT_RETRY_OPTIONS, retryPromise } from './retries';
+import { DataSource } from 'typeorm';
+import {
+  cartItemSchema,
+  cartSchema,
+  InitialMigration1672531200000,
+} from '../db';
 
-let db: ConnectionPool;
+let dataSource: Promise<DataSource> | undefined;
 
-export const getPostgres = (): ConnectionPool => {
-  if (!db) {
-    if (!config.postgres.connectionString) {
-      throw new Error(
-        'Postgres connection string not set. Please define "DATABASE_URL" environment variable',
-      );
-    }
-
-    if (!config.postgres.schemaName) {
-      throw new Error(
-        'Postgres schema name string not set. Please define "DATABASE_SCHEMA" environment variable',
-      );
-    }
-
-    db = createConnectionPool({
-      connectionString: config.postgres.connectionString,
-      schema: config.postgres.schemaName,
-    });
+export const getPostgres = (): Promise<DataSource> => {
+  if (!config.postgres.connectionString) {
+    throw new Error(
+      'Postgres connection string not set. Please define "DATABASE_URL" environment variable',
+    );
   }
 
-  return db;
+  dataSource ??= new DataSource({
+    type: 'postgres',
+    url: config.postgres.connectionString,
+    entities: [cartSchema, cartItemSchema],
+    migrations: [InitialMigration1672531200000],
+  }).initialize();
+
+  return dataSource;
+};
+
+export const runPostgresMigrations = async () => {
+  await (await getPostgres()).runMigrations();
 };
 
 export const disconnectFromPostgres = async () => {
-  const db = getPostgres();
+  if (!dataSource) return;
+
+  const current = dataSource;
+  dataSource = undefined;
 
   try {
-    return await db.dispose();
+    await (await current).destroy();
   } catch (ex) {
     console.error(ex);
   }
-};
-
-export const runPostgresMigration = ({
-  connectionString,
-  migrationsPath,
-  ignoreEdditedMigrationFile = false,
-}: {
-  connectionString: string;
-  migrationsPath: string;
-  ignoreEdditedMigrationFile?: boolean;
-}) => {
-  execSync(
-    `npx node_modules/@databases/pg-migrations apply --database ${connectionString} --directory ${migrationsPath} ${
-      ignoreEdditedMigrationFile ? '--ignore-error migration_file_edited' : ''
-    }`,
-  );
-};
-
-export const enum PostgresErrors {
-  FAILED_TO_UPDATE_ROW = 'FAILED_TO_UPDATE_ROW',
-  ROW_NOT_FOUND = 'ROW_NOT_FOUND',
-}
-
-export const assertUpdated = async <T>(
-  update: () => Promise<T[]>,
-): Promise<T[]> => {
-  const result = await update();
-
-  if (result.length === 0) {
-    throw new Error(PostgresErrors.FAILED_TO_UPDATE_ROW);
-  }
-
-  return result;
-};
-
-export const assertFound = async <T>(
-  find: () => Promise<T | null>,
-): Promise<T> => {
-  const result = await find();
-
-  if (result === null) {
-    throw new Error(PostgresErrors.ROW_NOT_FOUND);
-  }
-
-  return result;
-};
-
-//////////////////////////////////////
-/// Retries
-//////////////////////////////////////
-
-export const retryIfNotFound = <T>(
-  find: () => Promise<T | null>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
-): Promise<T> => {
-  return retryPromise(() => assertFound(find), options);
-};
-
-export const retryIfNotUpdated = <T>(
-  update: () => Promise<T[]>,
-  options: RetryOptions = DEFAULT_RETRY_OPTIONS,
-): Promise<T[]> => {
-  return retryPromise(() => assertUpdated(update), options);
 };

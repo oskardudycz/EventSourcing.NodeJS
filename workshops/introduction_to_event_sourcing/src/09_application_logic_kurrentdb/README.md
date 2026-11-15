@@ -13,7 +13,7 @@ Having the following shopping cart process:
 
 And business logic implemented in the [previous exercise](../07_business_logic/) write the application code that will _glue_ the API defined in `api.ts` files with the domain code.
 
-This time you'll use KurrentDB instead of the mocked one. Run `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) before running test code to have database set up.
+This time you'll use KurrentDB instead of the mocked one. Tests start their own KurrentDB container. To see the data in KurrentDB UI, start Docker Compose from the main workshop folder (`docker compose --profile all up`, for Mac `docker compose -f docker-compose.arm.yml --profile all up`). Tests then use it automatically. Stop it to go back.
 
 There are four variations:
 

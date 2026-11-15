@@ -1,4 +1,3 @@
-import { MongoDBContainer } from '@testcontainers/mongodb';
 import { mongoObjectId } from '#core/mongoDB';
 import type { ClientShoppingHistory } from './clientShoppingHistory';
 import {
@@ -9,16 +8,14 @@ import { MongoClient } from 'mongodb';
 import type { ShoppingCartEvent } from '../shoppingCart';
 import type { PricedProductItem } from '../productItem';
 import { Spec } from '#testing/mongoDB/mongoDbProjectionTests';
-import { afterAll, beforeAll, describe, it } from 'vitest';
+import { afterAll, beforeAll, describe, inject, it } from 'vitest';
 
 describe('Client Shopping History', () => {
   let mongo: MongoClient;
   let given: Spec<ShoppingCartEvent, ClientShoppingHistory>;
 
   beforeAll(async () => {
-    const mongoContainer = await new MongoDBContainer('mongo:6.0.12').start();
-    console.log(mongoContainer.getConnectionString());
-    mongo = new MongoClient(mongoContainer.getConnectionString(), {
+    mongo = new MongoClient(inject('mongoDBConnectionString'), {
       directConnection: true,
     });
     await mongo.connect();

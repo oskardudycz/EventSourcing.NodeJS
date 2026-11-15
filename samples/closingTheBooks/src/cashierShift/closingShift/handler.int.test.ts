@@ -1,5 +1,4 @@
-import type { StartedKurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
-import { KurrentDBContainer } from '#testing/kurrentDB/kurrentDBContainer';
+import { getEventStore } from '#core/eventStore';
 import { expectStreamToHaveNumberOfEvents } from '#testing/assertions/streams';
 import { config } from '#config';
 import type { CloseShift } from './handler';
@@ -11,21 +10,18 @@ import { getCurrentCashierShiftStreamName } from '../cashierShift';
 import type { KurrentDBClient } from '@kurrent/kurrentdb-client';
 import { appendToStream } from '#core/eventStore/appending';
 import { getCurrentTime } from '#core/primitives';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, inject, it } from 'vitest';
 
 describe('ClosingShift command', () => {
-  let kurrentDBContainer: StartedKurrentDBContainer;
   let eventStore: KurrentDBClient;
   const cashRegisterId = uuid();
   const cashierId = uuid();
   const streamName = getCurrentCashierShiftStreamName(cashRegisterId);
 
   beforeAll(async () => {
-    kurrentDBContainer = await new KurrentDBContainer().start();
-    config.kurrentDB.connectionString =
-      kurrentDBContainer.getConnectionString();
+    config.kurrentDB.connectionString = inject('kurrentDBConnectionString');
 
-    eventStore = kurrentDBContainer.getClient();
+    eventStore = getEventStore();
 
     const result = await appendToStream<CashierShiftEvent>(
       eventStore,
@@ -51,10 +47,6 @@ describe('ClosingShift command', () => {
       ],
     );
     expect(result.isError).toBeFalsy();
-  });
-
-  afterAll(async () => {
-    await kurrentDBContainer.stop();
   });
 
   it('should close the shift for existing, opened cash register shift', async () => {

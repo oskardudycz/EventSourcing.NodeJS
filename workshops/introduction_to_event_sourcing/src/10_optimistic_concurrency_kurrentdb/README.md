@@ -17,7 +17,7 @@ And business logic and application code implemented in the [previous exercise](.
 - [MDN - HTTP conditional requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests)
 - [KurrentDB Documentation - Handling concurrency](https://docs.kurrent.io/clients/node/v1.3/appending-events.html#handling-concurrency)
 
-This time you'll use KurrentDB instead of the mocked one. Run `docker compose up` (or for Mac `docker compose -f docker-compose.arm.yml up`) before running test code to have database set up.
+This time you'll use KurrentDB instead of the mocked one. Tests start their own KurrentDB container. To see the data in KurrentDB UI, start Docker Compose from the main workshop folder (`docker compose --profile all up`, for Mac `docker compose -f docker-compose.arm.yml --profile all up`). Tests then use it automatically. Stop it to go back.
 
 There are four variations:
 

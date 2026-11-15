@@ -2,13 +2,8 @@
 /// Shopping Carts
 //////////////////////////////////////
 
-import type {
-  JSONEventType,
-  JSONRecordedEvent,
-  RecordedEvent,
-  ResolvedEvent,
-} from '@kurrent/kurrentdb-client';
-import { StreamAggregator } from '../core/streams';
+import type { Command, Event } from '@event-driven-io/emmett';
+import { IllegalStateError, ValidationError } from '@event-driven-io/emmett';
 import type { PricedProductItem, ProductItem } from './productItem';
 import {
   addProductItem,
@@ -21,7 +16,7 @@ import type { User } from './user';
 /// Events
 //////////////////////////////////////
 
-export type ShoppingCartOpened = JSONEventType<
+export type ShoppingCartOpened = Event<
   'shopping-cart-opened',
   {
     shoppingCartId: string;
@@ -29,7 +24,7 @@ export type ShoppingCartOpened = JSONEventType<
   }
 >;
 
-export type ProductItemAddedToShoppingCart = JSONEventType<
+export type ProductItemAddedToShoppingCart = Event<
   'product-item-added-to-shopping-cart',
   {
     shoppingCartId: string;
@@ -38,7 +33,7 @@ export type ProductItemAddedToShoppingCart = JSONEventType<
   }
 >;
 
-export type ProductItemRemovedFromShoppingCart = JSONEventType<
+export type ProductItemRemovedFromShoppingCart = Event<
   'product-item-removed-from-shopping-cart',
   {
     shoppingCartId: string;
@@ -47,7 +42,7 @@ export type ProductItemRemovedFromShoppingCart = JSONEventType<
   }
 >;
 
-export type ShoppingCartConfirmed = JSONEventType<
+export type ShoppingCartConfirmed = Event<
   'shopping-cart-confirmed',
   {
     shoppingCartId: string;
@@ -67,18 +62,6 @@ export type ShoppingCartEvent =
   | ProductItemAddedToShoppingCart
   | ProductItemRemovedFromShoppingCart
   | ShoppingCartConfirmed;
-
-export const isCashierShoppingCartEvent = (
-  event: RecordedEvent | null,
-): event is ShoppingCartEvent & JSONRecordedEvent => {
-  return (
-    event != null &&
-    (event.type === 'shopping-cart-opened' ||
-      event.type === 'product-item-added-to-shopping-cart' ||
-      event.type === 'product-item-removed-from-shopping-cart' ||
-      event.type === 'shopping-cart-confirmed')
-  );
-};
 
 //////////////////////////////////////
 /// Entity/State
@@ -111,13 +94,13 @@ export const toShoppingCartStreamName = (shoppingCartId: string) =>
 
 export const assertShoppingCartIsOpened = (shoppingCart: ShoppingCart) => {
   if (shoppingCart.status !== ShoppingCartStatus.Opened) {
-    throw new Error(ShoppingCartErrors.CART_IS_NOT_OPENED);
+    throw new IllegalStateError(ShoppingCartErrors.CART_IS_NOT_OPENED);
   }
 };
 
 export const assertHasProductItems = (shoppingCart: ShoppingCart) => {
   if (shoppingCart.productItems.length === 0) {
-    throw new Error(ShoppingCartErrors.NO_PRODUCTS_ITEMS);
+    throw new IllegalStateError(ShoppingCartErrors.NO_PRODUCTS_ITEMS);
   }
 };
 
@@ -125,15 +108,16 @@ export const assertHasProductItems = (shoppingCart: ShoppingCart) => {
 /// Getting the state from events
 //////////////////////////////////////
 
-export const getShoppingCart = StreamAggregator<
-  ShoppingCart,
-  ShoppingCartEvent
->((currentState, event) => {
+export const initialState = (): ShoppingCart => ({}) as ShoppingCart;
+
+export const evolve = (
+  currentState: ShoppingCart,
+  event: ShoppingCartEvent,
+): ShoppingCart => {
   switch (event.type) {
     case 'shopping-cart-opened':
       return {
         id: event.data.shoppingCartId,
-        openedAt: new Date(event.data.openedAt),
         productItems: [],
         status: ShoppingCartStatus.Opened,
       };
@@ -164,24 +148,29 @@ export const getShoppingCart = StreamAggregator<
       return currentState;
     }
   }
-});
+};
 
 //////////////////////////////////////
 /// Open shopping cart
 //////////////////////////////////////
 
-export type OpenShoppingCart = {
-  shoppingCartId: string;
-};
+export type OpenShoppingCart = Command<
+  'OpenShoppingCart',
+  {
+    shoppingCartId: string;
+  },
+  { now: Date }
+>;
 
 export const openShoppingCart = ({
-  shoppingCartId,
+  data: { shoppingCartId },
+  metadata,
 }: OpenShoppingCart): ShoppingCartOpened => {
   return {
     type: 'shopping-cart-opened',
     data: {
       shoppingCartId,
-      openedAt: new Date().toJSON(),
+      openedAt: metadata.now.toJSON(),
     },
   };
 };
@@ -190,28 +179,30 @@ export const openShoppingCart = ({
 /// Add product item to shopping cart
 //////////////////////////////////////
 
-export type AddProductItemToShoppingCart = {
-  shoppingCartId: string;
-  productItem: ProductItem;
-};
+export type AddProductItemToShoppingCart = Command<
+  'AddProductItemToShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: PricedProductItem;
+  },
+  { now: Date }
+>;
 
-export const addProductItemToShoppingCart = async (
-  getPricedProduct: (productItem: ProductItem) => Promise<PricedProductItem>,
-  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId, productItem }: AddProductItemToShoppingCart,
-): Promise<ProductItemAddedToShoppingCart> => {
-  const shoppingCart = await getShoppingCart(events);
-
+export const addProductItemToShoppingCart = (
+  {
+    data: { shoppingCartId, productItem },
+    metadata,
+  }: AddProductItemToShoppingCart,
+  shoppingCart: ShoppingCart,
+): ProductItemAddedToShoppingCart => {
   assertShoppingCartIsOpened(shoppingCart);
-
-  const pricedProductItem = await getPricedProduct(productItem);
 
   return {
     type: 'product-item-added-to-shopping-cart',
     data: {
       shoppingCartId,
-      productItem: pricedProductItem,
-      addedAt: new Date().toJSON(),
+      productItem,
+      addedAt: metadata.now.toJSON(),
     },
   };
 };
@@ -220,17 +211,22 @@ export const addProductItemToShoppingCart = async (
 /// Remove product item to shopping cart
 //////////////////////////////////////
 
-export type RemoveProductItemFromShoppingCart = {
-  shoppingCartId: string;
-  productItem: ProductItem;
-};
+export type RemoveProductItemFromShoppingCart = Command<
+  'RemoveProductItemFromShoppingCart',
+  {
+    shoppingCartId: string;
+    productItem: ProductItem;
+  },
+  { now: Date }
+>;
 
-export const removeProductItemFromShoppingCart = async (
-  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId, productItem }: RemoveProductItemFromShoppingCart,
-): Promise<ProductItemRemovedFromShoppingCart> => {
-  const shoppingCart = await getShoppingCart(events);
-
+export const removeProductItemFromShoppingCart = (
+  {
+    data: { shoppingCartId, productItem },
+    metadata,
+  }: RemoveProductItemFromShoppingCart,
+  shoppingCart: ShoppingCart,
+): ProductItemRemovedFromShoppingCart => {
   assertShoppingCartIsOpened(shoppingCart);
 
   const current = assertProductItemExists(
@@ -243,7 +239,7 @@ export const removeProductItemFromShoppingCart = async (
     data: {
       shoppingCartId,
       productItem: { ...current, quantity: productItem.quantity },
-      removedAt: new Date().toJSON(),
+      removedAt: metadata.now.toJSON(),
     },
   };
 };
@@ -252,31 +248,29 @@ export const removeProductItemFromShoppingCart = async (
 /// Confirm shopping cart
 //////////////////////////////////////
 
-export type ConfirmShoppingCart = {
-  shoppingCartId: string;
-  userId: number;
-  additionalInfo: {
-    content?: string;
-    line1?: string;
-    line2?: string;
-  };
-};
+export type ConfirmShoppingCart = Command<
+  'ConfirmShoppingCart',
+  {
+    shoppingCartId: string;
+    user: User;
+    additionalInfo: {
+      content?: string;
+      line1?: string;
+      line2?: string;
+    };
+  },
+  { now: Date }
+>;
 
-export const confirmShoppingCart = async (
-  getUserData: (userId: number) => Promise<User | undefined>,
-  events: AsyncIterableIterator<ResolvedEvent<ShoppingCartEvent>>,
-  { shoppingCartId, additionalInfo, userId }: ConfirmShoppingCart,
-): Promise<ShoppingCartConfirmed> => {
-  const shoppingCart = await getShoppingCart(events);
-
+export const confirmShoppingCart = (
+  {
+    data: { shoppingCartId, user, additionalInfo },
+    metadata,
+  }: ConfirmShoppingCart,
+  shoppingCart: ShoppingCart,
+): ShoppingCartConfirmed => {
   assertShoppingCartIsOpened(shoppingCart);
   assertHasProductItems(shoppingCart);
-
-  const user = await getUserData(userId);
-
-  if (!user) {
-    throw new Error(ShoppingCartErrors.USER_DOES_NOT_EXISTS);
-  }
 
   return {
     type: 'shopping-cart-confirmed',
@@ -284,7 +278,41 @@ export const confirmShoppingCart = async (
       shoppingCartId,
       user,
       additionalInfo,
-      confirmedAt: new Date().toJSON(),
+      confirmedAt: metadata.now.toJSON(),
     },
   };
 };
+
+//////////////////////////////////////
+/// Decider
+//////////////////////////////////////
+
+export type ShoppingCartCommand =
+  | OpenShoppingCart
+  | AddProductItemToShoppingCart
+  | RemoveProductItemFromShoppingCart
+  | ConfirmShoppingCart;
+
+export const decide = (
+  command: ShoppingCartCommand,
+  shoppingCart: ShoppingCart,
+): ShoppingCartEvent => {
+  const { type } = command;
+
+  switch (type) {
+    case 'OpenShoppingCart':
+      return openShoppingCart(command);
+    case 'AddProductItemToShoppingCart':
+      return addProductItemToShoppingCart(command, shoppingCart);
+    case 'RemoveProductItemFromShoppingCart':
+      return removeProductItemFromShoppingCart(command, shoppingCart);
+    case 'ConfirmShoppingCart':
+      return confirmShoppingCart(command, shoppingCart);
+    default: {
+      const _: never = command;
+      throw new ValidationError(`Unknown command type: ${type as string}`);
+    }
+  }
+};
+
+export const decider = { decide, evolve, initialState };

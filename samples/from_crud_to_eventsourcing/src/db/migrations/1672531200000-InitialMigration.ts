@@ -1,3 +1,8 @@
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class InitialMigration1672531200000 implements MigrationInterface {
+  async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
 CREATE SCHEMA "ecommerce";
 
 CREATE TABLE "ecommerce"."cart" (
@@ -37,3 +42,10 @@ CREATE TABLE "ecommerce"."cart_item" (
 );
 
 CREATE UNIQUE INDEX "idx_cart_cartId_productId" ON "ecommerce"."cart_item" ("cartId", "productId");
+`);
+  }
+
+  async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP SCHEMA "ecommerce" CASCADE;`);
+  }
+}

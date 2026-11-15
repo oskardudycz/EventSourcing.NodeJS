@@ -7,11 +7,10 @@ import {
   assertPositiveNumberOrUndefined,
   assertStringOrUndefined,
 } from '#core/validation';
-import { anyOf, not } from '@databases/pg-typed';
 import type { NextFunction, Request, Response } from 'express';
 import { Router } from 'express';
-import { cartItems, carts } from '../db';
-import type { Cart_InsertParameters } from '../db/__generated__';
+import type { Cart } from '../../db';
+import { cartItemSchema, cartSchema } from '../../db';
 import type { CartDetails } from './shoppingCart';
 import { ShoppingCartStatus } from './shoppingCart';
 
@@ -19,11 +18,116 @@ import { ShoppingCartStatus } from './shoppingCart';
 /// Routes
 //////////////////////////////////////
 
-export const router = Router();
+export const shoppingCartsRouter = (getCurrentTime: () => Date): Router => {
+  const router = Router();
 
-///////////////////////////////
-// Open or update Shopping cart
-///////////////////////////////
+  ///////////////////////////////
+  // Open or update Shopping cart
+  ///////////////////////////////
+  router.post(
+    '/shopping-carts/:sessionId',
+    async (
+      request: CartUpsertRequest,
+      response: Response,
+      next: NextFunction,
+    ) => {
+      try {
+        const now = getCurrentTime();
+        const { items, id, sessionId, ...cart } = getShoppingCartFromRequest(
+          request,
+          now,
+        );
+
+        const wasStored = await (
+          await getPostgres()
+        ).transaction(async (entityManager) => {
+          const shoppingCarts = entityManager.getRepository(cartSchema);
+          const shoppingCartItems = entityManager.getRepository(cartItemSchema);
+
+          const existing = await shoppingCarts.findOneBy({ sessionId });
+
+          if (
+            existing !== null &&
+            (existing.status & ShoppingCartStatus.Closed) !== 0
+          )
+            return false;
+
+          const stored = await shoppingCarts.save(
+            existing === null
+              ? { ...cart, sessionId, createdAt: now }
+              : { ...existing, ...cart, updatedAt: now },
+          );
+
+          const cartId = id ?? stored.id;
+
+          // delete and recreate all cart items
+          await shoppingCartItems.delete({ cartId });
+
+          if (items.length > 0)
+            await shoppingCartItems.insert(
+              items.map((item) => {
+                return {
+                  ...item,
+                  cartId,
+                  createdAt: now,
+                  updatedAt: now,
+                };
+              }),
+            );
+
+          return true;
+        });
+
+        if (!wasStored) {
+          response.sendStatus(412);
+          return;
+        }
+
+        response.sendStatus(200);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  ///////////////////////////////
+  // Get Shopping cart details
+  ///////////////////////////////
+  router.get(
+    '/shopping-carts/:sessionId',
+    async (
+      request: Request,
+      response: Response<CartDetails>,
+      next: NextFunction,
+    ) => {
+      try {
+        const postgres = await getPostgres();
+
+        const result = await postgres.getRepository(cartSchema).findOneBy({
+          sessionId: assertNotEmptyString(request.params.sessionId),
+        });
+
+        if (result === null) {
+          response.sendStatus(404);
+          return;
+        }
+
+        const items = await postgres.getRepository(cartItemSchema).findBy({
+          cartId: result.id,
+        });
+
+        response.send({
+          ...result,
+          items,
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  return router;
+};
 
 export type CartItemUpsert = {
   content: string | null;
@@ -34,7 +138,8 @@ export type CartItemUpsert = {
   sku: string;
 };
 
-export type CartUpsert = Cart_InsertParameters & {
+export type CartUpsert = Omit<Cart, 'id' | 'updatedAt'> & {
+  id?: number;
   items: CartItemUpsert[];
 };
 
@@ -44,84 +149,10 @@ export type CartUpsertRequest = Request<
   Partial<CartUpsert>
 >;
 
-router.post(
-  '/shopping-carts/:sessionId',
-  async (
-    request: CartUpsertRequest,
-    response: Response,
-    next: NextFunction,
-  ) => {
-    try {
-      const { items, id, sessionId, ...cart } =
-        getShoppingCartFromRequest(request);
-
-      const shoppingCarts = carts(getPostgres());
-      const shoppingCartItems = cartItems(getPostgres());
-
-      let resultCarts = await shoppingCarts.insertOrIgnore({
-        ...cart,
-        sessionId,
-        createdAt: new Date(),
-      });
-
-      if (resultCarts.length === 0) {
-        resultCarts = await shoppingCarts.update(
-          {
-            sessionId,
-            status: not(
-              anyOf([
-                ShoppingCartStatus.Confirmed,
-                ShoppingCartStatus.Cancelled,
-              ]),
-            ),
-          },
-          {
-            ...cart,
-            updatedAt: new Date(),
-          },
-        );
-      }
-
-      if (resultCarts.length === 0) {
-        response.sendStatus(412);
-        return;
-      }
-
-      const cartId = id ?? resultCarts[0].id;
-
-      // delete and recreate all cart items
-      await shoppingCartItems.delete({ cartId });
-
-      await shoppingCartItems.bulkInsert({
-        columnsToInsert: [
-          'cartId',
-          'content',
-          'createdAt',
-          'discount',
-          'price',
-          'productId',
-          'quantity',
-          'sku',
-          'updatedAt',
-        ],
-        records: items.map((item) => {
-          return {
-            ...item,
-            cartId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-        }),
-      });
-
-      response.sendStatus(200);
-    } catch (error) {
-      next(error);
-    }
-  },
-);
-
-const getShoppingCartFromRequest = (request: CartUpsertRequest): CartUpsert => {
+const getShoppingCartFromRequest = (
+  request: CartUpsertRequest,
+  now: Date,
+): CartUpsert => {
   const id =
     'id' in request.body
       ? (assertPositiveNumberOrUndefined(request.body.id) ?? {})
@@ -162,46 +193,6 @@ const getShoppingCartFromRequest = (request: CartUpsertRequest): CartUpsert => {
         };
       },
     ),
-    createdAt: assertDateOrUndefined(request.body.createdAt) ?? new Date(),
+    createdAt: assertDateOrUndefined(request.body.createdAt) ?? now,
   };
 };
-
-///////////////////////////////
-// Get Shopping cart details
-///////////////////////////////
-
-router.get(
-  '/shopping-carts/:sessionId',
-  async (
-    request: Request,
-    response: Response<CartDetails>,
-    next: NextFunction,
-  ) => {
-    try {
-      const shoppingCarts = carts(getPostgres());
-      const shoppingCartItems = cartItems(getPostgres());
-
-      const result = await shoppingCarts.findOne({
-        sessionId: assertNotEmptyString(request.params.sessionId),
-      });
-
-      if (result === null) {
-        response.sendStatus(404);
-        return;
-      }
-
-      const items = await shoppingCartItems
-        .find({
-          cartId: result.id,
-        })
-        .all();
-
-      response.send({
-        ...result,
-        items,
-      });
-    } catch (error) {
-      next(error);
-    }
-  },
-);

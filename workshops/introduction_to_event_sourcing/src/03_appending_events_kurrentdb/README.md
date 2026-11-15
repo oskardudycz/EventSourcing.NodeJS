@@ -4,16 +4,4 @@ Using a defined structure of events from the [first exercise](../01_events_defin
 
 ## Prerequisites
 
-Run [docker compose](../../docker-compose.yml) script from the main workshop repository to start KurrentDB instance.
-
-```shell
-docker compose up
-```
-
-or for Mac:
-
-```shell
-docker compose -f docker-compose.arm.yml up
-```
-
-After that you can use KurrentDB UI to see how streams and events look like. It's available at: http://localhost:2113/.
+Tests start their own KurrentDB container. To see what streams and events look like, start [docker compose](../../docker-compose.yml) from the main workshop folder (`docker compose --profile all up`, for Mac `docker compose -f docker-compose.arm.yml --profile all up`). Tests then use this KurrentDB automatically. Stop it to go back. Use KurrentDB UI to see the data. It's available at: http://localhost:2113/.

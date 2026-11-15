@@ -60,13 +60,13 @@ Follow the instructions in exercises folders.
 
 ## Ensuring that all is setup correctly
 
-1. Make sure Docker is running. Tests start KurrentDB, PostgreSQL and MongoDB containers on their own through Testcontainers.
+1. Make sure Docker is running. Tests start their own KurrentDB, PostgreSQL and MongoDB containers through Testcontainers. You don't need to start anything else.
 
 2. Run `npm run test:solved`. If all is fine then all tests should be green.
 
 ## Running
 
-1. Run: `docker compose up` to start KurrentDB Docker image.You should automatically get:
+1. To see the data that tests store, start Docker Compose: in the folder of [docker-compose.yml](./docker-compose.yml), run `docker compose --profile all up` (or for Mac `docker compose -f docker-compose.arm.yml --profile all up`). Tests then use these containers automatically instead of starting their own. Stop Docker Compose to go back to Testcontainers. You get:
 
 - KurrentDB UI: http://localhost:2113/
 - Mongo Express UI: http://localhost:8081/

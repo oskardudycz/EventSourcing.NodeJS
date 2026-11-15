@@ -2,6 +2,7 @@
 /// Product Items
 //////////////////////////////////////
 
+import { IllegalStateError } from '@event-driven-io/emmett';
 import { ShoppingCartErrors } from './shoppingCart';
 
 export interface ProductItem {
@@ -72,7 +73,7 @@ export const assertProductItemExists = (
   const current = findProductItem(productItems, productId);
 
   if (!current || current.quantity < quantity) {
-    throw new Error(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
+    throw new IllegalStateError(ShoppingCartErrors.PRODUCT_ITEM_NOT_FOUND);
   }
 
   return current;

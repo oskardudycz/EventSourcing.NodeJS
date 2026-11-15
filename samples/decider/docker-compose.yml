@@ -1,13 +1,13 @@
-version: '3'
+name: eventsourcing
 
 services:
   #######################################################
   #  KurrentDB
   #######################################################
   kurrentdb:
-    image: kurrentplatform/kurrentdb:26.2.3
-    # use this image if you're running ARM-based proc like Apple M1
-    # image: kurrentplatform/kurrentdb:26.2.3-experimental-arm64-10.0-noble
+    profiles: [ kurrentdb, kurrentdb-all, all, all-no-ui, ci, sample ]
+    image: ${KURRENTDB_IMAGE:-kurrentplatform/kurrentdb:26.2.3}
+    # on ARM (e.g. Apple Silicon) run: KURRENTDB_IMAGE=kurrentplatform/kurrentdb:26.2.3-experimental-arm64-10.0-noble docker compose --profile all up
     environment:
       - KURRENTDB_CLUSTER_SIZE=1
       - KURRENTDB_RUN_PROJECTIONS=All
@@ -16,43 +16,54 @@ services:
       - KURRENTDB_INSECURE=true
       - KURRENTDB_ENABLE_ATOM_PUB_OVER_HTTP=true
     ports:
-      - '2113:2113'
+      - '${KURRENTDB_PORT:-2113}:2113'
     volumes:
-      - type: volume
-        source: kurrentdb-volume-data
-        target: /var/lib/kurrentdb
-      - type: volume
-        source: kurrentdb-volume-logs
-        target: /var/log/kurrentdb
+      - kurrentdb-data:/var/lib/kurrentdb
+      - kurrentdb-logs:/var/log/kurrentdb
     networks:
-      - kurrentdb_network
+      - kurrentdb
 
+  #######################################################
+  #  MongoDB
+  #######################################################
   mongodb:
-    image: mongo:6.0.4
-    # environment:
-    #     MONGO_INITDB_ROOT_USERNAME: root
-    #     MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    profiles: [ mongodb, mongodb-all, all, all-no-ui, ci, sample ]
+    image: mongo:9.0.8
+    command: ['--replSet', 'rs0', '--bind_ip_all', '--port', '27017']
     ports:
-      - 27017:27017
+      - '${MONGODB_PORT:-27017}:27017'
     volumes:
       - mongodb-data:/data/db
+    healthcheck:
+      # initialises the single-node replica set on the first check
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongodb:27017' }] }).ok }"]
+      interval: 5s
+      timeout: 10s
+      retries: 100
+    networks:
+      - mongodb
 
   mongo-express:
-    image: mongo-express
-    restart: always
+    profiles: [ mongodb-ui, mongodb-all, all ]
+    image: mongo-express:1.0.2
+    depends_on:
+      mongodb:
+        condition: service_healthy
     ports:
-      - 8081:8081
+      - '${MONGO_EXPRESS_PORT:-8081}:8081'
     environment:
-      # ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      # ME_CONFIG_MONGODB_ADMINPASSWORD: example
-      # ME_CONFIG_MONGODB_URL: mongodb://root:example@mongodb:27017/
-      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/?replicaSet=rs0
+      ME_CONFIG_BASICAUTH: 'false'
+    networks:
+      - mongodb
 
 networks:
-  kurrentdb_network:
+  kurrentdb:
+    driver: bridge
+  mongodb:
     driver: bridge
 
 volumes:
-  kurrentdb-volume-data:
-  kurrentdb-volume-logs:
+  kurrentdb-data:
+  kurrentdb-logs:
   mongodb-data:
