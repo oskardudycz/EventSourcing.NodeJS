@@ -28,7 +28,7 @@ We still need to support regular checkouts, payments, charges etc. as we do righ
 - Define the Group Checkout entity in `groupCheckouts/groupCheckout.ts` and fill application logic in [groupCheckoutFacade.ts](./regular/solution1_aggregates/groupCheckouts/groupCheckoutFacade.ts), using the [in-memory database](./tools/database.ts) and [in-memory message bus](./tools/messageBus.ts) to store changes and publish events as the outcome of business logic,
 - Configure message handling in `configureGroupCheckouts` (`groupCheckouts/index.ts`) and `configureGuestStayAccounts` (`guestStayAccounts/index.ts`) by subscribing to commands and events on the message bus (think about them as setup called once upon application startup),
 - You can use any preferred style of implementing process coordination,
-- Use `businessProcess.exercise.test.ts` to guide you and verify if you implemented it correctly.
+- Use business process tests ([aggregates](./regular/solution1_aggregates/businessProcess.exercise.test.ts), [immutable entities](./regular/solution2_immutableEntities/businessProcess.exercise.test.ts)) and group checkout entity definition tests ([aggregates](./regular/solution1_aggregates/groupCheckouts/entityDefinitionTests.exercise.test.ts), [immutable entities](./regular/solution2_immutableEntities/groupCheckouts/entityDefinitionTests.exercise.test.ts)) to guide you and verify if you implemented it correctly.
 
 ### Commands and events on one message bus
 
