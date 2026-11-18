@@ -6,7 +6,7 @@ import {
   type Database,
   type MessageBus,
   type MessageCatcher,
-} from '../../../tools';
+} from '../../../../tools';
 import { GroupCheckoutFacade, type InitiateGroupCheckout } from '.';
 import { beforeEach, describe, it } from 'vitest';
 

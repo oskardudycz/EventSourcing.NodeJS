@@ -53,7 +53,11 @@ export const GuestStayAccountFacade = (options: {
       messageBus.publish(events);
     },
     checkoutGuest: (command: CheckoutGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+      const account = accounts.get(command.data.guestStayAccountId);
+
+      if (!account) {
+        return;
+      }
 
       const events = decide(command, account);
 

@@ -1,3 +1,5 @@
+import { Aggregate } from '../core';
+
 export type GroupCheckoutInitiated = {
   type: 'GroupCheckoutInitiated';
   data: {
@@ -51,3 +53,14 @@ export type GroupCheckoutEvent =
   | GuestCheckoutFailureRecorded
   | GroupCheckoutCompleted
   | GroupCheckoutFailed;
+
+export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
+  // Public constructor without parameters, used when loading from the database
+  constructor() {
+    super();
+  }
+
+  evolve(_event: GroupCheckoutEvent): void {
+    throw new Error('TODO: Fill the implementation');
+  }
+}

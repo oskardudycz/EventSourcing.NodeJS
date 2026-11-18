@@ -48,7 +48,10 @@ export const GuestStayAccountFacade = (options: {
 }) => {
   const { database, messageBus } = options;
 
-  const accounts = database.collection<GuestStayAccount>('guestStayAccount');
+  const accounts = database.collection<GuestStayAccount>(
+    'guestStayAccount',
+    GuestStayAccount,
+  );
 
   return {
     checkInGuest: (command: CheckInGuest) => {
@@ -96,7 +99,7 @@ export const GuestStayAccountFacade = (options: {
       const account = accounts.get(command.data.guestStayAccountId);
 
       if (!account) {
-        throw new Error('Entity not found');
+        return;
       }
 
       account.checkoutGuest(command.data);

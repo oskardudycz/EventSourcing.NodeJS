@@ -81,6 +81,8 @@ export const GuestStayFacade = (options: {
 }) => {
   const { database, messageBus } = options;
 
+  // TODO: If your guest stay account is a class, pass it here: `database.collection('guestStayAccount', GuestStayAccount)`.
+  // It needs a public constructor without parameters
   const accounts = database.collection('guestStayAccount');
 
   return {

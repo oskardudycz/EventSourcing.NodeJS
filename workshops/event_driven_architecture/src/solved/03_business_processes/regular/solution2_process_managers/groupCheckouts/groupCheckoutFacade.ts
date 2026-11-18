@@ -44,21 +44,23 @@ export const GroupCheckoutFacade = (options: {
 }) => {
   const { database, messageBus } = options;
 
-  const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
+  const groupCheckouts = database.collection<GroupCheckout>(
+    'groupCheckout',
+    GroupCheckout,
+  );
 
-  const publishMessages = (groupCheckout: GroupCheckout) => {
-    const messages = groupCheckout.dequeueUncommitedMessages();
-
-    messageBus.publish(messages.map(({ message }) => message));
-  };
+  const dequeueMessages = (groupCheckout: GroupCheckout) =>
+    groupCheckout.dequeueUncommitedMessages().map(({ message }) => message);
 
   return {
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
       const groupCheckout = GroupCheckout.initiate(command);
 
+      const messages = dequeueMessages(groupCheckout);
+
       groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
 
-      publishMessages(groupCheckout);
+      messageBus.publish(messages);
     },
     onGuestCheckedOut: (event: GuestCheckedOut) => {
       if (!event.data.groupCheckoutId) return;
@@ -71,9 +73,11 @@ export const GroupCheckoutFacade = (options: {
 
       groupCheckout.onGuestCheckedOut(event);
 
+      const messages = dequeueMessages(groupCheckout);
+
       groupCheckouts.store(event.data.groupCheckoutId, groupCheckout);
 
-      publishMessages(groupCheckout);
+      messageBus.publish(messages);
     },
     onGuestCheckoutFailed: (event: GuestCheckoutFailed) => {
       if (!event.data.groupCheckoutId) return;
@@ -86,9 +90,11 @@ export const GroupCheckoutFacade = (options: {
 
       groupCheckout.onGuestCheckoutFailed(event);
 
+      const messages = dequeueMessages(groupCheckout);
+
       groupCheckouts.store(event.data.groupCheckoutId, groupCheckout);
 
-      publishMessages(groupCheckout);
+      messageBus.publish(messages);
     },
   };
 };

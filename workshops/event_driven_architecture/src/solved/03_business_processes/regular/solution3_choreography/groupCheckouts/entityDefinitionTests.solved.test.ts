@@ -8,11 +8,7 @@ import {
   type MessageCatcher,
 } from '../../../tools';
 import type { CheckoutGuest } from '../guestStayAccounts';
-import {
-  GroupCheckoutFacade,
-  type GroupCheckoutInitiated,
-  type InitiateGroupCheckout,
-} from '.';
+import { GroupCheckoutFacade, type InitiateGroupCheckout } from '.';
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Entity Definition Tests', () => {
@@ -61,9 +57,7 @@ describe('Group Checkout Entity Definition Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<
-      GroupCheckoutInitiated | CheckoutGuest
-    >([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {

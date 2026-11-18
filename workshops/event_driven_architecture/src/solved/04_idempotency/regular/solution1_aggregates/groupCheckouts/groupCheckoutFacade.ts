@@ -40,7 +40,10 @@ export const GroupCheckoutFacade = (options: {
 }) => {
   const { database, messageBus } = options;
 
-  const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
+  const groupCheckouts = database.collection<GroupCheckout>(
+    'groupCheckout',
+    GroupCheckout,
+  );
 
   return {
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {

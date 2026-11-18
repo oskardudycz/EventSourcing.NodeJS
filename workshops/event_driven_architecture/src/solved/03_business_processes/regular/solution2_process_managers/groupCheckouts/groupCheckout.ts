@@ -68,16 +68,15 @@ export class GroupCheckout extends ProcessManager<
   GroupCheckoutEvent
 > {
   private groupCheckoutId: string = undefined!;
-  private guestStayCheckouts: Map<string, CheckoutStatus> = new Map();
+  private guestStayCheckouts: Record<string, CheckoutStatus> = {};
   private status: CheckoutStatus = 'NotExisting';
 
-  private constructor() {
+  // Public constructor without parameters, used when loading from the database
+  constructor() {
     super();
   }
 
-  static initiate = ({
-    data: command,
-  }: InitiateGroupCheckout): GroupCheckout => {
+  static initiate({ data: command }: InitiateGroupCheckout): GroupCheckout {
     const { groupCheckoutId, clerkId, guestStayIds, now } = command;
     const groupCheckout = new GroupCheckout();
 
@@ -99,10 +98,11 @@ export class GroupCheckout extends ProcessManager<
     }
 
     return groupCheckout;
-  };
+  }
 
-  onGuestCheckedOut = ({ data: event }: GuestCheckedOut): void => {
+  onGuestCheckedOut({ data: event }: GuestCheckedOut): void {
     if (event.groupCheckoutId !== this.groupCheckoutId) return;
+    if (this.status !== 'Initiated') return;
 
     this.enqueue({
       type: 'GuestCheckoutCompletionRecorded',
@@ -112,13 +112,14 @@ export class GroupCheckout extends ProcessManager<
         checkedOutAt: event.checkedOutAt,
       },
     });
-    this.guestStayCheckouts.set(event.guestStayAccountId, 'Completed');
+    this.guestStayCheckouts[event.guestStayAccountId] = 'Completed';
 
     if (!this.areAnyOngoingCheckouts()) this.finish(event.checkedOutAt);
-  };
+  }
 
-  onGuestCheckoutFailed = ({ data: event }: GuestCheckoutFailed): void => {
+  onGuestCheckoutFailed({ data: event }: GuestCheckoutFailed): void {
     if (event.groupCheckoutId !== this.groupCheckoutId) return;
+    if (this.status !== 'Initiated') return;
 
     this.enqueue({
       type: 'GuestCheckoutFailureRecorded',
@@ -128,34 +129,37 @@ export class GroupCheckout extends ProcessManager<
         failedAt: event.failedAt,
       },
     });
-    this.guestStayCheckouts.set(event.guestStayAccountId, 'Failed');
+    this.guestStayCheckouts[event.guestStayAccountId] = 'Failed';
 
     if (!this.areAnyOngoingCheckouts()) this.finish(event.failedAt);
-  };
+  }
 
-  private areAnyOngoingCheckouts = () =>
-    [...this.guestStayCheckouts.values()].some(
+  private areAnyOngoingCheckouts(): boolean {
+    return Object.values(this.guestStayCheckouts).some(
       (status) => status === 'Initiated',
     );
+  }
 
-  private areAllCompleted = () =>
-    [...this.guestStayCheckouts.values()].every(
+  private areAllCompleted(): boolean {
+    return Object.values(this.guestStayCheckouts).every(
       (status) => status === 'Completed',
     );
+  }
 
-  private checkoutsWith = (status: CheckoutStatus): string[] =>
-    [...this.guestStayCheckouts]
+  private checkoutsWith(status: CheckoutStatus): string[] {
+    return Object.entries(this.guestStayCheckouts)
       .filter((s) => s[1] === status)
       .map((s) => s[0]);
+  }
 
-  private finish = (now: Date): void =>
+  private finish(now: Date): void {
     this.enqueue(
       this.areAllCompleted()
         ? {
             type: 'GroupCheckoutCompleted',
             data: {
               groupCheckoutId: this.groupCheckoutId,
-              completedCheckouts: Array.from(this.guestStayCheckouts.keys()),
+              completedCheckouts: Object.keys(this.guestStayCheckouts),
               completedAt: now,
             },
           }
@@ -169,17 +173,17 @@ export class GroupCheckout extends ProcessManager<
             },
           },
     );
+  }
 
-  evolve = ({ type, data: event }: GroupCheckoutEvent): void => {
+  evolve({ type, data: event }: GroupCheckoutEvent): void {
     switch (type) {
       case 'GroupCheckoutInitiated': {
         if (this.status !== 'NotExisting') return;
 
         this.groupCheckoutId = event.groupCheckoutId;
         this.status = 'Initiated';
-        this.guestStayCheckouts = event.guestStayAccountIds.reduce(
-          (map, id) => map.set(id, 'Initiated'),
-          new Map<string, CheckoutStatus>(),
+        this.guestStayCheckouts = Object.fromEntries(
+          event.guestStayAccountIds.map((id) => [id, 'Initiated' as const]),
         );
         return;
       }
@@ -187,10 +191,8 @@ export class GroupCheckout extends ProcessManager<
       case 'GuestCheckoutFailureRecorded': {
         if (this.status !== 'Initiated') return;
 
-        this.guestStayCheckouts.set(
-          event.guestStayAccountId,
-          type === 'GuestCheckoutCompletionRecorded' ? 'Completed' : 'Failed',
-        );
+        this.guestStayCheckouts[event.guestStayAccountId] =
+          type === 'GuestCheckoutCompletionRecorded' ? 'Completed' : 'Failed';
         return;
       }
       case 'GroupCheckoutCompleted': {
@@ -210,5 +212,5 @@ export class GroupCheckout extends ProcessManager<
         return;
       }
     }
-  };
+  }
 }

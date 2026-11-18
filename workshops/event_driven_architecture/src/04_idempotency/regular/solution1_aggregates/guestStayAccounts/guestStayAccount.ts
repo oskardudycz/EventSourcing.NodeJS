@@ -59,16 +59,17 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
   private status: GuestStayAccountStatus = 'NotExisting';
   private balance: number = 0;
 
-  private constructor() {
+  // Public constructor without parameters, used when loading from the database
+  constructor() {
     super();
   }
 
-  static checkInGuest = (data: {
+  static checkInGuest(data: {
     guestId: string;
     roomId: string;
     guestStayAccountId: string;
     now: Date;
-  }): GuestStayAccount => {
+  }): GuestStayAccount {
     const account = new GuestStayAccount();
 
     account.enqueue({
@@ -82,7 +83,7 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
     });
 
     return account;
-  };
+  }
 
   recordCharge(data: {
     chargeId: string;

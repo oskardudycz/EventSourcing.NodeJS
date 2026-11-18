@@ -34,7 +34,7 @@ export type CheckoutStatus = 'Initiated' | 'Completed' | 'Failed';
 
 export type GroupCheckout = {
   id: string;
-  guestStayCheckouts: Map<string, CheckoutStatus>;
+  guestStayCheckouts: Record<string, CheckoutStatus>;
   updatedAt: Date;
 };
 
@@ -44,8 +44,8 @@ export const initiated = (
   initiatedAt: Date,
 ): GroupCheckout => ({
   id,
-  guestStayCheckouts: new Map(
-    guestStayIds.map((guestStayId) => [guestStayId, 'Initiated']),
+  guestStayCheckouts: Object.fromEntries(
+    guestStayIds.map((guestStayId) => [guestStayId, 'Initiated' as const]),
   ),
   updatedAt: initiatedAt,
 });
@@ -57,23 +57,23 @@ export const withCheckout = (
   at: Date,
 ): GroupCheckout => ({
   ...groupCheckout,
-  guestStayCheckouts: new Map(groupCheckout.guestStayCheckouts).set(
-    guestStayId,
-    status,
-  ),
+  guestStayCheckouts: {
+    ...groupCheckout.guestStayCheckouts,
+    [guestStayId]: status,
+  },
   updatedAt: at,
 });
 
 export const areAnyOngoingCheckouts = ({ guestStayCheckouts }: GroupCheckout) =>
-  [...guestStayCheckouts.values()].some((status) => status === 'Initiated');
+  Object.values(guestStayCheckouts).some((status) => status === 'Initiated');
 
 export const areAnyFailedCheckouts = ({ guestStayCheckouts }: GroupCheckout) =>
-  [...guestStayCheckouts.values()].some((status) => status === 'Failed');
+  Object.values(guestStayCheckouts).some((status) => status === 'Failed');
 
 export const checkoutsWith = (
   { guestStayCheckouts }: GroupCheckout,
   status: CheckoutStatus,
 ): string[] =>
-  [...guestStayCheckouts]
+  Object.entries(guestStayCheckouts)
     .filter(([, guestStayStatus]) => guestStayStatus === status)
     .map(([guestStayId]) => guestStayId);

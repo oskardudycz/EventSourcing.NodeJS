@@ -13,12 +13,6 @@ import {
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Idempotency Tests', () => {
-  let now: Date;
-
-  beforeEach(() => {
-    now = new Date();
-  });
-
   it('group checkout completes once when the bus delivers every message twice', () => {
     const database = getDatabase();
     const messageBus = getMessageBus({ deliverTwice: true });
@@ -110,5 +104,11 @@ describe('Idempotency Tests', () => {
       checkoutGuest(first),
       checkoutGuest(second),
     ]);
+  });
+
+  let now: Date;
+
+  beforeEach(() => {
+    now = new Date();
   });
 });

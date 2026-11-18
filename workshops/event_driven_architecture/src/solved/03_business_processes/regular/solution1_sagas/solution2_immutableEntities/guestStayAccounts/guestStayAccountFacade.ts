@@ -8,7 +8,7 @@ import {
   type RecordCharge,
   type RecordPayment,
 } from '.';
-import type { Database, MessageBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../../tools';
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
@@ -53,7 +53,11 @@ export const GuestStayAccountFacade = (options: {
       messageBus.publish(events);
     },
     checkoutGuest: (command: CheckoutGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+      const account = accounts.get(command.data.guestStayAccountId);
+
+      if (!account) {
+        return;
+      }
 
       const events = decide(command, account);
 

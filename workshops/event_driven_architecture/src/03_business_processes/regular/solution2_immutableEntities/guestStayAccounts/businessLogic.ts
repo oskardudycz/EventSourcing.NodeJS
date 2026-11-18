@@ -49,13 +49,9 @@ export type CheckoutGuest = {
 export type GuestStayAccountCommand =
   CheckInGuest | RecordCharge | RecordPayment | CheckoutGuest;
 
-export const checkInGuest = (
-  { data: command }: CheckInGuest,
-  state: GuestStayAccount,
-): GuestCheckedIn => {
-  if (state.status !== 'NotExisting')
-    throw Error('Guest is already checked-in!');
-
+export const checkInGuest = ({
+  data: command,
+}: CheckInGuest): GuestCheckedIn => {
   return {
     type: 'GuestCheckedIn',
     data: {
@@ -148,7 +144,7 @@ export const decide = (
   const { type } = command;
   switch (type) {
     case 'CheckInGuest':
-      return [checkInGuest(command, state)];
+      return [checkInGuest(command)];
     case 'RecordCharge':
       return [recordCharge(command, state)];
     case 'RecordPayment':

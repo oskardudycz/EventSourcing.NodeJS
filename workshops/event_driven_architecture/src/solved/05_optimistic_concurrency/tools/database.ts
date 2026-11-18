@@ -1,16 +1,5 @@
+import { JSONSerializer } from '@event-driven-io/emmett';
 import { ConcurrencyError } from './concurrencyError';
-
-// structuredClone drops the class, so the prototype is restored to keep aggregate methods
-const clone = <T>(document: T): T => {
-  const copy = structuredClone(document);
-
-  if (typeof document !== 'object' || document === null) return copy;
-
-  return Object.setPrototypeOf(
-    copy,
-    Object.getPrototypeOf(document) as object | null,
-  ) as T;
-};
 
 export type Versioned<T> = { document: T; version: number };
 
@@ -25,15 +14,28 @@ export interface DocumentsCollection<T> {
 }
 
 export interface Database {
-  collection: <T>(name: string) => DocumentsCollection<T>;
+  collection: <T extends object>(
+    name: string,
+    type?: new () => T,
+  ) => DocumentsCollection<T>;
 }
 
 export const getDatabase = (): Database => {
-  const storage = new Map<string, Versioned<unknown>>();
+  const storage = new Map<string, Versioned<string>>();
 
   return {
-    collection: <T>(name: string): DocumentsCollection<T> => {
+    collection: <T extends object>(
+      name: string,
+      type?: new () => T,
+    ): DocumentsCollection<T> => {
       const toFullId = (id: string) => `${name}-${id}`;
+      const load = (json: string): T => {
+        const data = JSONSerializer.deserialize<T>(json, {
+          parseDates: true,
+        });
+
+        return type ? Object.assign(new type(), data) : data;
+      };
 
       return {
         store: (
@@ -55,7 +57,7 @@ export const getDatabase = (): Database => {
             );
 
           storage.set(toFullId(id), {
-            document: clone(document),
+            document: JSONSerializer.serialize(document),
             version: currentVersion + 1,
           });
 
@@ -72,8 +74,7 @@ export const getDatabase = (): Database => {
           return Promise.resolve(
             result
               ? {
-                  // Clone to simulate getting new instance on loading
-                  document: clone(result.document) as T,
+                  document: load(result.document),
                   version: result.version,
                 }
               : null,
