@@ -1,4 +1,5 @@
 import type { Database, Message, MessageBus } from '../../../tools';
+import { GroupCheckout } from './groupCheckout';
 
 export type InitiateGroupCheckout = {
   type: 'InitiateGroupCheckout';
@@ -39,7 +40,10 @@ export const GroupCheckoutFacade = (options: {
 }) => {
   const { database, messageBus } = options;
 
-  const groupCheckouts = database.collection('groupCheckout');
+  const groupCheckouts = database.collection<GroupCheckout>(
+    'groupCheckout',
+    GroupCheckout,
+  );
 
   return {
     initiateGroupCheckout: (_command: InitiateGroupCheckout) => {
@@ -51,7 +55,7 @@ export const GroupCheckoutFacade = (options: {
       const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
 
       if (!groupCheckout) {
-        throw new Error('Entity not found');
+        return;
       }
 
       // TODO: do something with grup checkout and produce messages
@@ -68,7 +72,7 @@ export const GroupCheckoutFacade = (options: {
       const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
 
       if (!groupCheckout) {
-        throw new Error('Entity not found');
+        return;
       }
 
       // TODO: do something with grup checkout and produce messages

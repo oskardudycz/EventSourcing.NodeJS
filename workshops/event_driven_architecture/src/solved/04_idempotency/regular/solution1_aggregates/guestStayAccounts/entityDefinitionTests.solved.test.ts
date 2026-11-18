@@ -18,21 +18,6 @@ import {
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Guest Stay Account Entity Definition Tests', () => {
-  let database: Database;
-  let messageBus: MessageBus;
-  let publishedMessages: MessageCatcher;
-  let guestStayFacade: GuestStayAccountFacade;
-  let now: Date;
-
-  beforeEach(() => {
-    database = getDatabase();
-    messageBus = getMessageBus();
-    publishedMessages = getMessageCatcher();
-    guestStayFacade = GuestStayAccountFacade({ database, messageBus });
-    now = new Date();
-    messageBus.use(publishedMessages.catchMessage);
-  });
-
   it('checking in guest succeeds', () => {
     const guestStayAccountId = uuid();
     const command: CheckInGuest = {
@@ -322,5 +307,20 @@ describe('Guest Stay Account Entity Definition Tests', () => {
         groupCheckoutId: undefined,
       },
     });
+  });
+
+  let database: Database;
+  let messageBus: MessageBus;
+  let publishedMessages: MessageCatcher;
+  let guestStayFacade: GuestStayAccountFacade;
+  let now: Date;
+
+  beforeEach(() => {
+    database = getDatabase();
+    messageBus = getMessageBus();
+    publishedMessages = getMessageCatcher();
+    guestStayFacade = GuestStayAccountFacade({ database, messageBus });
+    now = new Date();
+    messageBus.use(publishedMessages.catchMessage);
   });
 });

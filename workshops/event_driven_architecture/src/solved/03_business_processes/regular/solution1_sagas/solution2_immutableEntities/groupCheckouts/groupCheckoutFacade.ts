@@ -1,4 +1,4 @@
-import type { Database, MessageBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../../tools';
 import {
   initiateGroupCheckout,
   recordGuestCheckout,
@@ -21,7 +21,7 @@ export const GroupCheckoutFacade = (options: {
       const groupCheckout =
         groupCheckouts.get(command.data.groupCheckoutId) ?? initial;
 
-      const event = initiateGroupCheckout(command, groupCheckout);
+      const event = initiateGroupCheckout(command);
 
       groupCheckouts.store(
         command.data.groupCheckoutId,

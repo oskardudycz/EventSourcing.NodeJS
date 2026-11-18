@@ -7,7 +7,6 @@ import {
 } from '../../../tools';
 import {
   GroupCheckoutFacade,
-  type GroupCheckoutEvent,
   type InitiateGroupCheckout,
   type RecordGuestCheckoutCompletion,
   type RecordGuestCheckoutFailure,
@@ -15,23 +14,6 @@ import {
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Idempotency Tests', () => {
-  let publishedMessages: MessageCatcher;
-  let groupCheckoutFacade: GroupCheckoutFacade;
-  let now: Date;
-
-  beforeEach(() => {
-    const database = getDatabase();
-    const messageBus = getMessageBus();
-    publishedMessages = getMessageCatcher();
-    groupCheckoutFacade = GroupCheckoutFacade({
-      database,
-      messageBus,
-    });
-    now = new Date();
-
-    messageBus.use(publishedMessages.catchMessage);
-  });
-
   it('group checkout is initiated once for the same id', () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
@@ -142,7 +124,7 @@ describe('Group Checkout Idempotency Tests', () => {
 
     groupCheckoutFacade.recordGuestCheckoutCompletion(command);
 
-    publishedMessages.shouldReceiveMessages<GroupCheckoutEvent>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
@@ -160,5 +142,22 @@ describe('Group Checkout Idempotency Tests', () => {
         },
       },
     ]);
+  });
+
+  let publishedMessages: MessageCatcher;
+  let groupCheckoutFacade: GroupCheckoutFacade;
+  let now: Date;
+
+  beforeEach(() => {
+    const database = getDatabase();
+    const messageBus = getMessageBus();
+    publishedMessages = getMessageCatcher();
+    groupCheckoutFacade = GroupCheckoutFacade({
+      database,
+      messageBus,
+    });
+    now = new Date();
+
+    messageBus.use(publishedMessages.catchMessage);
   });
 });

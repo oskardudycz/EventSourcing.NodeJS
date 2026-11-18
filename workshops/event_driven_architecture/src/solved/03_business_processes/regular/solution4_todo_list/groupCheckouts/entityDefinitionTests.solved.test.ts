@@ -13,14 +13,10 @@ import type {
 } from '../guestStayAccounts';
 import {
   configureGroupCheckouts,
-  type GroupCheckoutEvent,
   type GroupCheckoutFacade,
   type InitiateGroupCheckout,
 } from '.';
 import { beforeEach, describe, it } from 'vitest';
-
-type ExpectedTypes =
-  GroupCheckoutEvent | CheckoutGuest | GuestCheckedOut | GuestCheckoutFailed;
 
 describe('Group Checkout Entity Definition Tests', () => {
   let messageBus: MessageBus;
@@ -67,7 +63,7 @@ describe('Group Checkout Entity Definition Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -98,7 +94,7 @@ describe('Group Checkout Entity Definition Tests', () => {
 
     messageBus.publish([event]);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([event]);
+    publishedMessages.shouldReceiveMessages([event]);
   });
 
   it('recording guest checkout failure succeeds', () => {
@@ -120,7 +116,7 @@ describe('Group Checkout Entity Definition Tests', () => {
 
     messageBus.publish([event]);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([event]);
+    publishedMessages.shouldReceiveMessages([event]);
   });
 
   it('recording last guest checkout completion completes group checkout', () => {
@@ -152,7 +148,7 @@ describe('Group Checkout Entity Definition Tests', () => {
 
     messageBus.publish([event]);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       event,
       {
         type: 'GroupCheckoutCompleted',
@@ -195,7 +191,7 @@ describe('Group Checkout Entity Definition Tests', () => {
 
     messageBus.publish([event]);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       event,
       {
         type: 'GroupCheckoutFailed',

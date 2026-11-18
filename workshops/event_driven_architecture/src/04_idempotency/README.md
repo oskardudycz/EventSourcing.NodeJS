@@ -36,4 +36,17 @@ Message brokers usually guarantee at-least-once delivery, and clients retry requ
   - recording the same guest checkout completion twice,
   - recording the same guest checkout failure twice,
 - The whole process should give the same result when [the message bus](./tools/messageBus.ts) delivers every message twice,
-- Use idempotency tests (aggregates: [group checkouts](./regular/solution1_aggregates/groupCheckouts/idempotency.exercise.test.ts), [guest stay accounts](./regular/solution1_aggregates/guestStayAccounts/idempotency.exercise.test.ts), [message bus](./regular/solution1_aggregates/idempotency.exercise.test.ts); immutable entities: [group checkouts](./regular/solution2_immutableEntities/groupCheckouts/idempotency.exercise.test.ts), [guest stay accounts](./regular/solution2_immutableEntities/guestStayAccounts/idempotency.exercise.test.ts), [message bus](./regular/solution2_immutableEntities/idempotency.exercise.test.ts)) to guide you and verify if you implemented it correctly. Business process and entity definition tests should stay green.
+- Use the idempotency tests to guide you and verify if you implemented it correctly. Business process and entity definition tests should stay green.
+
+## Tests
+
+The business process tests and the test where the message bus delivers every message twice are in the variant folder. The entity definition and idempotency tests of each module sit next to the module's code.
+
+- Aggregates:
+  - [Business process](./regular/solution1_aggregates/businessProcess.exercise.test.ts) and [message bus delivers every message twice](./regular/solution1_aggregates/idempotency.exercise.test.ts),
+  - group checkouts: [entity definition](./regular/solution1_aggregates/groupCheckouts/entityDefinitionTests.exercise.test.ts) and [idempotency](./regular/solution1_aggregates/groupCheckouts/idempotency.exercise.test.ts),
+  - guest stay accounts: [entity definition](./regular/solution1_aggregates/guestStayAccounts/entityDefinitionTests.exercise.test.ts) and [idempotency](./regular/solution1_aggregates/guestStayAccounts/idempotency.exercise.test.ts).
+- Immutable Entities:
+  - [Business process](./regular/solution2_immutableEntities/businessProcess.exercise.test.ts) and [message bus delivers every message twice](./regular/solution2_immutableEntities/idempotency.exercise.test.ts),
+  - group checkouts: [entity definition](./regular/solution2_immutableEntities/groupCheckouts/entityDefinitionTests.exercise.test.ts) and [idempotency](./regular/solution2_immutableEntities/groupCheckouts/idempotency.exercise.test.ts),
+  - guest stay accounts: [entity definition](./regular/solution2_immutableEntities/guestStayAccounts/entityDefinitionTests.exercise.test.ts) and [idempotency](./regular/solution2_immutableEntities/guestStayAccounts/idempotency.exercise.test.ts).

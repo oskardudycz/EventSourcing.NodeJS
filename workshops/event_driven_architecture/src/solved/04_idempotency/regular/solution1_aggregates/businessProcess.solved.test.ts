@@ -11,50 +11,13 @@ import {
 import type { GroupCheckoutFacade } from './groupCheckouts';
 import {
   configureGroupCheckouts,
-  type GroupCheckoutCommand,
-  type GroupCheckoutEvent,
   type InitiateGroupCheckout,
 } from './groupCheckouts';
 import type { GuestStayAccountFacade } from './guestStayAccounts';
-import {
-  configureGuestStayAccounts,
-  type GuestStayAccountCommand,
-  type GuestStayAccountEvent,
-} from './guestStayAccounts';
+import { configureGuestStayAccounts } from './guestStayAccounts';
 import { beforeEach, describe, it } from 'vitest';
 
-type ExpectedTypes =
-  | GroupCheckoutEvent
-  | GuestStayAccountEvent
-  | GroupCheckoutCommand
-  | GuestStayAccountCommand;
-
 describe('Business Process Tests', () => {
-  let database: Database;
-  let messageBus: MessageBus;
-  let publishedMessages: MessageCatcher;
-  let guestStayFacade: GuestStayAccountFacade;
-  let groupCheckoutFacade: GroupCheckoutFacade;
-  let now: Date;
-
-  beforeEach(() => {
-    database = getDatabase();
-    messageBus = getMessageBus();
-    publishedMessages = getMessageCatcher();
-    now = new Date();
-
-    messageBus.use(publishedMessages.catchMessage);
-
-    groupCheckoutFacade = configureGroupCheckouts({
-      messageBus,
-      database,
-    }).groupCheckoutFacade;
-    guestStayFacade = configureGuestStayAccounts({
-      messageBus,
-      database,
-    }).guestStayAccountFacade;
-  });
-
   it('group checkout for multiple guest stay without payments and charges should complete', () => {
     const guestStays = [
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
@@ -90,7 +53,7 @@ describe('Business Process Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -329,7 +292,7 @@ describe('Business Process Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -552,7 +515,7 @@ describe('Business Process Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -769,7 +732,7 @@ describe('Business Process Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -892,5 +855,30 @@ describe('Business Process Tests', () => {
         },
       },
     ]);
+  });
+
+  let database: Database;
+  let messageBus: MessageBus;
+  let publishedMessages: MessageCatcher;
+  let guestStayFacade: GuestStayAccountFacade;
+  let groupCheckoutFacade: GroupCheckoutFacade;
+  let now: Date;
+
+  beforeEach(() => {
+    database = getDatabase();
+    messageBus = getMessageBus();
+    publishedMessages = getMessageCatcher();
+    now = new Date();
+
+    messageBus.use(publishedMessages.catchMessage);
+
+    groupCheckoutFacade = configureGroupCheckouts({
+      messageBus,
+      database,
+    }).groupCheckoutFacade;
+    guestStayFacade = configureGuestStayAccounts({
+      messageBus,
+      database,
+    }).guestStayAccountFacade;
   });
 });

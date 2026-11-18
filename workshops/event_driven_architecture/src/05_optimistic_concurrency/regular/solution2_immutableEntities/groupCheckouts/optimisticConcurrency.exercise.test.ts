@@ -85,7 +85,7 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
       ),
     );
 
-    publishedMessages.shouldReceiveMessagesInAnyOrder<GroupCheckoutEvent>([
+    publishedMessages.shouldReceiveMessagesInAnyOrder([
       ...guestStayIds.map<GroupCheckoutEvent>((guestStayAccountId) => ({
         type: 'GuestCheckoutCompletionRecorded',
         data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
@@ -119,7 +119,7 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
       ),
     ]);
 
-    publishedMessages.shouldReceiveMessagesInAnyOrder<GroupCheckoutEvent>([
+    publishedMessages.shouldReceiveMessagesInAnyOrder([
       {
         type: 'GuestCheckoutFailureRecorded',
         data: {

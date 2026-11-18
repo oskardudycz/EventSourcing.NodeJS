@@ -26,15 +26,19 @@ export const configureGroupCheckouts = ({
     messageBus,
   });
 
+  const groupCheckoutSaga = GroupCheckoutSaga({ messageBus });
+
   messageBus.subscribe<GroupCheckoutInitiated>(
     'GroupCheckoutInitiated',
-    (event) => messageBus.publish(GroupCheckoutSaga(event)),
+    groupCheckoutSaga.onGroupCheckoutInitiated,
   );
-  messageBus.subscribe<GuestCheckedOut>('GuestCheckedOut', (event) =>
-    messageBus.publish(GroupCheckoutSaga(event)),
+  messageBus.subscribe<GuestCheckedOut>(
+    'GuestCheckedOut',
+    groupCheckoutSaga.onGuestCheckedOut,
   );
-  messageBus.subscribe<GuestCheckoutFailed>('GuestCheckoutFailed', (event) =>
-    messageBus.publish(GroupCheckoutSaga(event)),
+  messageBus.subscribe<GuestCheckoutFailed>(
+    'GuestCheckoutFailed',
+    groupCheckoutSaga.onGuestCheckoutFailed,
   );
 
   messageBus.subscribe<RecordGuestCheckoutCompletion>(

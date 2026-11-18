@@ -11,23 +11,14 @@ import {
 import type { GroupCheckoutFacade } from './groupCheckouts';
 import {
   configureGroupCheckouts,
-  type GroupCheckoutCommand,
-  type GroupCheckoutEvent,
   type InitiateGroupCheckout,
 } from './groupCheckouts';
 import type { GuestStayAccountFacade } from './guestStayAccounts';
 import {
   configureGuestStayAccounts,
-  type GuestStayAccountCommand,
   type GuestStayAccountEvent,
 } from './guestStayAccounts';
-import { beforeEach, describe, expect, it } from 'vitest';
-
-type ExpectedTypes =
-  | GroupCheckoutEvent
-  | GuestStayAccountEvent
-  | GroupCheckoutCommand
-  | GuestStayAccountCommand;
+import { beforeEach, describe, it } from 'vitest';
 
 describe('Business Process Tests', () => {
   let database: Database;
@@ -90,7 +81,7 @@ describe('Business Process Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -281,7 +272,7 @@ describe('Business Process Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -456,7 +447,7 @@ describe('Business Process Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -625,7 +616,7 @@ describe('Business Process Tests', () => {
 
     groupCheckoutFacade.initiateGroupCheckout(command);
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -702,7 +693,7 @@ describe('Business Process Tests', () => {
     ]);
   });
 
-  it('guest checkout for group checkout not on the to-do list fails', () => {
+  it('guest checkout for group checkout not on the to-do list is ignored', () => {
     const guestCheckedOut: GuestStayAccountEvent = {
       type: 'GuestCheckedOut',
       data: {
@@ -712,8 +703,8 @@ describe('Business Process Tests', () => {
       },
     };
 
-    expect(() => messageBus.publish([guestCheckedOut])).toThrow(
-      'Entity not found',
-    );
+    messageBus.publish([guestCheckedOut]);
+
+    publishedMessages.shouldReceiveMessages([guestCheckedOut]);
   });
 });

@@ -26,5 +26,6 @@ We still need to support regular checkouts, payments, charges etc. as we do righ
 - Choose one starting point: [regular](./regular) or [Emmett](./emmett),
 - Define the entity in [guestStayAccount.ts](./regular/guestStayAccounts/guestStayAccount.ts),
 - Fill application logic in [guestStayFacade.ts](./regular/guestStayFacade.ts), using the [in-memory database](./tools/database.ts) and [in-memory message bus](./tools/messageBus.ts) to store changes and publish events as the outcome of business logic,
+- If your guest stay account is a class, pass it to the database collection: `database.collection('guestStayAccount', GuestStayAccount)`. It needs a public constructor without parameters,
 - You can use any preferred style of implementing business logic,
 - Use [entityDefinitionTests.exercise.test.ts](./regular/entityDefinitionTests.exercise.test.ts) to guide you and verify if you implemented it correctly.

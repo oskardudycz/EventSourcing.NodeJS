@@ -40,13 +40,9 @@ export type GroupCheckoutCommand =
   | RecordGuestCheckoutCompletion
   | RecordGuestCheckoutFailure;
 
-export const initiateGroupCheckout = (
-  { data: command }: InitiateGroupCheckout,
-  state: GroupCheckout,
-): GroupCheckoutInitiated => {
-  if (state.status !== 'NotExisting')
-    throw new Error('Group checkout already initiated!');
-
+export const initiateGroupCheckout = ({
+  data: command,
+}: InitiateGroupCheckout): GroupCheckoutInitiated => {
   const { groupCheckoutId, clerkId, guestStayIds, now } = command;
 
   return {
@@ -88,13 +84,11 @@ export const recordGuestCheckout = (
           },
         };
 
-  const guestStayCheckouts = new Map<string, CheckoutStatus>([
+  const guestStayCheckouts: Record<string, CheckoutStatus> = {
     ...state.guestStayCheckouts,
-    [
-      command.guestStayAccountId,
+    [command.guestStayAccountId]:
       type === 'RecordGuestCheckoutCompletion' ? 'Completed' : 'Failed',
-    ],
-  ]);
+  };
 
   return areAnyOngoingCheckouts(guestStayCheckouts)
     ? [guestCheckoutCompletionRecorded]
@@ -106,7 +100,7 @@ export const recordGuestCheckout = (
 
 const finish = (
   groupCheckoutId: string,
-  guestStayAccounts: Map<string, CheckoutStatus>,
+  guestStayAccounts: Record<string, CheckoutStatus>,
   now: Date,
 ): GroupCheckoutCompleted | GroupCheckoutFailed => {
   return areAllCompleted(guestStayAccounts)
@@ -114,7 +108,7 @@ const finish = (
         type: 'GroupCheckoutCompleted',
         data: {
           groupCheckoutId,
-          completedCheckouts: Array.from(guestStayAccounts.keys()),
+          completedCheckouts: Object.keys(guestStayAccounts),
           completedAt: now,
         },
       }
@@ -130,14 +124,16 @@ const finish = (
 };
 
 const areAnyOngoingCheckouts = (
-  guestStayCheckouts: Map<string, CheckoutStatus>,
-) => [...guestStayCheckouts.values()].some((status) => status === 'Initiated');
+  guestStayCheckouts: Record<string, CheckoutStatus>,
+) => Object.values(guestStayCheckouts).some((status) => status === 'Initiated');
 
-const areAllCompleted = (guestStayCheckouts: Map<string, CheckoutStatus>) =>
-  [...guestStayCheckouts.values()].every((status) => status === 'Completed');
+const areAllCompleted = (guestStayCheckouts: Record<string, CheckoutStatus>) =>
+  Object.values(guestStayCheckouts).every((status) => status === 'Completed');
 
 const checkoutsWith = (
-  guestStayCheckouts: Map<string, CheckoutStatus>,
+  guestStayCheckouts: Record<string, CheckoutStatus>,
   status: CheckoutStatus,
 ): string[] =>
-  [...guestStayCheckouts].filter((s) => s[1] === status).map((s) => s[0]);
+  Object.entries(guestStayCheckouts)
+    .filter((s) => s[1] === status)
+    .map((s) => s[0]);

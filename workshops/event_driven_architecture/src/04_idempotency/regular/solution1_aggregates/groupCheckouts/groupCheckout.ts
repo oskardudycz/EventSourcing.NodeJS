@@ -62,18 +62,19 @@ export type GroupCheckoutStatus = 'NotExisting' | 'Initiated' | 'Finished';
 export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
   private groupCheckoutId: string = undefined!;
   private status: GroupCheckoutStatus = 'NotExisting';
-  private guestStayCheckouts: Map<string, CheckoutStatus> = new Map();
+  private guestStayCheckouts: Record<string, CheckoutStatus> = {};
 
-  private constructor() {
+  // Public constructor without parameters, used when loading from the database
+  constructor() {
     super();
   }
 
-  static initiate = (data: {
+  static initiate(data: {
     groupCheckoutId: string;
     clerkId: string;
     guestStayIds: string[];
     now: Date;
-  }): GroupCheckout => {
+  }): GroupCheckout {
     const groupCheckout = new GroupCheckout();
 
     groupCheckout.enqueue({
@@ -87,7 +88,7 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
     });
 
     return groupCheckout;
-  };
+  }
 
   recordGuestCheckoutCompletion(data: {
     guestStayAccountId: string;
@@ -128,7 +129,7 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
             type: 'GroupCheckoutCompleted',
             data: {
               groupCheckoutId: this.groupCheckoutId,
-              completedCheckouts: Array.from(this.guestStayCheckouts.keys()),
+              completedCheckouts: Object.keys(this.guestStayCheckouts),
               completedAt: now,
             },
           }
@@ -145,19 +146,19 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
   }
 
   private areAnyOngoingCheckouts(): boolean {
-    return [...this.guestStayCheckouts.values()].some(
+    return Object.values(this.guestStayCheckouts).some(
       (status) => status === 'Initiated',
     );
   }
 
   private areAllCompleted(): boolean {
-    return [...this.guestStayCheckouts.values()].every(
+    return Object.values(this.guestStayCheckouts).every(
       (status) => status === 'Completed',
     );
   }
 
   private checkoutsWith(status: CheckoutStatus): string[] {
-    return [...this.guestStayCheckouts]
+    return Object.entries(this.guestStayCheckouts)
       .filter((s) => s[1] === status)
       .map((s) => s[0]);
   }
@@ -169,9 +170,8 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
 
         this.groupCheckoutId = event.groupCheckoutId;
         this.status = 'Initiated';
-        this.guestStayCheckouts = event.guestStayAccountIds.reduce(
-          (map, id) => map.set(id, 'Initiated'),
-          new Map<string, CheckoutStatus>(),
+        this.guestStayCheckouts = Object.fromEntries(
+          event.guestStayAccountIds.map((id) => [id, 'Initiated' as const]),
         );
         return;
       }
@@ -179,10 +179,8 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
       case 'GuestCheckoutFailureRecorded': {
         if (this.status !== 'Initiated') return;
 
-        this.guestStayCheckouts.set(
-          event.guestStayAccountId,
-          type === 'GuestCheckoutCompletionRecorded' ? 'Completed' : 'Failed',
-        );
+        this.guestStayCheckouts[event.guestStayAccountId] =
+          type === 'GuestCheckoutCompletionRecorded' ? 'Completed' : 'Failed';
         return;
       }
       case 'GroupCheckoutCompleted':

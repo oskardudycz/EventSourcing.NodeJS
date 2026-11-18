@@ -1,17 +1,6 @@
+import { JSONSerializer } from '@event-driven-io/emmett';
 import { ConcurrencyError } from './concurrencyError';
 import { getTransientFailures } from './transientFailures';
-
-// structuredClone drops the class, so the prototype is restored to keep aggregate methods
-const clone = <T>(document: T): T => {
-  const copy = structuredClone(document);
-
-  if (typeof document !== 'object' || document === null) return copy;
-
-  return Object.setPrototypeOf(
-    copy,
-    Object.getPrototypeOf(document) as object | null,
-  ) as T;
-};
 
 export type Versioned<T> = { document: T; version: number };
 
@@ -30,7 +19,10 @@ export interface DocumentsCollection<T> {
 }
 
 export interface Database {
-  collection: <T>(name: string) => DocumentsCollection<T>;
+  collection: <T extends object>(
+    name: string,
+    type?: new () => T,
+  ) => DocumentsCollection<T>;
   transaction: <Result>(
     operations: (transaction: Database) => Promise<Result>,
   ) => Promise<Result>;
@@ -41,7 +33,7 @@ type Storage = {
   lastPosition: number;
 };
 
-type StoredDocument = Stored<unknown> & { collection: string };
+type StoredDocument = Stored<string> & { collection: string };
 
 type Write =
   | {
@@ -68,7 +60,7 @@ export const getDatabase = (): Database => {
         storage.documents.set(key, {
           collection: write.collection,
           id: write.id,
-          document: clone(write.document),
+          document: JSONSerializer.serialize(write.document),
           version: (storage.documents.get(key)?.version ?? 0) + 1,
           position: ++storage.lastPosition,
         });
@@ -77,21 +69,37 @@ export const getDatabase = (): Database => {
   };
 
   const database: Database = {
-    collection: <T>(name: string): DocumentsCollection<T> =>
-      collection<T>(name, storage, (key, write) => {
-        failures.failIfUnavailable();
-        commit(new Map([[key, write]]));
-      }),
+    collection: <T extends object>(
+      name: string,
+      type?: new () => T,
+    ): DocumentsCollection<T> =>
+      collection<T>(
+        name,
+        storage,
+        (key, write) => {
+          failures.failIfUnavailable();
+          commit(new Map([[key, write]]));
+        },
+        type,
+      ),
     transaction: async <Result>(
       operations: (transaction: Database) => Promise<Result>,
     ): Promise<Result> => {
       const writes = new Map<string, Write>();
 
       const transaction: Database = {
-        collection: <T>(name: string): DocumentsCollection<T> =>
-          collection<T>(name, storage, (key, write) => {
-            writes.set(key, write);
-          }),
+        collection: <T extends object>(
+          name: string,
+          type?: new () => T,
+        ): DocumentsCollection<T> =>
+          collection<T>(
+            name,
+            storage,
+            (key, write) => {
+              writes.set(key, write);
+            },
+            type,
+          ),
         transaction: (nested) => nested(transaction),
       };
 
@@ -108,12 +116,20 @@ export const getDatabase = (): Database => {
   return database;
 };
 
-const collection = <T>(
+const collection = <T extends object>(
   name: string,
   storage: Storage,
   write: (key: string, write: Write) => void,
+  type?: new () => T,
 ): DocumentsCollection<T> => {
   const toFullId = (id: string) => `${name}-${id}`;
+  const load = (json: string): T => {
+    const data = JSONSerializer.deserialize<T>(json, {
+      parseDates: true,
+    });
+
+    return type ? Object.assign(new type(), data) : data;
+  };
 
   return {
     store: (
@@ -152,8 +168,7 @@ const collection = <T>(
       return Promise.resolve(
         result
           ? {
-              // Clone to simulate getting new instance on loading
-              document: clone(result.document) as T,
+              document: load(result.document),
               version: result.version,
             }
           : null,
@@ -166,7 +181,7 @@ const collection = <T>(
           .sort((a, b) => a.position - b.position)
           .map(({ id, document, version, position }) => ({
             id,
-            document: clone(document) as T,
+            document: load(document),
             version,
             position,
           })),

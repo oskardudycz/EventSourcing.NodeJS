@@ -1,3 +1,5 @@
+import { JSONSerializer } from '@event-driven-io/emmett';
+
 export interface DocumentsCollection<T> {
   store: (id: string, obj: T) => void;
   delete: (id: string) => void;
@@ -6,40 +8,45 @@ export interface DocumentsCollection<T> {
 }
 
 export interface Database {
-  collection: <T>(name: string) => DocumentsCollection<T>;
+  collection: <T extends object>(
+    name: string,
+    type?: new () => T,
+  ) => DocumentsCollection<T>;
 }
 
 export const getDatabase = (): Database => {
-  const storage = new Map<string, unknown>();
+  const storage = new Map<string, string>();
 
   return {
-    collection: <T>(name: string): DocumentsCollection<T> => {
+    collection: <T extends object>(
+      name: string,
+      type?: new () => T,
+    ): DocumentsCollection<T> => {
       const toFullId = (id: string) => `${name}-${id}`;
-      const clone = (result: unknown): T =>
-        // Clone to simulate getting new instance on loading
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        Object.assign(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          Object.create(Object.getPrototypeOf(result)),
-          result,
-        );
+      const load = (json: string): T => {
+        const data = JSONSerializer.deserialize<T>(json, {
+          parseDates: true,
+        });
+
+        return type ? Object.assign(new type(), data) : data;
+      };
 
       return {
         store: (id: string, obj: T): void => {
-          storage.set(toFullId(id), obj);
+          storage.set(toFullId(id), JSONSerializer.serialize(obj));
         },
         delete: (id: string): void => {
           storage.delete(toFullId(id));
         },
         get: (id: string): T | null => {
-          const result = storage.get(toFullId(id));
+          const json = storage.get(toFullId(id));
 
-          return result ? clone(result) : null;
+          return json !== undefined ? load(json) : null;
         },
         findAll: (): T[] =>
           [...storage.entries()]
             .filter(([fullId]) => fullId.startsWith(`${name}-`))
-            .map(([, result]) => clone(result)),
+            .map(([, json]) => load(json)),
       };
     },
   };

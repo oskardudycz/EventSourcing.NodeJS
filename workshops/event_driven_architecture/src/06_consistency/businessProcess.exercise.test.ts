@@ -14,23 +14,11 @@ import {
 import type { GroupCheckoutFacade } from './groupCheckouts';
 import {
   configureGroupCheckouts,
-  type GroupCheckoutCommand,
-  type GroupCheckoutEvent,
   type InitiateGroupCheckout,
 } from './groupCheckouts';
 import type { GuestStayAccountFacade } from './guestStayAccounts';
-import {
-  configureGuestStayAccounts,
-  type GuestStayAccountCommand,
-  type GuestStayAccountEvent,
-} from './guestStayAccounts';
+import { configureGuestStayAccounts } from './guestStayAccounts';
 import { beforeEach, describe, it } from 'vitest';
-
-type ExpectedTypes =
-  | GroupCheckoutEvent
-  | GuestStayAccountEvent
-  | GroupCheckoutCommand
-  | GuestStayAccountCommand;
 
 describe('Business Process Tests', () => {
   let backgroundJobs: BackgroundJobs;
@@ -99,7 +87,7 @@ describe('Business Process Tests', () => {
     await groupCheckoutFacade.initiateGroupCheckout(command);
 
     await runBackgroundJobsUntilIdle(backgroundJobs, publishedMessages);
-    publishedMessages.shouldReceiveMessagesInAnyOrder<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessagesInAnyOrder([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -340,7 +328,7 @@ describe('Business Process Tests', () => {
     await groupCheckoutFacade.initiateGroupCheckout(command);
 
     await runBackgroundJobsUntilIdle(backgroundJobs, publishedMessages);
-    publishedMessages.shouldReceiveMessagesInAnyOrder<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessagesInAnyOrder([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -565,7 +553,7 @@ describe('Business Process Tests', () => {
     await groupCheckoutFacade.initiateGroupCheckout(command);
 
     await runBackgroundJobsUntilIdle(backgroundJobs, publishedMessages);
-    publishedMessages.shouldReceiveMessagesInAnyOrder<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessagesInAnyOrder([
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -784,7 +772,7 @@ describe('Business Process Tests', () => {
     await groupCheckoutFacade.initiateGroupCheckout(command);
 
     await runBackgroundJobsUntilIdle(backgroundJobs, publishedMessages);
-    publishedMessages.shouldReceiveMessagesInAnyOrder<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessagesInAnyOrder([
       {
         type: 'GroupCheckoutInitiated',
         data: {

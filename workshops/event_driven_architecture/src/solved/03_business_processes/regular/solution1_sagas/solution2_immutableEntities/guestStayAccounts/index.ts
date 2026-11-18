@@ -1,4 +1,4 @@
-import type { Database, MessageBus } from '../../../tools';
+import type { Database, MessageBus } from '../../../../tools';
 import type { CheckoutGuest } from './businessLogic';
 import { GuestStayAccountFacade } from './guestStayAccountFacade';
 

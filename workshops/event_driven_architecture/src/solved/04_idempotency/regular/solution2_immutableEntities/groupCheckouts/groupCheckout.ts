@@ -59,9 +59,12 @@ export type GroupCheckout =
   | { status: 'NotExisting' }
   | {
       status: 'Initiated';
-      guestStayCheckouts: Map<string, CheckoutStatus>;
+      guestStayCheckouts: Record<string, CheckoutStatus>;
     }
-  | { status: 'Finished' };
+  | {
+      status: 'Finished';
+      guestStayCheckouts: Record<string, CheckoutStatus>;
+    };
 
 export const initial: GroupCheckout = {
   status: 'NotExisting',
@@ -77,9 +80,8 @@ export const evolve = (
 
       return {
         status: 'Initiated',
-        guestStayCheckouts: event.guestStayAccountIds.reduce(
-          (map, id) => map.set(id, 'Initiated'),
-          new Map<string, CheckoutStatus>(),
+        guestStayCheckouts: Object.fromEntries(
+          event.guestStayAccountIds.map((id) => [id, 'Initiated' as const]),
         ),
       };
     }
@@ -89,10 +91,11 @@ export const evolve = (
 
       return {
         ...state,
-        guestStayCheckouts: state.guestStayCheckouts.set(
-          event.guestStayAccountId,
-          type === 'GuestCheckoutCompletionRecorded' ? 'Completed' : 'Failed',
-        ),
+        guestStayCheckouts: {
+          ...state.guestStayCheckouts,
+          [event.guestStayAccountId]:
+            type === 'GuestCheckoutCompletionRecorded' ? 'Completed' : 'Failed',
+        },
       };
     }
     case 'GroupCheckoutCompleted':
@@ -100,6 +103,7 @@ export const evolve = (
       if (state.status !== 'Initiated') return state;
 
       return {
+        ...state,
         status: 'Finished',
       };
     }

@@ -52,7 +52,10 @@ export const GuestStayAccountFacade = (options: {
 }) => {
   const { database, messageBus } = options;
 
-  const accounts = database.collection<GuestStayAccount>('guestStayAccount');
+  const accounts = database.collection<GuestStayAccount>(
+    'guestStayAccount',
+    GuestStayAccount,
+  );
 
   return {
     checkInGuest: async (command: CheckInGuest) => {

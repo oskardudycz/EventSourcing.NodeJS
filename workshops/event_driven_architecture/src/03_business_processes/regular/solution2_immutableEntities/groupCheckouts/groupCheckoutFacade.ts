@@ -51,7 +51,7 @@ export const GroupCheckoutFacade = (options: {
       const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
 
       if (!groupCheckout) {
-        throw new Error('Entity not found');
+        return;
       }
 
       // TODO: do something with grup checkout and produce messages
@@ -68,7 +68,7 @@ export const GroupCheckoutFacade = (options: {
       const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
 
       if (!groupCheckout) {
-        throw new Error('Entity not found');
+        return;
       }
 
       // TODO: do something with grup checkout and produce messages

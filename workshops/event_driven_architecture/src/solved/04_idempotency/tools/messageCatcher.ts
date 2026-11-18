@@ -30,13 +30,13 @@ export const getMessageCatcher = (): MessageCatcher => {
     },
     shouldReceiveSingleMessage: (expectedMessage: Message): void => {
       expect(messages.length).toBe(1);
-      expect(messages[0]).toEqual(expectedMessage);
+      expect(messages[0]).toStrictEqual(expectedMessage);
     },
     shouldReceiveMessages: <ExpectedTypes extends Message>(
       expectedMessages: ExpectedTypes[],
     ): void => {
       expect(messages.length).toBe(expectedMessages.length);
-      expect(messages).toMatchObject(expectedMessages);
+      expect(messages).toStrictEqual(expectedMessages);
     },
   };
 };

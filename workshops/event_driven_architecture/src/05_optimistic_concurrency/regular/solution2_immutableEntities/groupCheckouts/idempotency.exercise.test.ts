@@ -7,7 +7,6 @@ import {
 } from '../../../tools';
 import {
   GroupCheckoutFacade,
-  type GroupCheckoutEvent,
   type InitiateGroupCheckout,
   type RecordGuestCheckoutCompletion,
   type RecordGuestCheckoutFailure,
@@ -142,7 +141,7 @@ describe('Group Checkout Idempotency Tests', () => {
 
     await groupCheckoutFacade.recordGuestCheckoutCompletion(command);
 
-    publishedMessages.shouldReceiveMessages<GroupCheckoutEvent>([
+    publishedMessages.shouldReceiveMessages([
       {
         type: 'GuestCheckoutCompletionRecorded',
         data: {

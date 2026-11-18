@@ -82,18 +82,20 @@ export const GuestStayFacade = (options: {
 }) => {
   const { database, messageBus } = options;
 
-  const accounts = database.collection<GuestStayAccount>('guestStayAccount');
+  const accounts = database.collection<GuestStayAccount>(
+    'guestStayAccount',
+    GuestStayAccount,
+  );
 
   return {
     checkInGuest: (command: CheckInGuest) => {
-      if (accounts.get(command.data.guestStayAccountId)) {
-        throw Error('Guest is already checked-in!');
-      }
-
       const account = GuestStayAccount.checkInGuest(command.data);
 
+      const events = account.dequeueUncommitedEvents();
+
       accounts.store(command.data.guestStayAccountId, account);
-      messageBus.publish(account.dequeueUncommitedEvents());
+
+      messageBus.publish(events);
     },
     recordCharge: (command: RecordCharge) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -104,8 +106,11 @@ export const GuestStayFacade = (options: {
 
       account.recordCharge(command.data);
 
+      const events = account.dequeueUncommitedEvents();
+
       accounts.store(command.data.guestStayAccountId, account);
-      messageBus.publish(account.dequeueUncommitedEvents());
+
+      messageBus.publish(events);
     },
     recordPayment: (command: RecordPayment) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -116,8 +121,11 @@ export const GuestStayFacade = (options: {
 
       account.recordPayment(command.data);
 
+      const events = account.dequeueUncommitedEvents();
+
       accounts.store(command.data.guestStayAccountId, account);
-      messageBus.publish(account.dequeueUncommitedEvents());
+
+      messageBus.publish(events);
     },
     checkoutGuest: (command: CheckoutGuest) => {
       const account = accounts.get(command.data.guestStayAccountId);
@@ -128,8 +136,11 @@ export const GuestStayFacade = (options: {
 
       account.checkoutGuest(command.data);
 
+      const events = account.dequeueUncommitedEvents();
+
       accounts.store(command.data.guestStayAccountId, account);
-      messageBus.publish(account.dequeueUncommitedEvents());
+
+      messageBus.publish(events);
     },
     initiateGroupCheckout: (command: InitiateGroupCheckout) => {
       const event: GroupCheckoutInitiated = {

@@ -1,230 +1,119 @@
-# EDA workshop: Node.js vs .NET vs JVM
+# EDA workshop alignment: Node.js, .NET, JVM
 
-Compared:
+For each exercise: what it teaches, what its tests prove, which implementation is the model, and where the other repositories teach something different. Differences that don't change what an attendee learns (language idioms, file layout) are only listed at the end.
 
-- **Node.js**: `workshops/event_driven_architecture` (exercises in `src/0X_*`, solutions in `src/solved/0X_*`). The older copy in `workshops/introduction_to_event_sourcing/src/15–17` isn't compared.
-- **.NET**: `../EventSourcing.NetCore/Workshops/EventDrivenArchitecture` (exercises in `0X-*`, solutions in `Solutions/0X-*`).
-- **JVM**: `../EventSourcing.JVM/workshops/event-driven-architecture` (`exercises/` and `solved/`). JVM is the reference.
+Repositories: Node.js `workshops/event_driven_architecture`, .NET `../EventSourcing.NetCore/Workshops/EventDrivenArchitecture`, JVM `../EventSourcing.JVM/workshops/event-driven-architecture`. JVM is the reference, unless it teaches something the exercise isn't about.
 
-State on 2026-11-17, from a file-by-file review of exercises, solutions, tools and tests (Kafka/RabbitMQ variants only checked for the shared test data bug):
+State on 2026-11-17: Node.js `migrated_to_current_db` at `ab21cde`, .NET `migrated_to_kurrentdb` at `3c8b01ad`, JVM `migrated_to_kurrentdb` at `880b7fd`, plus today's uncommitted fixes. All solution suites pass (Node.js 239, JVM 365, every .NET solution project).
 
-- **Node.js**: `migrated_to_current_db` at `ab21cde` (same tree as `origin/main`).
-- **.NET**: `migrated_to_kurrentdb` at `3c8b01ad`.
-- **JVM**: `migrated_to_kurrentdb` at `880b7fd`.
+## 01 Events definition
 
-Solution suites, run on 2026-11-16: Node.js `npm run test:solved` 239 passed; .NET `dotnet test --solution EventDrivenArchitecture.slnx` all solution tests passed (the 87 failures are the unsolved exercise projects); JVM `solved` `./gradlew test --rerun` 365 passed, 0 failed.
+**Teaches:** describing what happens in the two modules, guest stay accounts and group checkouts, as events.
 
-Legend: **Aligned** means same behaviour and same test scenarios; differences that are only language idioms aren't listed.
+**Tests prove:** for each module, the attendee wrote five events of five different types. They don't check names or content, which is fine for a first modelling step.
 
-## 1. Scope
+**Model:** JVM. The events go in their own files (one per module), and the test prepares the ids the attendee will need.
 
-| Step | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| 00 Modelling | – | `00-Modelling` (only a `.csproj`) | – |
-| 01–06 | ✅ | ✅ | ✅ |
-| Real brokers (Kafka, RabbitMQ), failures, metadata, observability | ❌ | ❌ | ✅ 03 solved only |
+**Where the others teach something different:**
 
-Planned: 07 DLQ and wrong events, 08 tracing and bug finding. The JVM Kafka/RabbitMQ plan (`spec-spring-messaging.md`, `todo.md` steps 4–8) goes last (see section 12).
+- Node.js puts the events in the test file, so the attendee doesn't practise giving each module its own events.
+- Node.js events already carry `chargeId` and `paymentId`. In JVM and .NET those ids appear in 04, where they are the answer to "how do I know this charge was already recorded?". Node.js gives that answer away in 01. Its `GuestCheckedIn` also carries `guestId` and `roomId`, which no exercise uses.
+- .NET names the group checkout events differently (`GuestCheckoutCompleted`, and `GuestCheckOutFailed`, the same name as the guest stay event). The attendee meets two events with one name in two modules.
+- JVM 01 names the failure reasons `InvalidState` / `BalanceNotSettled`, but 02+ use `INVALID_STATE` / `BALANCE_NOT_SETTLED`.
 
-### Variants
+## 02 Entities definition
 
-| Exercise | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| 01 solved | `simple`, `typed`, `emmett` | one | one |
-| 02 exercise | `regular` plus an `emmett` starting point without a solution | one | one |
-| 02 solved | aggregates, immutable entities | same | same |
-| 03–05 | aggregates, immutable entities | same | same |
-| 06 exercise | immutable entities only | aggregates, immutable entities | same as .NET |
-| 06 solved | `publish_asynchronously`, `publish_right_away`, both immutable entities | aggregates publish asynchronously, immutable entities publish right away | same as .NET |
+**Teaches:** turning a command into events through an entity, in two styles: an aggregate that records events and changes its state from them, or an immutable entity where a function decides the events and another evolves the state. The facade loads, decides, stores and publishes.
 
-03 solutions:
+**Tests prove:** through the guest stay facade, the published events for check-in, charge, payment, payment after a charge, checkout with a settled balance, checkout with an unsettled balance (fails), and group checkout initiation.
 
-| Solution | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| Sagas, immutable entities | ✅ `solution1_saga` | ✅ | ✅ |
-| Sagas, aggregates | ❌ | ✅ | ✅ |
-| Process managers | ✅ | ✅ | ✅ |
-| Choreography | ✅ | ✅ | ✅ |
-| To-do list (with scheduled version and projection) | ✅ | ✅ | ✅ |
-| Transactions | ❌ | ❌ | ✅ |
-| Sagas on Kafka / RabbitMQ | ❌ | ❌ | ✅ |
+**Model:** JVM. It gives an empty entity to fill and shows load / decide / store / publish in three facade methods, so the attendee sees the pattern before writing it. Its aggregate changes state only from events, and its immutable entity has a separate decider and evolve.
 
-## 2. Tools
+**Where the others teach something different:**
 
-Database, message bus and message catcher have the same API and the same bus doc comment in all three. Differences:
+- The .NET aggregate changes its fields directly in each method and only records the events. That isn't the event-driven aggregate the exercise is about: its state doesn't come from its events.
+- Node.js throws when a guest is checked in twice. That's the 04 question (what to do with a repeated command) answered in 02, and answered differently from 04, which ignores it.
+- Node.js and .NET show the facade pattern in one method only.
 
-| | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| `Database.get` copy | **shallow** (`Object.assign`), nested arrays and maps are shared with the stored document | deep (JSON round trip) | deep (JSON round trip) |
-| Catcher `shouldReceiveMessages` | **partial match** (`toMatchObject`) | exact (`ShouldBeEquivalentTo`) | exact (recursive equality) |
-| Unused code | – | `Core/DictionaryExtensions.cs` in 02 Solution2 | `core/EventEnvelopeBase` (02, 03), `Database.Collection.getAndUpdate` (02–04) |
-| Bus doc | class only | class only | class plus every method |
-| Retry on conflict (05) | hand-written loop, 10 attempts | Polly `RetryAsync(9)`, 10 attempts | hand-written loop, 10 attempts |
+## 03 Business processes
 
-## 3. Tests
+**Teaches:** coordinating two modules through messages on one bus. The group checkout asks each guest stay to check out, records each result, and completes when all succeed or fails when any fails. The solutions show the styles: saga, process manager, choreography, to-do list (plus transactions in JVM, as the "why not" baseline).
 
-Test names match in every exercise and in every 03 solution that exists in all three. Setup, steps and expected messages also match, apart from:
+**Tests prove:** the four business process scenarios (no charges, all settled, one settled, none settled) produce the right sequence of commands and events. On their own, the group checkout tests prove initiation, recording a completion or failure, and completing or failing after the last guest, and the guest stay tests prove the 02 behaviour.
 
-- Fixed on 2026-11-17: in .NET and JVM, the "all stays settled" business process test recorded the third guest's charge and payments on `guestStays[0]` (03 exercises, every 03 solution, 06 exercises and solutions).
-- **Group checkout entity tests in 04–06:** only Node.js has the 5 tests (`groupCheckouts/`). .NET Version1 has one initiation test in `EntityDefinitionTests.cs`; .NET Version2 and JVM have none.
-- **Layout in 04–06:** only Node.js keeps tests next to the code (`groupCheckouts/`, `guestStayAccounts/`, and the bus test at the variant root). .NET and JVM have one flat file per kind (`BusinessProcessTests`, `EntityDefinitionTests`, `IdempotencyTests`, `OptimisticConcurrencyTests`). 03 is aligned.
-- **Style:** Node.js tests have no `Given` / `When` / `Then` / `And` comments (0 of 103 test files); .NET and JVM have them. .NET keeps the setup fields below the tests; Node.js and JVM at the top.
-- **Markers:** .NET `[Trait("Category","SkipCI")]` only in 01 and 02; JVM `@Tag("Exercise")` in every exercise test; Node.js `.exercise.test.ts` / `.solved.test.ts`.
-- **Test data:** Node.js 01 solved (`simple`) uses `const clerkId = 'room-123'`, the room id.
+**Model:** JVM for the set of solutions (it has every style in both flavours), but not its group checkout guards. The JVM 03 solutions ignore a guest result that was already recorded. No 03 test needs that. It's 04's lesson, which JVM teaches in 03 and then again in 04.
 
-## 4. Exercise 01: Events definition
+**Where the others teach something different:**
 
-Same two tests with the same assertion (exactly 5 events, 5 distinct types).
+- .NET records guest results even after the group checkout finished. No test catches it, but the solution shows a process that keeps changing after it ended.
+- Node.js throws when a group checkout is initiated twice; .NET and JVM overwrite it. Again, that's a 04 question.
+- Node.js has no aggregates saga, so an attendee who chose aggregates in 02 has no saga solution to compare with.
+- .NET starts the guest checkouts in choreography from a `GroupCheckoutInitiated` handler; Node.js and JVM from the facade. Both are choreography; they just show it differently.
 
-- Node.js defines the events in the test file (`// 1. Define your events here`); .NET and JVM give separate event files.
-- JVM pre-declares the ids in `Given`; .NET and Node.js don't.
-- Node.js events carry more: `GuestCheckedIn` has `guestId` and `roomId`, and charges and payments have `chargeId` / `paymentId` from 01. .NET and JVM add charge and payment ids only from 04.
-- Field and reason names differ (section 10).
+## 04 Idempotency
 
-## 5. Exercise 02: Entities definition
+**Teaches:** a message delivered twice must give the same result as once. That means ignoring a repeated command (check-in, the same charge or payment id, a repeated checkout, a repeated guest result, a repeated initiation), so the whole process works when the bus delivers every message twice.
 
-Same seven tests. Exercise scaffolding:
+**Tests prove:** each repeated command is ignored, the last guest result recorded twice completes the group checkout once, and the whole process with a bus delivering everything twice publishes each effect once.
 
-- **Entity stub:** JVM gives an empty `GuestStayAccount` class; Node.js and .NET give none (.NET loads `Database.Get<object>` "use here your real type").
-- **Facade:** JVM shows load/store/publish in `recordCharge`, `recordPayment` and `checkOutGuest`; Node.js and .NET only in `recordCharge`. JVM's `initiateGroupCheckout` TODO says "publishing event", the others "calling your entity/aggregate". In .NET, `CheckInGuest` has no `CancellationToken`, and `CheckOutGuest` / `InitiateGroupCheckout` throw `NotImplementedException` without the TODO message.
-- **Commands:** Node.js already defines `RecordGuestCheckoutCompletion` / `Failure` in 02; .NET and JVM only `InitiateGroupCheckout`. Node.js `InitiateGroupCheckout` uses `guestStayIds` while its event uses `guestStayAccountIds`.
-- **Facade constructor:** JVM takes `database.collection(GuestStayAccount.class)`; Node.js and .NET take the database.
+**Model:** any. All three teach the same thing, with the same tests and the same solution guards, in both flavours.
 
-Solutions:
+**Gaps:** none. The 04 exercise is the 03 saga solution without the idempotency handling, the solution adds it, and the tests sit next to the module they test, with READMEs that link them (checked on 2026-11-18: JVM solved tests and Node.js solved tests, type check and lint pass, every .NET `Solutions/` project passes, and the 04 exercises fail only in their 18 idempotency tests).
 
-| | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| Aggregate style | state changes only in `evolve`, called by `enqueue` | **fields changed in the methods; `Enqueue` only records**, no apply/evolve | state changes only in `apply`, called by `enqueue` |
-| Immutable shape | `businessLogic.ts` (one function per command, `decide` returns arrays) + `evolve` / `initial` | decision methods on the `GuestStayAccount` record, `Evolve`, `Initial`; no decider | `GuestStayAccountDecider` (`handle`, `decide` returns one event) + record with `evolve` / `INITIAL` |
-| Check-in of an existing account | throws "Guest is already checked-in!" | not checked | not checked |
-| Checkout when not open and unsettled | `NotCheckedIn` | `NotOpened` | **`BALANCE_NOT_SETTLED`** (balance checked first) |
-| Error messages | "Guest account is already checked out!" for charge and payment | "Cannot record charge/payment for not opened account" | "Cannot record charge/payment if status is other than Open" |
-| Immutable state id | none, events use the command's id | `Id` | `id` |
+## 05 Optimistic concurrency
 
-Other: the JVM immutable `INITIAL` balance is `Double.MIN_VALUE` (the smallest positive double). Node.js spells `dequeueUncommitedEvents`. Fixed on 2026-11-17: the .NET payment error said "charge", and the .NET 02 Solution1 `CheckOutGuest` didn't inherit `GuestStayAccountCommand`.
+**Teaches:** handlers running at the same time must not lose each other's updates. Store with the version you loaded, and on a conflict load, decide and store again.
 
-## 6. Exercise 03: Business processes
+**Tests prove:** concurrent initiation initiates once, concurrent guest results complete or fail the group checkout correctly, concurrent charges all count, and a charge racing a checkout never lets an unsettled guest check out.
 
-The exercise starts from the 02 solution in all three (guest stay code unchanged), with `GroupCheckoutFacade` given as TODOs that load, store, publish and throw, and wiring that throws "Configure group checkouts handlers here". Same four business process tests, 5 group checkout and 6 guest stay entity tests.
+**Model:** any. All three use the same approach (retry up to 10 attempts, check-in stores with version 0, publish after the retry) and the same tests.
 
-Exercise differences:
+**Gaps:** Node.js copies a loaded document shallowly, so lists inside it (recorded charge ids, guest checkout statuses) are shared with the stored one. A failed attempt can then change the stored state, which is exactly what this exercise teaches you to avoid. JVM and .NET copy deeply.
 
-- Node.js `configureGroupCheckouts` builds the facade itself and returns it (`_groupCheckoutFacade` is unused in the exercise); .NET and JVM take a built facade.
-- Completion and failure command time field: Node.js `now`; .NET `CompletedAt` / `FailedAt`; JVM `completedAt` / `failedAt` in aggregates (exercises and solutions, 03–06) and `now` in immutable entities. The JVM 03 immutable exercise had `completedAt` / `failedAt` while its solution had `now`; fixed on 2026-11-17.
-- Node.js TODO typo: "do something with grup checkout and produce messages" (both variants).
-- JVM facade constructors vary: 03 exercises take `Database`, 03 solutions and 04–05 take `Database.Collection<T>`, 06 takes `Database` + `BackgroundJobs`, to-do list `GroupCheckoutFacade` takes only `MessageBus`.
-- .NET 03 solutions name the types `GroupCheckOut` / `GroupCheckOutFacade`; the exercise uses `GroupCheckout` / `GroupCheckoutFacade`.
+## 06 Consistency
 
-Solution differences:
+**Teaches:** storing state and publishing messages can fail separately. Use an outbox so that what is published always matches what is stored, even when the database or bus fails and work is retried.
 
-| | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| Recording a guest result after the group finished | ignored | **recorded** | ignored |
-| Recording the same guest result twice | **recorded** | **recorded** | ignored (04's idempotency already in 03) |
-| Initiating an existing group checkout | throws | overwrites | overwrites |
-| Recording for a missing group checkout (saga) | ignored | throws "Entity not found" | throws "Entity not found" |
-| Saga result | plain command arrays | `SagaResult` (`Send` / `Ignore`, plus unused `Event` / `Publish`) | `SagaResult` (`Send` / `Ignore`) |
-| Choreography start | facade publishes `CheckOutGuest` after `GroupCheckoutInitiated` | a `GroupCheckoutInitiated` handler publishes `CheckOutGuest` | same as Node.js |
-| Process manager base | `ProcessManager` in the variant `core.ts` | `ProcessManagerResult` in `GroupCheckout.cs` | `core/AbstractProcessManager`, `ProcessManager`, `Message` |
+**Tests prove:** the business process and module tests pass while the database and bus fail at random calls, with background jobs publishing from the outbox.
 
-Message subscriptions match for sagas, process managers and the to-do list. .NET process manager events are named `GuestCheckOutCompleted` and `GroupCheckOutCompleted`, unlike the other .NET solutions (`GuestCheckoutCompleted`, `GroupCheckoutCompleted`).
+**Model:** none yet. 06 should start from the 05 solution, as 05 starts from 04, but in every repository it started from an earlier version:
 
-## 7. Exercise 04: Idempotency
+- the guest stay account doesn't ignore repeated commands, and the idempotency tests are the 3 old group checkout ones;
+- there is no "bus delivers twice" test;
+- .NET and JVM have no charge or payment ids.
 
-**Aligned.** The exercise is the 03 saga solution plus `chargeId` / `paymentId` (.NET, JVM) and `deliverTwice`; Node.js loosens its 03 group checkout guard so the tests fail. The 9 tests and the bus-twice message list match.
+So 06 drops idempotency in the one exercise where failures and retries make duplicates certain. An outbox delivers at least once; without the 04 guards a repeated publish double-charges.
 
-The solutions, in both flavours and all three repos:
+**Where the others differ:** Node.js has only immutable entities, in two solutions (publish right away, publish asynchronously). .NET and JVM have both flavours, with aggregates publishing asynchronously and immutable entities publishing right away.
 
-- ignore check-in of an existing account,
-- keep the recorded charge and payment ids,
-- keep the group checkout id on the checked-out account,
-- ignore a guest status the group already has, anything after the group finished, and re-initiation.
+## What I'd do, in order
 
-JVM exercises use `ignored` lambda parameters where solved uses `_`.
+1. **06 from the 05 solution, in all three:** bring back the 04 guards and tests, the charge and payment ids, and the "bus delivers twice" test, then add the outbox on top. This is the biggest teaching gap. It needs one design answer first: in 06 the background jobs publish, so the "delivers twice" bus has to be the one they publish to.
+2. **Node.js `Database` copies deeply and the message catcher compares exactly:** both make 05 and every assertion prove what they claim.
+3. **03 teaches coordination only:** take the repeated-result guard out of the JVM 03 solutions (it stays in 04), and keep "ignore results after the group checkout finished" in every 03 solution (add it in .NET).
+4. **Repeated commands are answered in 04 only:** remove the Node.js throws on a repeated check-in (02, 03) and a repeated initiation (03).
+5. **.NET aggregates change state from their events,** as in JVM and Node.js, from 02.
+6. **One set of event names, JVM's:** .NET group checkout events, and JVM 01 failure reasons in the 02+ style.
+7. **01 in Node.js:** events in their own files, and charge and payment ids only from 04.
+8. **Node.js aggregates saga in 03 and an aggregates variant in 06,** so both flavours have the full path.
 
-## 8. Exercise 05: Optimistic concurrency
+Then the agreed layout change: in 04–06, tests go next to the module they test, as in 03 and in Node.js, and the READMEs say so and link them.
 
-**Aligned.** The exercise is the 04 solution on a versioned database (`get` returns document and version, `store` takes an expected version and throws `ConcurrencyException` / `ConcurrencyError`). The solution adds a retry helper: load, decide, store with the loaded version, retry on conflict up to 10 attempts, check-in stores with expected version 0, publish after the retry. The 5 tests match.
+Last, after everything else (Oskar, 2026-11-16): the JVM Kafka and RabbitMQ work (`spec-spring-messaging.md`, `todo.md` steps 4–8).
 
-- .NET and JVM facades share a private `Handle`; Node.js repeats the retry in every method.
-- Node.js runs the concurrent calls with `Promise.all` (deterministic interleaving); .NET and JVM use real threads with a 1 ms wait after each read.
+## Differences that don't change what is taught
 
-## 9. Exercise 06: Consistency
+- **Layout:** in 04–06, .NET and JVM keep one test file per kind at the variant root; Node.js keeps them next to the module, as all three do in 03.
+- **Test style:** Node.js tests have no `Given` / `When` / `Then` comments and keep helpers above the tests.
+- **Immutable entity shape:** a JVM decider class, Node.js functions per command, .NET methods on the record.
+- **Naming of fields and statuses:** `checkedInAt` / `CheckedInAt` / `openedAt`, `CheckoutGuest` / `CheckOutGuest`, and so on.
+- **JVM facade constructors** take a `Database` in some exercises and a collection in others.
+- **Unused code:** JVM `EventEnvelopeBase` and `Database.Collection.getAndUpdate`, .NET 02 `DictionaryExtensions` and `SagaResult.Event`.
+- **Scope extras:** JVM transactions and broker sagas; Node.js 01 `typed` / `emmett` solutions and the 02 `emmett` start; .NET `00-Modelling` (empty).
 
-The exercise starts from the 05 solution with failing database and bus (`TimeoutException` / `TimeoutError`), `transaction`, `getAll` ordered by `position`, `BackgroundJobs`, and the 05 retry given. The solution adds an `Outbox` (store in outbox, publish from outbox with a checkpoint). Publishing styles match between the repos (`publishOrStoreInOutbox` and `publishFromOutbox`).
+## Fixed on 2026-11-17
 
-- Node.js stores the events as they are, in one collection per outbox name. .NET and JVM store a serialized `OutboxMessage` with the type name in one collection, filtered by outbox id.
-- JVM has an extra `core/Stored.java`.
-
-**06 hasn't got the 04/05 changes in any repo:**
-
-- the idempotency tests are the old 3 group checkout tests,
-- there is no `deliverTwice`,
-- the guest stay account has no idempotency (no recorded charge or payment ids, no repeated-checkout check); the group checkout keeps its 05 guards,
-- there is no `chargeId` / `paymentId` in .NET and JVM.
-
-## 10. Naming
-
-| Concept | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| Guest recorded in group | `GuestCheckoutCompletionRecorded` | `GuestCheckoutCompleted` (`GuestCheckOutCompleted` in 03 process managers) | `GuestCheckoutCompletionRecorded` |
-| Guest failure in group | `GuestCheckoutFailureRecorded` | `GuestCheckOutFailed` (same name as the guest stay event) | `GuestCheckoutFailureRecorded` |
-| Guest checkout failure event | `GuestCheckoutFailed` | `GuestCheckOutFailed` | `GuestCheckoutFailed` |
-| Failure reason: not checked in | `NotCheckedIn` | `NotOpened` | `InvalidState` in 01, `INVALID_STATE` from 02 |
-| Failure reason: balance | `BalanceNotSettled` | `BalanceNotSettled` | `BalanceNotSettled` in 01, `BALANCE_NOT_SETTLED` from 02 |
-| Checkout command | `CheckoutGuest` | `CheckOutGuest` | `CheckOutGuest` |
-| Account id | `guestStayAccountId` | `GuestStayId` | `guestStayAccountId` in events, `guestStayId` in commands |
-| Group checkout id on guest events and commands | `groupCheckoutId` | `GroupCheckOutId` | `groupCheckoutId` in events, `groupCheckOutId` in commands |
-| Guest ids on group initiation | `guestStayAccountIds` (command: `guestStayIds`) | `GuestStayIds` | `guestStayAccountIds` (command: `guestStayIds`) |
-| Check-in time | `checkedInAt` | `CheckedInAt` | `openedAt` |
-| Checkout time | `checkedOutAt` | `CheckedOutAt` | `completedAt` |
-| Guest completion time in group | `checkedOutAt` | `CompletedAt` | `completedAt` |
-| Account status | `NotExisting` / `CheckedIn` / `CheckedOut` | `Opened` / `CheckedOut` | `OPEN` / `CHECKED_OUT` |
-| Balance sign | charge +, payment − | charge −, payment + | charge −, payment + |
-| Guest stay facade file | `guestStayAccountFacade.ts` | `GuestStayFacade.cs` | `GuestStayAccountFacade.java` |
-
-## 11. Docs
-
-Every repo has a workshop README and a README for each exercise 01–06, with the same headings. Solved READMEs: Node.js and .NET have 06; JVM has 03 (Grafana) and 06.
-
-| Test links in exercise READMEs | Node.js | .NET | JVM |
-| --- | --- | --- | --- |
-| 01, 02 | ✅ | ✅ | ✅ |
-| 03 | ✅ | ✅ | ✅ |
-| 04 | ✅ group checkouts, guest stay accounts and message bus files | ✅ | ✅ |
-| 05 | ✅ | ✅ | ✅ |
-| 06 | – | – | – |
-
-- The 02 title is "Entity Definition" in all three.
-- Link labels: Node.js "aggregates" / "immutable entities", .NET "Aggregates" / "Immutable Entities", JVM "DDD Aggregate" / "Functional Decider".
-- The JVM workshop README links each exercise folder; the Node.js and .NET ones don't.
-- JVM keeps `plan.md`, `todo.md` and `spec-spring-messaging.md` at the workshop root.
-
-## 12. To do
-
-### Clear
-
-1. 04–06 test layout: move JVM to the 03 layout (group checkout entity tests, tests split by module), then .NET, and drop the .NET Version1 initiation test.
-
-Done on 2026-11-17: the third-guest test data in .NET and JVM; the .NET payment error message; the .NET 02 Solution1 `CheckOutGuest` base type; `now` in the JVM 03 immutable exercise commands; the Node.js 03 and 04 README test links.
-
-### Decisions needed
-
-1. 03 group checkout guards: should every 03 solution behave like JVM (ignore after finish and ignore repeated guest results), or should that wait for 04 as in the exercises?
-2. Aggregate style in .NET 02+: switch to state changes in apply/evolve like Node.js and JVM?
-3. Checkout failure reason order: JVM reports the balance first, Node.js and .NET the status first. Which one?
-4. Check-in of an existing account before 04: Node.js throws, .NET and JVM don't check.
-5. Immutable entity shape: one decider per entity (JVM), functions per command (Node.js) or methods on the record (.NET)?
-6. Node.js tools: deep copy in `Database.get` and exact `shouldReceiveMessages`, like .NET and JVM?
-7. Node.js tests: add `Given` / `When` / `Then` comments?
-8. Naming (section 10): which names win for each row, including the JVM time field (`completedAt` / `failedAt` in aggregates, `now` in immutable entities)?
-9. Port the 04/05 changes to 06 in all three, after settling the background jobs test design (how duplicate delivery works with the jobs).
-10. 06 variants: Node.js aggregates variant, or .NET/JVM split by publishing style like Node.js?
-11. JVM facade constructors: one shape across 03–06?
-12. Unused code: JVM `EventEnvelopeBase` and `getAndUpdate`, .NET 02 `DictionaryExtensions`, .NET `SagaResult.Event`.
-13. 06 README test links, and the variant link labels.
-14. Scope: Node.js aggregates saga; Transactions in Node.js and .NET; Node.js 01 `typed` / `emmett` solutions and the 02 `emmett` starting point (including the stray `eventsDefinition.emmett.exercise.test.ts`); the ES-workshop 15–17 copy; .NET `00-Modelling`; JVM root `plan.md` / `todo.md` / `spec-spring-messaging.md`.
-
-### Last
-
-Last, after all the other improvements (Oskar, 2026-11-16): the Kafka and RabbitMQ work from JVM `spec-spring-messaging.md` and `todo.md` (steps 4–8: Spring Kafka, Spring AMQP, Spring Modulith, Spring Cloud Stream, docs). Their planned names `e04_spring_kafka`, `e05_spring_cloud_stream` and `e06_spring_modulith` clash with the current 04–06; the numbering is still open.
+- .NET and JVM "all stays settled" test recorded the third guest's charge and payments on the first guest.
+- .NET payment error said "charge"; .NET 02 aggregates `CheckOutGuest` didn't inherit the command type.
+- JVM 03 immutable exercise commands used different field names from its solution.
+- Node.js 03 and 04 READMEs link their test files.

@@ -53,16 +53,17 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
   private status = 'NotExisting' satisfies GuestStayAccountStatus;
   private balance: number = 0;
 
-  private constructor() {
+  // Public constructor without parameters, used when loading from the database
+  constructor() {
     super();
   }
 
-  static checkInGuest = (data: {
+  static checkInGuest(data: {
     guestId: string;
     roomId: string;
     guestStayAccountId: string;
     now: Date;
-  }): GuestStayAccount => {
+  }): GuestStayAccount {
     const account = new GuestStayAccount();
 
     account.enqueue({
@@ -76,14 +77,14 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
     });
 
     return account;
-  };
+  }
 
-  recordCharge = (data: {
+  recordCharge(data: {
     chargeId: string;
     guestStayAccountId: string;
     amount: number;
     now: Date;
-  }): void => {
+  }): void {
     if (this.status !== 'CheckedIn')
       throw Error('Guest account is already checked out!');
 
@@ -96,14 +97,14 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
         recordedAt: data.now,
       },
     });
-  };
+  }
 
-  recordPayment = (data: {
+  recordPayment(data: {
     paymentId: string;
     guestStayAccountId: string;
     amount: number;
     now: Date;
-  }): void => {
+  }): void {
     if (this.status !== 'CheckedIn')
       throw Error('Guest account is already checked out!');
 
@@ -116,12 +117,12 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
         recordedAt: data.now,
       },
     });
-  };
+  }
 
-  checkoutGuest = (data: {
+  checkoutGuest(data: {
     groupCheckoutId?: string | undefined;
     now: Date;
-  }): void => {
+  }): void {
     if (this.status !== 'CheckedIn') {
       this.enqueue({
         type: 'GuestCheckoutFailed',
@@ -157,7 +158,7 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
             },
           },
     );
-  };
+  }
 
   evolve(event: GuestStayAccountEvent): void {
     switch (event.type) {

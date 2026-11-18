@@ -13,19 +13,13 @@ import {
   GroupCheckoutToDoList,
   ScheduledGroupCheckoutToDoList,
   type GroupCheckout,
-  type GroupCheckoutEvent,
   type GroupCheckoutToDoListEvent,
 } from './groupCheckouts';
 import {
   configureGuestStayAccounts,
-  type GuestStayAccountCommand,
-  type GuestStayAccountEvent,
   type GuestStayAccountFacade,
 } from './guestStayAccounts';
 import { beforeEach, describe, expect, it } from 'vitest';
-
-type ExpectedTypes =
-  GroupCheckoutEvent | GuestStayAccountEvent | GuestStayAccountCommand;
 
 describe('Scheduled Business Process Tests', () => {
   let database: Database;
@@ -93,7 +87,7 @@ describe('Scheduled Business Process Tests', () => {
       },
     });
 
-    const initiatedAndCheckedOut: ExpectedTypes[] = [
+    const initiatedAndCheckedOut = [
       {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -141,7 +135,7 @@ describe('Scheduled Business Process Tests', () => {
     scheduledToDoList.handleAll();
     scheduledToDoList.handleAll();
 
-    publishedMessages.shouldReceiveMessages<ExpectedTypes>([
+    publishedMessages.shouldReceiveMessages([
       ...initiatedAndCheckedOut,
       {
         type: 'GroupCheckoutCompleted',
