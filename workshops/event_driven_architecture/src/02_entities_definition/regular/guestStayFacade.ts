@@ -5,8 +5,6 @@ export type CheckInGuest = {
   type: 'CheckInGuest';
   data: {
     guestStayAccountId: string;
-    guestId: string;
-    roomId: string;
     now: Date;
   };
 };
@@ -14,7 +12,6 @@ export type RecordCharge = {
   type: 'RecordCharge';
   data: {
     guestStayAccountId: string;
-    chargeId: string;
     amount: number;
     now: Date;
   };
@@ -24,14 +21,13 @@ export type RecordPayment = {
   type: 'RecordPayment';
   data: {
     guestStayAccountId: string;
-    paymentId: string;
     amount: number;
     now: Date;
   };
 };
 
-export type CheckoutGuest = {
-  type: 'CheckoutGuest';
+export type CheckOutGuest = {
+  type: 'CheckOutGuest';
   data: {
     guestStayAccountId: string;
     now: Date;
@@ -40,14 +36,14 @@ export type CheckoutGuest = {
 };
 
 export type GuestStayAccountCommand =
-  CheckInGuest | RecordCharge | RecordPayment | CheckoutGuest;
+  CheckInGuest | RecordCharge | RecordPayment | CheckOutGuest;
 
 export type InitiateGroupCheckout = {
   type: 'InitiateGroupCheckout';
   data: {
     groupCheckoutId: string;
     clerkId: string;
-    guestStayIds: string[];
+    guestStayAccountIds: string[];
     now: Date;
   };
 };
@@ -126,7 +122,7 @@ export const GuestStayFacade = (options: {
         'TODO: Fill the implementation calling your entity/aggregate',
       );
     },
-    checkoutGuest: async (command: CheckoutGuest) => {
+    checkOutGuest: async (command: CheckOutGuest) => {
       const account = await accounts.get(command.data.guestStayAccountId);
 
       if (!account) {

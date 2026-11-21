@@ -2,15 +2,12 @@ export type GuestCheckedIn = {
   type: 'GuestCheckedIn';
   data: {
     guestStayAccountId: string;
-    guestId: string;
-    roomId: string;
-    checkedInAt: Date;
+    openedAt: Date;
   };
 };
 export type ChargeRecorded = {
   type: 'ChargeRecorded';
   data: {
-    chargeId: string;
     guestStayAccountId: string;
     amount: number;
     recordedAt: Date;
@@ -19,7 +16,6 @@ export type ChargeRecorded = {
 export type PaymentRecorded = {
   type: 'PaymentRecorded';
   data: {
-    paymentId: string;
     guestStayAccountId: string;
     amount: number;
     recordedAt: Date;
@@ -29,15 +25,17 @@ export type GuestCheckedOut = {
   type: 'GuestCheckedOut';
   data: {
     guestStayAccountId: string;
-    checkedOutAt: Date;
+    completedAt: Date;
     groupCheckoutId?: string;
   };
 };
+export type FailureReason = 'InvalidState' | 'BalanceNotSettled';
+
 export type GuestCheckoutFailed = {
   type: 'GuestCheckoutFailed';
   data: {
     guestStayAccountId: string;
-    reason: 'NotCheckedIn' | 'BalanceNotSettled';
+    reason: FailureReason;
     failedAt: Date;
     groupCheckoutId?: string;
   };
@@ -53,10 +51,12 @@ export type GuestStayAccountEvent =
 export type GuestStayAccount =
   | { status: 'NotExisting' }
   | {
-      status: 'CheckedIn';
+      status: 'Open';
       balance: number;
     }
   | { status: 'CheckedOut' };
+
+export type GuestStayAccountStatus = GuestStayAccount['status'];
 
 export const initial: GuestStayAccount = {
   status: 'NotExisting',
@@ -69,11 +69,11 @@ export const evolve = (
   switch (type) {
     case 'GuestCheckedIn':
       return {
-        status: 'CheckedIn',
+        status: 'Open',
         balance: 0,
       };
     case 'ChargeRecorded':
-      if (state.status !== 'CheckedIn') {
+      if (state.status !== 'Open') {
         return state;
       }
       return {
@@ -81,7 +81,7 @@ export const evolve = (
         balance: state.balance + event.amount,
       };
     case 'PaymentRecorded':
-      if (state.status !== 'CheckedIn') {
+      if (state.status !== 'Open') {
         return state;
       }
       return {
@@ -89,7 +89,7 @@ export const evolve = (
         balance: state.balance - event.amount,
       };
     case 'GuestCheckedOut':
-      if (state.status !== 'CheckedIn') {
+      if (state.status !== 'Open') {
         return state;
       }
       return { status: 'CheckedOut' };

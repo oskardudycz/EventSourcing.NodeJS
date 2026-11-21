@@ -29,14 +29,14 @@ describe('Group Checkout Entity Definition Tests', () => {
     messageBus.use(publishedMessages.catchMessage);
   });
 
-  const initiateGroupCheckout = async (guestStayIds: string[]) => {
+  const initiateGroupCheckout = async (guestStayAccountIds: string[]) => {
     const groupCheckoutId = uuid();
     await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
         clerkId: uuid(),
-        guestStayIds,
+        guestStayAccountIds,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -48,10 +48,10 @@ describe('Group Checkout Entity Definition Tests', () => {
   it('initiating group checkout succeeds', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
-    const guestStayIds = [uuid(), uuid(), uuid()];
+    const guestStayAccountIds = [uuid(), uuid(), uuid()];
     const command: InitiateGroupCheckout = {
       type: 'InitiateGroupCheckout',
-      data: { groupCheckoutId, clerkId, guestStayIds, now },
+      data: { groupCheckoutId, clerkId, guestStayAccountIds, now },
     };
 
     await groupCheckoutFacade.initiateGroupCheckout(command);
@@ -62,12 +62,12 @@ describe('Group Checkout Entity Definition Tests', () => {
         data: {
           groupCheckoutId,
           clerkId,
-          guestStayAccountIds: guestStayIds,
+          guestStayAccountIds: guestStayAccountIds,
           initiatedAt: now,
         },
       },
-      ...guestStayIds.map((guestStayAccountId) => ({
-        type: 'CheckoutGuest',
+      ...guestStayAccountIds.map((guestStayAccountId) => ({
+        type: 'CheckOutGuest',
         data: { guestStayAccountId, groupCheckoutId, now },
       })),
     ]);
@@ -83,12 +83,12 @@ describe('Group Checkout Entity Definition Tests', () => {
 
     await groupCheckoutFacade.onGuestCheckedOut({
       type: 'GuestCheckedOut',
-      data: { guestStayAccountId, checkedOutAt: now, groupCheckoutId },
+      data: { guestStayAccountId, completedAt: now, groupCheckoutId },
     });
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckoutCompletionRecorded',
-      data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
+      data: { groupCheckoutId, guestStayAccountId, completedAt: now },
     });
   });
 
@@ -117,17 +117,17 @@ describe('Group Checkout Entity Definition Tests', () => {
   });
 
   it('recording last guest checkout completion completes group checkout', async () => {
-    const completedGuestStayId = uuid();
-    const lastGuestStayId = uuid();
+    const completedGuestStayAccountId = uuid();
+    const lastGuestStayAccountId = uuid();
     const groupCheckoutId = await initiateGroupCheckout([
-      completedGuestStayId,
-      lastGuestStayId,
+      completedGuestStayAccountId,
+      lastGuestStayAccountId,
     ]);
     await groupCheckoutFacade.onGuestCheckedOut({
       type: 'GuestCheckedOut',
       data: {
-        guestStayAccountId: completedGuestStayId,
-        checkedOutAt: now,
+        guestStayAccountId: completedGuestStayAccountId,
+        completedAt: now,
         groupCheckoutId,
       },
     });
@@ -136,8 +136,8 @@ describe('Group Checkout Entity Definition Tests', () => {
     await groupCheckoutFacade.onGuestCheckedOut({
       type: 'GuestCheckedOut',
       data: {
-        guestStayAccountId: lastGuestStayId,
-        checkedOutAt: now,
+        guestStayAccountId: lastGuestStayAccountId,
+        completedAt: now,
         groupCheckoutId,
       },
     });
@@ -147,15 +147,18 @@ describe('Group Checkout Entity Definition Tests', () => {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
           groupCheckoutId,
-          guestStayAccountId: lastGuestStayId,
-          checkedOutAt: now,
+          guestStayAccountId: lastGuestStayAccountId,
+          completedAt: now,
         },
       },
       {
         type: 'GroupCheckoutCompleted',
         data: {
           groupCheckoutId,
-          completedCheckouts: [completedGuestStayId, lastGuestStayId],
+          completedCheckouts: [
+            completedGuestStayAccountId,
+            lastGuestStayAccountId,
+          ],
           completedAt: now,
         },
       },
@@ -163,16 +166,16 @@ describe('Group Checkout Entity Definition Tests', () => {
   });
 
   it('recording last guest checkout after failure fails group checkout', async () => {
-    const failedGuestStayId = uuid();
-    const lastGuestStayId = uuid();
+    const failedGuestStayAccountId = uuid();
+    const lastGuestStayAccountId = uuid();
     const groupCheckoutId = await initiateGroupCheckout([
-      failedGuestStayId,
-      lastGuestStayId,
+      failedGuestStayAccountId,
+      lastGuestStayAccountId,
     ]);
     await groupCheckoutFacade.onGuestCheckoutFailed({
       type: 'GuestCheckoutFailed',
       data: {
-        guestStayAccountId: failedGuestStayId,
+        guestStayAccountId: failedGuestStayAccountId,
         reason: 'BalanceNotSettled',
         failedAt: now,
         groupCheckoutId,
@@ -183,8 +186,8 @@ describe('Group Checkout Entity Definition Tests', () => {
     await groupCheckoutFacade.onGuestCheckedOut({
       type: 'GuestCheckedOut',
       data: {
-        guestStayAccountId: lastGuestStayId,
-        checkedOutAt: now,
+        guestStayAccountId: lastGuestStayAccountId,
+        completedAt: now,
         groupCheckoutId,
       },
     });
@@ -194,16 +197,16 @@ describe('Group Checkout Entity Definition Tests', () => {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
           groupCheckoutId,
-          guestStayAccountId: lastGuestStayId,
-          checkedOutAt: now,
+          guestStayAccountId: lastGuestStayAccountId,
+          completedAt: now,
         },
       },
       {
         type: 'GroupCheckoutFailed',
         data: {
           groupCheckoutId,
-          completedCheckouts: [lastGuestStayId],
-          failedCheckouts: [failedGuestStayId],
+          completedCheckouts: [lastGuestStayAccountId],
+          failedCheckouts: [failedGuestStayAccountId],
           failedAt: now,
         },
       },

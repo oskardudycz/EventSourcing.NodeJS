@@ -1,17 +1,16 @@
+export type FailureReason = 'InvalidState' | 'BalanceNotSettled';
+
 export type GuestStayAccountEvent =
   | {
       type: 'GuestCheckedIn';
       data: {
         guestStayAccountId: string;
-        guestId: string;
-        roomId: string;
-        checkedInAt: Date;
+        openedAt: Date;
       };
     }
   | {
       type: 'ChargeRecorded';
       data: {
-        chargeId: string;
         guestStayAccountId: string;
         amount: number;
         recordedAt: Date;
@@ -20,7 +19,6 @@ export type GuestStayAccountEvent =
   | {
       type: 'PaymentRecorded';
       data: {
-        paymentId: string;
         guestStayAccountId: string;
         amount: number;
         recordedAt: Date;
@@ -30,7 +28,7 @@ export type GuestStayAccountEvent =
       type: 'GuestCheckedOut';
       data: {
         guestStayAccountId: string;
-        checkedOutAt: Date;
+        completedAt: Date;
         groupCheckoutId?: string;
       };
     }
@@ -38,7 +36,7 @@ export type GuestStayAccountEvent =
       type: 'GuestCheckoutFailed';
       data: {
         guestStayAccountId: string;
-        reason: 'NotCheckedIn' | 'BalanceNotSettled';
+        reason: FailureReason;
         failedAt: Date;
         groupCheckoutId?: string;
       };

@@ -20,9 +20,9 @@ import { beforeEach, describe, it } from 'vitest';
 describe('Business Process Tests', () => {
   it('group checkout for multiple guest stay without payments and charges should complete', async () => {
     const guestStays = [
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '2' },
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '3' },
+      { guestStayAccountId: uuid() },
+      { guestStayAccountId: uuid() },
+      { guestStayAccountId: uuid() },
     ];
     const guestStayAccountIds = guestStays.map((s) => s.guestStayAccountId);
 
@@ -31,8 +31,6 @@ describe('Business Process Tests', () => {
         type: 'CheckInGuest',
         data: {
           guestStayAccountId: guestStay.guestStayAccountId,
-          guestId: guestStay.guestId,
-          roomId: guestStay.roomId,
           now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
         },
       });
@@ -46,7 +44,7 @@ describe('Business Process Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds: guestStayAccountIds,
+        guestStayAccountIds: guestStayAccountIds,
         now,
       },
     };
@@ -64,7 +62,7 @@ describe('Business Process Tests', () => {
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
           now,
@@ -75,7 +73,7 @@ describe('Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },
@@ -92,11 +90,11 @@ describe('Business Process Tests', () => {
         data: {
           groupCheckoutId,
           guestStayAccountId: guestStayAccountIds[0]!,
-          checkedOutAt: now,
+          completedAt: now,
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[1]!,
           now,
@@ -107,7 +105,7 @@ describe('Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[1]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },
@@ -124,11 +122,11 @@ describe('Business Process Tests', () => {
         data: {
           groupCheckoutId,
           guestStayAccountId: guestStayAccountIds[1]!,
-          checkedOutAt: now,
+          completedAt: now,
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[2]!,
           now,
@@ -139,7 +137,7 @@ describe('Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[2]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },
@@ -156,7 +154,7 @@ describe('Business Process Tests', () => {
         data: {
           groupCheckoutId,
           guestStayAccountId: guestStayAccountIds[2]!,
-          checkedOutAt: now,
+          completedAt: now,
         },
       },
       {
@@ -172,9 +170,9 @@ describe('Business Process Tests', () => {
 
   it('group checkout for multiple guest stay with all stays settled should complete', async () => {
     const guestStays = [
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '2' },
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '3' },
+      { guestStayAccountId: uuid() },
+      { guestStayAccountId: uuid() },
+      { guestStayAccountId: uuid() },
     ];
     const guestStayAccountIds = guestStays.map((s) => s.guestStayAccountId);
 
@@ -188,8 +186,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
-        guestId: guestStays[0]!.guestId,
-        roomId: guestStays[0]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -216,8 +212,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
-        guestId: guestStays[1]!.guestId,
-        roomId: guestStays[1]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -244,8 +238,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
-        guestId: guestStays[2]!.guestId,
-        roomId: guestStays[2]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -285,7 +277,7 @@ describe('Business Process Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds: guestStayAccountIds,
+        guestStayAccountIds: guestStayAccountIds,
         now,
       },
     };
@@ -303,7 +295,7 @@ describe('Business Process Tests', () => {
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
           now,
@@ -314,7 +306,7 @@ describe('Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },
@@ -331,11 +323,11 @@ describe('Business Process Tests', () => {
         data: {
           groupCheckoutId,
           guestStayAccountId: guestStayAccountIds[0]!,
-          checkedOutAt: now,
+          completedAt: now,
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[1]!,
           now,
@@ -346,7 +338,7 @@ describe('Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[1]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },
@@ -363,11 +355,11 @@ describe('Business Process Tests', () => {
         data: {
           groupCheckoutId,
           guestStayAccountId: guestStayAccountIds[1]!,
-          checkedOutAt: now,
+          completedAt: now,
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[2]!,
           now,
@@ -378,7 +370,7 @@ describe('Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[2]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },
@@ -395,7 +387,7 @@ describe('Business Process Tests', () => {
         data: {
           groupCheckoutId,
           guestStayAccountId: guestStayAccountIds[2]!,
-          checkedOutAt: now,
+          completedAt: now,
         },
       },
       {
@@ -411,9 +403,9 @@ describe('Business Process Tests', () => {
 
   it('group checkout for multiple guest stay with one settled and rest unsettled should fail', async () => {
     const guestStays = [
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '2' },
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '3' },
+      { guestStayAccountId: uuid() },
+      { guestStayAccountId: uuid() },
+      { guestStayAccountId: uuid() },
     ];
     const guestStayAccountIds = guestStays.map((s) => s.guestStayAccountId);
     const amounts = [
@@ -427,8 +419,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
-        guestId: guestStays[0]!.guestId,
-        roomId: guestStays[0]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -456,8 +446,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
-        guestId: guestStays[1]!.guestId,
-        roomId: guestStays[1]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -476,8 +464,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
-        guestId: guestStays[2]!.guestId,
-        roomId: guestStays[2]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -508,7 +494,7 @@ describe('Business Process Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds: guestStayAccountIds,
+        guestStayAccountIds: guestStayAccountIds,
         now,
       },
     };
@@ -526,7 +512,7 @@ describe('Business Process Tests', () => {
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
           now,
@@ -537,7 +523,7 @@ describe('Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },
@@ -554,11 +540,11 @@ describe('Business Process Tests', () => {
         data: {
           groupCheckoutId,
           guestStayAccountId: guestStayAccountIds[0]!,
-          checkedOutAt: now,
+          completedAt: now,
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[1]!,
           now,
@@ -591,7 +577,7 @@ describe('Business Process Tests', () => {
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[2]!,
           now,
@@ -637,9 +623,9 @@ describe('Business Process Tests', () => {
 
   it('group checkout for multiple guest stay with all unsettled should fail', async () => {
     const guestStays = [
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '2' },
-      { guestStayAccountId: uuid(), guestId: uuid(), roomId: '3' },
+      { guestStayAccountId: uuid() },
+      { guestStayAccountId: uuid() },
+      { guestStayAccountId: uuid() },
     ];
     const guestStayAccountIds = guestStays.map((s) => s.guestStayAccountId);
     const amounts = [
@@ -653,8 +639,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
-        guestId: guestStays[0]!.guestId,
-        roomId: guestStays[0]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -673,8 +657,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
-        guestId: guestStays[1]!.guestId,
-        roomId: guestStays[1]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -693,8 +675,6 @@ describe('Business Process Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
-        guestId: guestStays[2]!.guestId,
-        roomId: guestStays[2]!.roomId,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -725,7 +705,7 @@ describe('Business Process Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds: guestStayAccountIds,
+        guestStayAccountIds: guestStayAccountIds,
         now,
       },
     };
@@ -743,7 +723,7 @@ describe('Business Process Tests', () => {
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
           now,
@@ -776,7 +756,7 @@ describe('Business Process Tests', () => {
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[1]!,
           now,
@@ -809,7 +789,7 @@ describe('Business Process Tests', () => {
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[2]!,
           now,

@@ -1,5 +1,5 @@
 import type { Database, MessageBus } from '../../../tools';
-import type { CheckoutGuest } from './guestStayAccountFacade';
+import type { CheckOutGuest } from './guestStayAccountFacade';
 import { GuestStayAccountFacade } from './guestStayAccountFacade';
 
 export * from './guestStayAccountFacade';
@@ -18,9 +18,9 @@ export const configureGuestStayAccounts = (options: {
     },
   );
 
-  messageBus.subscribe<CheckoutGuest>(
-    'CheckoutGuest',
-    guestStayAccountFacade.checkoutGuest,
+  messageBus.subscribe<CheckOutGuest>(
+    'CheckOutGuest',
+    guestStayAccountFacade.checkOutGuest,
   );
 
   return { guestStayAccountFacade };

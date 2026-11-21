@@ -7,7 +7,7 @@ import {
 } from './groupCheckouts';
 import {
   configureGuestStayAccounts,
-  type CheckoutGuest,
+  type CheckOutGuest,
   type GuestStayAccountEvent,
 } from './guestStayAccounts';
 import { beforeEach, describe, it } from 'vitest';
@@ -32,7 +32,7 @@ describe('Idempotency Tests', () => {
     for (const guestStayAccountId of guestStayAccountIds) {
       await guestStayAccountFacade.checkInGuest({
         type: 'CheckInGuest',
-        data: { guestStayAccountId, guestId: uuid(), roomId: '1', now },
+        data: { guestStayAccountId, now },
       });
     }
     publishedMessages.reset();
@@ -44,21 +44,21 @@ describe('Idempotency Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds: guestStayAccountIds,
+        guestStayAccountIds: guestStayAccountIds,
         now,
       },
     });
 
     const [first, second] = guestStayAccountIds as [string, string];
-    const checkoutGuest = (guestStayAccountId: string): CheckoutGuest => ({
-      type: 'CheckoutGuest',
+    const checkOutGuest = (guestStayAccountId: string): CheckOutGuest => ({
+      type: 'CheckOutGuest',
       data: { guestStayAccountId, now, groupCheckoutId },
     });
     const guestCheckedOut = (
       guestStayAccountId: string,
     ): GuestStayAccountEvent => ({
       type: 'GuestCheckedOut',
-      data: { guestStayAccountId, checkedOutAt: now, groupCheckoutId },
+      data: { guestStayAccountId, completedAt: now, groupCheckoutId },
     });
     const recordGuestCheckoutCompletion = (
       guestStayAccountId: string,
@@ -70,7 +70,7 @@ describe('Idempotency Tests', () => {
       guestStayAccountId: string,
     ): GroupCheckoutEvent => ({
       type: 'GuestCheckoutCompletionRecorded',
-      data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
+      data: { groupCheckoutId, guestStayAccountId, completedAt: now },
     });
 
     publishedMessages.shouldReceiveMessages([
@@ -83,12 +83,12 @@ describe('Idempotency Tests', () => {
           initiatedAt: now,
         },
       },
-      checkoutGuest(first),
+      checkOutGuest(first),
       guestCheckedOut(first),
       recordGuestCheckoutCompletion(first),
       guestCheckoutCompletionRecorded(first),
       recordGuestCheckoutCompletion(first),
-      checkoutGuest(second),
+      checkOutGuest(second),
       guestCheckedOut(second),
       recordGuestCheckoutCompletion(second),
       guestCheckoutCompletionRecorded(second),
@@ -101,8 +101,8 @@ describe('Idempotency Tests', () => {
         },
       },
       recordGuestCheckoutCompletion(second),
-      checkoutGuest(first),
-      checkoutGuest(second),
+      checkOutGuest(first),
+      checkOutGuest(second),
     ]);
   });
 

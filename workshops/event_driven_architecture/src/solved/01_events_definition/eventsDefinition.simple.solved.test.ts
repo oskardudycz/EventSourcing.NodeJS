@@ -5,20 +5,19 @@ import { describe, expect, it } from 'vitest';
 ///// Guest Stay Account Events ////////
 ////////////////////////////////////////
 
+export type FailureReason = 'InvalidState' | 'BalanceNotSettled';
+
 export type GuestStayAccountEvent =
   | {
       type: 'GuestCheckedIn';
       data: {
         guestStayAccountId: string;
-        guestId: string;
-        roomId: string;
-        checkedInAt: Date;
+        openedAt: Date;
       };
     }
   | {
       type: 'ChargeRecorded';
       data: {
-        chargeId: string;
         guestStayAccountId: string;
         amount: number;
         recordedAt: Date;
@@ -27,7 +26,6 @@ export type GuestStayAccountEvent =
   | {
       type: 'PaymentRecorded';
       data: {
-        paymentId: string;
         guestStayAccountId: string;
         amount: number;
         recordedAt: Date;
@@ -37,7 +35,7 @@ export type GuestStayAccountEvent =
       type: 'GuestCheckedOut';
       data: {
         guestStayAccountId: string;
-        checkedOutAt: Date;
+        completedAt: Date;
         groupCheckoutId?: string;
       };
     }
@@ -45,7 +43,7 @@ export type GuestStayAccountEvent =
       type: 'GuestCheckoutFailed';
       data: {
         guestStayAccountId: string;
-        reason: 'NotCheckedIn' | 'BalanceNotSettled';
+        reason: FailureReason;
         failedAt: Date;
         groupCheckoutId?: string;
       };
@@ -70,7 +68,7 @@ export type GroupCheckoutEvent =
       data: {
         groupCheckoutId: string;
         guestStayAccountId: string;
-        checkedOutAt: Date;
+        completedAt: Date;
       };
     }
   | {
@@ -100,9 +98,7 @@ export type GroupCheckoutEvent =
     };
 
 describe('Events definition', () => {
-  const guestId = uuid();
   const clerkId = 'room-123';
-  const roomId = 'room-123';
   const groupCheckoutId = uuid();
   const guestStayAccountId = uuid();
   const otherGuestStayAccountId = uuid();
@@ -113,16 +109,13 @@ describe('Events definition', () => {
         type: 'GuestCheckedIn',
         data: {
           guestStayAccountId,
-          guestId,
-          roomId,
-          checkedInAt: new Date(),
+          openedAt: new Date(),
         },
       },
       {
         type: 'ChargeRecorded',
         data: {
           guestStayAccountId,
-          chargeId: uuid(),
           amount: 123.45,
           recordedAt: new Date(),
         },
@@ -131,7 +124,6 @@ describe('Events definition', () => {
         type: 'PaymentRecorded',
         data: {
           guestStayAccountId,
-          paymentId: uuid(),
           amount: 123.45,
           recordedAt: new Date(),
         },
@@ -140,7 +132,7 @@ describe('Events definition', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId,
-          checkedOutAt: new Date(),
+          completedAt: new Date(),
           groupCheckoutId,
         },
       },
@@ -148,7 +140,7 @@ describe('Events definition', () => {
         type: 'GuestCheckoutFailed',
         data: {
           guestStayAccountId,
-          reason: 'NotCheckedIn',
+          reason: 'InvalidState',
           failedAt: new Date(),
           groupCheckoutId,
         },
@@ -175,7 +167,7 @@ describe('Events definition', () => {
         data: {
           guestStayAccountId,
           groupCheckoutId,
-          checkedOutAt: new Date(),
+          completedAt: new Date(),
         },
       },
       {

@@ -14,10 +14,10 @@ describe('Group Checkout Entity Definition Tests', () => {
   it('initiating group checkout succeeds', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
-    const guestStayIds = [uuid(), uuid(), uuid()];
+    const guestStayAccountIds = [uuid(), uuid(), uuid()];
     const command: InitiateGroupCheckout = {
       type: 'InitiateGroupCheckout',
-      data: { groupCheckoutId, clerkId, guestStayIds, now },
+      data: { groupCheckoutId, clerkId, guestStayAccountIds, now },
     };
 
     await groupCheckoutFacade.initiateGroupCheckout(command);
@@ -27,7 +27,7 @@ describe('Group Checkout Entity Definition Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayAccountIds: guestStayIds,
+        guestStayAccountIds: guestStayAccountIds,
         initiatedAt: now,
       },
     });
@@ -48,7 +48,7 @@ describe('Group Checkout Entity Definition Tests', () => {
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckoutCompletionRecorded',
-      data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
+      data: { groupCheckoutId, guestStayAccountId, completedAt: now },
     });
   });
 
@@ -72,21 +72,29 @@ describe('Group Checkout Entity Definition Tests', () => {
   });
 
   it('recording last guest checkout completion completes group checkout', async () => {
-    const completedGuestStayId = uuid();
-    const lastGuestStayId = uuid();
+    const completedGuestStayAccountId = uuid();
+    const lastGuestStayAccountId = uuid();
     const groupCheckoutId = await initiateGroupCheckout([
-      completedGuestStayId,
-      lastGuestStayId,
+      completedGuestStayAccountId,
+      lastGuestStayAccountId,
     ]);
     await groupCheckoutFacade.recordGuestCheckoutCompletion({
       type: 'RecordGuestCheckoutCompletion',
-      data: { groupCheckoutId, guestStayAccountId: completedGuestStayId, now },
+      data: {
+        groupCheckoutId,
+        guestStayAccountId: completedGuestStayAccountId,
+        now,
+      },
     });
     publishedMessages.reset();
 
     await groupCheckoutFacade.recordGuestCheckoutCompletion({
       type: 'RecordGuestCheckoutCompletion',
-      data: { groupCheckoutId, guestStayAccountId: lastGuestStayId, now },
+      data: {
+        groupCheckoutId,
+        guestStayAccountId: lastGuestStayAccountId,
+        now,
+      },
     });
 
     publishedMessages.shouldReceiveMessages([
@@ -94,15 +102,18 @@ describe('Group Checkout Entity Definition Tests', () => {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
           groupCheckoutId,
-          guestStayAccountId: lastGuestStayId,
-          checkedOutAt: now,
+          guestStayAccountId: lastGuestStayAccountId,
+          completedAt: now,
         },
       },
       {
         type: 'GroupCheckoutCompleted',
         data: {
           groupCheckoutId,
-          completedCheckouts: [completedGuestStayId, lastGuestStayId],
+          completedCheckouts: [
+            completedGuestStayAccountId,
+            lastGuestStayAccountId,
+          ],
           completedAt: now,
         },
       },
@@ -110,21 +121,29 @@ describe('Group Checkout Entity Definition Tests', () => {
   });
 
   it('recording last guest checkout after failure fails group checkout', async () => {
-    const failedGuestStayId = uuid();
-    const lastGuestStayId = uuid();
+    const failedGuestStayAccountId = uuid();
+    const lastGuestStayAccountId = uuid();
     const groupCheckoutId = await initiateGroupCheckout([
-      failedGuestStayId,
-      lastGuestStayId,
+      failedGuestStayAccountId,
+      lastGuestStayAccountId,
     ]);
     await groupCheckoutFacade.recordGuestCheckoutFailure({
       type: 'RecordGuestCheckoutFailure',
-      data: { groupCheckoutId, guestStayAccountId: failedGuestStayId, now },
+      data: {
+        groupCheckoutId,
+        guestStayAccountId: failedGuestStayAccountId,
+        now,
+      },
     });
     publishedMessages.reset();
 
     await groupCheckoutFacade.recordGuestCheckoutCompletion({
       type: 'RecordGuestCheckoutCompletion',
-      data: { groupCheckoutId, guestStayAccountId: lastGuestStayId, now },
+      data: {
+        groupCheckoutId,
+        guestStayAccountId: lastGuestStayAccountId,
+        now,
+      },
     });
 
     publishedMessages.shouldReceiveMessages([
@@ -132,16 +151,16 @@ describe('Group Checkout Entity Definition Tests', () => {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
           groupCheckoutId,
-          guestStayAccountId: lastGuestStayId,
-          checkedOutAt: now,
+          guestStayAccountId: lastGuestStayAccountId,
+          completedAt: now,
         },
       },
       {
         type: 'GroupCheckoutFailed',
         data: {
           groupCheckoutId,
-          completedCheckouts: [lastGuestStayId],
-          failedCheckouts: [failedGuestStayId],
+          completedCheckouts: [lastGuestStayAccountId],
+          failedCheckouts: [failedGuestStayAccountId],
           failedAt: now,
         },
       },
@@ -166,14 +185,14 @@ describe('Group Checkout Entity Definition Tests', () => {
     messageBus.use(publishedMessages.catchMessage);
   });
 
-  const initiateGroupCheckout = async (guestStayIds: string[]) => {
+  const initiateGroupCheckout = async (guestStayAccountIds: string[]) => {
     const groupCheckoutId = uuid();
     await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
         clerkId: uuid(),
-        guestStayIds,
+        guestStayAccountIds,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });

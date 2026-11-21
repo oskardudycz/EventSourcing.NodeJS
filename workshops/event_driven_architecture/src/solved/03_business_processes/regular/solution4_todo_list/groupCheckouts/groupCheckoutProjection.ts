@@ -41,7 +41,7 @@ export const GroupCheckoutProjection = (
                 current,
                 event.data.guestStayAccountId,
                 'Completed',
-                event.data.checkedOutAt,
+                event.data.completedAt,
               );
         case 'GuestCheckoutFailed':
           return current === null

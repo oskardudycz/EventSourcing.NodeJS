@@ -8,7 +8,7 @@ import {
 import {
   GuestStayAccountFacade,
   type CheckInGuest,
-  type CheckoutGuest,
+  type CheckOutGuest,
   type RecordCharge,
   type RecordPayment,
 } from '.';
@@ -18,7 +18,7 @@ describe('Guest Stay Account Idempotency Tests', () => {
   it('guest is checked in once for the same guest stay account', async () => {
     const command: CheckInGuest = {
       type: 'CheckInGuest',
-      data: { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1', now },
+      data: { guestStayAccountId: uuid(), now },
     };
     await guestStayFacade.checkInGuest(command);
 
@@ -28,9 +28,7 @@ describe('Guest Stay Account Idempotency Tests', () => {
       type: 'GuestCheckedIn',
       data: {
         guestStayAccountId: command.data.guestStayAccountId,
-        guestId: command.data.guestId,
-        roomId: command.data.roomId,
-        checkedInAt: now,
+        openedAt: now,
       },
     });
   });
@@ -83,17 +81,17 @@ describe('Guest Stay Account Idempotency Tests', () => {
     const guestStayAccountId = await checkInGuest();
     const groupCheckoutId = uuid();
 
-    const command: CheckoutGuest = {
-      type: 'CheckoutGuest',
+    const command: CheckOutGuest = {
+      type: 'CheckOutGuest',
       data: { guestStayAccountId, groupCheckoutId, now },
     };
-    await guestStayFacade.checkoutGuest(command);
+    await guestStayFacade.checkOutGuest(command);
 
-    await guestStayFacade.checkoutGuest(command);
+    await guestStayFacade.checkOutGuest(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedOut',
-      data: { guestStayAccountId, groupCheckoutId, checkedOutAt: now },
+      data: { guestStayAccountId, groupCheckoutId, completedAt: now },
     });
   });
 
@@ -115,7 +113,7 @@ describe('Guest Stay Account Idempotency Tests', () => {
     const guestStayAccountId = uuid();
     await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
-      data: { guestStayAccountId, guestId: uuid(), roomId: '1', now },
+      data: { guestStayAccountId, now },
     });
     publishedMessages.reset();
     return guestStayAccountId;

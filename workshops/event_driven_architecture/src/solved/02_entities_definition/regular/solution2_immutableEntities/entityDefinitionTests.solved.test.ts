@@ -10,7 +10,7 @@ import {
 } from '../../tools';
 import type {
   CheckInGuest,
-  CheckoutGuest,
+  CheckOutGuest,
   RecordCharge,
   RecordPayment,
 } from './guestStayAccounts';
@@ -23,7 +23,6 @@ describe('Entity Definition Tests', () => {
       type: 'RecordCharge',
       data: {
         guestStayAccountId: uuid(),
-        chargeId: uuid(),
         amount: 100,
         now,
       },
@@ -41,7 +40,6 @@ describe('Entity Definition Tests', () => {
       type: 'RecordPayment',
       data: {
         guestStayAccountId: uuid(),
-        paymentId: uuid(),
         amount: 100,
         now,
       },
@@ -55,15 +53,15 @@ describe('Entity Definition Tests', () => {
   });
 
   it('checking out a missing guest stay account fails with Entity not found', async () => {
-    const command: CheckoutGuest = {
-      type: 'CheckoutGuest',
+    const command: CheckOutGuest = {
+      type: 'CheckOutGuest',
       data: {
         guestStayAccountId: uuid(),
         now,
       },
     };
 
-    await expect(guestStayFacade.checkoutGuest(command)).rejects.toThrow(
+    await expect(guestStayFacade.checkOutGuest(command)).rejects.toThrow(
       'Entity not found',
     );
 
@@ -91,8 +89,6 @@ describe('Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now,
       },
     };
@@ -104,23 +100,18 @@ describe('Entity Definition Tests', () => {
       type: 'GuestCheckedIn',
       data: {
         guestStayAccountId: guestStayAccountId,
-        guestId: command.data.guestId,
-        roomId: command.data.roomId,
-        checkedInAt: now,
+        openedAt: now,
       },
     });
   });
 
   it('recording charge for checked in guest succeeds', async () => {
     const guestStayAccountId = uuid();
-    const chargeId = uuid();
 
     await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -135,7 +126,6 @@ describe('Entity Definition Tests', () => {
       type: 'RecordCharge',
       data: {
         guestStayAccountId,
-        chargeId,
         amount,
         now,
       },
@@ -147,7 +137,6 @@ describe('Entity Definition Tests', () => {
       type: 'ChargeRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
-        chargeId,
         amount,
         recordedAt: now,
       },
@@ -156,13 +145,10 @@ describe('Entity Definition Tests', () => {
 
   it('recording payment for checked in guest succeeds', async () => {
     const guestStayAccountId = uuid();
-    const paymentId = uuid();
     await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -177,7 +163,6 @@ describe('Entity Definition Tests', () => {
       type: 'RecordPayment',
       data: {
         guestStayAccountId,
-        paymentId,
         amount,
         now,
       },
@@ -189,7 +174,6 @@ describe('Entity Definition Tests', () => {
       type: 'PaymentRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
-        paymentId,
         amount,
         recordedAt: now,
       },
@@ -198,15 +182,11 @@ describe('Entity Definition Tests', () => {
 
   it('recording payment for checked in guest with charge succeeds', async () => {
     const guestStayAccountId = uuid();
-    const paymentId = uuid();
-    const chargeId = uuid();
 
     await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -214,7 +194,6 @@ describe('Entity Definition Tests', () => {
       type: 'RecordCharge',
       data: {
         guestStayAccountId,
-        chargeId,
         amount: faker.number.float({
           min: 2,
           max: 10,
@@ -234,7 +213,6 @@ describe('Entity Definition Tests', () => {
       type: 'RecordPayment',
       data: {
         guestStayAccountId,
-        paymentId,
         amount,
         now,
       },
@@ -246,7 +224,6 @@ describe('Entity Definition Tests', () => {
       type: 'PaymentRecorded',
       data: {
         guestStayAccountId: guestStayAccountId,
-        paymentId,
         amount,
         recordedAt: now,
       },
@@ -255,8 +232,6 @@ describe('Entity Definition Tests', () => {
 
   it('checking out guest with settled balance succeeds', async () => {
     const guestStayAccountId = uuid();
-    const paymentId = uuid();
-    const chargeId = uuid();
     const amount = faker.number.float({
       min: 10,
       max: 1000,
@@ -267,8 +242,6 @@ describe('Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -276,7 +249,6 @@ describe('Entity Definition Tests', () => {
       type: 'RecordCharge',
       data: {
         guestStayAccountId,
-        chargeId,
         amount,
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
@@ -285,28 +257,27 @@ describe('Entity Definition Tests', () => {
       type: 'RecordPayment',
       data: {
         guestStayAccountId,
-        paymentId,
         amount,
         now: new Date(now.getTime() - 60 * 60 * 1000),
       },
     });
     publishedMessages.reset();
 
-    const command: CheckoutGuest = {
-      type: 'CheckoutGuest',
+    const command: CheckOutGuest = {
+      type: 'CheckOutGuest',
       data: {
         guestStayAccountId,
         now,
       },
     };
 
-    await guestStayFacade.checkoutGuest(command);
+    await guestStayFacade.checkOutGuest(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId: guestStayAccountId,
-        checkedOutAt: now,
+        completedAt: now,
         groupCheckoutId: undefined,
       },
     });
@@ -314,8 +285,6 @@ describe('Entity Definition Tests', () => {
 
   it('checking out guest with unsettled balance fails with guest checkout failed', async () => {
     const guestStayAccountId = uuid();
-    const paymentId = uuid();
-    const chargeId = uuid();
     const amount = faker.number.float({
       min: 10,
       max: 1000,
@@ -326,8 +295,6 @@ describe('Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -335,7 +302,6 @@ describe('Entity Definition Tests', () => {
       type: 'RecordCharge',
       data: {
         guestStayAccountId,
-        chargeId,
         amount: amount + 10,
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
@@ -344,15 +310,14 @@ describe('Entity Definition Tests', () => {
       type: 'RecordPayment',
       data: {
         guestStayAccountId,
-        paymentId,
         amount,
         now: new Date(now.getTime() - 60 * 60 * 1000),
       },
     });
     publishedMessages.reset();
 
-    const command: CheckoutGuest = {
-      type: 'CheckoutGuest',
+    const command: CheckOutGuest = {
+      type: 'CheckOutGuest',
       data: {
         guestStayAccountId,
         now,
@@ -360,7 +325,7 @@ describe('Entity Definition Tests', () => {
     };
 
     try {
-      await guestStayFacade.checkoutGuest(command);
+      await guestStayFacade.checkOutGuest(command);
     } catch (exc) {
       console.log((exc as Error).message);
     }
@@ -384,8 +349,6 @@ describe('Entity Definition Tests', () => {
         type: 'CheckInGuest',
         data: {
           guestStayAccountId,
-          guestId: uuid(),
-          roomId: 'room-123',
           now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
         },
       });
@@ -399,7 +362,7 @@ describe('Entity Definition Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds: guestStays,
+        guestStayAccountIds: guestStays,
         now,
       },
     };

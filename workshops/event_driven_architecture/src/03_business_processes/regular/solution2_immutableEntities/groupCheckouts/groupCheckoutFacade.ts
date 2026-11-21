@@ -5,7 +5,7 @@ export type InitiateGroupCheckout = {
   data: {
     groupCheckoutId: string;
     clerkId: string;
-    guestStayIds: string[];
+    guestStayAccountIds: string[];
     now: Date;
   };
 };

@@ -13,7 +13,7 @@ export type GroupCheckoutEvent =
       data: {
         groupCheckoutId: string;
         guestStayAccountId: string;
-        checkedOutAt: Date;
+        completedAt: Date;
       };
     }
   | {

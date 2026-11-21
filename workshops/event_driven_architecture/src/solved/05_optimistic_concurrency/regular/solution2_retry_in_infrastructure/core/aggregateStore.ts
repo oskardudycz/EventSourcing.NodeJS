@@ -5,7 +5,7 @@ import {
 } from '../../../tools';
 
 export const AggregateStore = <
-  A extends { dequeueUncommitedEvents(): Event[] },
+  A extends { dequeueUncommittedEvents(): Event[] },
 >(
   collection: DocumentsCollection<A>,
 ) => ({
@@ -19,7 +19,7 @@ export const AggregateStore = <
 
       if (!aggregate) return [];
 
-      const events = aggregate.dequeueUncommitedEvents();
+      const events = aggregate.dequeueUncommittedEvents();
 
       if (events.length === 0) return events;
 

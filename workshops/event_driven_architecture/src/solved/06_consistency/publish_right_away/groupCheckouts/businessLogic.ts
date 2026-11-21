@@ -12,7 +12,7 @@ export type InitiateGroupCheckout = {
   data: {
     groupCheckoutId: string;
     clerkId: string;
-    guestStayIds: string[];
+    guestStayAccountIds: string[];
     now: Date;
   };
 };
@@ -47,14 +47,14 @@ export const initiateGroupCheckout = (
   if (state.status !== 'NotExisting')
     throw new Error('Group checkout already initiated!');
 
-  const { groupCheckoutId, clerkId, guestStayIds, now } = command;
+  const { groupCheckoutId, clerkId, guestStayAccountIds, now } = command;
 
   return {
     type: 'GroupCheckoutInitiated',
     data: {
       groupCheckoutId,
       clerkId: clerkId,
-      guestStayAccountIds: guestStayIds,
+      guestStayAccountIds: guestStayAccountIds,
       initiatedAt: now,
     },
   };
@@ -83,7 +83,7 @@ export const recordGuestCheckout = (
           data: {
             groupCheckoutId: command.groupCheckoutId,
             guestStayAccountId: command.guestStayAccountId,
-            checkedOutAt: command.now,
+            completedAt: command.now,
           },
         }
       : {
@@ -113,7 +113,7 @@ const finish = (
   guestStayAccounts: Record<string, CheckoutStatus>,
   now: Date,
 ): GroupCheckoutCompleted | GroupCheckoutFailed => {
-  return areAllCompleted(guestStayAccounts)
+  return !areAnyFailedCheckouts(guestStayAccounts)
     ? {
         type: 'GroupCheckoutCompleted',
         data: {
@@ -137,8 +137,9 @@ const areAnyOngoingCheckouts = (
   guestStayCheckouts: Record<string, CheckoutStatus>,
 ) => Object.values(guestStayCheckouts).some((status) => status === 'Initiated');
 
-const areAllCompleted = (guestStayCheckouts: Record<string, CheckoutStatus>) =>
-  Object.values(guestStayCheckouts).every((status) => status === 'Completed');
+const areAnyFailedCheckouts = (
+  guestStayCheckouts: Record<string, CheckoutStatus>,
+) => Object.values(guestStayCheckouts).some((status) => status === 'Failed');
 
 const checkoutsWith = (
   guestStayCheckouts: Record<string, CheckoutStatus>,

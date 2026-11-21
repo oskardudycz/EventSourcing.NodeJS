@@ -10,7 +10,7 @@ import {
 } from '../../../../tools';
 import {
   type CheckInGuest,
-  type CheckoutGuest,
+  type CheckOutGuest,
   type RecordCharge,
   type RecordPayment,
   GuestStayAccountFacade,
@@ -24,8 +24,6 @@ describe('Guest Stay Account Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now,
       },
     };
@@ -37,9 +35,7 @@ describe('Guest Stay Account Entity Definition Tests', () => {
       type: 'GuestCheckedIn',
       data: {
         guestStayAccountId: guestStayAccountId,
-        guestId: command.data.guestId,
-        roomId: command.data.roomId,
-        checkedInAt: now,
+        openedAt: now,
       },
     });
   });
@@ -52,8 +48,6 @@ describe('Guest Stay Account Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -94,8 +88,6 @@ describe('Guest Stay Account Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -138,8 +130,6 @@ describe('Guest Stay Account Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -200,8 +190,6 @@ describe('Guest Stay Account Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -225,21 +213,21 @@ describe('Guest Stay Account Entity Definition Tests', () => {
     });
     publishedMessages.reset();
 
-    const command: CheckoutGuest = {
-      type: 'CheckoutGuest',
+    const command: CheckOutGuest = {
+      type: 'CheckOutGuest',
       data: {
         guestStayAccountId,
         now,
       },
     };
 
-    await guestStayFacade.checkoutGuest(command);
+    await guestStayFacade.checkOutGuest(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId: guestStayAccountId,
-        checkedOutAt: now,
+        completedAt: now,
         groupCheckoutId: undefined,
       },
     });
@@ -259,8 +247,6 @@ describe('Guest Stay Account Entity Definition Tests', () => {
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
-        guestId: uuid(),
-        roomId: 'room-123',
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -284,8 +270,8 @@ describe('Guest Stay Account Entity Definition Tests', () => {
     });
     publishedMessages.reset();
 
-    const command: CheckoutGuest = {
-      type: 'CheckoutGuest',
+    const command: CheckOutGuest = {
+      type: 'CheckOutGuest',
       data: {
         guestStayAccountId,
         now,
@@ -293,7 +279,7 @@ describe('Guest Stay Account Entity Definition Tests', () => {
     };
 
     try {
-      await guestStayFacade.checkoutGuest(command);
+      await guestStayFacade.checkOutGuest(command);
     } catch (exc) {
       console.log((exc as Error).message);
     }

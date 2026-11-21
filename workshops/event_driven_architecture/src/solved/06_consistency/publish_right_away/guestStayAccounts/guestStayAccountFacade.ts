@@ -3,7 +3,7 @@ import {
   evolve,
   initial,
   type CheckInGuest,
-  type CheckoutGuest,
+  type CheckOutGuest,
   type GuestStayAccount,
   type RecordCharge,
   type RecordPayment,
@@ -96,7 +96,7 @@ export const GuestStayAccountFacade = (options: {
         events,
       );
     },
-    checkoutGuest: async (command: CheckoutGuest) => {
+    checkOutGuest: async (command: CheckOutGuest) => {
       const events = await retryOnConflict(async () => {
         const existing = await accounts.get(command.data.guestStayAccountId);
         const account = existing?.document ?? initial;

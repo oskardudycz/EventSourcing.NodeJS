@@ -12,8 +12,6 @@ export type CheckInGuest = {
   type: 'CheckInGuest';
   data: {
     guestStayAccountId: string;
-    guestId: string;
-    roomId: string;
     now: Date;
   };
 };
@@ -21,7 +19,6 @@ export type RecordCharge = {
   type: 'RecordCharge';
   data: {
     guestStayAccountId: string;
-    chargeId: string;
     amount: number;
     now: Date;
   };
@@ -31,14 +28,13 @@ export type RecordPayment = {
   type: 'RecordPayment';
   data: {
     guestStayAccountId: string;
-    paymentId: string;
     amount: number;
     now: Date;
   };
 };
 
-export type CheckoutGuest = {
-  type: 'CheckoutGuest';
+export type CheckOutGuest = {
+  type: 'CheckOutGuest';
   data: {
     guestStayAccountId: string;
     now: Date;
@@ -47,7 +43,7 @@ export type CheckoutGuest = {
 };
 
 export type GuestStayAccountCommand =
-  CheckInGuest | RecordCharge | RecordPayment | CheckoutGuest;
+  CheckInGuest | RecordCharge | RecordPayment | CheckOutGuest;
 
 export const checkInGuest = ({
   data: command,
@@ -55,10 +51,8 @@ export const checkInGuest = ({
   return {
     type: 'GuestCheckedIn',
     data: {
-      guestId: command.guestId,
-      roomId: command.roomId,
       guestStayAccountId: command.guestStayAccountId,
-      checkedInAt: command.now,
+      openedAt: command.now,
     },
   };
 };
@@ -67,14 +61,13 @@ export const recordCharge = (
   { data: command }: RecordCharge,
   state: GuestStayAccount,
 ): ChargeRecorded => {
-  if (state.status !== 'CheckedIn')
+  if (state.status !== 'Open')
     throw Error('Guest account is already checked out!');
 
   return {
     type: 'ChargeRecorded',
     data: {
       guestStayAccountId: command.guestStayAccountId,
-      chargeId: command.chargeId,
       amount: command.amount,
       recordedAt: command.now,
     },
@@ -85,31 +78,30 @@ export const recordPayment = (
   { data: command }: RecordPayment,
   state: GuestStayAccount,
 ): PaymentRecorded => {
-  if (state.status !== 'CheckedIn')
+  if (state.status !== 'Open')
     throw Error('Guest account is already checked out!');
 
   return {
     type: 'PaymentRecorded',
     data: {
       guestStayAccountId: command.guestStayAccountId,
-      paymentId: command.paymentId,
       amount: command.amount,
       recordedAt: command.now,
     },
   };
 };
 
-export const checkoutGuest = (
-  { data: command }: CheckoutGuest,
+export const checkOutGuest = (
+  { data: command }: CheckOutGuest,
   state: GuestStayAccount,
 ): GuestCheckedOut | GuestCheckoutFailed => {
-  if (state.status !== 'CheckedIn')
+  if (state.status !== 'Open')
     return {
       type: 'GuestCheckoutFailed',
       data: {
         guestStayAccountId: command.guestStayAccountId,
         groupCheckoutId: command.groupCheckoutId,
-        reason: 'NotCheckedIn',
+        reason: 'InvalidState',
         failedAt: command.now,
       },
     };
@@ -132,7 +124,7 @@ export const checkoutGuest = (
     data: {
       guestStayAccountId: command.guestStayAccountId,
       groupCheckoutId: command.groupCheckoutId,
-      checkedOutAt: command.now,
+      completedAt: command.now,
     },
   };
 };
@@ -149,8 +141,8 @@ export const decide = (
       return [recordCharge(command, state)];
     case 'RecordPayment':
       return [recordPayment(command, state)];
-    case 'CheckoutGuest':
-      return [checkoutGuest(command, state)];
+    case 'CheckOutGuest':
+      return [checkOutGuest(command, state)];
     default: {
       const _exhaustiveCheck: never = type;
       throw new Error(

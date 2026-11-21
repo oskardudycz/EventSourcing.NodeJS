@@ -36,7 +36,7 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
     const guestStayAccountId = uuid();
     await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
-      data: { guestStayAccountId, guestId: uuid(), roomId: 'O-1', now },
+      data: { guestStayAccountId, now },
     });
     await runBackgroundJobsUntilIdle(backgroundJobs, publishedMessages);
     publishedMessages.reset();
@@ -68,8 +68,8 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
     await runBackgroundJobsUntilIdle(backgroundJobs, publishedMessages);
     publishedMessages.reset();
 
-    await guestStayFacade.checkoutGuest({
-      type: 'CheckoutGuest',
+    await guestStayFacade.checkOutGuest({
+      type: 'CheckOutGuest',
       data: { guestStayAccountId, now },
     });
 
@@ -78,7 +78,7 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId,
-        checkedOutAt: now,
+        completedAt: now,
         groupCheckoutId: undefined,
       },
     });
@@ -88,8 +88,8 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
     const guestStayAccountId = await checkInGuest();
 
     await Promise.allSettled([
-      guestStayFacade.checkoutGuest({
-        type: 'CheckoutGuest',
+      guestStayFacade.checkOutGuest({
+        type: 'CheckOutGuest',
         data: { guestStayAccountId, now },
       }),
       guestStayFacade.recordCharge({

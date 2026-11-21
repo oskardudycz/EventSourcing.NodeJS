@@ -1,6 +1,6 @@
 import type { MessageBus } from '../../../tools';
 import type {
-  CheckoutGuest,
+  CheckOutGuest,
   GuestCheckedOut,
   GuestCheckoutFailed,
 } from '../guestStayAccounts';
@@ -16,9 +16,9 @@ export const GroupCheckoutSaga = (options: { messageBus: MessageBus }) => {
 
   return {
     onGroupCheckoutInitiated: ({ data: event }: GroupCheckoutInitiated) =>
-      messageBus.publish<CheckoutGuest>(
+      messageBus.publish<CheckOutGuest>(
         event.guestStayAccountIds.map((id) => ({
-          type: 'CheckoutGuest',
+          type: 'CheckOutGuest',
           data: {
             guestStayAccountId: id,
             now: event.initiatedAt,
@@ -35,7 +35,7 @@ export const GroupCheckoutSaga = (options: { messageBus: MessageBus }) => {
           data: {
             groupCheckoutId: event.groupCheckoutId,
             guestStayAccountId: event.guestStayAccountId,
-            now: event.checkedOutAt,
+            now: event.completedAt,
           },
         },
       ]);

@@ -3,7 +3,7 @@ import {
   evolve,
   initial,
   type CheckInGuest,
-  type CheckoutGuest,
+  type CheckOutGuest,
   type GuestStayAccount,
   type GuestStayAccountEvent,
   type RecordCharge,
@@ -64,7 +64,7 @@ export const GuestStayAccountFacade = (options: {
 
         return decide(command, state);
       }),
-    checkoutGuest: (command: CheckoutGuest) =>
+    checkOutGuest: (command: CheckOutGuest) =>
       handle(command.data.guestStayAccountId, (state) =>
         state.status === 'NotExisting' ? [] : decide(command, state),
       ),

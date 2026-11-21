@@ -1,5 +1,5 @@
 import type {
-  CheckoutGuest,
+  CheckOutGuest,
   GuestCheckedOut,
   GuestCheckoutFailed,
 } from '../guestStayAccounts';
@@ -14,7 +14,7 @@ export type GroupCheckoutSagaEvent =
   GroupCheckoutInitiated | GuestCheckedOut | GuestCheckoutFailed;
 
 export type GroupCheckoutSagaCommand =
-  CheckoutGuest | RecordGuestCheckoutCompletion | RecordGuestCheckoutFailure;
+  CheckOutGuest | RecordGuestCheckoutCompletion | RecordGuestCheckoutFailure;
 
 export const GroupCheckoutSaga = ({
   type,
@@ -24,7 +24,7 @@ export const GroupCheckoutSaga = ({
     case 'GroupCheckoutInitiated': {
       return event.guestStayAccountIds.map<GroupCheckoutSagaCommand>((id) => {
         return {
-          type: 'CheckoutGuest',
+          type: 'CheckOutGuest',
           data: {
             guestStayAccountId: id,
             now: event.initiatedAt,
@@ -42,7 +42,7 @@ export const GroupCheckoutSaga = ({
           data: {
             groupCheckoutId: event.groupCheckoutId,
             guestStayAccountId: event.guestStayAccountId,
-            now: event.checkedOutAt,
+            now: event.completedAt,
           },
         },
       ];

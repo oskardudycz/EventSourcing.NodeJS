@@ -15,7 +15,7 @@ export type GuestCheckoutCompletionRecorded = {
   data: {
     groupCheckoutId: string;
     guestStayAccountId: string;
-    checkedOutAt: Date;
+    completedAt: Date;
   };
 };
 
@@ -57,11 +57,9 @@ export type GroupCheckoutEvent =
 export type CheckoutStatus =
   'NotExisting' | 'Initiated' | 'Completed' | 'Failed';
 
-export type GroupCheckoutStatus = 'NotExisting' | 'Initiated' | 'Finished';
-
 export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
   private groupCheckoutId: string = undefined!;
-  private status: GroupCheckoutStatus = 'NotExisting';
+  private status: CheckoutStatus = 'NotExisting';
   private guestStayCheckouts: Record<string, CheckoutStatus> = {};
 
   // Public constructor without parameters, used when loading from the database
@@ -72,7 +70,7 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
   static initiate(data: {
     groupCheckoutId: string;
     clerkId: string;
-    guestStayIds: string[];
+    guestStayAccountIds: string[];
     now: Date;
   }): GroupCheckout {
     const groupCheckout = new GroupCheckout();
@@ -82,7 +80,7 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
       data: {
         groupCheckoutId: data.groupCheckoutId,
         clerkId: data.clerkId,
-        guestStayAccountIds: data.guestStayIds,
+        guestStayAccountIds: data.guestStayAccountIds,
         initiatedAt: data.now,
       },
     });
@@ -99,7 +97,7 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
       data: {
         groupCheckoutId: this.groupCheckoutId,
         guestStayAccountId: data.guestStayAccountId,
-        checkedOutAt: data.now,
+        completedAt: data.now,
       },
     });
 
@@ -124,7 +122,7 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
 
   private finish(now: Date): void {
     this.enqueue(
-      this.areAllCompleted()
+      !this.areAnyFailedCheckouts()
         ? {
             type: 'GroupCheckoutCompleted',
             data: {
@@ -151,9 +149,9 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
     );
   }
 
-  private areAllCompleted(): boolean {
-    return Object.values(this.guestStayCheckouts).every(
-      (status) => status === 'Completed',
+  private areAnyFailedCheckouts(): boolean {
+    return Object.values(this.guestStayCheckouts).some(
+      (status) => status === 'Failed',
     );
   }
 
@@ -187,7 +185,8 @@ export class GroupCheckout extends Aggregate<GroupCheckoutEvent> {
       case 'GroupCheckoutFailed': {
         if (this.status !== 'Initiated') return;
 
-        this.status = 'Finished';
+        this.status =
+          type === 'GroupCheckoutCompleted' ? 'Completed' : 'Failed';
         return;
       }
       default: {

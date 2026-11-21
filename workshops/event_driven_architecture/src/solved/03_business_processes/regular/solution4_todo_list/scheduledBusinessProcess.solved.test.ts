@@ -70,8 +70,6 @@ describe('Scheduled Business Process Tests', () => {
         type: 'CheckInGuest',
         data: {
           guestStayAccountId,
-          guestId: uuid(),
-          roomId: uuid(),
           now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
         },
       });
@@ -85,7 +83,7 @@ describe('Scheduled Business Process Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds: guestStayAccountIds,
+        guestStayAccountIds: guestStayAccountIds,
         now,
       },
     });
@@ -101,7 +99,7 @@ describe('Scheduled Business Process Tests', () => {
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
           now,
@@ -112,12 +110,12 @@ describe('Scheduled Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[0]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },
       {
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: {
           guestStayAccountId: guestStayAccountIds[1]!,
           now,
@@ -128,7 +126,7 @@ describe('Scheduled Business Process Tests', () => {
         type: 'GuestCheckedOut',
         data: {
           guestStayAccountId: guestStayAccountIds[1]!,
-          checkedOutAt: now,
+          completedAt: now,
           groupCheckoutId,
         },
       },

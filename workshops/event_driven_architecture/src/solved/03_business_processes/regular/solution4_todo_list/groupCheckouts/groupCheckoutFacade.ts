@@ -1,5 +1,5 @@
 import type { MessageBus } from '../../../tools';
-import type { CheckoutGuest } from '../guestStayAccounts';
+import type { CheckOutGuest } from '../guestStayAccounts';
 import type { GroupCheckoutInitiated } from './groupCheckout';
 
 export type InitiateGroupCheckout = {
@@ -7,7 +7,7 @@ export type InitiateGroupCheckout = {
   data: {
     groupCheckoutId: string;
     clerkId: string;
-    guestStayIds: string[];
+    guestStayAccountIds: string[];
     now: Date;
   };
 };
@@ -19,24 +19,26 @@ export const GroupCheckoutFacade = (options: { messageBus: MessageBus }) => {
 
   return {
     initiateGroupCheckout: async ({ data: command }: InitiateGroupCheckout) => {
-      await messageBus.publish<GroupCheckoutInitiated | CheckoutGuest>([
+      await messageBus.publish<GroupCheckoutInitiated | CheckOutGuest>([
         {
           type: 'GroupCheckoutInitiated',
           data: {
             groupCheckoutId: command.groupCheckoutId,
             clerkId: command.clerkId,
-            guestStayAccountIds: command.guestStayIds,
+            guestStayAccountIds: command.guestStayAccountIds,
             initiatedAt: command.now,
           },
         },
-        ...command.guestStayIds.map((guestStayAccountId): CheckoutGuest => ({
-          type: 'CheckoutGuest',
-          data: {
-            guestStayAccountId,
-            now: command.now,
-            groupCheckoutId: command.groupCheckoutId,
-          },
-        })),
+        ...command.guestStayAccountIds.map(
+          (guestStayAccountId): CheckOutGuest => ({
+            type: 'CheckOutGuest',
+            data: {
+              guestStayAccountId,
+              now: command.now,
+              groupCheckoutId: command.groupCheckoutId,
+            },
+          }),
+        ),
       ]);
     },
   };

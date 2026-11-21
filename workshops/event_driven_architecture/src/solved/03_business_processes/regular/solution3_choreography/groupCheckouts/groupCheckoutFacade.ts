@@ -1,6 +1,6 @@
 import type { Database, MessageBus } from '../../../tools';
 import type {
-  CheckoutGuest,
+  CheckOutGuest,
   GuestCheckedOut,
   GuestCheckoutFailed,
 } from '../guestStayAccounts';
@@ -34,9 +34,9 @@ export const GroupCheckoutFacade = (options: {
       );
       await messageBus.publish([event]);
 
-      await messageBus.publish<CheckoutGuest>(
+      await messageBus.publish<CheckOutGuest>(
         event.data.guestStayAccountIds.map((guestStayAccountId) => ({
-          type: 'CheckoutGuest',
+          type: 'CheckOutGuest',
           data: {
             guestStayAccountId,
             now: event.data.initiatedAt,
@@ -66,7 +66,7 @@ export const GroupCheckoutFacade = (options: {
               data: {
                 groupCheckoutId: event.data.groupCheckoutId,
                 guestStayAccountId: event.data.guestStayAccountId,
-                now: event.data.checkedOutAt,
+                now: event.data.completedAt,
               },
             }
           : {

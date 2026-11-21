@@ -5,8 +5,6 @@ export type CheckInGuest = {
   type: 'CheckInGuest';
   data: {
     guestStayAccountId: string;
-    guestId: string;
-    roomId: string;
     now: Date;
   };
 };
@@ -30,8 +28,8 @@ export type RecordPayment = {
   };
 };
 
-export type CheckoutGuest = {
-  type: 'CheckoutGuest';
+export type CheckOutGuest = {
+  type: 'CheckOutGuest';
   data: {
     guestStayAccountId: string;
     now: Date;
@@ -40,7 +38,7 @@ export type CheckoutGuest = {
 };
 
 export type GuestStayAccountCommand =
-  CheckInGuest | RecordCharge | RecordPayment | CheckoutGuest;
+  CheckInGuest | RecordCharge | RecordPayment | CheckOutGuest;
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
@@ -57,9 +55,9 @@ export const GuestStayAccountFacade = (options: {
     checkInGuest: async (command: CheckInGuest) => {
       if (await accounts.get(command.data.guestStayAccountId)) return;
 
-      const account = GuestStayAccount.checkInGuest(command.data);
+      const account = GuestStayAccount.checkIn(command.data);
 
-      const events = account.dequeueUncommitedEvents();
+      const events = account.dequeueUncommittedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
 
@@ -74,7 +72,7 @@ export const GuestStayAccountFacade = (options: {
 
       account.recordCharge(command.data);
 
-      const events = account.dequeueUncommitedEvents();
+      const events = account.dequeueUncommittedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
 
@@ -89,22 +87,22 @@ export const GuestStayAccountFacade = (options: {
 
       account.recordPayment(command.data);
 
-      const events = account.dequeueUncommitedEvents();
+      const events = account.dequeueUncommittedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
 
       await messageBus.publish(events);
     },
-    checkoutGuest: async (command: CheckoutGuest) => {
+    checkOutGuest: async (command: CheckOutGuest) => {
       const account = await accounts.get(command.data.guestStayAccountId);
 
       if (!account) {
         return;
       }
 
-      account.checkoutGuest(command.data);
+      account.checkout(command.data);
 
-      const events = account.dequeueUncommitedEvents();
+      const events = account.dequeueUncommittedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
 

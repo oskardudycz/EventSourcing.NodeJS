@@ -10,7 +10,7 @@ export type InitiateGroupCheckout = {
   data: {
     groupCheckoutId: string;
     clerkId: string;
-    guestStayIds: string[];
+    guestStayAccountIds: string[];
     now: Date;
   };
 };
@@ -59,7 +59,7 @@ export const GroupCheckoutFacade = (options: {
 
       if (!groupCheckout) return [];
 
-      const events = groupCheckout.dequeueUncommitedEvents();
+      const events = groupCheckout.dequeueUncommittedEvents();
 
       if (events.length === 0) return events;
 

@@ -40,26 +40,29 @@ export type GroupCheckout = {
 
 export const initiated = (
   id: string,
-  guestStayIds: string[],
+  guestStayAccountIds: string[],
   initiatedAt: Date,
 ): GroupCheckout => ({
   id,
   guestStayCheckouts: Object.fromEntries(
-    guestStayIds.map((guestStayId) => [guestStayId, 'Initiated' as const]),
+    guestStayAccountIds.map((guestStayAccountId) => [
+      guestStayAccountId,
+      'Initiated' as const,
+    ]),
   ),
   updatedAt: initiatedAt,
 });
 
 export const withCheckout = (
   groupCheckout: GroupCheckout,
-  guestStayId: string,
+  guestStayAccountId: string,
   status: CheckoutStatus,
   at: Date,
 ): GroupCheckout => ({
   ...groupCheckout,
   guestStayCheckouts: {
     ...groupCheckout.guestStayCheckouts,
-    [guestStayId]: status,
+    [guestStayAccountId]: status,
   },
   updatedAt: at,
 });
@@ -76,4 +79,4 @@ export const checkoutsWith = (
 ): string[] =>
   Object.entries(guestStayCheckouts)
     .filter(([, guestStayStatus]) => guestStayStatus === status)
-    .map(([guestStayId]) => guestStayId);
+    .map(([guestStayAccountId]) => guestStayAccountId);

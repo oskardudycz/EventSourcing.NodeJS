@@ -2,9 +2,7 @@ export type GuestCheckedIn = {
   type: 'GuestCheckedIn';
   data: {
     guestStayAccountId: string;
-    guestId: string;
-    roomId: string;
-    checkedInAt: Date;
+    openedAt: Date;
   };
 };
 export type ChargeRecorded = {
@@ -29,15 +27,17 @@ export type GuestCheckedOut = {
   type: 'GuestCheckedOut';
   data: {
     guestStayAccountId: string;
-    checkedOutAt: Date;
+    completedAt: Date;
     groupCheckoutId?: string;
   };
 };
+export type FailureReason = 'InvalidState' | 'BalanceNotSettled';
+
 export type GuestCheckoutFailed = {
   type: 'GuestCheckoutFailed';
   data: {
     guestStayAccountId: string;
-    reason: 'NotCheckedIn' | 'BalanceNotSettled';
+    reason: FailureReason;
     failedAt: Date;
     groupCheckoutId?: string;
   };
@@ -53,12 +53,14 @@ export type GuestStayAccountEvent =
 export type GuestStayAccount =
   | { status: 'NotExisting' }
   | {
-      status: 'CheckedIn';
+      status: 'Open';
       balance: number;
       recordedChargeIds: string[];
       recordedPaymentIds: string[];
     }
   | { status: 'CheckedOut'; groupCheckoutId?: string | undefined };
+
+export type GuestStayAccountStatus = GuestStayAccount['status'];
 
 export const initial: GuestStayAccount = {
   status: 'NotExisting',
@@ -71,13 +73,13 @@ export const evolve = (
   switch (type) {
     case 'GuestCheckedIn':
       return {
-        status: 'CheckedIn',
+        status: 'Open',
         balance: 0,
         recordedChargeIds: [],
         recordedPaymentIds: [],
       };
     case 'ChargeRecorded':
-      if (state.status !== 'CheckedIn') {
+      if (state.status !== 'Open') {
         return state;
       }
       return {
@@ -86,7 +88,7 @@ export const evolve = (
         recordedChargeIds: [...state.recordedChargeIds, event.chargeId],
       };
     case 'PaymentRecorded':
-      if (state.status !== 'CheckedIn') {
+      if (state.status !== 'Open') {
         return state;
       }
       return {
@@ -95,7 +97,7 @@ export const evolve = (
         recordedPaymentIds: [...state.recordedPaymentIds, event.paymentId],
       };
     case 'GuestCheckedOut':
-      if (state.status !== 'CheckedIn') {
+      if (state.status !== 'Open') {
         return state;
       }
       return { status: 'CheckedOut', groupCheckoutId: event.groupCheckoutId };

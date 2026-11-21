@@ -17,10 +17,10 @@ describe('Group Checkout Idempotency Tests', () => {
   it('group checkout is initiated once for the same id', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
-    const guestStayIds = [uuid(), uuid(), uuid()];
+    const guestStayAccountIds = [uuid(), uuid(), uuid()];
     const command: InitiateGroupCheckout = {
       type: 'InitiateGroupCheckout',
-      data: { groupCheckoutId, clerkId, guestStayIds, now },
+      data: { groupCheckoutId, clerkId, guestStayAccountIds, now },
     };
     await groupCheckoutFacade.initiateGroupCheckout(command);
 
@@ -31,7 +31,7 @@ describe('Group Checkout Idempotency Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayAccountIds: guestStayIds,
+        guestStayAccountIds: guestStayAccountIds,
         initiatedAt: now,
       },
     });
@@ -40,13 +40,13 @@ describe('Group Checkout Idempotency Tests', () => {
   it('group checkout records once guest checkout completion', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
-    const guestStayIds = [uuid(), uuid(), uuid()];
+    const guestStayAccountIds = [uuid(), uuid(), uuid()];
     await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds,
+        guestStayAccountIds,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -54,7 +54,11 @@ describe('Group Checkout Idempotency Tests', () => {
 
     const command: RecordGuestCheckoutCompletion = {
       type: 'RecordGuestCheckoutCompletion',
-      data: { groupCheckoutId, guestStayAccountId: guestStayIds[0]!, now },
+      data: {
+        groupCheckoutId,
+        guestStayAccountId: guestStayAccountIds[0]!,
+        now,
+      },
     };
     await groupCheckoutFacade.recordGuestCheckoutCompletion(command);
 
@@ -64,8 +68,8 @@ describe('Group Checkout Idempotency Tests', () => {
       type: 'GuestCheckoutCompletionRecorded',
       data: {
         groupCheckoutId,
-        guestStayAccountId: guestStayIds[0]!,
-        checkedOutAt: now,
+        guestStayAccountId: guestStayAccountIds[0]!,
+        completedAt: now,
       },
     });
   });
@@ -73,13 +77,13 @@ describe('Group Checkout Idempotency Tests', () => {
   it('group checkout records once guest checkout failure', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
-    const guestStayIds = [uuid(), uuid(), uuid()];
+    const guestStayAccountIds = [uuid(), uuid(), uuid()];
     await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayIds,
+        guestStayAccountIds,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
@@ -87,7 +91,11 @@ describe('Group Checkout Idempotency Tests', () => {
 
     const command: RecordGuestCheckoutFailure = {
       type: 'RecordGuestCheckoutFailure',
-      data: { groupCheckoutId, guestStayAccountId: guestStayIds[0]!, now },
+      data: {
+        groupCheckoutId,
+        guestStayAccountId: guestStayAccountIds[0]!,
+        now,
+      },
     };
     await groupCheckoutFacade.recordGuestCheckoutFailure(command);
 
@@ -97,7 +105,7 @@ describe('Group Checkout Idempotency Tests', () => {
       type: 'GuestCheckoutFailureRecorded',
       data: {
         groupCheckoutId,
-        guestStayAccountId: guestStayIds[0]!,
+        guestStayAccountId: guestStayAccountIds[0]!,
         failedAt: now,
       },
     });
@@ -105,20 +113,28 @@ describe('Group Checkout Idempotency Tests', () => {
 
   it('group checkout completes once when the last guest checkout completion is recorded twice', async () => {
     const groupCheckoutId = uuid();
-    const guestStayIds = [uuid(), uuid()];
+    const guestStayAccountIds = [uuid(), uuid()];
     await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
-      data: { groupCheckoutId, clerkId: uuid(), guestStayIds, now },
+      data: { groupCheckoutId, clerkId: uuid(), guestStayAccountIds, now },
     });
     await groupCheckoutFacade.recordGuestCheckoutCompletion({
       type: 'RecordGuestCheckoutCompletion',
-      data: { groupCheckoutId, guestStayAccountId: guestStayIds[0]!, now },
+      data: {
+        groupCheckoutId,
+        guestStayAccountId: guestStayAccountIds[0]!,
+        now,
+      },
     });
     publishedMessages.reset();
 
     const command: RecordGuestCheckoutCompletion = {
       type: 'RecordGuestCheckoutCompletion',
-      data: { groupCheckoutId, guestStayAccountId: guestStayIds[1]!, now },
+      data: {
+        groupCheckoutId,
+        guestStayAccountId: guestStayAccountIds[1]!,
+        now,
+      },
     };
     await groupCheckoutFacade.recordGuestCheckoutCompletion(command);
 
@@ -129,15 +145,15 @@ describe('Group Checkout Idempotency Tests', () => {
         type: 'GuestCheckoutCompletionRecorded',
         data: {
           groupCheckoutId,
-          guestStayAccountId: guestStayIds[1]!,
-          checkedOutAt: now,
+          guestStayAccountId: guestStayAccountIds[1]!,
+          completedAt: now,
         },
       },
       {
         type: 'GroupCheckoutCompleted',
         data: {
           groupCheckoutId,
-          completedCheckouts: guestStayIds,
+          completedCheckouts: guestStayAccountIds,
           completedAt: now,
         },
       },

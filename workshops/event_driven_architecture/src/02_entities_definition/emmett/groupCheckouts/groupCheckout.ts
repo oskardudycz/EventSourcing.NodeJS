@@ -15,7 +15,7 @@ export type GuestCheckoutCompletionRecorded = Event<
   {
     groupCheckoutId: string;
     guestStayAccountId: string;
-    checkedOutAt: Date;
+    completedAt: Date;
   }
 >;
 

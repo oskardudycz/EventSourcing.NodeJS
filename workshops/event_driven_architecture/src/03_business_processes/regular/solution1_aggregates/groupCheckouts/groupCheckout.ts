@@ -15,7 +15,7 @@ export type GuestCheckoutCompletionRecorded = {
   data: {
     groupCheckoutId: string;
     guestStayAccountId: string;
-    checkedOutAt: Date;
+    completedAt: Date;
   };
 };
 

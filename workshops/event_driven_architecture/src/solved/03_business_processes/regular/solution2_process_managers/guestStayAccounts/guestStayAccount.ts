@@ -4,15 +4,12 @@ export type GuestCheckedIn = {
   type: 'GuestCheckedIn';
   data: {
     guestStayAccountId: string;
-    guestId: string;
-    roomId: string;
-    checkedInAt: Date;
+    openedAt: Date;
   };
 };
 export type ChargeRecorded = {
   type: 'ChargeRecorded';
   data: {
-    chargeId: string;
     guestStayAccountId: string;
     amount: number;
     recordedAt: Date;
@@ -21,7 +18,6 @@ export type ChargeRecorded = {
 export type PaymentRecorded = {
   type: 'PaymentRecorded';
   data: {
-    paymentId: string;
     guestStayAccountId: string;
     amount: number;
     recordedAt: Date;
@@ -31,15 +27,17 @@ export type GuestCheckedOut = {
   type: 'GuestCheckedOut';
   data: {
     guestStayAccountId: string;
-    checkedOutAt: Date;
+    completedAt: Date;
     groupCheckoutId?: string;
   };
 };
+export type FailureReason = 'InvalidState' | 'BalanceNotSettled';
+
 export type GuestCheckoutFailed = {
   type: 'GuestCheckoutFailed';
   data: {
     guestStayAccountId: string;
-    reason: 'NotCheckedIn' | 'BalanceNotSettled';
+    reason: FailureReason;
     failedAt: Date;
     groupCheckoutId?: string;
   };
@@ -52,7 +50,7 @@ export type GuestStayAccountEvent =
   | GuestCheckedOut
   | GuestCheckoutFailed;
 
-export type GuestStayAccountStatus = 'NotExisting' | 'CheckedIn' | 'CheckedOut';
+export type GuestStayAccountStatus = 'NotExisting' | 'Open' | 'CheckedOut';
 
 export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
   private guestStayAccountId: string = undefined!;
@@ -64,9 +62,7 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
     super();
   }
 
-  static checkInGuest(data: {
-    guestId: string;
-    roomId: string;
+  static checkIn(data: {
     guestStayAccountId: string;
     now: Date;
   }): GuestStayAccount {
@@ -75,10 +71,8 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
     account.enqueue({
       type: 'GuestCheckedIn',
       data: {
-        guestId: data.guestId,
-        roomId: data.roomId,
         guestStayAccountId: data.guestStayAccountId,
-        checkedInAt: data.now,
+        openedAt: data.now,
       },
     });
 
@@ -86,19 +80,17 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
   }
 
   recordCharge(data: {
-    chargeId: string;
     guestStayAccountId: string;
     amount: number;
     now: Date;
   }): void {
-    if (this.status !== 'CheckedIn')
+    if (this.status !== 'Open')
       throw Error('Guest account is already checked out!');
 
     this.enqueue({
       type: 'ChargeRecorded',
       data: {
         guestStayAccountId: this.guestStayAccountId,
-        chargeId: data.chargeId,
         amount: data.amount,
         recordedAt: data.now,
       },
@@ -106,36 +98,31 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
   }
 
   recordPayment(data: {
-    paymentId: string;
     guestStayAccountId: string;
     amount: number;
     now: Date;
   }): void {
-    if (this.status !== 'CheckedIn')
+    if (this.status !== 'Open')
       throw Error('Guest account is already checked out!');
 
     this.enqueue({
       type: 'PaymentRecorded',
       data: {
         guestStayAccountId: this.guestStayAccountId,
-        paymentId: data.paymentId,
         amount: data.amount,
         recordedAt: data.now,
       },
     });
   }
 
-  checkoutGuest(data: {
-    groupCheckoutId?: string | undefined;
-    now: Date;
-  }): void {
-    if (this.status !== 'CheckedIn') {
+  checkout(data: { groupCheckoutId?: string | undefined; now: Date }): void {
+    if (this.status !== 'Open') {
       this.enqueue({
         type: 'GuestCheckoutFailed',
         data: {
           guestStayAccountId: this.guestStayAccountId,
           groupCheckoutId: data.groupCheckoutId,
-          reason: 'NotCheckedIn',
+          reason: 'InvalidState',
           failedAt: data.now,
         },
       });
@@ -160,7 +147,7 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
             data: {
               guestStayAccountId: this.guestStayAccountId,
               groupCheckoutId: data.groupCheckoutId,
-              checkedOutAt: data.now,
+              completedAt: data.now,
             },
           },
     );
@@ -170,26 +157,26 @@ export class GuestStayAccount extends Aggregate<GuestStayAccountEvent> {
     switch (event.type) {
       case 'GuestCheckedIn': {
         this.guestStayAccountId = event.data.guestStayAccountId;
-        this.status = 'CheckedIn';
+        this.status = 'Open';
         this.balance = 0;
         return;
       }
       case 'ChargeRecorded': {
-        if (this.status !== 'CheckedIn') return;
+        if (this.status !== 'Open') return;
 
         this.balance += event.data.amount;
 
         return;
       }
       case 'PaymentRecorded': {
-        if (this.status !== 'CheckedIn') return;
+        if (this.status !== 'Open') return;
 
         this.balance -= event.data.amount;
 
         return;
       }
       case 'GuestCheckedOut': {
-        if (this.status !== 'CheckedIn') return;
+        if (this.status !== 'Open') return;
 
         this.status = 'CheckedOut';
 

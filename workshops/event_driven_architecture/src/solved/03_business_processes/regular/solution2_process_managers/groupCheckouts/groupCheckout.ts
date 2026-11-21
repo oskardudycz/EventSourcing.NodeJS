@@ -1,6 +1,6 @@
 import { ProcessManager } from '../core';
 import type {
-  CheckoutGuest,
+  CheckOutGuest,
   GuestCheckedOut,
   GuestCheckoutFailed,
 } from '../guestStayAccounts';
@@ -21,7 +21,7 @@ export type GuestCheckoutCompletionRecorded = {
   data: {
     groupCheckoutId: string;
     guestStayAccountId: string;
-    checkedOutAt: Date;
+    completedAt: Date;
   };
 };
 
@@ -64,7 +64,7 @@ export type CheckoutStatus =
   'NotExisting' | 'Initiated' | 'Completed' | 'Failed';
 
 export class GroupCheckout extends ProcessManager<
-  CheckoutGuest,
+  CheckOutGuest,
   GroupCheckoutEvent
 > {
   private groupCheckoutId: string = undefined!;
@@ -77,7 +77,7 @@ export class GroupCheckout extends ProcessManager<
   }
 
   static initiate({ data: command }: InitiateGroupCheckout): GroupCheckout {
-    const { groupCheckoutId, clerkId, guestStayIds, now } = command;
+    const { groupCheckoutId, clerkId, guestStayAccountIds, now } = command;
     const groupCheckout = new GroupCheckout();
 
     groupCheckout.enqueue({
@@ -85,14 +85,14 @@ export class GroupCheckout extends ProcessManager<
       data: {
         groupCheckoutId,
         clerkId: clerkId,
-        guestStayAccountIds: guestStayIds,
+        guestStayAccountIds: guestStayAccountIds,
         initiatedAt: now,
       },
     });
 
-    for (const guestStayAccountId of guestStayIds) {
+    for (const guestStayAccountId of guestStayAccountIds) {
       groupCheckout.schedule({
-        type: 'CheckoutGuest',
+        type: 'CheckOutGuest',
         data: { guestStayAccountId, groupCheckoutId, now },
       });
     }
@@ -109,12 +109,12 @@ export class GroupCheckout extends ProcessManager<
       data: {
         groupCheckoutId: event.groupCheckoutId,
         guestStayAccountId: event.guestStayAccountId,
-        checkedOutAt: event.checkedOutAt,
+        completedAt: event.completedAt,
       },
     });
     this.guestStayCheckouts[event.guestStayAccountId] = 'Completed';
 
-    if (!this.areAnyOngoingCheckouts()) this.finish(event.checkedOutAt);
+    if (!this.areAnyOngoingCheckouts()) this.finish(event.completedAt);
   }
 
   onGuestCheckoutFailed({ data: event }: GuestCheckoutFailed): void {
@@ -140,9 +140,9 @@ export class GroupCheckout extends ProcessManager<
     );
   }
 
-  private areAllCompleted(): boolean {
-    return Object.values(this.guestStayCheckouts).every(
-      (status) => status === 'Completed',
+  private areAnyFailedCheckouts(): boolean {
+    return Object.values(this.guestStayCheckouts).some(
+      (status) => status === 'Failed',
     );
   }
 
@@ -154,7 +154,7 @@ export class GroupCheckout extends ProcessManager<
 
   private finish(now: Date): void {
     this.enqueue(
-      this.areAllCompleted()
+      !this.areAnyFailedCheckouts()
         ? {
             type: 'GroupCheckoutCompleted',
             data: {

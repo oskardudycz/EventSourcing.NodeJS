@@ -6,7 +6,7 @@ export type InitiateGroupCheckout = {
   data: {
     groupCheckoutId: string;
     clerkId: string;
-    guestStayIds: string[];
+    guestStayAccountIds: string[];
     now: Date;
   };
 };
@@ -51,7 +51,7 @@ export const GroupCheckoutFacade = (options: {
 
       const groupCheckout = GroupCheckout.initiate(command.data);
 
-      const events = groupCheckout.dequeueUncommitedEvents();
+      const events = groupCheckout.dequeueUncommittedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
 
@@ -70,7 +70,7 @@ export const GroupCheckoutFacade = (options: {
 
       groupCheckout.recordGuestCheckoutCompletion(command.data);
 
-      const events = groupCheckout.dequeueUncommitedEvents();
+      const events = groupCheckout.dequeueUncommittedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
 
@@ -87,7 +87,7 @@ export const GroupCheckoutFacade = (options: {
 
       groupCheckout.recordGuestCheckoutFailure(command.data);
 
-      const events = groupCheckout.dequeueUncommitedEvents();
+      const events = groupCheckout.dequeueUncommittedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
 

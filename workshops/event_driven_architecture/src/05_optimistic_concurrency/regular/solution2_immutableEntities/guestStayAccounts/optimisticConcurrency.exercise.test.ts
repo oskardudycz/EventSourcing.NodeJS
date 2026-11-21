@@ -12,15 +12,13 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
   it('guest checked in concurrently is checked in once', async () => {
     // Given
     const guestStayAccountId = uuid();
-    const guestId = uuid();
-    const roomId = 'O-1';
 
     // When
     await Promise.all(
       Array.from({ length: 10 }).map(() =>
         guestStayFacade.checkInGuest({
           type: 'CheckInGuest',
-          data: { guestStayAccountId, guestId, roomId, now },
+          data: { guestStayAccountId, now },
         }),
       ),
     );
@@ -28,7 +26,7 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
     // Then
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedIn',
-      data: { guestStayAccountId, guestId, roomId, checkedInAt: now },
+      data: { guestStayAccountId, openedAt: now },
     });
   });
 
@@ -59,8 +57,8 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
     });
     publishedMessages.reset();
 
-    await guestStayFacade.checkoutGuest({
-      type: 'CheckoutGuest',
+    await guestStayFacade.checkOutGuest({
+      type: 'CheckOutGuest',
       data: { guestStayAccountId, now },
     });
 
@@ -68,7 +66,7 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId,
-        checkedOutAt: now,
+        completedAt: now,
         groupCheckoutId: undefined,
       },
     });
@@ -101,8 +99,8 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
     // Then
     publishedMessages.reset();
 
-    await guestStayFacade.checkoutGuest({
-      type: 'CheckoutGuest',
+    await guestStayFacade.checkOutGuest({
+      type: 'CheckOutGuest',
       data: { guestStayAccountId, now },
     });
 
@@ -110,7 +108,7 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId,
-        checkedOutAt: now,
+        completedAt: now,
         groupCheckoutId: undefined,
       },
     });
@@ -125,8 +123,8 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
     await Promise.all(
       guestStayAccountIds
         .flatMap((guestStayAccountId) => [
-          guestStayFacade.checkoutGuest({
-            type: 'CheckoutGuest',
+          guestStayFacade.checkOutGuest({
+            type: 'CheckOutGuest',
             data: { guestStayAccountId, now },
           }),
           guestStayFacade.recordCharge({
@@ -175,7 +173,7 @@ describe('Guest Stay Account Optimistic Concurrency Tests', () => {
     const guestStayAccountId = uuid();
     await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
-      data: { guestStayAccountId, guestId: uuid(), roomId: 'O-1', now },
+      data: { guestStayAccountId, now },
     });
     publishedMessages.reset();
 

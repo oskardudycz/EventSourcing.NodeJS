@@ -17,9 +17,6 @@ State on 2026-11-17: Node.js `migrated_to_current_db` at `ab21cde`, .NET `migrat
 **Where the others teach something different:**
 
 - Node.js puts the events in the test file, so the attendee doesn't practise giving each module its own events.
-- Node.js events already carry `chargeId` and `paymentId`. In JVM and .NET those ids appear in 04, where they are the answer to "how do I know this charge was already recorded?". Node.js gives that answer away in 01. Its `GuestCheckedIn` also carries `guestId` and `roomId`, which no exercise uses.
-- .NET names the group checkout events differently (`GuestCheckoutCompleted`, and `GuestCheckOutFailed`, the same name as the guest stay event). The attendee meets two events with one name in two modules.
-- JVM 01 names the failure reasons `InvalidState` / `BalanceNotSettled`, but 02+ use `INVALID_STATE` / `BALANCE_NOT_SETTLED`.
 
 ## 02 Entities definition
 
@@ -93,9 +90,8 @@ So 06 drops idempotency in the one exercise where failures and retries make dupl
 3. **03 teaches coordination only:** take the repeated-result guard out of the JVM 03 solutions (it stays in 04), and keep "ignore results after the group checkout finished" in every 03 solution (add it in .NET).
 4. **Repeated commands are answered in 04 only:** remove the Node.js throws on a repeated check-in (02, 03) and a repeated initiation (03).
 5. **.NET aggregates change state from their events,** as in JVM and Node.js, from 02.
-6. **One set of event names, JVM's:** .NET group checkout events, and JVM 01 failure reasons in the 02+ style.
-7. **01 in Node.js:** events in their own files, and charge and payment ids only from 04.
-8. **Node.js aggregates saga in 03 and an aggregates variant in 06,** so both flavours have the full path.
+6. **01 in Node.js:** events in their own files.
+7. **Node.js aggregates saga in 03 and an aggregates variant in 06,** so both flavours have the full path.
 
 Then the agreed layout change: in 04–06, tests go next to the module they test, as in 03 and in Node.js, and the READMEs say so and link them.
 
@@ -106,7 +102,6 @@ Last, after everything else (Oskar, 2026-11-16): the JVM Kafka and RabbitMQ work
 - **Layout:** in 04–06, .NET and JVM keep one test file per kind at the variant root; Node.js keeps them next to the module, as all three do in 03.
 - **Test style:** Node.js tests have no `Given` / `When` / `Then` comments and keep helpers above the tests.
 - **Immutable entity shape:** a JVM decider class, Node.js functions per command, .NET methods on the record.
-- **Naming of fields and statuses:** `checkedInAt` / `CheckedInAt` / `openedAt`, `CheckoutGuest` / `CheckOutGuest`, and so on.
 - **JVM facade constructors** take a `Database` in some exercises and a collection in others.
 - **Unused code:** JVM `EventEnvelopeBase` and `Database.Collection.getAndUpdate`, .NET 02 `DictionaryExtensions` and `SagaResult.Event`.
 - **Scope extras:** JVM transactions and broker sagas; Node.js 01 `typed` / `emmett` solutions and the 02 `emmett` start; .NET `00-Modelling` (empty).
@@ -117,3 +112,7 @@ Last, after everything else (Oskar, 2026-11-16): the JVM Kafka and RabbitMQ work
 - .NET payment error said "charge"; .NET 02 aggregates `CheckOutGuest` didn't inherit the command type.
 - JVM 03 immutable exercise commands used different field names from its solution.
 - Node.js 03 and 04 READMEs link their test files.
+
+## Fixed on 2026-11-21: one set of names
+
+All three repositories, 01–06, exercises and solutions, use the same names (`specs/eda-naming-alignment/qa.md`): the group checkout events `GuestCheckoutCompletionRecorded` / `GuestCheckoutFailureRecorded` and the guest stay `GuestCheckoutFailed` in .NET; `guestStayAccountId` and `groupCheckoutId` in every command and event; `now` on every command; `openedAt` / `completedAt`; `CheckOutGuest`; `FailureReason` (`InvalidState`, `BalanceNotSettled`) and `GuestStayAccountStatus` (`Open`, `CheckedOut`, `NotExisting`); the group checkout status `Completed` / `Failed`; the group checkout's private `finish`; `GroupCheckout` and `GuestStayAccountFacade` (from 03) in .NET. Node.js lost `guestId` / `roomId`, and its `chargeId` / `paymentId` appear from 04, as in JVM and .NET. Language idioms stay (Node.js `businessLogic.ts` functions and saga `on*` handlers, .NET methods on records).

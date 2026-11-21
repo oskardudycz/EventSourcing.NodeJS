@@ -13,7 +13,7 @@ export type GuestCheckoutCompletionRecorded = {
   data: {
     groupCheckoutId: string;
     guestStayAccountId: string;
-    checkedOutAt: Date;
+    completedAt: Date;
   };
 };
 
@@ -61,7 +61,7 @@ export type GroupCheckout =
       status: 'Initiated';
       guestStayCheckouts: Record<string, CheckoutStatus>;
     }
-  | { status: 'Finished' };
+  | { status: 'Completed' | 'Failed' };
 
 export const initial: GroupCheckout = {
   status: 'NotExisting',
@@ -100,7 +100,7 @@ export const evolve = (
       if (state.status !== 'Initiated') return state;
 
       return {
-        status: 'Finished',
+        status: type === 'GroupCheckoutCompleted' ? 'Completed' : 'Failed',
       };
     }
     default: {

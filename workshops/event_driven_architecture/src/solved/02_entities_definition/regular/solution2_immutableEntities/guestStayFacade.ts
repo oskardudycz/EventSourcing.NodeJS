@@ -5,7 +5,7 @@ import {
   evolve,
   initial,
   type CheckInGuest,
-  type CheckoutGuest,
+  type CheckOutGuest,
   type GuestStayAccount,
   type RecordCharge,
   type RecordPayment,
@@ -16,7 +16,7 @@ export type InitiateGroupCheckout = {
   data: {
     groupCheckoutId: string;
     clerkId: string;
-    guestStayIds: string[];
+    guestStayAccountIds: string[];
     now: Date;
   };
 };
@@ -95,7 +95,7 @@ export const GuestStayFacade = (options: {
       );
       await messageBus.publish(events);
     },
-    checkoutGuest: async (command: CheckoutGuest) => {
+    checkOutGuest: async (command: CheckOutGuest) => {
       const account = await accounts.get(command.data.guestStayAccountId);
 
       if (!account) {
@@ -116,7 +116,7 @@ export const GuestStayFacade = (options: {
         data: {
           groupCheckoutId: command.data.groupCheckoutId,
           clerkId: command.data.clerkId,
-          guestStayAccountIds: command.data.guestStayIds,
+          guestStayAccountIds: command.data.guestStayAccountIds,
           initiatedAt: command.data.now,
         },
       };

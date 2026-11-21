@@ -11,7 +11,7 @@ export abstract class Aggregate<E extends Event> {
     this.evolve(event);
   }
 
-  dequeueUncommitedEvents(): E[] {
+  dequeueUncommittedEvents(): E[] {
     const events = this.#uncommitedEvents;
 
     this.#uncommitedEvents = [];

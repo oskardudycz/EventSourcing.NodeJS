@@ -6,8 +6,6 @@ export type CheckInGuest = {
   type: 'CheckInGuest';
   data: {
     guestStayAccountId: string;
-    guestId: string;
-    roomId: string;
     now: Date;
   };
 };
@@ -31,8 +29,8 @@ export type RecordPayment = {
   };
 };
 
-export type CheckoutGuest = {
-  type: 'CheckoutGuest';
+export type CheckOutGuest = {
+  type: 'CheckOutGuest';
   data: {
     guestStayAccountId: string;
     now: Date;
@@ -41,7 +39,7 @@ export type CheckoutGuest = {
 };
 
 export type GuestStayAccountCommand =
-  CheckInGuest | RecordCharge | RecordPayment | CheckoutGuest;
+  CheckInGuest | RecordCharge | RecordPayment | CheckOutGuest;
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
@@ -57,8 +55,7 @@ export const GuestStayAccountFacade = (options: {
     checkInGuest: async (command: CheckInGuest) => {
       const events = await accounts.handle(
         command.data.guestStayAccountId,
-        (account) =>
-          account ? null : GuestStayAccount.checkInGuest(command.data),
+        (account) => (account ? null : GuestStayAccount.checkIn(command.data)),
       );
 
       if (events.length === 0) return;
@@ -97,11 +94,11 @@ export const GuestStayAccountFacade = (options: {
 
       await messageBus.publish(events);
     },
-    checkoutGuest: async (command: CheckoutGuest) => {
+    checkOutGuest: async (command: CheckOutGuest) => {
       const events = await accounts.handle(
         command.data.guestStayAccountId,
         (account) => {
-          account?.checkoutGuest(command.data);
+          account?.checkout(command.data);
 
           return account;
         },

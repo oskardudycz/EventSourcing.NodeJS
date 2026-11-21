@@ -9,8 +9,6 @@ export type CheckInGuest = {
   type: 'CheckInGuest';
   data: {
     guestStayAccountId: string;
-    guestId: string;
-    roomId: string;
     now: Date;
   };
 };
@@ -34,8 +32,8 @@ export type RecordPayment = {
   };
 };
 
-export type CheckoutGuest = {
-  type: 'CheckoutGuest';
+export type CheckOutGuest = {
+  type: 'CheckOutGuest';
   data: {
     guestStayAccountId: string;
     now: Date;
@@ -44,7 +42,7 @@ export type CheckoutGuest = {
 };
 
 export type GuestStayAccountCommand =
-  CheckInGuest | RecordCharge | RecordPayment | CheckoutGuest;
+  CheckInGuest | RecordCharge | RecordPayment | CheckOutGuest;
 
 export const GuestStayAccountFacade = (options: {
   database: Database;
@@ -67,7 +65,7 @@ export const GuestStayAccountFacade = (options: {
 
       if (!account) return [];
 
-      const events = account.dequeueUncommitedEvents();
+      const events = account.dequeueUncommittedEvents();
 
       if (events.length === 0) return events;
 
@@ -86,7 +84,7 @@ export const GuestStayAccountFacade = (options: {
   return {
     checkInGuest: (command: CheckInGuest) =>
       handle(command.data.guestStayAccountId, (account) =>
-        account ? null : GuestStayAccount.checkInGuest(command.data),
+        account ? null : GuestStayAccount.checkIn(command.data),
       ),
     recordCharge: (command: RecordCharge) =>
       handle(command.data.guestStayAccountId, (account) => {
@@ -104,9 +102,9 @@ export const GuestStayAccountFacade = (options: {
 
         return account;
       }),
-    checkoutGuest: (command: CheckoutGuest) =>
+    checkOutGuest: (command: CheckOutGuest) =>
       handle(command.data.guestStayAccountId, (account) => {
-        account?.checkoutGuest(command.data);
+        account?.checkout(command.data);
 
         return account;
       }),

@@ -17,10 +17,10 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
     // Given
     const groupCheckoutId = uuid();
     const clerkId = uuid();
-    const guestStayIds = [uuid(), uuid(), uuid()];
+    const guestStayAccountIds = [uuid(), uuid(), uuid()];
     const command: InitiateGroupCheckout = {
       type: 'InitiateGroupCheckout',
-      data: { groupCheckoutId, clerkId, guestStayIds, now },
+      data: { groupCheckoutId, clerkId, guestStayAccountIds, now },
     };
 
     // When
@@ -36,7 +36,7 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
       data: {
         groupCheckoutId,
         clerkId,
-        guestStayAccountIds: guestStayIds,
+        guestStayAccountIds: guestStayAccountIds,
         initiatedAt: now,
       },
     });
@@ -44,12 +44,12 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
 
   it('guest checkout completions recorded concurrently complete group checkout', async () => {
     // Given
-    const guestStayIds = Array.from({ length: 10 }).map(() => uuid());
-    const groupCheckoutId = await initiateGroupCheckout(guestStayIds);
+    const guestStayAccountIds = Array.from({ length: 10 }).map(() => uuid());
+    const groupCheckoutId = await initiateGroupCheckout(guestStayAccountIds);
 
     // When
     await Promise.all(
-      guestStayIds.map((guestStayAccountId) =>
+      guestStayAccountIds.map((guestStayAccountId) =>
         groupCheckoutFacade.recordGuestCheckoutCompletion({
           type: 'RecordGuestCheckoutCompletion',
           data: { groupCheckoutId, guestStayAccountId, now },
@@ -59,15 +59,15 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
 
     // Then
     publishedMessages.shouldReceiveMessagesInAnyOrder([
-      ...guestStayIds.map<GroupCheckoutEvent>((guestStayAccountId) => ({
+      ...guestStayAccountIds.map<GroupCheckoutEvent>((guestStayAccountId) => ({
         type: 'GuestCheckoutCompletionRecorded',
-        data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
+        data: { groupCheckoutId, guestStayAccountId, completedAt: now },
       })),
       {
         type: 'GroupCheckoutCompleted',
         data: {
           groupCheckoutId,
-          completedCheckouts: guestStayIds,
+          completedCheckouts: guestStayAccountIds,
           completedAt: now,
         },
       },
@@ -76,17 +76,22 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
 
   it('guest checkout completions and failure recorded concurrently fail group checkout', async () => {
     // Given
-    const guestStayIds = Array.from({ length: 10 }).map(() => uuid());
-    const [failedGuestStayId, ...completedGuestStayIds] = guestStayIds;
-    const groupCheckoutId = await initiateGroupCheckout(guestStayIds);
+    const guestStayAccountIds = Array.from({ length: 10 }).map(() => uuid());
+    const [failedGuestStayAccountId, ...completedGuestStayAccountIds] =
+      guestStayAccountIds;
+    const groupCheckoutId = await initiateGroupCheckout(guestStayAccountIds);
 
     // When
     await Promise.all([
       groupCheckoutFacade.recordGuestCheckoutFailure({
         type: 'RecordGuestCheckoutFailure',
-        data: { groupCheckoutId, guestStayAccountId: failedGuestStayId!, now },
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: failedGuestStayAccountId!,
+          now,
+        },
       }),
-      ...completedGuestStayIds.map((guestStayAccountId) =>
+      ...completedGuestStayAccountIds.map((guestStayAccountId) =>
         groupCheckoutFacade.recordGuestCheckoutCompletion({
           type: 'RecordGuestCheckoutCompletion',
           data: { groupCheckoutId, guestStayAccountId, now },
@@ -100,22 +105,22 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
         type: 'GuestCheckoutFailureRecorded',
         data: {
           groupCheckoutId,
-          guestStayAccountId: failedGuestStayId!,
+          guestStayAccountId: failedGuestStayAccountId!,
           failedAt: now,
         },
       },
-      ...completedGuestStayIds.map<GroupCheckoutEvent>(
+      ...completedGuestStayAccountIds.map<GroupCheckoutEvent>(
         (guestStayAccountId) => ({
           type: 'GuestCheckoutCompletionRecorded',
-          data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
+          data: { groupCheckoutId, guestStayAccountId, completedAt: now },
         }),
       ),
       {
         type: 'GroupCheckoutFailed',
         data: {
           groupCheckoutId,
-          completedCheckouts: completedGuestStayIds,
-          failedCheckouts: [failedGuestStayId!],
+          completedCheckouts: completedGuestStayAccountIds,
+          failedCheckouts: [failedGuestStayAccountId!],
           failedAt: now,
         },
       },
@@ -139,14 +144,14 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
     messageBus.use(publishedMessages.catchMessage);
   });
 
-  const initiateGroupCheckout = async (guestStayIds: string[]) => {
+  const initiateGroupCheckout = async (guestStayAccountIds: string[]) => {
     const groupCheckoutId = uuid();
     await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
         clerkId: uuid(),
-        guestStayIds,
+        guestStayAccountIds,
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });

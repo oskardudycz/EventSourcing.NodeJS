@@ -3,7 +3,7 @@ import {
   evolve,
   initial,
   type CheckInGuest,
-  type CheckoutGuest,
+  type CheckOutGuest,
   type GuestStayAccount,
   type RecordCharge,
   type RecordPayment,
@@ -91,7 +91,7 @@ export const GuestStayAccountFacade = (options: {
           }),
         ),
       ),
-    checkoutGuest: (command: CheckoutGuest) =>
+    checkOutGuest: (command: CheckOutGuest) =>
       retryOnConflict(() =>
         retryUntilSucceeds(() =>
           database.transaction(async (transaction) => {
