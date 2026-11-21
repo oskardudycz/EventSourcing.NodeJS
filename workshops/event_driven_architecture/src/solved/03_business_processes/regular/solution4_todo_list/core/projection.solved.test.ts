@@ -27,48 +27,48 @@ describe('Projection', () => {
     },
   });
 
-  it('first event stores and returns the document', () => {
+  it('first event stores and returns the document', async () => {
     const id = uuid();
 
-    const result = projection.handle({
+    const result = await projection.handle({
       type: 'Started',
       data: { counterId: id },
     });
 
     expect(result).toEqual({ id, count: 0 });
-    expect(collection.get(id)).toEqual({ id, count: 0 });
+    expect(await collection.get(id)).toEqual({ id, count: 0 });
   });
 
-  it('next event evolves the stored document', () => {
+  it('next event evolves the stored document', async () => {
     const id = uuid();
-    projection.handle({ type: 'Started', data: { counterId: id } });
+    await projection.handle({ type: 'Started', data: { counterId: id } });
 
-    const result = projection.handle({
+    const result = await projection.handle({
       type: 'Incremented',
       data: { counterId: id },
     });
 
     expect(result).toEqual({ id, count: 1 });
-    expect(collection.get(id)).toEqual({ id, count: 1 });
+    expect(await collection.get(id)).toEqual({ id, count: 1 });
   });
 
-  it('event without document id is skipped', () => {
-    const result = projection.handle({ type: 'Incremented', data: {} });
+  it('event without document id is skipped', async () => {
+    const result = await projection.handle({ type: 'Incremented', data: {} });
 
     expect(result).toBeNull();
   });
 
-  it('no document from evolve deletes the document', () => {
+  it('no document from evolve deletes the document', async () => {
     const id = uuid();
-    projection.handle({ type: 'Started', data: { counterId: id } });
+    await projection.handle({ type: 'Started', data: { counterId: id } });
 
-    const result = projection.handle({
+    const result = await projection.handle({
       type: 'Finished',
       data: { counterId: id },
     });
 
     expect(result).toBeNull();
-    expect(collection.get(id)).toBeNull();
+    expect(await collection.get(id)).toBeNull();
   });
 
   it('can handle lists the projected events', () => {

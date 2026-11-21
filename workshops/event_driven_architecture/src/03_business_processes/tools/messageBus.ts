@@ -1,3 +1,5 @@
+import type { MaybePromise } from '@event-driven-io/emmett';
+
 export type Event<
   EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>,
@@ -29,30 +31,34 @@ export type Message = Event | Command;
  * that a command has exactly one subscriber; that's up to how the application wires it.
  */
 export interface MessageBus {
-  publish<M extends Message>(messages: M[]): void;
+  publish<M extends Message>(messages: M[]): Promise<void>;
   subscribe<M extends Message>(
     messageType: M['type'],
     messageHandler: MessageHandler<M>,
   ): void;
 
-  use(middleware: MessageHandler): void;
+  use(middleware: MessageMiddleware): void;
 }
 
-export type MessageHandler<M extends Message = Message> = (message: M) => void;
+export type MessageHandler<M extends Message = Message> = (
+  message: M,
+) => MaybePromise<void>;
+
+export type MessageMiddleware = (message: Message) => MaybePromise<void>;
 
 export const getMessageBus = (): MessageBus => {
   const handlers: Map<string, MessageHandler[]> = new Map();
-  const middlewares: MessageHandler[] = [];
+  const middlewares: MessageMiddleware[] = [];
 
   return {
-    publish: <M extends Message>(messages: M[]): void => {
+    publish: async <M extends Message>(messages: M[]): Promise<void> => {
       for (const message of messages) {
-        for (const middleware of middlewares) middleware(message);
+        for (const middleware of middlewares) await middleware(message);
 
         const messageHandlers = handlers.get(message.type) ?? [];
 
         for (const handle of messageHandlers) {
-          handle(message);
+          await handle(message);
         }
       }
     },
@@ -64,7 +70,7 @@ export const getMessageBus = (): MessageBus => {
       messageHandlers.push(messageHandler as MessageHandler);
       handlers.set(messageType, messageHandlers);
     },
-    use: (middleware: MessageHandler): void => {
+    use: (middleware: MessageMiddleware): void => {
       middlewares.push(middleware);
     },
   };

@@ -17,20 +17,24 @@ export const GroupCheckoutFacade = (options: {
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
 
   return {
-    initiateGroupCheckout: (command: InitiateGroupCheckout) => {
+    initiateGroupCheckout: async (command: InitiateGroupCheckout) => {
       const groupCheckout =
-        groupCheckouts.get(command.data.groupCheckoutId) ?? initial;
+        (await groupCheckouts.get(command.data.groupCheckoutId)) ?? initial;
 
       const event = initiateGroupCheckout(command);
 
-      groupCheckouts.store(
+      await groupCheckouts.store(
         command.data.groupCheckoutId,
         evolve(groupCheckout, event),
       );
-      messageBus.publish([event]);
+      await messageBus.publish([event]);
     },
-    recordGuestCheckoutCompletion: (command: RecordGuestCheckoutCompletion) => {
-      const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
+    recordGuestCheckoutCompletion: async (
+      command: RecordGuestCheckoutCompletion,
+    ) => {
+      const groupCheckout = await groupCheckouts.get(
+        command.data.groupCheckoutId,
+      );
 
       if (!groupCheckout) {
         return;
@@ -38,14 +42,16 @@ export const GroupCheckoutFacade = (options: {
 
       const events = recordGuestCheckout(command, groupCheckout);
 
-      groupCheckouts.store(
+      await groupCheckouts.store(
         command.data.groupCheckoutId,
         events.reduce(evolve, groupCheckout),
       );
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
-    recordGuestCheckoutFailure: (command: RecordGuestCheckoutFailure) => {
-      const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
+    recordGuestCheckoutFailure: async (command: RecordGuestCheckoutFailure) => {
+      const groupCheckout = await groupCheckouts.get(
+        command.data.groupCheckoutId,
+      );
 
       if (!groupCheckout) {
         return;
@@ -53,11 +59,11 @@ export const GroupCheckoutFacade = (options: {
 
       const events = recordGuestCheckout(command, groupCheckout);
 
-      groupCheckouts.store(
+      await groupCheckouts.store(
         command.data.groupCheckoutId,
         events.reduce(evolve, groupCheckout),
       );
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

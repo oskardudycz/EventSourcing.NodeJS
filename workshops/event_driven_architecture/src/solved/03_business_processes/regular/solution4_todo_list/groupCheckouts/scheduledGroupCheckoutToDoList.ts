@@ -9,9 +9,9 @@ export const ScheduledGroupCheckoutToDoList = (options: {
   const { groupCheckouts, groupCheckoutToDoList } = options;
 
   return {
-    handleAll: () => {
-      for (const groupCheckout of groupCheckouts.findAll())
-        groupCheckoutToDoList.tryComplete(groupCheckout);
+    handleAll: async () => {
+      for (const groupCheckout of await groupCheckouts.findAll())
+        await groupCheckoutToDoList.tryComplete(groupCheckout);
     },
   };
 };

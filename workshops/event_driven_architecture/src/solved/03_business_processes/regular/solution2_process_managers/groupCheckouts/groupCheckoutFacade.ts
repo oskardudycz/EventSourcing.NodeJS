@@ -53,19 +53,21 @@ export const GroupCheckoutFacade = (options: {
     groupCheckout.dequeueUncommitedMessages().map(({ message }) => message);
 
   return {
-    initiateGroupCheckout: (command: InitiateGroupCheckout) => {
+    initiateGroupCheckout: async (command: InitiateGroupCheckout) => {
       const groupCheckout = GroupCheckout.initiate(command);
 
       const messages = dequeueMessages(groupCheckout);
 
-      groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+      await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
 
-      messageBus.publish(messages);
+      await messageBus.publish(messages);
     },
-    onGuestCheckedOut: (event: GuestCheckedOut) => {
+    onGuestCheckedOut: async (event: GuestCheckedOut) => {
       if (!event.data.groupCheckoutId) return;
 
-      const groupCheckout = groupCheckouts.get(event.data.groupCheckoutId);
+      const groupCheckout = await groupCheckouts.get(
+        event.data.groupCheckoutId,
+      );
 
       if (!groupCheckout) {
         return;
@@ -75,14 +77,16 @@ export const GroupCheckoutFacade = (options: {
 
       const messages = dequeueMessages(groupCheckout);
 
-      groupCheckouts.store(event.data.groupCheckoutId, groupCheckout);
+      await groupCheckouts.store(event.data.groupCheckoutId, groupCheckout);
 
-      messageBus.publish(messages);
+      await messageBus.publish(messages);
     },
-    onGuestCheckoutFailed: (event: GuestCheckoutFailed) => {
+    onGuestCheckoutFailed: async (event: GuestCheckoutFailed) => {
       if (!event.data.groupCheckoutId) return;
 
-      const groupCheckout = groupCheckouts.get(event.data.groupCheckoutId);
+      const groupCheckout = await groupCheckouts.get(
+        event.data.groupCheckoutId,
+      );
 
       if (!groupCheckout) {
         return;
@@ -92,9 +96,9 @@ export const GroupCheckoutFacade = (options: {
 
       const messages = dequeueMessages(groupCheckout);
 
-      groupCheckouts.store(event.data.groupCheckoutId, groupCheckout);
+      await groupCheckouts.store(event.data.groupCheckoutId, groupCheckout);
 
-      messageBus.publish(messages);
+      await messageBus.publish(messages);
     },
   };
 };

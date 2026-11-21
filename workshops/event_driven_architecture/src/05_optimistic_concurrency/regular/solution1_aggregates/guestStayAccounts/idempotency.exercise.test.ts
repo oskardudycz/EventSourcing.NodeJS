@@ -15,29 +15,6 @@ import {
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Guest Stay Account Idempotency Tests', () => {
-  let publishedMessages: MessageCatcher;
-  let guestStayFacade: GuestStayAccountFacade;
-  let now: Date;
-
-  beforeEach(() => {
-    const database = getDatabase();
-    const messageBus = getMessageBus();
-    publishedMessages = getMessageCatcher();
-    guestStayFacade = GuestStayAccountFacade({ database, messageBus });
-    now = new Date();
-
-    messageBus.use(publishedMessages.catchMessage);
-  });
-
-  const checkInGuest = async (): Promise<string> => {
-    const guestStayAccountId = uuid();
-    await guestStayFacade.checkInGuest({
-      type: 'CheckInGuest',
-      data: { guestStayAccountId, guestId: uuid(), roomId: '1', now },
-    });
-    publishedMessages.reset();
-    return guestStayAccountId;
-  };
   it('guest is checked in once for the same guest stay account', async () => {
     const command: CheckInGuest = {
       type: 'CheckInGuest',
@@ -119,4 +96,28 @@ describe('Guest Stay Account Idempotency Tests', () => {
       data: { guestStayAccountId, groupCheckoutId, checkedOutAt: now },
     });
   });
+
+  let publishedMessages: MessageCatcher;
+  let guestStayFacade: GuestStayAccountFacade;
+  let now: Date;
+
+  beforeEach(() => {
+    const database = getDatabase();
+    const messageBus = getMessageBus();
+    publishedMessages = getMessageCatcher();
+    guestStayFacade = GuestStayAccountFacade({ database, messageBus });
+    now = new Date();
+
+    messageBus.use(publishedMessages.catchMessage);
+  });
+
+  const checkInGuest = async (): Promise<string> => {
+    const guestStayAccountId = uuid();
+    await guestStayFacade.checkInGuest({
+      type: 'CheckInGuest',
+      data: { guestStayAccountId, guestId: uuid(), roomId: '1', now },
+    });
+    publishedMessages.reset();
+    return guestStayAccountId;
+  };
 });

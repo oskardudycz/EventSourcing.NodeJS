@@ -13,7 +13,7 @@ import {
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Idempotency Tests', () => {
-  it('group checkout completes once when the bus delivers every message twice', () => {
+  it('group checkout completes once when the bus delivers every message twice', async () => {
     const database = getDatabase();
     const messageBus = getMessageBus({ deliverTwice: true });
     const publishedMessages = getMessageCatcher();
@@ -30,7 +30,7 @@ describe('Idempotency Tests', () => {
 
     const guestStayAccountIds = [uuid(), uuid()];
     for (const guestStayAccountId of guestStayAccountIds) {
-      guestStayAccountFacade.checkInGuest({
+      await guestStayAccountFacade.checkInGuest({
         type: 'CheckInGuest',
         data: { guestStayAccountId, guestId: uuid(), roomId: '1', now },
       });
@@ -39,7 +39,7 @@ describe('Idempotency Tests', () => {
 
     const groupCheckoutId = uuid();
     const clerkId = uuid();
-    groupCheckoutFacade.initiateGroupCheckout({
+    await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,

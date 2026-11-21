@@ -1,3 +1,5 @@
+import type { MaybePromise } from '@event-driven-io/emmett';
+
 export type Event<
   EventType extends string = string,
   EventData extends Record<string, unknown> = Record<string, unknown>,
@@ -40,9 +42,9 @@ export interface MessageBus {
 
 export type MessageHandler<M extends Message = Message> = (
   message: M,
-) => Promise<void> | void;
+) => MaybePromise<void>;
 
-export type MessageMiddleware = (message: Message) => void;
+export type MessageMiddleware = (message: Message) => MaybePromise<void>;
 
 export const getMessageBus = (
   options: { deliverTwice?: boolean } = {},
@@ -53,7 +55,7 @@ export const getMessageBus = (
   return {
     publish: async <M extends Message>(messages: M[]): Promise<void> => {
       for (const message of messages) {
-        for (const middleware of middlewares) middleware(message);
+        for (const middleware of middlewares) await middleware(message);
 
         const messageHandlers = handlers.get(message.type) ?? [];
 

@@ -14,7 +14,7 @@ import {
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Idempotency Tests', () => {
-  it('group checkout is initiated once for the same id', () => {
+  it('group checkout is initiated once for the same id', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
     const guestStayIds = [uuid(), uuid(), uuid()];
@@ -22,9 +22,9 @@ describe('Group Checkout Idempotency Tests', () => {
       type: 'InitiateGroupCheckout',
       data: { groupCheckoutId, clerkId, guestStayIds, now },
     };
-    groupCheckoutFacade.initiateGroupCheckout(command);
+    await groupCheckoutFacade.initiateGroupCheckout(command);
 
-    groupCheckoutFacade.initiateGroupCheckout(command);
+    await groupCheckoutFacade.initiateGroupCheckout(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GroupCheckoutInitiated',
@@ -37,11 +37,11 @@ describe('Group Checkout Idempotency Tests', () => {
     });
   });
 
-  it('group checkout records once guest checkout completion', () => {
+  it('group checkout records once guest checkout completion', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
     const guestStayIds = [uuid(), uuid(), uuid()];
-    groupCheckoutFacade.initiateGroupCheckout({
+    await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
@@ -56,9 +56,9 @@ describe('Group Checkout Idempotency Tests', () => {
       type: 'RecordGuestCheckoutCompletion',
       data: { groupCheckoutId, guestStayAccountId: guestStayIds[0]!, now },
     };
-    groupCheckoutFacade.recordGuestCheckoutCompletion(command);
+    await groupCheckoutFacade.recordGuestCheckoutCompletion(command);
 
-    groupCheckoutFacade.recordGuestCheckoutCompletion(command);
+    await groupCheckoutFacade.recordGuestCheckoutCompletion(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckoutCompletionRecorded',
@@ -70,11 +70,11 @@ describe('Group Checkout Idempotency Tests', () => {
     });
   });
 
-  it('group checkout records once guest checkout failure', () => {
+  it('group checkout records once guest checkout failure', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
     const guestStayIds = [uuid(), uuid(), uuid()];
-    groupCheckoutFacade.initiateGroupCheckout({
+    await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
@@ -89,9 +89,9 @@ describe('Group Checkout Idempotency Tests', () => {
       type: 'RecordGuestCheckoutFailure',
       data: { groupCheckoutId, guestStayAccountId: guestStayIds[0]!, now },
     };
-    groupCheckoutFacade.recordGuestCheckoutFailure(command);
+    await groupCheckoutFacade.recordGuestCheckoutFailure(command);
 
-    groupCheckoutFacade.recordGuestCheckoutFailure(command);
+    await groupCheckoutFacade.recordGuestCheckoutFailure(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckoutFailureRecorded',
@@ -103,14 +103,14 @@ describe('Group Checkout Idempotency Tests', () => {
     });
   });
 
-  it('group checkout completes once when the last guest checkout completion is recorded twice', () => {
+  it('group checkout completes once when the last guest checkout completion is recorded twice', async () => {
     const groupCheckoutId = uuid();
     const guestStayIds = [uuid(), uuid()];
-    groupCheckoutFacade.initiateGroupCheckout({
+    await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: { groupCheckoutId, clerkId: uuid(), guestStayIds, now },
     });
-    groupCheckoutFacade.recordGuestCheckoutCompletion({
+    await groupCheckoutFacade.recordGuestCheckoutCompletion({
       type: 'RecordGuestCheckoutCompletion',
       data: { groupCheckoutId, guestStayAccountId: guestStayIds[0]!, now },
     });
@@ -120,9 +120,9 @@ describe('Group Checkout Idempotency Tests', () => {
       type: 'RecordGuestCheckoutCompletion',
       data: { groupCheckoutId, guestStayAccountId: guestStayIds[1]!, now },
     };
-    groupCheckoutFacade.recordGuestCheckoutCompletion(command);
+    await groupCheckoutFacade.recordGuestCheckoutCompletion(command);
 
-    groupCheckoutFacade.recordGuestCheckoutCompletion(command);
+    await groupCheckoutFacade.recordGuestCheckoutCompletion(command);
 
     publishedMessages.shouldReceiveMessages([
       {

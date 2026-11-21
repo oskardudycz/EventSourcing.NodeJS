@@ -13,6 +13,115 @@ import {
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Optimistic Concurrency Tests', () => {
+  it('group checkout initiated concurrently is initiated once', async () => {
+    // Given
+    const groupCheckoutId = uuid();
+    const clerkId = uuid();
+    const guestStayIds = [uuid(), uuid(), uuid()];
+    const command: InitiateGroupCheckout = {
+      type: 'InitiateGroupCheckout',
+      data: { groupCheckoutId, clerkId, guestStayIds, now },
+    };
+
+    // When
+    await Promise.all(
+      Array.from({ length: 10 }).map(() =>
+        groupCheckoutFacade.initiateGroupCheckout(command),
+      ),
+    );
+
+    // Then
+    publishedMessages.shouldReceiveSingleMessage({
+      type: 'GroupCheckoutInitiated',
+      data: {
+        groupCheckoutId,
+        clerkId,
+        guestStayAccountIds: guestStayIds,
+        initiatedAt: now,
+      },
+    });
+  });
+
+  it('guest checkout completions recorded concurrently complete group checkout', async () => {
+    // Given
+    const guestStayIds = Array.from({ length: 10 }).map(() => uuid());
+    const groupCheckoutId = await initiateGroupCheckout(guestStayIds);
+
+    // When
+    await Promise.all(
+      guestStayIds.map((guestStayAccountId) =>
+        groupCheckoutFacade.recordGuestCheckoutCompletion({
+          type: 'RecordGuestCheckoutCompletion',
+          data: { groupCheckoutId, guestStayAccountId, now },
+        }),
+      ),
+    );
+
+    // Then
+    publishedMessages.shouldReceiveMessagesInAnyOrder([
+      ...guestStayIds.map<GroupCheckoutEvent>((guestStayAccountId) => ({
+        type: 'GuestCheckoutCompletionRecorded',
+        data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
+      })),
+      {
+        type: 'GroupCheckoutCompleted',
+        data: {
+          groupCheckoutId,
+          completedCheckouts: guestStayIds,
+          completedAt: now,
+        },
+      },
+    ]);
+  });
+
+  it('guest checkout completions and failure recorded concurrently fail group checkout', async () => {
+    // Given
+    const guestStayIds = Array.from({ length: 10 }).map(() => uuid());
+    const [failedGuestStayId, ...completedGuestStayIds] = guestStayIds;
+    const groupCheckoutId = await initiateGroupCheckout(guestStayIds);
+
+    // When
+    await Promise.all([
+      groupCheckoutFacade.recordGuestCheckoutFailure({
+        type: 'RecordGuestCheckoutFailure',
+        data: { groupCheckoutId, guestStayAccountId: failedGuestStayId!, now },
+      }),
+      ...completedGuestStayIds.map((guestStayAccountId) =>
+        groupCheckoutFacade.recordGuestCheckoutCompletion({
+          type: 'RecordGuestCheckoutCompletion',
+          data: { groupCheckoutId, guestStayAccountId, now },
+        }),
+      ),
+    ]);
+
+    // Then
+    publishedMessages.shouldReceiveMessagesInAnyOrder([
+      {
+        type: 'GuestCheckoutFailureRecorded',
+        data: {
+          groupCheckoutId,
+          guestStayAccountId: failedGuestStayId!,
+          failedAt: now,
+        },
+      },
+      ...completedGuestStayIds.map<GroupCheckoutEvent>(
+        (guestStayAccountId) => ({
+          type: 'GuestCheckoutCompletionRecorded',
+          data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
+        }),
+      ),
+      {
+        type: 'GroupCheckoutFailed',
+        data: {
+          groupCheckoutId,
+          completedCheckouts: completedGuestStayIds,
+          failedCheckouts: [failedGuestStayId!],
+          failedAt: now,
+        },
+      },
+    ]);
+  });
+
   let publishedMessages: MessageCatcher;
   let groupCheckoutFacade: GroupCheckoutFacade;
   let now: Date;
@@ -45,104 +154,4 @@ describe('Group Checkout Optimistic Concurrency Tests', () => {
 
     return groupCheckoutId;
   };
-
-  it('group checkout initiated concurrently is initiated once', async () => {
-    const groupCheckoutId = uuid();
-    const clerkId = uuid();
-    const guestStayIds = [uuid(), uuid(), uuid()];
-    const command: InitiateGroupCheckout = {
-      type: 'InitiateGroupCheckout',
-      data: { groupCheckoutId, clerkId, guestStayIds, now },
-    };
-
-    await Promise.all(
-      [1, 2, 3, 4, 5].map(() =>
-        groupCheckoutFacade.initiateGroupCheckout(command),
-      ),
-    );
-
-    publishedMessages.shouldReceiveSingleMessage({
-      type: 'GroupCheckoutInitiated',
-      data: {
-        groupCheckoutId,
-        clerkId,
-        guestStayAccountIds: guestStayIds,
-        initiatedAt: now,
-      },
-    });
-  });
-
-  it('guest checkout completions recorded concurrently complete group checkout', async () => {
-    const guestStayIds = [uuid(), uuid(), uuid(), uuid(), uuid()];
-    const groupCheckoutId = await initiateGroupCheckout(guestStayIds);
-
-    await Promise.all(
-      guestStayIds.map((guestStayAccountId) =>
-        groupCheckoutFacade.recordGuestCheckoutCompletion({
-          type: 'RecordGuestCheckoutCompletion',
-          data: { groupCheckoutId, guestStayAccountId, now },
-        }),
-      ),
-    );
-
-    publishedMessages.shouldReceiveMessagesInAnyOrder([
-      ...guestStayIds.map<GroupCheckoutEvent>((guestStayAccountId) => ({
-        type: 'GuestCheckoutCompletionRecorded',
-        data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
-      })),
-      {
-        type: 'GroupCheckoutCompleted',
-        data: {
-          groupCheckoutId,
-          completedCheckouts: guestStayIds,
-          completedAt: now,
-        },
-      },
-    ]);
-  });
-
-  it('guest checkout completions and failure recorded concurrently fail group checkout', async () => {
-    const guestStayIds = [uuid(), uuid(), uuid(), uuid(), uuid()];
-    const [failedGuestStayId, ...completedGuestStayIds] = guestStayIds;
-    const groupCheckoutId = await initiateGroupCheckout(guestStayIds);
-
-    await Promise.all([
-      groupCheckoutFacade.recordGuestCheckoutFailure({
-        type: 'RecordGuestCheckoutFailure',
-        data: { groupCheckoutId, guestStayAccountId: failedGuestStayId!, now },
-      }),
-      ...completedGuestStayIds.map((guestStayAccountId) =>
-        groupCheckoutFacade.recordGuestCheckoutCompletion({
-          type: 'RecordGuestCheckoutCompletion',
-          data: { groupCheckoutId, guestStayAccountId, now },
-        }),
-      ),
-    ]);
-
-    publishedMessages.shouldReceiveMessagesInAnyOrder([
-      {
-        type: 'GuestCheckoutFailureRecorded',
-        data: {
-          groupCheckoutId,
-          guestStayAccountId: failedGuestStayId!,
-          failedAt: now,
-        },
-      },
-      ...completedGuestStayIds.map<GroupCheckoutEvent>(
-        (guestStayAccountId) => ({
-          type: 'GuestCheckoutCompletionRecorded',
-          data: { groupCheckoutId, guestStayAccountId, checkedOutAt: now },
-        }),
-      ),
-      {
-        type: 'GroupCheckoutFailed',
-        data: {
-          groupCheckoutId,
-          completedCheckouts: completedGuestStayIds,
-          failedCheckouts: [failedGuestStayId!],
-          failedAt: now,
-        },
-      },
-    ]);
-  });
 });

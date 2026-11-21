@@ -15,14 +15,14 @@ import {
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Guest Stay Account Idempotency Tests', () => {
-  it('guest is checked in once for the same guest stay account', () => {
+  it('guest is checked in once for the same guest stay account', async () => {
     const command: CheckInGuest = {
       type: 'CheckInGuest',
       data: { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1', now },
     };
-    guestStayFacade.checkInGuest(command);
+    await guestStayFacade.checkInGuest(command);
 
-    guestStayFacade.checkInGuest(command);
+    await guestStayFacade.checkInGuest(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedIn',
@@ -35,16 +35,16 @@ describe('Guest Stay Account Idempotency Tests', () => {
     });
   });
 
-  it('charge is recorded once for the same charge id', () => {
-    const guestStayAccountId = checkInGuest();
+  it('charge is recorded once for the same charge id', async () => {
+    const guestStayAccountId = await checkInGuest();
 
     const command: RecordCharge = {
       type: 'RecordCharge',
       data: { guestStayAccountId, chargeId: uuid(), amount: 100, now },
     };
-    guestStayFacade.recordCharge(command);
+    await guestStayFacade.recordCharge(command);
 
-    guestStayFacade.recordCharge(command);
+    await guestStayFacade.recordCharge(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'ChargeRecorded',
@@ -57,16 +57,16 @@ describe('Guest Stay Account Idempotency Tests', () => {
     });
   });
 
-  it('payment is recorded once for the same payment id', () => {
-    const guestStayAccountId = checkInGuest();
+  it('payment is recorded once for the same payment id', async () => {
+    const guestStayAccountId = await checkInGuest();
 
     const command: RecordPayment = {
       type: 'RecordPayment',
       data: { guestStayAccountId, paymentId: uuid(), amount: 100, now },
     };
-    guestStayFacade.recordPayment(command);
+    await guestStayFacade.recordPayment(command);
 
-    guestStayFacade.recordPayment(command);
+    await guestStayFacade.recordPayment(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'PaymentRecorded',
@@ -79,17 +79,17 @@ describe('Guest Stay Account Idempotency Tests', () => {
     });
   });
 
-  it('guest is checked out once for the same group checkout', () => {
-    const guestStayAccountId = checkInGuest();
+  it('guest is checked out once for the same group checkout', async () => {
+    const guestStayAccountId = await checkInGuest();
     const groupCheckoutId = uuid();
 
     const command: CheckoutGuest = {
       type: 'CheckoutGuest',
       data: { guestStayAccountId, groupCheckoutId, now },
     };
-    guestStayFacade.checkoutGuest(command);
+    await guestStayFacade.checkoutGuest(command);
 
-    guestStayFacade.checkoutGuest(command);
+    await guestStayFacade.checkoutGuest(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedOut',
@@ -111,9 +111,9 @@ describe('Guest Stay Account Idempotency Tests', () => {
     messageBus.use(publishedMessages.catchMessage);
   });
 
-  const checkInGuest = (): string => {
+  const checkInGuest = async (): Promise<string> => {
     const guestStayAccountId = uuid();
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: { guestStayAccountId, guestId: uuid(), roomId: '1', now },
     });

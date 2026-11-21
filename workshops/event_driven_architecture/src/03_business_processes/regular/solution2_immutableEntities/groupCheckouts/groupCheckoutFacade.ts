@@ -42,13 +42,18 @@ export const GroupCheckoutFacade = (options: {
   const groupCheckouts = database.collection('groupCheckout');
 
   return {
-    initiateGroupCheckout: (_command: InitiateGroupCheckout) => {
-      throw new Error(
-        'TODO: Fill the implementation calling your entity/aggregate',
+    initiateGroupCheckout: (_command: InitiateGroupCheckout) =>
+      Promise.reject(
+        new Error(
+          'TODO: Fill the implementation calling your entity/aggregate',
+        ),
+      ),
+    recordGuestCheckoutCompletion: async (
+      command: RecordGuestCheckoutCompletion,
+    ) => {
+      const groupCheckout = await groupCheckouts.get(
+        command.data.groupCheckoutId,
       );
-    },
-    recordGuestCheckoutCompletion: (command: RecordGuestCheckoutCompletion) => {
-      const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
 
       if (!groupCheckout) {
         return;
@@ -57,15 +62,17 @@ export const GroupCheckoutFacade = (options: {
       // TODO: do something with grup checkout and produce messages
       const messages: Message[] = [];
 
-      groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
-      messageBus.publish(messages);
+      await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+      await messageBus.publish(messages);
 
       throw new Error(
         'TODO: Fill the implementation calling your entity/aggregate',
       );
     },
-    recordGuestCheckoutFailure: (command: RecordGuestCheckoutFailure) => {
-      const groupCheckout = groupCheckouts.get(command.data.groupCheckoutId);
+    recordGuestCheckoutFailure: async (command: RecordGuestCheckoutFailure) => {
+      const groupCheckout = await groupCheckouts.get(
+        command.data.groupCheckoutId,
+      );
 
       if (!groupCheckout) {
         return;
@@ -74,8 +81,8 @@ export const GroupCheckoutFacade = (options: {
       // TODO: do something with grup checkout and produce messages
       const messages: Message[] = [];
 
-      groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
-      messageBus.publish(messages);
+      await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+      await messageBus.publish(messages);
 
       throw new Error(
         'TODO: Fill the implementation calling your entity/aggregate',

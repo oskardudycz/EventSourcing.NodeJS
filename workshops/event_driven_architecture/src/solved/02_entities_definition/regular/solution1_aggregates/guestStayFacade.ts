@@ -88,17 +88,17 @@ export const GuestStayFacade = (options: {
   );
 
   return {
-    checkInGuest: (command: CheckInGuest) => {
+    checkInGuest: async (command: CheckInGuest) => {
       const account = GuestStayAccount.checkInGuest(command.data);
 
       const events = account.dequeueUncommitedEvents();
 
-      accounts.store(command.data.guestStayAccountId, account);
+      await accounts.store(command.data.guestStayAccountId, account);
 
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
-    recordCharge: (command: RecordCharge) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+    recordCharge: async (command: RecordCharge) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
 
       if (!account) {
         throw new Error('Entity not found');
@@ -108,12 +108,12 @@ export const GuestStayFacade = (options: {
 
       const events = account.dequeueUncommitedEvents();
 
-      accounts.store(command.data.guestStayAccountId, account);
+      await accounts.store(command.data.guestStayAccountId, account);
 
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
-    recordPayment: (command: RecordPayment) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+    recordPayment: async (command: RecordPayment) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
 
       if (!account) {
         throw new Error('Entity not found');
@@ -123,12 +123,12 @@ export const GuestStayFacade = (options: {
 
       const events = account.dequeueUncommitedEvents();
 
-      accounts.store(command.data.guestStayAccountId, account);
+      await accounts.store(command.data.guestStayAccountId, account);
 
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
-    checkoutGuest: (command: CheckoutGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+    checkoutGuest: async (command: CheckoutGuest) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
 
       if (!account) {
         throw new Error('Entity not found');
@@ -138,11 +138,11 @@ export const GuestStayFacade = (options: {
 
       const events = account.dequeueUncommitedEvents();
 
-      accounts.store(command.data.guestStayAccountId, account);
+      await accounts.store(command.data.guestStayAccountId, account);
 
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
-    initiateGroupCheckout: (command: InitiateGroupCheckout) => {
+    initiateGroupCheckout: async (command: InitiateGroupCheckout) => {
       const event: GroupCheckoutInitiated = {
         type: 'GroupCheckoutInitiated',
         data: {
@@ -152,7 +152,7 @@ export const GuestStayFacade = (options: {
           initiatedAt: command.data.now,
         },
       };
-      messageBus.publish([event]);
+      await messageBus.publish([event]);
     },
   };
 };

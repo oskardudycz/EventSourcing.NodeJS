@@ -40,13 +40,9 @@ export type GroupCheckoutCommand =
   | RecordGuestCheckoutCompletion
   | RecordGuestCheckoutFailure;
 
-export const initiateGroupCheckout = (
-  { data: command }: InitiateGroupCheckout,
-  state: GroupCheckout,
-): GroupCheckoutInitiated => {
-  if (state.status !== 'NotExisting')
-    throw new Error('Group checkout already initiated!');
-
+export const initiateGroupCheckout = ({
+  data: command,
+}: InitiateGroupCheckout): GroupCheckoutInitiated => {
   const { groupCheckoutId, clerkId, guestStayIds, now } = command;
 
   return {

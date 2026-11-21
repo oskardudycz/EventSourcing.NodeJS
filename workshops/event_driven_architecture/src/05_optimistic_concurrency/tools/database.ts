@@ -11,6 +11,7 @@ export interface DocumentsCollection<T> {
   ) => Promise<void>;
   delete: (id: string) => Promise<void>;
   get: (id: string) => Promise<Versioned<T> | null>;
+  findAll: () => Promise<T[]>;
 }
 
 export interface Database {
@@ -80,6 +81,12 @@ export const getDatabase = (): Database => {
               : null,
           );
         },
+        findAll: (): Promise<T[]> =>
+          Promise.resolve(
+            [...storage.entries()]
+              .filter(([fullId]) => fullId.startsWith(`${name}-`))
+              .map(([, result]) => load(result.document)),
+          ),
       };
     },
   };

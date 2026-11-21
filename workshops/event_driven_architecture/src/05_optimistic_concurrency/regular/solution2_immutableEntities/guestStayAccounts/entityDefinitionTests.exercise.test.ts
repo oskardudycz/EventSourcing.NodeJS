@@ -15,24 +15,9 @@ import {
   type RecordPayment,
   GuestStayAccountFacade,
 } from '.';
-import { beforeEach, describe, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Guest Stay Account Entity Definition Tests', () => {
-  let database: Database;
-  let messageBus: MessageBus;
-  let publishedMessages: MessageCatcher;
-  let guestStayFacade: GuestStayAccountFacade;
-  let now: Date;
-
-  beforeEach(() => {
-    database = getDatabase();
-    messageBus = getMessageBus();
-    publishedMessages = getMessageCatcher();
-    guestStayFacade = GuestStayAccountFacade({ database, messageBus });
-    now = new Date();
-    messageBus.use(publishedMessages.catchMessage);
-  });
-
   it('checking in guest succeeds', async () => {
     const guestStayAccountId = uuid();
     const command: CheckInGuest = {
@@ -322,5 +307,56 @@ describe('Guest Stay Account Entity Definition Tests', () => {
         groupCheckoutId: undefined,
       },
     });
+  });
+
+  it('recording a charge for a missing guest stay account fails with Entity not found', async () => {
+    const command: RecordCharge = {
+      type: 'RecordCharge',
+      data: {
+        guestStayAccountId: uuid(),
+        chargeId: uuid(),
+        amount: 100,
+        now,
+      },
+    };
+
+    await expect(guestStayFacade.recordCharge(command)).rejects.toThrow(
+      'Entity not found',
+    );
+
+    publishedMessages.shouldNotReceiveAnyMessage();
+  });
+
+  it('recording a payment for a missing guest stay account fails with Entity not found', async () => {
+    const command: RecordPayment = {
+      type: 'RecordPayment',
+      data: {
+        guestStayAccountId: uuid(),
+        paymentId: uuid(),
+        amount: 100,
+        now,
+      },
+    };
+
+    await expect(guestStayFacade.recordPayment(command)).rejects.toThrow(
+      'Entity not found',
+    );
+
+    publishedMessages.shouldNotReceiveAnyMessage();
+  });
+
+  let database: Database;
+  let messageBus: MessageBus;
+  let publishedMessages: MessageCatcher;
+  let guestStayFacade: GuestStayAccountFacade;
+  let now: Date;
+
+  beforeEach(() => {
+    database = getDatabase();
+    messageBus = getMessageBus();
+    publishedMessages = getMessageCatcher();
+    guestStayFacade = GuestStayAccountFacade({ database, messageBus });
+    now = new Date();
+    messageBus.use(publishedMessages.catchMessage);
   });
 });

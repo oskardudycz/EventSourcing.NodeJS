@@ -11,40 +11,6 @@ import { GroupCheckoutFacade, type InitiateGroupCheckout } from '.';
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Group Checkout Entity Definition Tests', () => {
-  let database: Database;
-  let messageBus: MessageBus;
-  let publishedMessages: MessageCatcher;
-  let groupCheckoutFacade: GroupCheckoutFacade;
-  let now: Date;
-
-  beforeEach(() => {
-    database = getDatabase();
-    messageBus = getMessageBus();
-    publishedMessages = getMessageCatcher();
-    groupCheckoutFacade = GroupCheckoutFacade({
-      database,
-      messageBus,
-    });
-    now = new Date();
-    messageBus.use(publishedMessages.catchMessage);
-  });
-
-  const initiateGroupCheckout = async (guestStayIds: string[]) => {
-    const groupCheckoutId = uuid();
-    await groupCheckoutFacade.initiateGroupCheckout({
-      type: 'InitiateGroupCheckout',
-      data: {
-        groupCheckoutId,
-        clerkId: uuid(),
-        guestStayIds,
-        now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
-      },
-    });
-    publishedMessages.reset();
-
-    return groupCheckoutId;
-  };
-
   it('initiating group checkout succeeds', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
@@ -181,4 +147,38 @@ describe('Group Checkout Entity Definition Tests', () => {
       },
     ]);
   });
+
+  let database: Database;
+  let messageBus: MessageBus;
+  let publishedMessages: MessageCatcher;
+  let groupCheckoutFacade: GroupCheckoutFacade;
+  let now: Date;
+
+  beforeEach(() => {
+    database = getDatabase();
+    messageBus = getMessageBus();
+    publishedMessages = getMessageCatcher();
+    groupCheckoutFacade = GroupCheckoutFacade({
+      database,
+      messageBus,
+    });
+    now = new Date();
+    messageBus.use(publishedMessages.catchMessage);
+  });
+
+  const initiateGroupCheckout = async (guestStayIds: string[]) => {
+    const groupCheckoutId = uuid();
+    await groupCheckoutFacade.initiateGroupCheckout({
+      type: 'InitiateGroupCheckout',
+      data: {
+        groupCheckoutId,
+        clerkId: uuid(),
+        guestStayIds,
+        now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+      },
+    });
+    publishedMessages.reset();
+
+    return groupCheckoutId;
+  };
 });

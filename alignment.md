@@ -62,13 +62,13 @@ State on 2026-11-17: Node.js `migrated_to_current_db` at `ab21cde`, .NET `migrat
 
 ## 05 Optimistic concurrency
 
-**Teaches:** handlers running at the same time must not lose each other's updates. Store with the version you loaded, and on a conflict load, decide and store again.
+**Teaches:** handlers running at the same time must not lose each other's updates. Store with the version you loaded (0 when you create the document), and on a conflict load, decide and store again, up to 10 attempts.
 
-**Tests prove:** concurrent initiation initiates once, concurrent guest results complete or fail the group checkout correctly, concurrent charges all count, and a charge racing a checkout never lets an unsettled guest check out.
+**Tests prove:** seven concurrency tests per flavour, next to the module they test, each starting 10 calls together. Concurrent initiation initiates once, concurrent guest results complete or fail the group checkout correctly, concurrent check-ins check in once, concurrent charges and concurrent payments all count, and a charge racing a checkout never lets an unsettled guest check out. They fail every time in the exercise and pass every time in the solutions.
 
-**Model:** any. All three use the same approach (retry up to 10 attempts, check-in stores with version 0, publish after the retry) and the same tests.
+**Model:** any. The 05 exercise is the 04 solution plus the versioned database (versions, optional expected version on store, a concurrency exception, a load delay), so the business process, entity definition and idempotency tests of 04 are there too. Each flavour has two solutions: retry in the facade (one private helper that every facade method calls) and retry in the infrastructure (an aggregate store or a command handler that loads, runs, stores with the loaded version and retries; the facade passes the business logic and publishes the returned events). A missing entity follows one rule from 02 to 05: a method called directly throws "Entity not found", a method triggered by the bus does nothing. Node.js is asynchronous from 02, as .NET is, and its message catcher compares exactly.
 
-**Gaps:** Node.js copies a loaded document shallowly, so lists inside it (recorded charge ids, guest checkout statuses) are shared with the stored one. A failed attempt can then change the stored state, which is exactly what this exercise teaches you to avoid. JVM and .NET copy deeply.
+**Gaps:** none. JVM `Database.transaction` is serializable: a commit fails with `ConcurrencyException` if another commit changed a document the transaction read or wrote, and nested transactions are not supported (starting one fails at once).
 
 ## 06 Consistency
 
@@ -89,7 +89,7 @@ So 06 drops idempotency in the one exercise where failures and retries make dupl
 ## What I'd do, in order
 
 1. **06 from the 05 solution, in all three:** bring back the 04 guards and tests, the charge and payment ids, and the "bus delivers twice" test, then add the outbox on top. This is the biggest teaching gap. It needs one design answer first: in 06 the background jobs publish, so the "delivers twice" bus has to be the one they publish to.
-2. **Node.js `Database` copies deeply and the message catcher compares exactly:** both make 05 and every assertion prove what they claim.
+2. **Node.js 06 message catcher compares exactly,** as 02–05 do.
 3. **03 teaches coordination only:** take the repeated-result guard out of the JVM 03 solutions (it stays in 04), and keep "ignore results after the group checkout finished" in every 03 solution (add it in .NET).
 4. **Repeated commands are answered in 04 only:** remove the Node.js throws on a repeated check-in (02, 03) and a repeated initiation (03).
 5. **.NET aggregates change state from their events,** as in JVM and Node.js, from 02.

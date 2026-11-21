@@ -54,6 +54,7 @@ export const GroupCheckoutFacade = (options: {
       const events = groupCheckout.dequeueUncommitedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+
       await messageBus.publish(events);
     },
     recordGuestCheckoutCompletion: async (
@@ -72,6 +73,7 @@ export const GroupCheckoutFacade = (options: {
       const events = groupCheckout.dequeueUncommitedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+
       await messageBus.publish(events);
     },
     recordGuestCheckoutFailure: async (command: RecordGuestCheckoutFailure) => {
@@ -88,6 +90,7 @@ export const GroupCheckoutFacade = (options: {
       const events = groupCheckout.dequeueUncommitedEvents();
 
       await groupCheckouts.store(command.data.groupCheckoutId, groupCheckout);
+
       await messageBus.publish(events);
     },
   };

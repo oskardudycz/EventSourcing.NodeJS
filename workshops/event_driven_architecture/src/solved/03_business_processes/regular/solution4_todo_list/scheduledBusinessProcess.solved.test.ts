@@ -41,9 +41,12 @@ describe('Scheduled Business Process Tests', () => {
     groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
     const groupCheckoutProjection = GroupCheckoutProjection(groupCheckouts);
     for (const eventType of groupCheckoutProjection.canHandle) {
-      messageBus.subscribe<GroupCheckoutToDoListEvent>(eventType, (event) => {
-        groupCheckoutProjection.handle(event);
-      });
+      messageBus.subscribe<GroupCheckoutToDoListEvent>(
+        eventType,
+        async (event) => {
+          await groupCheckoutProjection.handle(event);
+        },
+      );
     }
     groupCheckoutFacade = GroupCheckoutFacade({ messageBus });
     scheduledToDoList = ScheduledGroupCheckoutToDoList({
@@ -59,11 +62,11 @@ describe('Scheduled Business Process Tests', () => {
     }).guestStayAccountFacade;
   });
 
-  it('group checkout for multiple guest stay should complete once time has passed', () => {
+  it('group checkout for multiple guest stay should complete once time has passed', async () => {
     const guestStayAccountIds = [uuid(), uuid()];
 
     for (const guestStayAccountId of guestStayAccountIds) {
-      guestStayFacade.checkInGuest({
+      await guestStayFacade.checkInGuest({
         type: 'CheckInGuest',
         data: {
           guestStayAccountId,
@@ -77,7 +80,7 @@ describe('Scheduled Business Process Tests', () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
 
-    groupCheckoutFacade.initiateGroupCheckout({
+    await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
@@ -132,8 +135,8 @@ describe('Scheduled Business Process Tests', () => {
     ];
     publishedMessages.shouldReceiveMessages(initiatedAndCheckedOut);
 
-    scheduledToDoList.handleAll();
-    scheduledToDoList.handleAll();
+    await scheduledToDoList.handleAll();
+    await scheduledToDoList.handleAll();
 
     publishedMessages.shouldReceiveMessages([
       ...initiatedAndCheckedOut,
@@ -146,6 +149,6 @@ describe('Scheduled Business Process Tests', () => {
         },
       },
     ]);
-    expect(groupCheckouts.get(groupCheckoutId)).toBeNull();
+    expect(await groupCheckouts.get(groupCheckoutId)).toBeNull();
   });
 });

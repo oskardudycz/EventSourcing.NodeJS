@@ -16,9 +16,61 @@ import {
   type RecordCharge,
   type RecordPayment,
 } from './guestStayFacade';
-import { beforeEach, describe, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Entity Definition Tests', () => {
+  it('recording a charge for a missing guest stay account fails with Entity not found', async () => {
+    const command: RecordCharge = {
+      type: 'RecordCharge',
+      data: {
+        guestStayAccountId: uuid(),
+        chargeId: uuid(),
+        amount: 100,
+        now,
+      },
+    };
+
+    await expect(guestStayFacade.recordCharge(command)).rejects.toThrow(
+      'Entity not found',
+    );
+
+    publishedMessages.shouldNotReceiveAnyMessage();
+  });
+
+  it('recording a payment for a missing guest stay account fails with Entity not found', async () => {
+    const command: RecordPayment = {
+      type: 'RecordPayment',
+      data: {
+        guestStayAccountId: uuid(),
+        paymentId: uuid(),
+        amount: 100,
+        now,
+      },
+    };
+
+    await expect(guestStayFacade.recordPayment(command)).rejects.toThrow(
+      'Entity not found',
+    );
+
+    publishedMessages.shouldNotReceiveAnyMessage();
+  });
+
+  it('checking out a missing guest stay account fails with Entity not found', async () => {
+    const command: CheckoutGuest = {
+      type: 'CheckoutGuest',
+      data: {
+        guestStayAccountId: uuid(),
+        now,
+      },
+    };
+
+    await expect(guestStayFacade.checkoutGuest(command)).rejects.toThrow(
+      'Entity not found',
+    );
+
+    publishedMessages.shouldNotReceiveAnyMessage();
+  });
+
   let database: Database;
   let messageBus: MessageBus;
   let publishedMessages: MessageCatcher;
@@ -35,7 +87,7 @@ describe('Entity Definition Tests', () => {
     messageBus.use(publishedMessages.catchMessage);
   });
 
-  it('checking in guest succeeds', () => {
+  it('checking in guest succeeds', async () => {
     const guestStayAccountId = uuid();
     const command: CheckInGuest = {
       type: 'CheckInGuest',
@@ -48,7 +100,7 @@ describe('Entity Definition Tests', () => {
     };
     publishedMessages.reset();
 
-    guestStayFacade.checkInGuest(command);
+    await guestStayFacade.checkInGuest(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedIn',
@@ -61,11 +113,11 @@ describe('Entity Definition Tests', () => {
     });
   });
 
-  it('recording charge for checked in guest succeeds', () => {
+  it('recording charge for checked in guest succeeds', async () => {
     const guestStayAccountId = uuid();
     const chargeId = uuid();
 
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
@@ -91,7 +143,7 @@ describe('Entity Definition Tests', () => {
       },
     };
 
-    guestStayFacade.recordCharge(command);
+    await guestStayFacade.recordCharge(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'ChargeRecorded',
@@ -104,10 +156,10 @@ describe('Entity Definition Tests', () => {
     });
   });
 
-  it('recording payment for checked in guest succeeds', () => {
+  it('recording payment for checked in guest succeeds', async () => {
     const guestStayAccountId = uuid();
     const paymentId = uuid();
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
@@ -133,7 +185,7 @@ describe('Entity Definition Tests', () => {
       },
     };
 
-    guestStayFacade.recordPayment(command);
+    await guestStayFacade.recordPayment(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'PaymentRecorded',
@@ -146,12 +198,12 @@ describe('Entity Definition Tests', () => {
     });
   });
 
-  it('recording payment for checked in guest with charge succeeds', () => {
+  it('recording payment for checked in guest with charge succeeds', async () => {
     const guestStayAccountId = uuid();
     const paymentId = uuid();
     const chargeId = uuid();
 
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
@@ -160,7 +212,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId,
@@ -190,7 +242,7 @@ describe('Entity Definition Tests', () => {
       },
     };
 
-    guestStayFacade.recordPayment(command);
+    await guestStayFacade.recordPayment(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'PaymentRecorded',
@@ -203,7 +255,7 @@ describe('Entity Definition Tests', () => {
     });
   });
 
-  it('checking out guest with settled balance succeeds', () => {
+  it('checking out guest with settled balance succeeds', async () => {
     const guestStayAccountId = uuid();
     const paymentId = uuid();
     const chargeId = uuid();
@@ -213,7 +265,7 @@ describe('Entity Definition Tests', () => {
       fractionDigits: 2,
     });
 
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
@@ -222,7 +274,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId,
@@ -231,7 +283,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId,
@@ -250,7 +302,7 @@ describe('Entity Definition Tests', () => {
       },
     };
 
-    guestStayFacade.checkoutGuest(command);
+    await guestStayFacade.checkoutGuest(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GuestCheckedOut',
@@ -262,7 +314,7 @@ describe('Entity Definition Tests', () => {
     });
   });
 
-  it('checking out guest with unsettled balance fails with guest checkout failed', () => {
+  it('checking out guest with unsettled balance fails with guest checkout failed', async () => {
     const guestStayAccountId = uuid();
     const paymentId = uuid();
     const chargeId = uuid();
@@ -272,7 +324,7 @@ describe('Entity Definition Tests', () => {
       fractionDigits: 2,
     });
 
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId,
@@ -281,7 +333,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId,
@@ -290,7 +342,7 @@ describe('Entity Definition Tests', () => {
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId,
@@ -310,7 +362,7 @@ describe('Entity Definition Tests', () => {
     };
 
     try {
-      guestStayFacade.checkoutGuest(command);
+      await guestStayFacade.checkoutGuest(command);
     } catch (exc) {
       console.log((exc as Error).message);
     }
@@ -326,11 +378,11 @@ describe('Entity Definition Tests', () => {
     });
   });
 
-  it('group checkout for multiple guest stay should be initiated', () => {
+  it('group checkout for multiple guest stay should be initiated', async () => {
     const guestStays = [uuid(), uuid(), uuid()];
 
     for (const guestStayAccountId of guestStays) {
-      guestStayFacade.checkInGuest({
+      await guestStayFacade.checkInGuest({
         type: 'CheckInGuest',
         data: {
           guestStayAccountId,
@@ -354,7 +406,7 @@ describe('Entity Definition Tests', () => {
       },
     };
 
-    guestStayFacade.initiateGroupCheckout(command);
+    await guestStayFacade.initiateGroupCheckout(command);
 
     publishedMessages.shouldReceiveSingleMessage({
       type: 'GroupCheckoutInitiated',

@@ -15,6 +15,15 @@ export type MessageCatcher = {
   ): void;
 };
 
+const isStrictlyEqual = (actual: Message, expected: Message): boolean => {
+  try {
+    expect(actual).toStrictEqual(expected);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const getMessageCatcher = (): MessageCatcher => {
   let messages: Message[] = [];
 
@@ -33,21 +42,29 @@ export const getMessageCatcher = (): MessageCatcher => {
     },
     shouldReceiveSingleMessage: (expectedMessage: Message): void => {
       expect(messages.length).toBe(1);
-      expect(messages[0]).toEqual(expectedMessage);
+      expect(messages[0]).toStrictEqual(expectedMessage);
     },
     shouldReceiveMessages: <ExpectedTypes extends Message>(
       expectedMessages: ExpectedTypes[],
     ): void => {
       expect(messages.length).toBe(expectedMessages.length);
-      expect(messages).toMatchObject(expectedMessages);
+      expect(messages).toStrictEqual(expectedMessages);
     },
     shouldReceiveMessagesInAnyOrder: <ExpectedTypes extends Message>(
       expectedMessages: ExpectedTypes[],
     ): void => {
       expect(messages.length).toBe(expectedMessages.length);
-      expect(messages).toEqual(
-        expect.arrayContaining<Message>(expectedMessages),
-      );
+
+      const notMatched = [...messages];
+      for (const expectedMessage of expectedMessages) {
+        const index = notMatched.findIndex((message) =>
+          isStrictlyEqual(message, expectedMessage),
+        );
+        expect(index, JSON.stringify(expectedMessage)).toBeGreaterThanOrEqual(
+          0,
+        );
+        notMatched.splice(index, 1);
+      }
     },
   };
 };

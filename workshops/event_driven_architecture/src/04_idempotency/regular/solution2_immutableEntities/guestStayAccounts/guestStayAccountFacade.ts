@@ -19,41 +19,50 @@ export const GuestStayAccountFacade = (options: {
   const accounts = database.collection<GuestStayAccount>('guestStayAccount');
 
   return {
-    checkInGuest: (command: CheckInGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+    checkInGuest: async (command: CheckInGuest) => {
+      const account =
+        (await accounts.get(command.data.guestStayAccountId)) ?? initial;
 
       const events = decide(command, account);
 
-      accounts.store(
+      await accounts.store(
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
-    recordCharge: (command: RecordCharge) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+    recordCharge: async (command: RecordCharge) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
+
+      if (!account) {
+        throw new Error('Entity not found');
+      }
 
       const events = decide(command, account);
 
-      accounts.store(
+      await accounts.store(
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
-    recordPayment: (command: RecordPayment) => {
-      const account = accounts.get(command.data.guestStayAccountId) ?? initial;
+    recordPayment: async (command: RecordPayment) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
+
+      if (!account) {
+        throw new Error('Entity not found');
+      }
 
       const events = decide(command, account);
 
-      accounts.store(
+      await accounts.store(
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
-    checkoutGuest: (command: CheckoutGuest) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+    checkoutGuest: async (command: CheckoutGuest) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
 
       if (!account) {
         return;
@@ -61,11 +70,11 @@ export const GuestStayAccountFacade = (options: {
 
       const events = decide(command, account);
 
-      accounts.store(
+      await accounts.store(
         command.data.guestStayAccountId,
         events.reduce(evolve, account),
       );
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

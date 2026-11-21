@@ -33,9 +33,13 @@ export const GuestStayAccountFacade = (options: {
       await messageBus.publish(events);
     },
     recordCharge: async (command: RecordCharge) => {
-      const account =
-        (await accounts.get(command.data.guestStayAccountId))?.document ??
-        initial;
+      const existing = await accounts.get(command.data.guestStayAccountId);
+
+      if (!existing) {
+        throw new Error('Entity not found');
+      }
+
+      const account = existing.document;
 
       const events = decide(command, account);
 
@@ -46,9 +50,13 @@ export const GuestStayAccountFacade = (options: {
       await messageBus.publish(events);
     },
     recordPayment: async (command: RecordPayment) => {
-      const account =
-        (await accounts.get(command.data.guestStayAccountId))?.document ??
-        initial;
+      const existing = await accounts.get(command.data.guestStayAccountId);
+
+      if (!existing) {
+        throw new Error('Entity not found');
+      }
+
+      const account = existing.document;
 
       const events = decide(command, account);
 
@@ -59,9 +67,13 @@ export const GuestStayAccountFacade = (options: {
       await messageBus.publish(events);
     },
     checkoutGuest: async (command: CheckoutGuest) => {
-      const account =
-        (await accounts.get(command.data.guestStayAccountId))?.document ??
-        initial;
+      const existing = await accounts.get(command.data.guestStayAccountId);
+
+      if (!existing) {
+        return;
+      }
+
+      const account = existing.document;
 
       const events = decide(command, account);
 

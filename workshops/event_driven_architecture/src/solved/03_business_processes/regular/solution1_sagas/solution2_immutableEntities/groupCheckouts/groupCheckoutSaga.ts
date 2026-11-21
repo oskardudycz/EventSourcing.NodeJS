@@ -26,10 +26,10 @@ export const GroupCheckoutSaga = (options: { messageBus: MessageBus }) => {
           },
         })),
       ),
-    onGuestCheckedOut: ({ data: event }: GuestCheckedOut) => {
+    onGuestCheckedOut: async ({ data: event }: GuestCheckedOut) => {
       if (!event.groupCheckoutId) return;
 
-      messageBus.publish<RecordGuestCheckoutCompletion>([
+      await messageBus.publish<RecordGuestCheckoutCompletion>([
         {
           type: 'RecordGuestCheckoutCompletion',
           data: {
@@ -40,10 +40,10 @@ export const GroupCheckoutSaga = (options: { messageBus: MessageBus }) => {
         },
       ]);
     },
-    onGuestCheckoutFailed: ({ data: event }: GuestCheckoutFailed) => {
+    onGuestCheckoutFailed: async ({ data: event }: GuestCheckoutFailed) => {
       if (!event.groupCheckoutId) return;
 
-      messageBus.publish<RecordGuestCheckoutFailure>([
+      await messageBus.publish<RecordGuestCheckoutFailure>([
         {
           type: 'RecordGuestCheckoutFailure',
           data: {

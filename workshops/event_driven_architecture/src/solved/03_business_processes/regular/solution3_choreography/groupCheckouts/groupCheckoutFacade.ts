@@ -22,19 +22,19 @@ export const GroupCheckoutFacade = (options: {
   const groupCheckouts = database.collection<GroupCheckout>('groupCheckout');
 
   return {
-    initiateGroupCheckout: (command: InitiateGroupCheckout) => {
+    initiateGroupCheckout: async (command: InitiateGroupCheckout) => {
       const groupCheckout =
-        groupCheckouts.get(command.data.groupCheckoutId) ?? initial;
+        (await groupCheckouts.get(command.data.groupCheckoutId)) ?? initial;
 
       const event = initiateGroupCheckout(command);
 
-      groupCheckouts.store(
+      await groupCheckouts.store(
         command.data.groupCheckoutId,
         evolve(groupCheckout, event),
       );
-      messageBus.publish([event]);
+      await messageBus.publish([event]);
 
-      messageBus.publish<CheckoutGuest>(
+      await messageBus.publish<CheckoutGuest>(
         event.data.guestStayAccountIds.map((guestStayAccountId) => ({
           type: 'CheckoutGuest',
           data: {
@@ -45,10 +45,14 @@ export const GroupCheckoutFacade = (options: {
         })),
       );
     },
-    onGuestCheckoutResult: (event: GuestCheckedOut | GuestCheckoutFailed) => {
+    onGuestCheckoutResult: async (
+      event: GuestCheckedOut | GuestCheckoutFailed,
+    ) => {
       if (!event.data.groupCheckoutId) return;
 
-      const groupCheckout = groupCheckouts.get(event.data.groupCheckoutId);
+      const groupCheckout = await groupCheckouts.get(
+        event.data.groupCheckoutId,
+      );
 
       if (!groupCheckout) {
         return;
@@ -76,11 +80,11 @@ export const GroupCheckoutFacade = (options: {
 
       const events = recordGuestCheckout(command, groupCheckout);
 
-      groupCheckouts.store(
+      await groupCheckouts.store(
         event.data.groupCheckoutId,
         events.reduce(evolve, groupCheckout),
       );
-      messageBus.publish(events);
+      await messageBus.publish(events);
     },
   };
 };

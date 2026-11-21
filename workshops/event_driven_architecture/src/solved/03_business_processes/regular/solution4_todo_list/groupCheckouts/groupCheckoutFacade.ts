@@ -18,8 +18,8 @@ export const GroupCheckoutFacade = (options: { messageBus: MessageBus }) => {
   const { messageBus } = options;
 
   return {
-    initiateGroupCheckout: ({ data: command }: InitiateGroupCheckout) => {
-      messageBus.publish<GroupCheckoutInitiated | CheckoutGuest>([
+    initiateGroupCheckout: async ({ data: command }: InitiateGroupCheckout) => {
+      await messageBus.publish<GroupCheckoutInitiated | CheckoutGuest>([
         {
           type: 'GroupCheckoutInitiated',
           data: {

@@ -18,10 +18,10 @@ export const GroupCheckoutToDoList = (options: {
 }) => {
   const { projection, messageBus } = options;
 
-  const tryComplete = (groupCheckout: GroupCheckout) => {
+  const tryComplete = async (groupCheckout: GroupCheckout) => {
     if (areAnyOngoingCheckouts(groupCheckout)) return;
 
-    messageBus.publish<GroupCheckoutCompleted | GroupCheckoutFailed>([
+    await messageBus.publish<GroupCheckoutCompleted | GroupCheckoutFailed>([
       !areAnyFailedCheckouts(groupCheckout)
         ? {
             type: 'GroupCheckoutCompleted',
@@ -45,10 +45,10 @@ export const GroupCheckoutToDoList = (options: {
 
   return {
     canHandle: projection.canHandle,
-    handle: (event: GroupCheckoutToDoListEvent) => {
-      const groupCheckout = projection.handle(event);
+    handle: async (event: GroupCheckoutToDoListEvent) => {
+      const groupCheckout = await projection.handle(event);
 
-      if (groupCheckout !== null) tryComplete(groupCheckout);
+      if (groupCheckout !== null) await tryComplete(groupCheckout);
     },
     tryComplete,
   };

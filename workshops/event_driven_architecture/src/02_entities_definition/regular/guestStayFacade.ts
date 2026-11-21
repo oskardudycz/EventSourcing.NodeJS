@@ -86,13 +86,14 @@ export const GuestStayFacade = (options: {
   const accounts = database.collection('guestStayAccount');
 
   return {
-    checkInGuest: (_command: CheckInGuest) => {
-      throw new Error(
-        'TODO: Fill the implementation calling your entity/aggregate',
-      );
-    },
-    recordCharge: (command: RecordCharge) => {
-      const account = accounts.get(command.data.guestStayAccountId);
+    checkInGuest: (_command: CheckInGuest) =>
+      Promise.reject(
+        new Error(
+          'TODO: Fill the implementation calling your entity/aggregate',
+        ),
+      ),
+    recordCharge: async (command: RecordCharge) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
 
       if (!account) {
         throw new Error('Entity not found');
@@ -102,26 +103,51 @@ export const GuestStayFacade = (options: {
       // e.g. account.doSomething;
       const events: GuestStayAccountEvent[] = []; // fill your events
 
-      accounts.store(command.data.guestStayAccountId, account);
-      messageBus.publish(events);
+      await accounts.store(command.data.guestStayAccountId, account);
+      await messageBus.publish(events);
       throw new Error(
         'TODO: Fill the implementation calling your entity/aggregate',
       );
     },
-    recordPayment: (_command: RecordPayment) => {
+    recordPayment: async (command: RecordPayment) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
+
+      if (!account) {
+        throw new Error('Entity not found');
+      }
+
+      // TODO: Fill the business logic implementation calling your entity/aggregate
+      // e.g. account.doSomething;
+      const events: GuestStayAccountEvent[] = []; // fill your events
+
+      await accounts.store(command.data.guestStayAccountId, account);
+      await messageBus.publish(events);
       throw new Error(
         'TODO: Fill the implementation calling your entity/aggregate',
       );
     },
-    checkoutGuest: (_command: CheckoutGuest) => {
+    checkoutGuest: async (command: CheckoutGuest) => {
+      const account = await accounts.get(command.data.guestStayAccountId);
+
+      if (!account) {
+        throw new Error('Entity not found');
+      }
+
+      // TODO: Fill the business logic implementation calling your entity/aggregate
+      // e.g. account.doSomething;
+      const events: GuestStayAccountEvent[] = []; // fill your events
+
+      await accounts.store(command.data.guestStayAccountId, account);
+      await messageBus.publish(events);
       throw new Error(
         'TODO: Fill the implementation calling your entity/aggregate',
       );
     },
-    initiateGroupCheckout: (_command: InitiateGroupCheckout) => {
-      throw new Error(
-        'TODO: Fill the implementation calling your entity/aggregate',
-      );
-    },
+    initiateGroupCheckout: (_command: InitiateGroupCheckout) =>
+      Promise.reject(
+        new Error(
+          'TODO: Fill the implementation calling your entity/aggregate',
+        ),
+      ),
   };
 };

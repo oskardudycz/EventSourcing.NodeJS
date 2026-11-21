@@ -18,13 +18,13 @@ export const GroupCheckoutFacade = (options: {
 
   return {
     initiateGroupCheckout: async (command: InitiateGroupCheckout) => {
-      const existing = await groupCheckouts.get(command.data.groupCheckoutId);
+      if (await groupCheckouts.get(command.data.groupCheckoutId)) return;
 
-      if (existing) return;
+      const groupCheckout =
+        (await groupCheckouts.get(command.data.groupCheckoutId))?.document ??
+        initial;
 
-      const groupCheckout = initial;
-
-      const event = initiateGroupCheckout(command, groupCheckout);
+      const event = initiateGroupCheckout(command);
 
       await groupCheckouts.store(
         command.data.groupCheckoutId,

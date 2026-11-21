@@ -18,31 +18,6 @@ import { configureGuestStayAccounts } from './guestStayAccounts';
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Business Process Tests', () => {
-  let database: Database;
-  let messageBus: MessageBus;
-  let publishedMessages: MessageCatcher;
-  let guestStayFacade: GuestStayAccountFacade;
-  let groupCheckoutFacade: GroupCheckoutFacade;
-  let now: Date;
-
-  beforeEach(() => {
-    database = getDatabase();
-    messageBus = getMessageBus();
-    publishedMessages = getMessageCatcher();
-    now = new Date();
-
-    messageBus.use(publishedMessages.catchMessage);
-
-    groupCheckoutFacade = configureGroupCheckouts({
-      messageBus,
-      database,
-    }).groupCheckoutFacade;
-    guestStayFacade = configureGuestStayAccounts({
-      messageBus,
-      database,
-    }).guestStayAccountFacade;
-  });
-
   it('group checkout for multiple guest stay without payments and charges should complete', async () => {
     const guestStays = [
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
@@ -880,5 +855,30 @@ describe('Business Process Tests', () => {
         },
       },
     ]);
+  });
+
+  let database: Database;
+  let messageBus: MessageBus;
+  let publishedMessages: MessageCatcher;
+  let guestStayFacade: GuestStayAccountFacade;
+  let groupCheckoutFacade: GroupCheckoutFacade;
+  let now: Date;
+
+  beforeEach(() => {
+    database = getDatabase();
+    messageBus = getMessageBus();
+    publishedMessages = getMessageCatcher();
+    now = new Date();
+
+    messageBus.use(publishedMessages.catchMessage);
+
+    groupCheckoutFacade = configureGroupCheckouts({
+      messageBus,
+      database,
+    }).groupCheckoutFacade;
+    guestStayFacade = configureGuestStayAccounts({
+      messageBus,
+      database,
+    }).guestStayAccountFacade;
   });
 });

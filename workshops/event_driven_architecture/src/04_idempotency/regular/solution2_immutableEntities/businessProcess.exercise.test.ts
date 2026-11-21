@@ -18,7 +18,7 @@ import { configureGuestStayAccounts } from './guestStayAccounts';
 import { beforeEach, describe, it } from 'vitest';
 
 describe('Business Process Tests', () => {
-  it('group checkout for multiple guest stay without payments and charges should complete', () => {
+  it('group checkout for multiple guest stay without payments and charges should complete', async () => {
     const guestStays = [
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '2' },
@@ -27,7 +27,7 @@ describe('Business Process Tests', () => {
     const guestStayAccountIds = guestStays.map((s) => s.guestStayAccountId);
 
     for (const guestStay of guestStays) {
-      guestStayFacade.checkInGuest({
+      await guestStayFacade.checkInGuest({
         type: 'CheckInGuest',
         data: {
           guestStayAccountId: guestStay.guestStayAccountId,
@@ -51,7 +51,7 @@ describe('Business Process Tests', () => {
       },
     };
 
-    groupCheckoutFacade.initiateGroupCheckout(command);
+    await groupCheckoutFacade.initiateGroupCheckout(command);
 
     publishedMessages.shouldReceiveMessages([
       {
@@ -170,7 +170,7 @@ describe('Business Process Tests', () => {
     ]);
   });
 
-  it('group checkout for multiple guest stay with all stays settled should complete', () => {
+  it('group checkout for multiple guest stay with all stays settled should complete', async () => {
     const guestStays = [
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '2' },
@@ -184,7 +184,7 @@ describe('Business Process Tests', () => {
       faker.number.float({ min: 10, max: 1000, fractionDigits: 2 }),
     ];
 
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
@@ -193,7 +193,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
@@ -202,7 +202,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
@@ -212,7 +212,7 @@ describe('Business Process Tests', () => {
       },
     });
 
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
@@ -221,7 +221,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
@@ -230,7 +230,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
@@ -240,7 +240,7 @@ describe('Business Process Tests', () => {
       },
     });
 
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -249,7 +249,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -258,7 +258,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -267,7 +267,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -290,7 +290,7 @@ describe('Business Process Tests', () => {
       },
     };
 
-    groupCheckoutFacade.initiateGroupCheckout(command);
+    await groupCheckoutFacade.initiateGroupCheckout(command);
 
     publishedMessages.shouldReceiveMessages([
       {
@@ -409,7 +409,7 @@ describe('Business Process Tests', () => {
     ]);
   });
 
-  it('group checkout for multiple guest stay with one settled and rest unsettled should fail', () => {
+  it('group checkout for multiple guest stay with one settled and rest unsettled should fail', async () => {
     const guestStays = [
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '2' },
@@ -423,7 +423,7 @@ describe('Business Process Tests', () => {
     ];
 
     // settled
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
@@ -432,7 +432,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
@@ -441,7 +441,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
@@ -452,7 +452,7 @@ describe('Business Process Tests', () => {
     });
 
     // payment without charge
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
@@ -461,7 +461,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
@@ -472,7 +472,7 @@ describe('Business Process Tests', () => {
     });
 
     // payment without charge
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -481,7 +481,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -490,7 +490,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -513,7 +513,7 @@ describe('Business Process Tests', () => {
       },
     };
 
-    groupCheckoutFacade.initiateGroupCheckout(command);
+    await groupCheckoutFacade.initiateGroupCheckout(command);
 
     publishedMessages.shouldReceiveMessages([
       {
@@ -635,7 +635,7 @@ describe('Business Process Tests', () => {
     ]);
   });
 
-  it('group checkout for multiple guest stay with all unsettled should fail', () => {
+  it('group checkout for multiple guest stay with all unsettled should fail', async () => {
     const guestStays = [
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '1' },
       { guestStayAccountId: uuid(), guestId: uuid(), roomId: '2' },
@@ -649,7 +649,7 @@ describe('Business Process Tests', () => {
     ];
 
     // charge without payment
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
@@ -658,7 +658,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId: guestStayAccountIds[0]!,
@@ -669,7 +669,7 @@ describe('Business Process Tests', () => {
     });
 
     // payment without charge
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
@@ -678,7 +678,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[1]!,
@@ -689,7 +689,7 @@ describe('Business Process Tests', () => {
     });
 
     // payment without charge
-    guestStayFacade.checkInGuest({
+    await guestStayFacade.checkInGuest({
       type: 'CheckInGuest',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -698,7 +698,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 24 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordCharge({
+    await guestStayFacade.recordCharge({
       type: 'RecordCharge',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -707,7 +707,7 @@ describe('Business Process Tests', () => {
         now: new Date(now.getTime() - 2 * 60 * 60 * 1000),
       },
     });
-    guestStayFacade.recordPayment({
+    await guestStayFacade.recordPayment({
       type: 'RecordPayment',
       data: {
         guestStayAccountId: guestStayAccountIds[2]!,
@@ -730,7 +730,7 @@ describe('Business Process Tests', () => {
       },
     };
 
-    groupCheckoutFacade.initiateGroupCheckout(command);
+    await groupCheckoutFacade.initiateGroupCheckout(command);
 
     publishedMessages.shouldReceiveMessages([
       {

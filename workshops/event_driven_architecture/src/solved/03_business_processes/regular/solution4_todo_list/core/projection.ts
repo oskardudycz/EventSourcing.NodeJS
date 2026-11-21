@@ -2,7 +2,7 @@ import type { DocumentsCollection, Event } from '../../../tools';
 
 export type Projection<Document, ProjectedEvent extends Event> = {
   canHandle: ProjectedEvent['type'][];
-  handle: (event: ProjectedEvent) => Document | null;
+  handle: (event: ProjectedEvent) => Promise<Document | null>;
 };
 
 export const Projection = <Document, ProjectedEvent extends Event>(
@@ -17,19 +17,19 @@ export const Projection = <Document, ProjectedEvent extends Event>(
   },
 ): Projection<Document, ProjectedEvent> => ({
   canHandle: definition.canHandle,
-  handle: (event) => {
+  handle: async (event) => {
     const id = definition.getDocumentId(event);
 
     if (id === undefined) return null;
 
-    const document = definition.evolve(collection.get(id), event);
+    const document = definition.evolve(await collection.get(id), event);
 
     if (document === null) {
-      collection.delete(id);
+      await collection.delete(id);
       return null;
     }
 
-    collection.store(id, document);
+    await collection.store(id, document);
     return document;
   },
 });

@@ -30,9 +30,9 @@ describe('Group Checkout Entity Definition Tests', () => {
     messageBus.use(publishedMessages.catchMessage);
   });
 
-  const initiateGroupCheckout = (guestStayIds: string[]) => {
+  const initiateGroupCheckout = async (guestStayIds: string[]) => {
     const groupCheckoutId = uuid();
-    groupCheckoutFacade.initiateGroupCheckout({
+    await groupCheckoutFacade.initiateGroupCheckout({
       type: 'InitiateGroupCheckout',
       data: {
         groupCheckoutId,
@@ -46,7 +46,7 @@ describe('Group Checkout Entity Definition Tests', () => {
     return groupCheckoutId;
   };
 
-  it('initiating group checkout succeeds', () => {
+  it('initiating group checkout succeeds', async () => {
     const groupCheckoutId = uuid();
     const clerkId = uuid();
     const guestStayIds = [uuid(), uuid(), uuid()];
@@ -55,7 +55,7 @@ describe('Group Checkout Entity Definition Tests', () => {
       data: { groupCheckoutId, clerkId, guestStayIds, now },
     };
 
-    groupCheckoutFacade.initiateGroupCheckout(command);
+    await groupCheckoutFacade.initiateGroupCheckout(command);
 
     publishedMessages.shouldReceiveMessages([
       {
@@ -74,15 +74,15 @@ describe('Group Checkout Entity Definition Tests', () => {
     ]);
   });
 
-  it('recording guest checkout completion succeeds', () => {
+  it('recording guest checkout completion succeeds', async () => {
     const guestStayAccountId = uuid();
-    const groupCheckoutId = initiateGroupCheckout([
+    const groupCheckoutId = await initiateGroupCheckout([
       guestStayAccountId,
       uuid(),
       uuid(),
     ]);
 
-    groupCheckoutFacade.onGuestCheckoutResult({
+    await groupCheckoutFacade.onGuestCheckoutResult({
       type: 'GuestCheckedOut',
       data: { guestStayAccountId, checkedOutAt: now, groupCheckoutId },
     });
@@ -93,15 +93,15 @@ describe('Group Checkout Entity Definition Tests', () => {
     });
   });
 
-  it('recording guest checkout failure succeeds', () => {
+  it('recording guest checkout failure succeeds', async () => {
     const guestStayAccountId = uuid();
-    const groupCheckoutId = initiateGroupCheckout([
+    const groupCheckoutId = await initiateGroupCheckout([
       guestStayAccountId,
       uuid(),
       uuid(),
     ]);
 
-    groupCheckoutFacade.onGuestCheckoutResult({
+    await groupCheckoutFacade.onGuestCheckoutResult({
       type: 'GuestCheckoutFailed',
       data: {
         guestStayAccountId,
@@ -117,14 +117,14 @@ describe('Group Checkout Entity Definition Tests', () => {
     });
   });
 
-  it('recording last guest checkout completion completes group checkout', () => {
+  it('recording last guest checkout completion completes group checkout', async () => {
     const completedGuestStayId = uuid();
     const lastGuestStayId = uuid();
-    const groupCheckoutId = initiateGroupCheckout([
+    const groupCheckoutId = await initiateGroupCheckout([
       completedGuestStayId,
       lastGuestStayId,
     ]);
-    groupCheckoutFacade.onGuestCheckoutResult({
+    await groupCheckoutFacade.onGuestCheckoutResult({
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId: completedGuestStayId,
@@ -134,7 +134,7 @@ describe('Group Checkout Entity Definition Tests', () => {
     });
     publishedMessages.reset();
 
-    groupCheckoutFacade.onGuestCheckoutResult({
+    await groupCheckoutFacade.onGuestCheckoutResult({
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId: lastGuestStayId,
@@ -163,14 +163,14 @@ describe('Group Checkout Entity Definition Tests', () => {
     ]);
   });
 
-  it('recording last guest checkout after failure fails group checkout', () => {
+  it('recording last guest checkout after failure fails group checkout', async () => {
     const failedGuestStayId = uuid();
     const lastGuestStayId = uuid();
-    const groupCheckoutId = initiateGroupCheckout([
+    const groupCheckoutId = await initiateGroupCheckout([
       failedGuestStayId,
       lastGuestStayId,
     ]);
-    groupCheckoutFacade.onGuestCheckoutResult({
+    await groupCheckoutFacade.onGuestCheckoutResult({
       type: 'GuestCheckoutFailed',
       data: {
         guestStayAccountId: failedGuestStayId,
@@ -181,7 +181,7 @@ describe('Group Checkout Entity Definition Tests', () => {
     });
     publishedMessages.reset();
 
-    groupCheckoutFacade.onGuestCheckoutResult({
+    await groupCheckoutFacade.onGuestCheckoutResult({
       type: 'GuestCheckedOut',
       data: {
         guestStayAccountId: lastGuestStayId,

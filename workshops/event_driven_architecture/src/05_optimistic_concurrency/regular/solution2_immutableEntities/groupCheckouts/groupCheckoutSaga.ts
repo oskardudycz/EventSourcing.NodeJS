@@ -1,3 +1,4 @@
+import type { MessageBus } from '../../../tools';
 import type {
   CheckoutGuest,
   GuestCheckedOut,
@@ -10,33 +11,25 @@ import type {
 
 import type { GroupCheckoutInitiated } from './groupCheckout';
 
-export type GroupCheckoutSagaEvent =
-  GroupCheckoutInitiated | GuestCheckedOut | GuestCheckoutFailed;
+export const GroupCheckoutSaga = (options: { messageBus: MessageBus }) => {
+  const { messageBus } = options;
 
-export type GroupCheckoutSagaCommand =
-  CheckoutGuest | RecordGuestCheckoutCompletion | RecordGuestCheckoutFailure;
-
-export const GroupCheckoutSaga = ({
-  type,
-  data: event,
-}: GroupCheckoutSagaEvent): GroupCheckoutSagaCommand[] => {
-  switch (type) {
-    case 'GroupCheckoutInitiated': {
-      return event.guestStayAccountIds.map<GroupCheckoutSagaCommand>((id) => {
-        return {
+  return {
+    onGroupCheckoutInitiated: ({ data: event }: GroupCheckoutInitiated) =>
+      messageBus.publish<CheckoutGuest>(
+        event.guestStayAccountIds.map((id) => ({
           type: 'CheckoutGuest',
           data: {
             guestStayAccountId: id,
             now: event.initiatedAt,
             groupCheckoutId: event.groupCheckoutId,
           },
-        };
-      });
-    }
-    case 'GuestCheckedOut': {
-      if (!event.groupCheckoutId) return [];
+        })),
+      ),
+    onGuestCheckedOut: async ({ data: event }: GuestCheckedOut) => {
+      if (!event.groupCheckoutId) return;
 
-      return [
+      await messageBus.publish<RecordGuestCheckoutCompletion>([
         {
           type: 'RecordGuestCheckoutCompletion',
           data: {
@@ -45,12 +38,12 @@ export const GroupCheckoutSaga = ({
             now: event.checkedOutAt,
           },
         },
-      ];
-    }
-    case 'GuestCheckoutFailed': {
-      if (!event.groupCheckoutId) return [];
+      ]);
+    },
+    onGuestCheckoutFailed: async ({ data: event }: GuestCheckoutFailed) => {
+      if (!event.groupCheckoutId) return;
 
-      return [
+      await messageBus.publish<RecordGuestCheckoutFailure>([
         {
           type: 'RecordGuestCheckoutFailure',
           data: {
@@ -59,7 +52,7 @@ export const GroupCheckoutSaga = ({
             now: event.failedAt,
           },
         },
-      ];
-    }
-  }
+      ]);
+    },
+  };
 };

@@ -62,6 +62,7 @@ export const GuestStayAccountFacade = (options: {
       const events = account.dequeueUncommitedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
+
       await messageBus.publish(events);
     },
     recordCharge: async (command: RecordCharge) => {
@@ -78,6 +79,7 @@ export const GuestStayAccountFacade = (options: {
       const events = account.dequeueUncommitedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
+
       await messageBus.publish(events);
     },
     recordPayment: async (command: RecordPayment) => {
@@ -94,13 +96,14 @@ export const GuestStayAccountFacade = (options: {
       const events = account.dequeueUncommitedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
+
       await messageBus.publish(events);
     },
     checkoutGuest: async (command: CheckoutGuest) => {
       const existing = await accounts.get(command.data.guestStayAccountId);
 
       if (!existing) {
-        throw new Error('Entity not found');
+        return;
       }
 
       const account = existing.document;
@@ -110,6 +113,7 @@ export const GuestStayAccountFacade = (options: {
       const events = account.dequeueUncommitedEvents();
 
       await accounts.store(command.data.guestStayAccountId, account);
+
       await messageBus.publish(events);
     },
   };

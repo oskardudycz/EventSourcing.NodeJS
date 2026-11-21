@@ -1,10 +1,10 @@
 import { JSONSerializer } from '@event-driven-io/emmett';
 
 export interface DocumentsCollection<T> {
-  store: (id: string, obj: T) => void;
-  delete: (id: string) => void;
-  get: (id: string) => T | null;
-  findAll: () => T[];
+  store: (id: string, obj: T) => Promise<void>;
+  delete: (id: string) => Promise<void>;
+  get: (id: string) => Promise<T | null>;
+  findAll: () => Promise<T[]>;
 }
 
 export interface Database {
@@ -32,21 +32,27 @@ export const getDatabase = (): Database => {
       };
 
       return {
-        store: (id: string, obj: T): void => {
+        store: (id: string, obj: T): Promise<void> => {
           storage.set(toFullId(id), JSONSerializer.serialize(obj));
+
+          return Promise.resolve();
         },
-        delete: (id: string): void => {
+        delete: (id: string): Promise<void> => {
           storage.delete(toFullId(id));
+
+          return Promise.resolve();
         },
-        get: (id: string): T | null => {
+        get: (id: string): Promise<T | null> => {
           const json = storage.get(toFullId(id));
 
-          return json !== undefined ? load(json) : null;
+          return Promise.resolve(json !== undefined ? load(json) : null);
         },
-        findAll: (): T[] =>
-          [...storage.entries()]
-            .filter(([fullId]) => fullId.startsWith(`${name}-`))
-            .map(([, json]) => load(json)),
+        findAll: (): Promise<T[]> =>
+          Promise.resolve(
+            [...storage.entries()]
+              .filter(([fullId]) => fullId.startsWith(`${name}-`))
+              .map(([, json]) => load(json)),
+          ),
       };
     },
   };
