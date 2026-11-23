@@ -1,0 +1,21 @@
+{
+  "name": "@e-commerce/application",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "The e-commerce application",
+  "scripts": {
+    "build:ts": "tsc"
+  },
+  "dependencies": {
+    "@e-commerce/core": "*",
+    "@event-driven-io/dumbo": "0.13.0-rc.2",
+    "@event-driven-io/emmett": "0.43.0-rc.3",
+    "@event-driven-io/emmett-honojs": "0.43.0-rc.3",
+    "@event-driven-io/emmett-sqlite": "0.43.0-rc.3",
+    "@event-driven-io/pongo": "0.17.0-rc.2",
+    "hono": "^4.13.21",
+    "sqlite3": "^6.0.1",
+    "uuid": "^14.0.3"
+  }
+}

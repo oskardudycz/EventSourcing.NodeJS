@@ -1,0 +1,26 @@
+{
+  "name": "@e-commerce/core",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Business-agnostic building blocks that Emmett lacks",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build:ts": "tsc"
+  },
+  "dependencies": {
+    "uuid": "^14.0.3"
+  },
+  "peerDependencies": {
+    "@event-driven-io/emmett": "0.43.0-rc.3",
+    "@event-driven-io/emmett-honojs": "0.43.0-rc.3",
+    "hono": "^4.13.14"
+  },
+  "devDependencies": {
+    "@event-driven-io/dumbo": "0.13.0-rc.2",
+    "@event-driven-io/emmett-sqlite": "0.43.0-rc.3",
+    "sqlite3": "^6.0.1"
+  }
+}

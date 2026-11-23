@@ -1,0 +1,81 @@
+{
+  "name": "e-commerce",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "E-commerce sample: distributed process with compensation, built on Emmett",
+  "engines": {
+    "node": ">=24.22.1"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/application"
+  ],
+  "scripts": {
+    "setup": "cat .nvmrc | nvm install; nvm use",
+    "build": "run-s lint build:ts",
+    "build:ts": "tsc -b",
+    "build:ts:clean": "tsc --build --clean",
+    "build:ts:watch": "tsc -b --watch",
+    "lint": "npm run lint:eslint && npm run lint:prettier",
+    "lint:prettier": "prettier --cache --config .prettierrc.json --check \"**/**/*.{json,md}\"",
+    "lint:eslint": "eslint --cache '**/*.ts'",
+    "fix": "run-s fix:eslint fix:prettier",
+    "agent:check": "run-s fix build:ts",
+    "fix:prettier": "prettier --cache --config .prettierrc.json --write \"**/**/*.{json,md}\"",
+    "fix:eslint": "eslint --cache '**/*.ts' --fix",
+    "test": "run-s test:unit test:int test:api test:e2e",
+    "test:unit": "vitest run \".unit.spec\" --passWithNoTests",
+    "test:int": "vitest run \".int.spec\" --passWithNoTests",
+    "test:api": "vitest run \".api.spec\" --passWithNoTests",
+    "test:e2e": "vitest run \".e2e.spec\" --passWithNoTests",
+    "test:watch": "vitest",
+    "test:unit:watch": "vitest \".unit.spec\"",
+    "test:int:watch": "vitest \".int.spec\"",
+    "test:api:watch": "vitest \".api.spec\"",
+    "test:e2e:watch": "vitest \".e2e.spec\"",
+    "test:file": "vitest run --no-file-parallelism --reporter=verbose"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oskardudycz/EventSourcing.NodeJS.git"
+  },
+  "keywords": [
+    "Event Sourcing"
+  ],
+  "author": "Oskar Dudycz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/oskardudycz/EventSourcing.NodeJS/issues"
+  },
+  "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
+    "@typescript-eslint/eslint-plugin": "^8.72.2",
+    "@typescript-eslint/parser": "^8.72.2",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.7",
+    "globals": "^17.14.0",
+    "npm-run-all2": "^9.0.4",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "^5.1.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "onFail": "error"
+    }
+  }
+}
