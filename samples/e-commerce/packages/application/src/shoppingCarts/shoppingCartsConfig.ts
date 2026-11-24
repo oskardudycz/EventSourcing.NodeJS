@@ -6,7 +6,6 @@ import {
   type ForwardedMessage,
 } from '@e-commerce/core';
 import type { ShoppingCartCheckedOutExternal } from './external/shoppingCartExternalEvent';
-import { ShoppingCartId } from './shoppingCart';
 
 export const shoppingCartsExternalChannel = 'shopping_carts-external';
 
@@ -23,6 +22,3 @@ export const shoppingCartsRoutes = messageRoutes<
     Urns.routingKeyOf(message.data.cartId),
   ),
 );
-
-export const shoppingCartsExternalStreamName = (cartId: string) =>
-  `shopping_carts:external:${ShoppingCartId.tailOf(cartId)}`;

@@ -1,4 +1,3 @@
-import type { Message } from '@event-driven-io/emmett';
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import {
@@ -16,11 +15,12 @@ import {
   redirectsTo,
   send,
   timePasses,
-  type TestWorker,
+  type PublishedMessage,
 } from './apiE2ESpecification';
+import type { Worker } from '../workers';
 import { manualClock } from './manualClock';
 
-const recordingWorker = (): TestWorker & { handledAt: Date[] } => {
+const recordingWorker = (): Worker & { handledAt: Date[] } => {
   const handledAt: Date[] = [];
   return {
     handledAt,
@@ -317,8 +317,8 @@ describe('ApiE2ESpecification', () => {
   });
 
   describe('published messages', () => {
-    const publishedBy = (...messages: Message[]) => {
-      const published: Message[] = [];
+    const publishedBy = (...messages: PublishedMessage[]) => {
+      const published: PublishedMessage[] = [];
       const given = ApiE2ESpecification.for({
         fetch: () => new Response(),
         sendMessages: () => {
@@ -368,6 +368,125 @@ describe('ApiE2ESpecification', () => {
         given()
           .when(send({ type: 'Any', data: {} }))
           .then(expectPublished({ type: 'First', data: {} })),
+      ).rejects.toThrow();
+    });
+
+    it('expectPublishedFailsWhenMessagesWithTheSameKeyAreOutOfOrder', async () => {
+      const { given } = publishedBy(
+        { type: 'First', data: {}, metadata: { key: 'order.1' } },
+        { type: 'Second', data: {}, metadata: { key: 'order.1' } },
+      );
+
+      await expect(
+        given()
+          .when(send({ type: 'Any', data: {} }))
+          .then(
+            expectPublished(
+              { type: 'Second', data: {} },
+              { type: 'First', data: {} },
+            ),
+          ),
+      ).rejects.toThrow();
+    });
+
+    it('expectPublishedIgnoresTheOrderBetweenDifferentKeys', async () => {
+      const { given } = publishedBy(
+        { type: 'First', data: {}, metadata: { key: 'order.1' } },
+        { type: 'Second', data: {}, metadata: { key: 'order.2' } },
+        { type: 'Third', data: {}, metadata: { key: 'order.1' } },
+      );
+
+      await given()
+        .when(send({ type: 'Any', data: {} }))
+        .then(
+          expectPublished(
+            { type: 'Second', data: {} },
+            { type: 'First', data: {} },
+            { type: 'Third', data: {} },
+          ),
+        );
+    });
+
+    it('expectPublishedFailsWhenAMessageIsMissingOrExtraWhateverTheKeys', async () => {
+      const { given } = publishedBy(
+        { type: 'First', data: {}, metadata: { key: 'order.1' } },
+        { type: 'Second', data: {}, metadata: { key: 'order.2' } },
+      );
+
+      await expect(
+        given()
+          .when(send({ type: 'Any', data: {} }))
+          .then(
+            expectPublished(
+              { type: 'Second', data: {} },
+              { type: 'Third', data: {} },
+            ),
+          ),
+      ).rejects.toThrow();
+
+      await expect(
+        given()
+          .when(send({ type: 'Any', data: {} }))
+          .then(expectPublished({ type: 'Second', data: {} })),
+      ).rejects.toThrow();
+    });
+
+    it('expectPublishedChecksTheRoutingKeyOnlyWhenItIsGiven', async () => {
+      const { given } = publishedBy({
+        type: 'Sent',
+        data: {},
+        metadata: { key: 'ecommerce.order.1' },
+      });
+      const sendOne = () => given().when(send({ type: 'Any', data: {} }));
+
+      await sendOne().then(expectPublished({ type: 'Sent', data: {} }));
+      await sendOne().then(
+        expectPublished({
+          type: 'Sent',
+          data: {},
+          metadata: { key: 'ecommerce.order.1' },
+        }),
+      );
+
+      await expect(
+        sendOne().then(
+          expectPublished({
+            type: 'Sent',
+            data: {},
+            metadata: { key: 'ecommerce.order.2' },
+          }),
+        ),
+      ).rejects.toThrow();
+    });
+
+    it('expectPublishedKeepsTheOrderOfMessagesWithTheSameKeyOnly', async () => {
+      const first = { type: 'First', data: {}, metadata: { key: 'a' } };
+      const second = { type: 'Second', data: {}, metadata: { key: 'a' } };
+      const other = { type: 'Other', data: {}, metadata: { key: 'b' } };
+      const { given } = publishedBy(first, other, second);
+      const whenSent = () => given().when(send({ type: 'Any', data: {} }));
+
+      await whenSent().then(expectPublished(first, other, second));
+      await whenSent().then(expectPublished(other, first, second));
+      await whenSent().then(expectPublished(first, second, other));
+
+      await expect(
+        whenSent().then(expectPublished(second, first, other)),
+      ).rejects.toThrow();
+      await expect(
+        whenSent().then(expectPublished(first, other)),
+      ).rejects.toThrow();
+      await expect(
+        whenSent().then(expectPublished(first, other, second, other)),
+      ).rejects.toThrow();
+      await expect(
+        whenSent().then(
+          expectPublished(first, other, {
+            type: 'Third',
+            data: {},
+            metadata: { key: 'a' },
+          }),
+        ),
       ).rejects.toThrow();
     });
 
@@ -451,7 +570,7 @@ describe('ApiE2ESpecification', () => {
 
   describe('catching up', () => {
     it('catchUpRepeatsUntilARoundSendsNothingNew', async () => {
-      const published: Message[] = [];
+      const published: PublishedMessage[] = [];
       let rounds = 0;
       const given = ApiE2ESpecification.for({
         fetch: () => new Response(),

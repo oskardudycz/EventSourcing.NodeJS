@@ -8,14 +8,36 @@
     "build:ts": "tsc"
   },
   "dependencies": {
+    "@asyncapi/parser": "^3.6.6",
     "@e-commerce/core": "*",
+    "@event-driven-io/almanac": "^0.1.0-rc.3",
     "@event-driven-io/dumbo": "0.13.0-rc.2",
     "@event-driven-io/emmett": "0.43.0-rc.3",
     "@event-driven-io/emmett-honojs": "0.43.0-rc.3",
+    "@event-driven-io/emmett-postgresql": "0.43.0-rc.3",
     "@event-driven-io/emmett-sqlite": "0.43.0-rc.3",
     "@event-driven-io/pongo": "0.17.0-rc.2",
+    "@hono/node-server": "^2.1.11",
+    "@hono/swagger-ui": "^0.6.2",
+    "@hono/zod-openapi": "^1.6.3",
+    "@opentelemetry/api": "^1.10.0",
+    "@opentelemetry/exporter-logs-otlp-proto": "^0.300.0",
+    "@opentelemetry/exporter-metrics-otlp-proto": "^0.300.0",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.300.0",
+    "@opentelemetry/sdk-logs": ">=3.0.0 <3.1.0",
+    "@opentelemetry/sdk-metrics": "^3.1.1",
+    "@opentelemetry/sdk-node": "^0.300.0",
+    "@opentelemetry/sdk-trace": ">=3.0.0 <3.1.0",
     "hono": "^4.13.21",
+    "htmx.org": "^4.0.2",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
     "sqlite3": "^6.0.1",
-    "uuid": "^14.0.3"
+    "uuid": "^14.0.3",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@event-driven-io/emmett-testcontainers": "0.43.0-rc.3",
+    "playwright": "^1.65.1"
   }
 }

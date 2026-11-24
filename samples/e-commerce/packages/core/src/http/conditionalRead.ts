@@ -8,7 +8,7 @@ import { retryUntil } from './longPolling';
 
 export type Versioned = { version: number };
 
-const versionSeenBy = (context: Context): number => {
+export const versionSeenBy = (context: Context): number => {
   const version = WeakETagRegex.exec(
     context.req.header('if-none-match') ?? '',
   )?.[1];

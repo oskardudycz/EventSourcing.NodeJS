@@ -9,8 +9,11 @@ import {
 import { toWeakETag, type TestRequest } from '@event-driven-io/emmett-honojs';
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import type { MessagingBus } from '../messagingBus';
-import { messagingBuses, testApplication } from '../testApplication';
+import {
+  testedMessagingBuses,
+  testApplication,
+  type TestedMessagingBus,
+} from '../testApplication';
 import { ShoppingCartId } from './shoppingCart';
 import {
   addProductItem,
@@ -30,8 +33,8 @@ const addShoes = (quantity: number) =>
 const addHat = (quantity: number) =>
   addProductItem(customerId, { productId: hat, quantity });
 
-const shoppingCartsOn = (messagingBus?: MessagingBus) => {
-  const { given, priceOf, appendsConflict } = testApplication(messagingBus);
+const shoppingCartsOn = (messagingBus?: TestedMessagingBus) => {
+  const { given, priceOf, appendsConflict } = testApplication({ messagingBus });
 
   const cartWithTwoShoes = () => [priceOf(shoes, 50), addShoes(2)];
   const checkedOutCart = () => [
@@ -74,7 +77,7 @@ describe('adding a product item', () => {
       .then(
         expectResponse(200, { headers: { ETag: toWeakETag(1) } }),
         expectAppended([
-          'ShoppingCart-' + `${customerId}-1`,
+          'shopping_carts_cart-' + `${customerId}-1`,
           [
             {
               type: 'shopping_carts.ProductItemAddedToShoppingCart',
@@ -96,7 +99,7 @@ describe('adding a product item', () => {
       .then(
         expectResponse(200, { headers: { ETag: toWeakETag(2) } }),
         expectAppended([
-          `ShoppingCart-${customerId}-1`,
+          `shopping_carts_cart-${customerId}-1`,
           [
             {
               type: 'shopping_carts.ProductItemAddedToShoppingCart',
@@ -118,7 +121,7 @@ describe('adding a product item', () => {
         expectResponse(200, { headers: { ETag: toWeakETag(1) } }),
         (outcome) =>
           expect(outcome.appended?.map(([stream]) => stream)).toEqual([
-            `ShoppingCart-${customerId}-2`,
+            `shopping_carts_cart-${customerId}-2`,
           ]),
       ));
 
@@ -154,7 +157,7 @@ describe('adding a product item', () => {
       .then(
         expectResponse(200, { headers: { ETag: toWeakETag(1) } }),
         expectAppended([
-          `ShoppingCart-${customerId}-1`,
+          `shopping_carts_cart-${customerId}-1`,
           [
             {
               type: 'shopping_carts.ProductItemAddedToShoppingCart',
@@ -193,7 +196,7 @@ describe('removing a product item', () => {
       .then(
         expectResponse(200, { headers: { ETag: toWeakETag(2) } }),
         expectAppended([
-          `ShoppingCart-${customerId}-1`,
+          `shopping_carts_cart-${customerId}-1`,
           [
             {
               type: 'shopping_carts.ProductItemRemovedFromShoppingCart',
@@ -216,7 +219,11 @@ describe('removing a product item', () => {
     given(...cartWithAChangedPrice())
       .when(removeShoes(1, toWeakETag(1)))
       .then(expectResponse(200), (outcome) =>
-        expect(outcome.appended).toMatchObject([
+        expect(
+          outcome.appended?.filter(([name]) =>
+            name.startsWith('shopping_carts_cart-'),
+          ),
+        ).toMatchObject([
           [expect.any(String), [{ data: { productItem: { unitPrice: 50 } } }]],
         ]),
       ));
@@ -252,7 +259,7 @@ describe('removing a product item', () => {
       .then(expectError(400)));
 });
 
-describe.each(messagingBuses)('checking out on messaging bus %s', (bus) => {
+describe.each(testedMessagingBuses)('checking out on messaging bus %s', (bus) => {
   const {
     given,
     priceOf,
@@ -322,7 +329,11 @@ describe.each(messagingBuses)('checking out on messaging bus %s', (bus) => {
     given(...cartWithTwoShoes())
       .when(checkOut(customerId, toWeakETag(1)))
       .then((outcome) =>
-        expect(outcome.appended).toMatchObject([
+        expect(
+          outcome.appended?.filter(([name]) =>
+            name.startsWith('shopping_carts_cart-'),
+          ),
+        ).toMatchObject([
           [
             expect.any(String),
             [{ type: 'shopping_carts.ShoppingCartCheckedOut' }],
@@ -353,7 +364,7 @@ describe.each(messagingBuses)('checking out on messaging bus %s', (bus) => {
       .then(
         expectResponse(409, { headers: { ETag: toWeakETag(2) } }),
         expectAppended([
-          `ShoppingCart-${customerId}-1`,
+          `shopping_carts_cart-${customerId}-1`,
           [
             {
               type: 'shopping_carts.ProductItemPriceChanged',

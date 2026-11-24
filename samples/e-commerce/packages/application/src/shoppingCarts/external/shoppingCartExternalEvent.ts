@@ -11,3 +11,7 @@ export type ShoppingCartCheckedOutExternal = Event<
     checkedOutAt: string;
   }
 >;
+
+export const shoppingCartExternalEventTypes = [
+  'shopping_carts.external.ShoppingCartCheckedOut',
+] as const;

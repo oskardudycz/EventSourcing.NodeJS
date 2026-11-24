@@ -341,3 +341,98 @@ Oskar: "And ofc allow no internal broker mode with pure emmett". Asked where the
 What shape do forwarders and readers have, after "ensure that forwarders and consumers you added API is consistent and idiomatic to other Emmett built in processors and consumers"?
 
 They follow Emmett's processors: an Emmett reactor registered with `consumer.reactor({ processorId, canHandle, eachMessage })`, which gets the store's transaction scope and checkpoints. The core supplies only the handler: `forwardToChannels` for a forwarder (routings, optional mapping, retry inside the handler) and `fromChannel` for a reader. There is no message bus (Q22), no send target and no message shape of the sample's own: messages are Emmett messages with Emmett metadata. The cart summary is an inline Pongo projection (Q38), and the forwarder reads it.
+
+## Q58 (step 8 review)
+
+The step asked both for the sample core's shape and for #436's proposal, which disagree on the appended-events check. Which wins, and do the Hono docs change on the same branch?
+
+Oskar chose "Emmett names, core strictness": Emmett keeps `expectNewEvents` and `expectNoNewEvents`, and they check exactly the streams and event counts the `when` step appended, in any stream order, with each event matched as a subset, as the sample core does. On the docs: "Yes, same branch": `docs/frameworks/honojs.md` and `docs/guides/testing.md` are updated on `hono_api_e2e_specification_steps`.
+
+## Q59 (step 3)
+
+In step 3 the unpaid-orders worker stored `CloseUnpaidOrder` as an input of the order workflow, and the workflow passed it on to the orders handler as its output (Q44 as written into the spec and plan). Emmett's workflow processor stores that output in the workflow's stream under the same name, and because the name is on the workflow's input list (`workflowProcessor.ts:243`), it handles the output as a new input, endlessly. Asked why the workflow would send its input again, there was no good reason: the workflow only relayed the command. Java's worker sends `CloseUnpaidOrder` straight to the orders facade (`OrdersConfig.java:128`).
+
+Oskar: "Yes" to changing it as in Java. So the unpaid-orders worker stores `CloseUnpaidOrder` in the order's stream and it goes straight to the orders handler (through the event store or the `orders-internal` channel, Q40), without the order workflow. I then also dropped the payment and shipment workflows of Q44 from the spec and plan; Oskar: "Are you fng nuts, why are shipment and payments workflows gone?!" They are restored: Q44 stands. How the payment and shipment workflows pass commands on without the same loop is open. A workflow reacts to events, and a command from a broker may still run a handler (Oskar: "We don't need command when reacting if we're using workflow, we can just listen to events, but for brokers, fine").
+
+## Q60 (step 3 review)
+
+What does "no broker" mean, and how are modules kept apart? Java has no such mode: its `messaging.bus` is `in-memory`, `kafka` or `rabbitmq`, and even a module's own commands travel on `-internal` channels. The earlier `none` setting (Q56) let modules read each other's streams in one shared store.
+
+Oskar: "no broker mode means (and in general it means): each module has its own database (for sqlite that means different file), for such mode it just forward message to another store. Message broker using Emmett event store is the similar either internal channel stream, or if external a dedicated database/file". On PostgreSQL, a schema per module in one database: "Fine". On KurrentDB, one instance: "use some modules prefixes in the stream name so {module}_{streamtype}-{id}".
+
+So every module has its own event store and read models (a SQLite file each, a PostgreSQL schema each, or `{module}_{streamtype}-{id}` stream names on one KurrentDB; the stream names are used in every store). `MESSAGING_BUS=none`: a forwarder writes straight into the receiving module's store, into its workflow inbox. `MESSAGING_BUS=in-memory`: a module's `-internal` channel is a stream in its own store, and the channels between modules are streams in a dedicated broker database. This replaces Q56, and the `requests:` streams proposed during the review are dropped.
+
+## Q61 (wave A reviews)
+
+Oskar, on a list of seven detailed review questions: "Are you kidding me, how can I answer to such scrutinised questions?!" So Claude decides these by the Java or Emmett default and records them here; Oskar may veto any:
+1. Orders without a broker: the order workflow decides a command and the orders handler records the event, as in Java and Emmett.
+2. A handler run by a processor on SQLite writes through a store on the processor's own connection that also runs the module's inline projections, until Emmett #432 is fixed. This replaces spec L398's "through the application's event store" for that case.
+3. 5.3 drops "in one append": Emmett's `WorkflowHandler` already appends all outputs of one decision together, and the black box can't see it.
+4. Broker catch-up in tests as in Java: committed Kafka offsets against end offsets, and a probe message per RabbitMQ queue, without blocking a consumer's start.
+5. Unknown type (20.8, 21.8) as in Java: only a message that can't be read goes to dead letters; a readable message no processor on the queue handles is acknowledged and skipped, and catch-up doesn't wait for it.
+6. Emmett processor retry policy: with a policy, each message is handled and committed in its own transaction, so no handler runs twice; without one, nothing changes.
+7. Emmett workflow processor: in a workflow's own stream, only entries marked `input: true` are inputs, so a workflow that passes a command on under the same name (the payment and shipment workflows, Q44) doesn't loop.
+
+## Q62 (step 3 rewire review)
+
+With `MESSAGING_BUS=none`, the cart wrote straight into the orders workflow inbox, while orders wrote `channel:payments-requests` into the payments store: two shapes, and writing into another module's inbox would make one module import the other's `WorkflowHandler`. Claude decides (Oskar may veto): one shape. On `none`, a forwarder appends to a channel stream in the receiving module's own store, and the receiver's `fromChannel` reactor stores the message in its workflow inbox, the same as `in-memory` except that the channel stream lives in the receiver's store instead of the broker database. This refines Q60's "into its workflow inbox".
+
+## Q63 (Emmett fix reviews)
+
+Claude decides these by the plain default (Oskar may veto), from the Opus reviews of the Emmett branches for #437, #440, #441, #432, #434 and #435:
+1. #437, which checkpoint stays after a failed batch: the one that matches what was saved. Where the processing scope is a transaction (PostgreSQL, SQLite on a file), the batch rolls back and the checkpoint stays before it; where it isn't (MongoDB, EventStoreDB, in-memory, Cloudflare D1), the earlier messages' writes stay and the checkpoint stays after the last one that succeeded, as on `main`. A handler that returns a stop with an error rolls back like one that throws.
+2. #440: the old `getETagFromIfNotMatch` and `IF_NOT_MATCH` stay exactly as they were, deprecated; the fixed behaviour is only in `getETagFromIfNoneMatch` and `IF_NONE_MATCH`. Docs and READMEs describe the new ones.
+3. #441: a message the workflow skips runs no `beforeAll` hook and opens no workflow span; pinned by a test and stated in the commit message.
+4. #432: `onBeforeCommit` on a processor's store runs inside the processor's transaction, so it can see events that are later rolled back or retried; the docs say so. MongoDB and EventStoreDB follow on their own branch.
+5. #434: in the separate inbox mode, an input whose decision appends nothing stays unmarked and can be decided again on redelivery; the docs say so.
+6. #435: a custom behaviour gets the method and its arguments; behaviours not reaching processors started from `wrapped.consumer()` is documented as a limit for now.
+7. #442 is done in stages: the `MessageStore` interface and generalised option types with the in-memory store first, then the workflow handler and `context.session.messageStore`, then one store per branch.
+8. Merge order: `processor_retry_policy` is rebased onto `processor_error_rolls_back`, keeping one error log per failure in both modes.
+
+## Q64 (step 4 review)
+
+Oskar, on the capture client storing the provider's answer itself: "External tools can use workflow's outputhandler, right?! And stop hacking". So the capture, authorization and fulfillment clients are the `outputHandler`s of the payment and shipment workflows: each calls the outside service for the workflow's output and returns its immediate answer (for example `FailPaymentCapture` when the provider refuses), which Emmett stores as the workflow's next input in the same transaction. A confirmation that comes later arrives from outside as a message, as Java's sandbox publishes `ConfirmPaymentCapture`. No reactor and no second connection write into the module's store.
+
+Claude decides the rest of the step 4 review by default (Oskar may veto):
+1. The expected failures for Emmett #439 stay (Oskar: "Finish the work with bugs if they're not blocked then we adjust"), in one shared helper, and a timed-out test stops its application.
+2. On `none`, orders and payments writing into each other can stall until Emmett #438 is released (Oskar chose B); a test with orders and payments under concurrent load pins it as an expected failure naming #438.
+3. 11.1's sandbox `Location` is checked in step 6; step 4 checks the provider's checkout URL, as Java's test does.
+4. `modules` and the other test-only options are not part of the production `createApplication` options.
+
+## Q65 (step 4 review)
+
+How do the order, payment and shipment workflows handle commands, after the loop of a workflow passing a command on under the same name? Claude kept proposing extra or relayed commands and separate handlers. Oskar: "I told you that we don't need doubled commands", "See how CheckoutGuest and GuestCheckedOut are handled", "And we said Payments and shipments should have workflow so wtf decideer?!", "Output handler is for external tools, so for instance payment gateway, whatever...", and on the order workflow's `Record…` commands to a separate orders handler: "are you fng joking?!".
+
+So, as in Emmett's group checkout (`guides/workflows.md`): each process is a workflow with state that decides its events itself (here one per module; more when a module has more flows). A command comes in once, as a workflow input, and is decided there; no handler next to the workflow, no command passed on, no command doubled, and no output is ever an input. The Java `OrderDecider`, `PaymentDecider` and `ShipmentDecider` rules become the workflows' `decide`; `evolve` only builds the state from the events (Oskar: "evolve don't decide on anything, it only builds state from events"). The workflow's outputs are its own events and commands for other modules; forwarders send those to other modules (this corrects Q22 and Q48, which had the `outputHandler` send them). The `outputHandler` only calls external tools (the payment gateway, the warehouse), and their answer is the workflow's next input (Q64). Q44's "without state" is replaced. Q59's direct path for `CloseUnpaidOrder` is replaced too: it is an input of the order workflow, like any other command for an order.
+
+## Q66 (step 3 and 4 rework review)
+
+Q61 item 2 (a store on the processor's connection that runs the inline projections until Emmett #432 is fixed) is superseded by Oskar's rule: "it can fail in samples, if there's a real bug in Emmett ... stop workarounding!" The sample appends through Emmett's `context.session.messageStore`; the tests whose read models depend on those appends are marked as expected failures naming #432.
+
+Claude decides by default (Oskar may veto): a workflow stamps its decisions with its own clock, whatever path the input came by; customer commands through `WorkflowHandler` retry version conflicts (3 attempts in all) as the spec's Modules section says; a customer command stored by the synchronous `WorkflowHandler` and then handled again by the inbox processor is Emmett #434 (an inbox that doesn't skip an input already handled), so the sample doesn't work around it and marks what it breaks.
+
+## Q67 (step 3 and 4 rework review)
+
+Where does shipments check stock? Java's `ShipmentFacade.reserveStock` asks the warehouse `isProductAvailable` for each item, then the decider decides `StockReserved` or `ProductWasOutOfStock`. After Q65 the rework put the warehouse call inside the shipment workflow's `decide`. Oskar: "If it's external, then it should go through output handler, right? and returning answer from output handler as input". So on `ReserveStock` the shipment workflow outputs a request to the warehouse; its `outputHandler` asks the warehouse whether every product is available and returns the answer as the workflow's next input; `decide` then records `StockReserved` or `ProductWasOutOfStock` from that answer. `decide` uses only its input and state.
+
+## Q68 (step 4)
+
+Should "pay now" (the checkout session, 11.1) also call the provider through the payment workflow's `outputHandler`? The API calls the provider, gets the checkout URL, records `RecordCheckoutSession` through `WorkflowHandler` and redirects, as Java's `OrdersController` and `PaymentFacade` do. Oskar: "this sounds good to me". So it stays: the customer's HTTP request needs the URL at once, so the API calls the provider before giving the command to the workflow. Every other external call comes out of a workflow decision and goes through its `outputHandler` (Q64, Q67).
+
+## Q69 (step 5)
+
+Do we need KurrentDB? It was in the plan because the port kept Java's three setups (Q3), with Kafka + KurrentDB as Java's default, and it was the only setup with asynchronous read models (Q26, criteria group 31). Oskar: "Drop kurrentdb and just use SQLite and PostgreSQL". So the event stores are SQLite and PostgreSQL only. The three setups become SQLite without a broker, Kafka + PostgreSQL and RabbitMQ + PostgreSQL (any pair still works, Q42). Group 31, step 5 Part 3 and the `kurrentdb` setting values go; the default store is PostgreSQL. This replaces Q13 and Q26 and changes Q3.
+
+## Q70 (steps 3-4, decided by Claude)
+
+On `MESSAGING_BUS=none` the published messages come from separate module stores, so no order holds between them: `ReserveStock` (shipments store) can be recorded before `AuthorizePayment` (payments store). `expectPublished` compared by index, so two order tests failed now and then. A broker keeps order only per routing key (Kafka partition, RabbitMQ queue), so the test can promise no more. Decision: `expectPublished` keeps the order of messages with the same routing key and ignores the order between different keys. No sorting or timestamps in the test application.
+
+## Q71 (steps 3-5)
+
+Oskar on the test application recording published messages with extra reactors and observer consumers: "why do you need additional reactor if it's just checking append?" There is no need. Follow-up from Oskar: "why would it read? expectAppended reads nothing afaik". Right: `expectAppended` takes `appendedEvents` from Emmett's `WrapEventStore`, which records each append as it happens. So on `none` and `in-memory` the test application wraps the stores that hold channel streams (`broker.db`, or the receivers' stores on `none`) with `WrapEventStore`, and `published()` is their `appendedEvents` in channel streams, filtered by `publishedTypes`. No reads, no observer consumers, no `test:published:<n>` reactors. Only Kafka and RabbitMQ need a consumer, because there the broker holds the messages. To do in the step 5 fix round.
+
+## Q72 (step 5, decided by Claude from the step 5 review)
+
+1. Criterion 22.2 said the workflow's outputs and checkpoint commit together, so a crash saves neither. Emmett does not work that way: the workflow appends its decision (events and output commands) and moves on, and the `outputHandler` (the call to an outside system, Q64) runs as its own step after that commit. Example: the stock check calls the warehouse and fails; after a restart the stock check runs again, but `ReserveStock` is decided only once. The sample follows Emmett, so 22.2 now says: the input is decided once, and the `outputHandler` runs again after a restart (at least once).
+2. Forwarders skip messages that are already in a channel stream (Oskar, Q-channels: "forward only from channels so checking also stream prefix then they won't be delivered twice"). Only the channel-stream forwarder did it. The Kafka and RabbitMQ forwarders need it too: with `MESSAGING_INTERNAL_DELIVERY=store`, a module's own commands land in a channel stream in its own store, and without the skip the Kafka forwarder would send them to Kafka as well. So all forwarders skip channel streams.
+3. Criterion 25.4 said "SQLite file", but the setting is `SQLITE_FOLDER` (one file per module, Q62). It now says folder; a given folder that does not exist is created.

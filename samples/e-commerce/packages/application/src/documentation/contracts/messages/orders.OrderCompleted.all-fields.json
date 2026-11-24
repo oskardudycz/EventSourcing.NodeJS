@@ -1,0 +1,7 @@
+{
+  "type": "orders.OrderCompleted",
+  "data": {
+    "orderId": "urn:ecommerce:order:customer-1-1",
+    "completedAt": "2026-11-24T10:00:00.000Z"
+  }
+}

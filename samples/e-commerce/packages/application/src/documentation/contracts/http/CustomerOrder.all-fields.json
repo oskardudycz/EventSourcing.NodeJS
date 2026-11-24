@@ -1,0 +1,8 @@
+{
+  "orderId": "urn:ecommerce:order:customer-1-1",
+  "customerId": "customer-1",
+  "placedAt": "2026-11-24T10:00:00.000Z",
+  "totalPrice": 39.98,
+  "progress": "Shipped",
+  "shipped": true
+}

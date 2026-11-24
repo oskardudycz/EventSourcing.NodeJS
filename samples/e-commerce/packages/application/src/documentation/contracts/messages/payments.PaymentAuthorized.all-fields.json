@@ -1,0 +1,8 @@
+{
+  "type": "payments.PaymentAuthorized",
+  "data": {
+    "paymentId": "urn:ecommerce:payment:customer-1-1",
+    "authorizedAt": "2026-11-24T10:00:00.000Z",
+    "captureBefore": "2026-11-25T10:00:00.000Z"
+  }
+}

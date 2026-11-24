@@ -1,0 +1,7 @@
+{
+  "type": "shipments.ConfirmStockAvailability",
+  "data": {
+    "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+    "productsAvailable": true
+  }
+}

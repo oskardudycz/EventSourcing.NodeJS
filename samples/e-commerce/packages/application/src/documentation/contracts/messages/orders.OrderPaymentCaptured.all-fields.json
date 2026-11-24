@@ -1,0 +1,9 @@
+{
+  "type": "orders.OrderPaymentCaptured",
+  "data": {
+    "orderId": "urn:ecommerce:order:customer-1-1",
+    "paymentId": "urn:ecommerce:payment:customer-1-1",
+    "amount": 39.98,
+    "capturedAt": "2026-11-24T10:00:00.000Z"
+  }
+}

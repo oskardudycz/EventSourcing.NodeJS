@@ -1,0 +1,6 @@
+{
+  "type": "shipments.DeliverPackage",
+  "data": {
+    "shipmentId": "urn:ecommerce:shipment:customer-1-1"
+  }
+}

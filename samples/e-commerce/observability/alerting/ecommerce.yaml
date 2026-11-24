@@ -1,0 +1,153 @@
+# Grafana alert rules for the e-commerce sample. Grafana loads them at start from provisioning/alerting.
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: e-commerce
+    folder: E-Commerce
+    interval: 10s
+    rules:
+      - uid: payments-failing
+        title: Payments failing
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: '(sum(increase(emmett_event_appending_count_total{emmett_event_type=~"payments.PaymentTimedOut|payments.PaymentCaptureFailed|payments.PaymentAuthorizationExpired"}[15m])) / clamp_min(sum(increase(emmett_event_appending_count_total{emmett_event_type=~"payments.PaymentAuthorizationRequested"}[15m])), 1) * 100) and on() (sum(increase(emmett_event_appending_count_total{emmett_event_type=~"payments.PaymentAuthorizationRequested"}[15m])) >= 5)'
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [20]
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "More than 20% of the payments failed in the last 15 minutes: timed out, failed to capture or expired."
+        labels:
+          severity: critical
+      - uid: capture-failed
+        title: Capture failed
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'sum(increase(emmett_event_appending_count_total{emmett_event_type=~"payments.PaymentCaptureFailed"}[5m]))'
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: "A package left the warehouse, but the provider refused to charge the customer. The order waits for the customer to pay again."
+        labels:
+          severity: critical
+      - uid: money-lost
+        title: Money lost
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'sum(increase(emmett_event_appending_count_total{emmett_event_type=~"orders.OrderClosedUnpaid|payments.PaymentAuthorizationExpired"}[15m]))'
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: "An order closed unpaid after its package was sent, or a payment hold expired before the charge."
+        labels:
+          severity: critical
+      - uid: checkout-broken
+        title: Checkout broken
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: '(sum(increase(emmett_event_appending_count_total{emmett_event_type=~"shopping_carts.ShoppingCartCheckedOut"}[10m])) > 0) and on() (sum(increase(emmett_event_appending_count_total{emmett_event_type=~"orders.OrderPlaced"}[10m])) == 0)'
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        noDataState: OK
+        execErrState: Error
+        for: 2m
+        annotations:
+          summary: "Customers checked out in the last 10 minutes, but the orders module placed no order."
+        labels:
+          severity: critical
+      - uid: commands-failing
+        title: Commands failing
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'sum(increase(emmett_command_handling_duration_count{emmett_command_status="failure"}[10m])) / clamp_min(sum(increase(emmett_command_handling_duration_count[10m])), 1) * 100'
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "More than 5% of the commands failed in the last 10 minutes."
+        labels:
+          severity: warning

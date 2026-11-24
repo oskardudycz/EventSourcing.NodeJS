@@ -1,0 +1,7 @@
+{
+  "type": "orders.CancelOrder",
+  "data": {
+    "orderId": "urn:ecommerce:order:customer-1-1",
+    "cancellationReason": "Requested"
+  }
+}

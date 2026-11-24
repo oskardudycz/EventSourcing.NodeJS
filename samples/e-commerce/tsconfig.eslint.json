@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["./packages/**/*.ts", "./*.ts"],
+  "include": ["./packages/**/*.ts", "./packages/**/*.tsx", "./*.ts"],
   "exclude": ["node_modules", "tmp", "**/dist", "**/lib"],
   "files": [],
   "compilerOptions": {

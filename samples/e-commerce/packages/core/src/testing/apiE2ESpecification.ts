@@ -1,22 +1,25 @@
+import { isDeepStrictEqual } from 'node:util';
 import {
   HonoTestAgent,
   type HonoResponse,
   type TestRequest,
 } from '@event-driven-io/emmett-honojs';
 import {
-  assertDeepEqual,
   assertEqual,
   assertFails,
   assertMatches,
   assertTrue,
   getInMemoryEventStore,
   WrapEventStore,
+  type EventStoreWrapper,
   type EventStore,
   type InMemoryEventStore,
   type Message,
   type ProblemDocument,
   type TestEventStream,
 } from '@event-driven-io/emmett';
+
+import type { Worker } from '../workers';
 
 type Fetch = (request: Request) => Response | Promise<Response>;
 
@@ -25,8 +28,8 @@ export type TestClock = {
   advanceBy: (milliseconds: number) => void | Promise<void>;
 };
 
-export type TestWorker = {
-  handle: (now: Date) => void | Promise<void>;
+export type PublishedMessage = Pick<Message, 'type' | 'data'> & {
+  metadata?: { key?: string };
 };
 
 export type AppendedEvents = ReadonlyMap<string, TestEventStream>;
@@ -35,8 +38,8 @@ export type TestApplication = {
   fetch: Fetch;
   sendMessages?: (messages: readonly Message[]) => void | Promise<void>;
   clock?: TestClock;
-  workers?: readonly TestWorker[];
-  published?: () => readonly Message[];
+  workers?: readonly Worker[];
+  published?: () => readonly PublishedMessage[];
   catchUp?: () => Promise<boolean>;
   start?: () => Promise<void>;
   stop?: () => Promise<void>;
@@ -46,7 +49,7 @@ type FetchOptions = { fetch: Fetch } & Omit<TestApplication, 'fetch'>;
 
 type ApplicationOptions<Store extends EventStore> = {
   getEventStore: () => Store;
-  getApplication: (eventStore: Store) => TestApplication;
+  getApplication: (eventStore: EventStoreWrapper<Store>) => TestApplication;
 };
 
 type InMemoryApplicationOptions = {
@@ -92,7 +95,7 @@ export type TestResponse = {
 
 export type Outcome = {
   response: TestResponse | undefined;
-  published: readonly Message[];
+  published: readonly PublishedMessage[];
   appended: readonly TestEventStream[] | undefined;
 };
 
@@ -291,14 +294,43 @@ export const expectError = (
 ): Expectation =>
   expectResponse(status, problemDetails ? { body: problemDetails } : undefined);
 
+const sameMessage = (
+  expected: PublishedMessage,
+  actual: PublishedMessage,
+): boolean =>
+  isDeepStrictEqual(
+    { type: actual.type, data: actual.data },
+    { type: expected.type, data: expected.data },
+  ) &&
+  (expected.metadata?.key === undefined ||
+    expected.metadata.key === actual.metadata?.key);
+
 export const expectPublished =
-  (...messages: Message[]): Expectation =>
-  (outcome) =>
-    assertDeepEqual(
-      outcome.published,
-      messages,
-      `Published messages: ${JSON.stringify(outcome.published)}`,
-    );
+  (...messages: PublishedMessage[]): Expectation =>
+  (outcome) => {
+    const describePublished = `Published messages: ${JSON.stringify(outcome.published)}`;
+
+    assertEqual(messages.length, outcome.published.length, describePublished);
+
+    const remaining = [...outcome.published];
+
+    for (const expected of messages) {
+      const found = remaining.findIndex(
+        (actual, index) =>
+          sameMessage(expected, actual) &&
+          !remaining
+            .slice(0, index)
+            .some((earlier) => earlier.metadata?.key === actual.metadata?.key),
+      );
+
+      if (found < 0)
+        assertFails(
+          `Expected ${JSON.stringify(expected)} next for its routing key. ${describePublished}`,
+        );
+
+      remaining.splice(found, 1);
+    }
+  };
 
 export const expectNothingPublished = (): Expectation => expectPublished();
 

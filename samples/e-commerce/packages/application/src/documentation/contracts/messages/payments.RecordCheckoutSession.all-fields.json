@@ -1,0 +1,10 @@
+{
+  "type": "payments.RecordCheckoutSession",
+  "data": {
+    "paymentId": "urn:ecommerce:payment:customer-1-1",
+    "session": {
+      "url": "https://sandbox.example/checkout/1",
+      "expiresAt": "2026-11-25T10:00:00.000Z"
+    }
+  }
+}

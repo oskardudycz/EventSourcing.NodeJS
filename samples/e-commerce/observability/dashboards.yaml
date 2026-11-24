@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: "E-commerce"
+    type: file
+    updateIntervalSeconds: 1
+    options:
+      path: /otel-lgtm/dashboards
+      foldersFromFilesStructure: false

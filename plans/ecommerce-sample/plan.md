@@ -1,6 +1,6 @@
 # Plan: E-commerce sample on Emmett
 
-Revision: 4. Built from spec r6.
+Revision: 6. Built from spec r8.
 
 Spec: `spec.md`. Q&A: `qa.md`.
 
@@ -11,7 +11,9 @@ Spec: `spec.md`. Q&A: `qa.md`.
 - **Core package**: the workspace package with the business-agnostic code Emmett lacks (Q16).
 - **Forwarder**: an Emmett reactor on the event store consumer, registered with `consumer.reactor({ processorId, canHandle, eachMessage })`, whose handler sends what a module recorded to Kafka, RabbitMQ or a channel stream; the reactor then saves its checkpoint (Q22, Q57). The core supplies only the handler (`forwardToChannels` for channel streams).
 - **Broker-to-workflow forwarder**: a reactor on a queue or channel stream whose handler (`toWorkflowInbox`) stores the message in a workflow's inbox with `WorkflowHandler`'s store-only path (Q45).
-- **Workflow**: an Emmett `Workflow` without state in inbox mode: order, payment, shipment (Q4, Q23, Q44, Q47).
+- **Workflows decide** (Q65): each process is a workflow with state that decides its events itself (here one per module; more when a module has more flows), as Emmett's group checkout does; no handler next to it, no command passed on or doubled, no output that is also an input. Forwarders send its outputs to other modules; its `outputHandler` only calls external tools. Rework of steps 3 and 4 for this comes before step 5 continues.
+- **Module databases** (Q60): each module has its own event store and read models (a SQLite file each plus `broker.db` for the channels between modules; a PostgreSQL schema each plus a `broker` schema; `{module}_{streamtype}-{id}` stream names in every store). `MESSAGING_BUS=none` appends to a channel stream in the receiving module's own store, which the receiver's channel reactor stores in its workflow inbox (Q62); `in-memory` keeps `-internal` channels in the module's own store and the channels between modules in the broker database. No module reads another module's database.
+- **Workflow**: an Emmett `Workflow` with state, in inbox mode: order, payment, shipment, one per module (Q4, Q23, Q44, Q47, Q65). `CloseUnpaidOrder` is an input of the order workflow like any other command for an order.
 - **Time step**: an `ApiE2ESpecification` step that moves the clock and runs each worker's `handle(now)` once.
 - **Java sample**: `~/repos/EventSourcing.JVM/samples/e-commerce`, the behaviour reference. Paths below are relative to `samples/e-commerce` in the Node.js repository.
 - Rules for every step: TDD; Vitest `expect`; forwarders and readers are Emmett reactors with core handlers, and module API tests run on `MESSAGING_BUS=in-memory` and `none` (Q56, Q57); no mocking library, named fakes; tests name behaviour; no code comments unless tricky; never commit, push, branch (except the named Emmett branches) or publish; clean up containers started by the step.
@@ -75,7 +77,7 @@ The application runs on Hono with `emmett-honojs`, on Emmett's SQLite event stor
 The shopping carts module works for adding, removing and reading the current cart, with the ported decider, the `Cart` and `CustomerShoppingCart` read models, the price calculator port with a random-price implementation and a `ChangeablePrices` fake, URN ids, money rounded to cents, problem details and the error mapping (409, 412, 404, 400).
 Tests use the core's `ApiE2ESpecification` from step 1.
 Add the CI workflow `.github/workflows/samples_e_commerce.yml`, like the other samples' workflows (Node from `.nvmrc`, `npm ci`, `npm run build:ts`, `npm run lint`, `npm test`), running only when `samples/e-commerce` changes (Q53).
-The same step builds what checkout needs, because neither part is usable alone: the core's routings (type to channel and routing key, Java `MessageRouter` rules), the forwarder as the `eachMessage` handler of an Emmett reactor on the event store consumer (Q22, Q57), retrying with back-off inside its handler (Q24, Q37), and channels as streams (Q51, Q55): each channel is a stream `channel:<name>`, the forwarder appends to it, and readers are reactors with `canHandle` that handle a message only from the channel stream and with a matching binding key; a reader stores a message in a workflow's inbox through `WorkflowHandler`'s store-only path, or passes a module's own command to its handler. With `MESSAGING_BUS=none` (Q56) there are no channel streams: the cart appends its external event to `shopping_carts:external:<cartId>`. The cart API tests run on both settings. Tests observe what was published through a recording reactor in the test application; like Java's `expectPublished`, it also lists a module's commands to itself. Type names get module prefixes (Q17, Q29); an old name is mapped with Emmett's `upcast` (Q54). The cart module checks out: the facade appends `ShoppingCartCheckedOut`, an inline Pongo projection keeps the `ShoppingCartSummary` (Q38), and the cart forwarder reads it and sends `shopping_carts.external.ShoppingCartCheckedOut` (19.6, cart part). The cart module checks out: the facade appends `ShoppingCartCheckedOut`, and the cart forwarder updates its `ShoppingCartSummary` and sends `shopping_carts.external.ShoppingCartCheckedOut` in one handler (19.6, cart part).
+The same step builds what checkout needs, because neither part is usable alone: the core's routings (type to channel and routing key, Java `MessageRouter` rules), the forwarder as the `eachMessage` handler of an Emmett reactor on the event store consumer (Q22, Q57), retrying with back-off inside its handler (Q24, Q37), and channels as streams (Q51, Q55): each channel is a stream `channel:<name>`, the forwarder appends to it, and readers are reactors with `canHandle` that handle a message only from the channel stream and with a matching binding key; a reader stores a message in a workflow's inbox through `WorkflowHandler`'s store-only path, or passes a module's own command to its handler. The cart API tests run on both settings. Tests observe what was published through a recording reactor in the test application; like Java's `expectPublished`, it also lists a module's commands to itself. Rewire for Q60 (after the first run of this step): the cart gets its own store and read models, its stream is `shopping_carts_cart-<id>`, and channel streams between modules move to the broker database; with `MESSAGING_BUS=none` the cart forwarder stores its external event in the receiving workflow's inbox in that module's store (19.8). Type names get module prefixes (Q17, Q29); an old name is mapped with Emmett's `upcast` (Q54). The cart module checks out: the facade appends `ShoppingCartCheckedOut`, an inline Pongo projection keeps the `ShoppingCartSummary` (Q38), and the cart forwarder reads it and sends `shopping_carts.external.ShoppingCartCheckedOut` (19.6, cart part).
 
 Context
 - No `samples/e-commerce` exists in the Node.js repository yet.
@@ -114,7 +116,7 @@ Acceptance criteria
 - 19.5 GIVEN an internal event WHEN the forwarder maps it to an external event THEN the external event's message id is derived from the internal event's id and the external type name, so a resend has the same id.
 - 19.6 GIVEN a forwarder that needs a summary (the cart's customer id, items and total; the `referenceId` of a payment or shipment) WHEN it handles an event THEN it reads its Pongo summary, which an inline projection updates in the module's own append, so it never lags behind (Q24, Q38, Q46).
 - 19.7 GIVEN channel streams WHEN a forwarder sends a message THEN it appends it to the stream `channel:<name>` with the routing key AND a reactor that reads that channel stores it in the receiving workflow's inbox (Q51, Q55) AND skips the copy of the same type in the source stream; nothing calls the receiving module's handlers inside the forwarder's processing.
-- 19.8 GIVEN `MESSAGING_BUS=none` WHEN the cart is checked out THEN `shopping_carts.external.ShoppingCartCheckedOut` is appended to `shopping_carts:external:<cartId>` AND readers take it by `canHandle` (Q56).
+- 19.8 GIVEN `MESSAGING_BUS=none` WHEN the cart is checked out THEN the cart forwarder appends `shopping_carts.external.ShoppingCartCheckedOut` to a channel stream in the orders store AND the orders channel reactor stores it in the order workflow's inbox AND no module reads another module's store (Q60).
 - 23.1 GIVEN any command or internal event WHEN it is stored or sent THEN its type name is `<module>.<Name>`, with the modules `shopping_carts`, `orders`, `payments` and `shipments`.
 - 23.2 GIVEN an external event WHEN it is sent THEN its type name is `<module>.external.<Name>`, for example `payments.external.PaymentAuthorized` next to the internal `payments.PaymentAuthorized`.
 - 23.3 GIVEN an event of an old type name WHEN a processor reads it THEN Emmett's `upcast` in the processor's `messageOptions` gives the current handler the current event (Q54).
@@ -145,7 +147,7 @@ Tests
 - 19.5: anExternalEventIdIsDerivedFromTheInternalIdAndType - asserts the same id for the same input twice; aForwardedMessageKeepsItsIdCorrelationAndCausation - asserts the derived id and the causation id in the channel stream
 - 19.6: checkingOutSendsTheItemsAndTotalOfAllCartChanges - asserts the published event built from the inline summary after adds and a removal
 - 19.7: aChannelReactorStoresTheMessageInTheWorkflowInbox - asserts the prefixed inbox entry of a test workflow and that the workflow did not decide; aChannelReactorSkipsTheSameTypeOutsideTheChannel; aChannelReactorGetsOnlyTheMessagesItsBindingKeyMatches
-- 19.8: the cart API tests of checkout run on `in-memory` and `none`; they assert the published event, not yet its stream name
+- 19.8: the cart API tests of checkout run on `in-memory` and `none`; the orders tests show the order is placed from the inbox in the orders store
 - 23.1: commandsAndInternalEventsArePrefixedWithTheModule - asserts `shopping_carts.ShoppingCartCheckedOut` in the stream
 - 23.2: externalEventsArePrefixedWithModuleExternal - asserts `shopping_carts.external.ShoppingCartCheckedOut`
 - 23.3: no test of its own: it is Emmett's `upcast`, and no module has an old name yet
@@ -170,16 +172,16 @@ Use the `implement-step` skill.
 
 What to build
 Part 1. Orders: placing an order and reading orders
-The orders module exists: the ported decider and entity (statuses `Opened`, `Confirmed`, `Completed`, `ClosedUnpaid`, `Canceled`), the facade (sets `now`), and the order workflow as an Emmett `Workflow` without state, keyed by the order id, in inbox mode (Q4, Q23, Q25, Q47). The workflow reacts to `ShoppingCartCheckedOut` with `PlaceOrder` (order id derived from the cart id) and to `OrderPlaced` with `AuthorizePayment` (payment id derived from the order id) and `ReserveStock`. Its `outputHandler` sends recorded outputs with the routings, retrying inside the handler. The `OrderStatus` and `CustomerOrder` read models and the endpoints `GET /customers/{customerId}/orders` and `GET /customers/{customerId}/orders/{orderId}` (conditional read, 1 s long polling, 404 after retries) exist.
+Rewire for Q60 (after the first run of this step): orders gets its own store and read models, with `orders_order-<id>` and `orders_workflow-<orderId>` streams; messages between modules go through the broker database (`in-memory`) or straight into the receiving module's store (`none`). The orders module exists: the order entity (statuses `Opened`, `Confirmed`, `Completed`, `ClosedUnpaid`, `Canceled`) and the order workflow as an Emmett `Workflow` with the order as state, keyed by the order id, in inbox mode (Q4, Q23, Q25, Q47, Q65). Its `decide` holds the ported `OrderDecider` rules and its `evolve` only builds the order from the events; its clock stamps every decision (Q66). On `ShoppingCartCheckedOut` it decides `OrderPlaced` (order id derived from the cart id) and the output commands `AuthorizePayment` (payment id derived from the order id) and `ReserveStock`. A forwarder sends the workflow's output commands with the routings, retrying inside the handler (Q65). Customer commands go through `WorkflowHandler`. The `OrderStatus` and `CustomerOrder` read models and the endpoints `GET /customers/{customerId}/orders` and `GET /customers/{customerId}/orders/{orderId}` (conditional read, 1 s long polling, 404 after retries) exist.
 
 Part 2. Orders: holding payment and stock, and completing
-The order decider records payment authorization, stock reservation, confirmation (in the same append as the second hold), package sent with `OrderPaymentDue`, capture and completion, with Java's rules on payment ids. The workflow reacts to `PaymentAuthorized`, `StockReserved`, `OrderConfirmed`, `PackageWasSent`, `OrderPaymentDue` and `PaymentCaptured` as in the Java `OrderSaga`. Messages from other modules are sent into the module test as broker steps.
+The order workflow decides payment authorization, stock reservation, confirmation (with the second hold), package sent with `OrderPaymentDue`, capture and completion, with Java's rules on payment ids, and outputs `RequestFulfillment` and `CapturePayment` as the Java `OrderSaga` does (Q65). Messages from other modules are sent into the module test as broker steps.
 
 Part 3. Orders: compensation, the unpaid-orders worker and the workers' loop
-Shipment and payment failures, `dueAt` from the payment terms (7 days), cancellation by the workflow, and the unpaid-orders worker over the `OrderAwaitingPayment` to-do list. The worker stores `CloseUnpaidOrder` as an input of the order's workflow (Q22, Q44), and the workflow passes it on to the orders handler; this step uses the default `broker` delivery through the channel streams' handler reactor from step 2 (22.3 and its `store` variant come in step 5). The core gets the workers' loop (every minute, `node:timers/promises` `setInterval`, stopped by an `AbortSignal`), and tests run the workers through the time step.
+Shipment and payment failures, `dueAt` from the payment terms (7 days), cancellation by the workflow, and the unpaid-orders worker over the `OrderAwaitingPayment` to-do list. The worker sends `CloseUnpaidOrder` as an input of the order workflow, which decides `OrderClosedUnpaid` itself (Q65); this step stores workers' and sandboxes' commands straight in the workflow inbox (the `store` variant of Q40); the `-internal` channel path (the `broker` variant, 22.3) comes in step 5. The core gets the workers' loop (every minute, Emmett's `delayOrAbort` between runs, stopped by an `AbortSignal`), and tests run the workers through the time step.
 
 Part 4. Orders: retrying payment and canceling
-`POST .../retry-payment` and `POST .../cancel` (202, 404 for unknown), with the decider rules from Java (cancel only `Opened`; retried payment id from order id and attempt number) and the workflow reactions to `OrderPaymentRetried` and `OrderCanceled`.
+`POST .../retry-payment` and `POST .../cancel` (202, 404 for unknown), with the order workflow's ported rules from Java (cancel only `Opened`; retried payment id from order id and attempt number); the API gives the commands to the workflow through `WorkflowHandler` (Q65).
 
 Context
 - Java: `../../../EventSourcing.JVM/samples/e-commerce/src/main/java/io/eventdriven/ecommerce/orders/` (`Order.java`, `OrderDecider.java`, `OrderSaga.java`, `OrderFacade.java`, `OrdersController.java`, `getorderstatus/`, `getcustomerorders/`).
@@ -199,77 +201,76 @@ Blocked by
 Step 2.
 
 Acceptance criteria
-- 5.1 GIVEN `ShoppingCartCheckedOut` arrives WHEN the workflow handles it THEN it sends `PlaceOrder` with the order id derived from the cart id AND the order records `OrderPlaced` with status `Opened`.
-- 5.2 GIVEN the same `ShoppingCartCheckedOut` arrives twice WHEN the workflow handles both THEN the order is placed once.
-- 5.3 GIVEN `OrderPlaced` WHEN the workflow handles it THEN it records `AuthorizePayment` (payment id derived from the order id) and `ReserveStock` in one append to its stream AND both are sent.
+- 5.1 GIVEN `ShoppingCartCheckedOut` arrives WHEN the order workflow handles it THEN the order, with the id derived from the cart id, has status `Opened` and stage `AwaitingPayment` AND `AuthorizePayment` (payment id derived from the order id) and `ReserveStock` are published. That `OrderPlaced` is the decided event is checked in the workflow's unit tests.
+- 5.2 GIVEN the same `ShoppingCartCheckedOut` arrives twice WHEN the workflow handles both THEN one order exists AND `AuthorizePayment` and `ReserveStock` are published once each.
+- 5.3 GIVEN the order was placed WHEN the order workflow's output is forwarded THEN `AuthorizePayment` (payment id derived from the order id) and `ReserveStock` are both published, each with its routing key.
 - 10.1 GIVEN orders of a customer WHEN they get `/customers/{customerId}/orders` THEN they get the orders, newest first, with placed time, total, progress and whether they shipped.
 - 10.2 GIVEN an order WHEN the customer gets its status THEN they get products, total, progress, stage, payment, shipment, carrier, tracking, current payment id and the possible actions (pay now, retry payment, cancel order) AND the `ETag`.
 - 10.3 GIVEN a cart was just checked out and the order isn't placed yet WHEN the customer gets the order status THEN the lookup is retried for up to 1 s AND the response is 200 if the order appears, else 404.
 - 10.4 GIVEN no order WHEN the customer gets its status THEN the response is 404.
 - 10.5 GIVEN `If-None-Match` with the current version AND nothing newer arrives within 1 s WHEN the customer gets the status THEN the response is 304.
-- 6.1 GIVEN an `Opened` order WHEN `PaymentAuthorized` and `StockReserved` both arrive, in any order THEN the order records each AND, with the second, `OrderConfirmed` with the payment id and the shipment id in the same append.
-- 6.2 GIVEN `OrderConfirmed` WHEN the workflow handles it THEN it sends `RequestFulfillment`.
-- 6.3 GIVEN a `Confirmed` order with an authorized payment and reserved stock WHEN `PackageWasSent` arrives THEN the order records `OrderPackageSent` and `OrderPaymentDue` AND the workflow sends `CapturePayment`.
-- 6.4 GIVEN a sent order WHEN `PaymentCaptured` arrives THEN the order records `OrderPaymentCaptured` and `OrderCompleted`.
-- 6.5 GIVEN an order whose payment is `Retrying` WHEN `PaymentAuthorized` arrives for the old payment id THEN the order records nothing.
-- 6.6 GIVEN an `Opened` order with a pending payment WHEN `PaymentAuthorized` arrives with any payment id THEN the order records `OrderPaymentAuthorized`, as in Java.
-- 6.7 GIVEN a sent order WHEN `PaymentCaptured` or `PaymentFailed` arrives for a payment id that is not the order's current one THEN the order records nothing.
-- 6.8 GIVEN an order that recorded `OrderPaymentAuthorized` WHEN `RecordOrderPaymentAuthorization` arrives again THEN the decider returns no events AND nothing is appended.
-- 6.9 GIVEN a `Completed` order WHEN `RecordOrderPackageSent` arrives late THEN nothing is appended.
-- 7.1 GIVEN an `Opened` order with a pending payment WHEN `ShipmentFailed` with `ProductsOutOfStock` arrives THEN the order records `OrderShipmentFailed` at once AND stays `Opened`.
-- 7.2 GIVEN that order WHEN the payment then answers with `PaymentAuthorized` THEN the order records `OrderPaymentAuthorized` and `OrderCanceled` AND the workflow sends `CancelPayment`.
-- 7.3 GIVEN a `Confirmed` order WHEN `ShipmentFailed` with `FulfillmentRejected` arrives THEN the order records `OrderShipmentFailed` and `OrderCanceled` AND the workflow sends `CancelPayment` and `ReleaseStock`.
-- 7.4 GIVEN an `Opened` order WHEN `PaymentFailed` arrives THEN the order records `OrderPaymentFailed` with `dueAt` 7 days after the failure AND stays `Opened`.
-- 7.5 GIVEN a `Confirmed` order that is not sent WHEN `PaymentFailed` arrives THEN the order records `OrderPaymentFailed` and `OrderCanceled` AND the workflow sends `ReleaseStock`.
-- 7.6 GIVEN a sent order whose capture failed WHEN time passes beyond `dueAt` THEN the unpaid-orders worker appends `CloseUnpaidOrder` AND the order records `OrderClosedUnpaid`.
-- 7.7 GIVEN an `Opened` order whose payment failed WHEN time passes beyond `dueAt` THEN the order records `OrderCanceled` with reason `PaymentFailed`.
-- 7.8 GIVEN an `Opened` order whose payment failed WHEN the worker runs before `dueAt` THEN nothing is appended.
+- 6.1 GIVEN an `Opened` order WHEN `PaymentAuthorized` and `StockReserved` both arrive, in any order THEN the order status is `Confirmed` with the payment id and the shipment id after the second one, and `RequestFulfillment` is published then.
+- 6.2 GIVEN an order is confirmed WHEN the workflow's output is forwarded THEN `RequestFulfillment` is published.
+- 6.3 GIVEN a `Confirmed` order with an authorized payment and reserved stock WHEN `PackageWasSent` arrives THEN the order shows the package as sent AND `CapturePayment` is published.
+- 6.4 GIVEN a sent order WHEN `PaymentCaptured` arrives THEN the order status is `Completed`. The recorded events `OrderPaymentCaptured` and `OrderCompleted` are checked in the workflow's unit tests.
+- 6.5 GIVEN an order whose payment is `Retrying` WHEN `PaymentAuthorized` arrives for the old payment id THEN the order does not change. Nothing recorded is checked in the workflow's unit tests.
+- 6.6 GIVEN an `Opened` order with a pending payment WHEN `PaymentAuthorized` arrives with any payment id THEN the order shows the payment as authorized, as in Java.
+- 6.7 GIVEN a sent order WHEN `PaymentCaptured` or `PaymentFailed` arrives for a payment id that is not the order's current one THEN the order does not change AND nothing is published.
+- 6.8 GIVEN an order whose payment is authorized WHEN `payments.external.PaymentAuthorized` arrives again THEN the order does not change AND nothing is published. That the workflow decides no events is checked in its unit tests.
+- 6.9 GIVEN a `Completed` order WHEN `shipments.external.PackageWasSent` arrives late THEN the order stays `Completed` AND nothing is published.
+- 7.1 GIVEN an `Opened` order with a pending payment WHEN `ShipmentFailed` with `ProductsOutOfStock` arrives THEN the order shows the shipment failure at once AND stays `Opened`.
+- 7.2 GIVEN that order WHEN the payment then answers with `PaymentAuthorized` THEN the order status is `Canceled` AND `CancelPayment` is published.
+- 7.3 GIVEN a `Confirmed` order WHEN `ShipmentFailed` with `FulfillmentRejected` arrives THEN the order status is `Canceled` AND `CancelPayment` and `ReleaseStock` are published.
+- 7.4 GIVEN an `Opened` order WHEN `PaymentFailed` arrives THEN the order stays `Opened` with `dueAt` 7 days after the failure.
+- 7.5 GIVEN a `Confirmed` order that is not sent WHEN `PaymentFailed` arrives THEN the order status is `Canceled` AND `ReleaseStock` is published.
+- 7.6 GIVEN a sent order whose capture failed WHEN time passes beyond `dueAt` THEN the unpaid-orders worker stores `CloseUnpaidOrder` as an input of the order workflow AND the order status is `ClosedUnpaid`.
+- 7.7 GIVEN an `Opened` order whose payment failed WHEN time passes beyond `dueAt` THEN the order status is `Canceled`. The reason `PaymentFailed` is checked in the workflow's unit tests.
+- 7.8 GIVEN an `Opened` order whose payment failed WHEN the worker runs before `dueAt` THEN the order stays `Opened`.
 - 24.1 GIVEN workers are on WHEN the application runs THEN each worker's `handle(now)` runs every minute.
 - 24.2 GIVEN the application stops WHEN shutdown runs THEN the workers' loop stops through its `AbortSignal`.
 - 24.3 GIVEN workers are off (tests) WHEN a test step makes time pass THEN the clock moves AND each worker's `handle(now)` runs once.
-- 8.1 GIVEN an order with a failed payment WHEN the customer posts `retry-payment` THEN the response is 202 AND the order records `OrderPaymentRetried` with a new payment id derived from the order id and the attempt number AND the workflow sends `AuthorizePayment` for the new payment.
-- 9.1 GIVEN an `Opened` order with a pending payment and reserved stock WHEN the customer posts `cancel` THEN the response is 202 AND the order records `OrderCanceled` with reason `Requested` AND the workflow sends `ReleaseStock` only.
-- 9.2 GIVEN a `Completed` order, or a `Confirmed` order that is paid and not sent WHEN the customer posts `cancel` THEN the response is 202 AND nothing is appended.
+- 8.1 GIVEN an order with a failed payment WHEN the customer posts `retry-payment` THEN the response is 202 AND the order shows a new current payment id derived from the order id and the attempt number AND `AuthorizePayment` is published for the new payment.
+- 9.1 GIVEN an `Opened` order with a pending payment and reserved stock WHEN the customer posts `cancel` THEN the response is 202 AND the order status is `Canceled` AND only `ReleaseStock` is published (reason `Requested` is checked in the workflow's unit tests).
+- 9.2 GIVEN a `Completed` order, or a `Confirmed` order that is paid and not sent WHEN the customer posts `cancel` THEN the response is 202 AND the order status does not change AND nothing is published.
 - 9.3 GIVEN an unknown order WHEN the customer posts `cancel` THEN the response is 404.
 
 Tests
-- 5.1: aCheckedOutCartPlacesAnOrderWithTheDerivedId - asserts `PlaceOrder` and `OrderPlaced` with status `Opened`
-- 5.2: theSameCheckoutTwicePlacesOneOrder - asserts one `OrderPlaced`
-- 5.3: aPlacedOrderAsksForPaymentAndStockInOneAppend - asserts both outputs in one workflow append and both sent, payment id derived
+- 5.1: aCheckedOutCartPlacesAnOrderWithTheDerivedId - asserts status `Opened`, stage `AwaitingPayment` and published `AuthorizePayment` and `ReserveStock` with derived ids
+- 5.2: theSameCheckoutTwicePlacesOneOrder - asserts one order and one `AuthorizePayment` and `ReserveStock`
+- 5.3: covered by 5.1's published `AuthorizePayment` and `ReserveStock` (Emmett appends one decision's outputs together, Q61), payment id derived
 - 10.1: customerOrdersAreListedNewestFirst - asserts order of two orders and their fields
 - 10.2: orderStatusShowsProgressActionsAndETag - asserts body fields and `ETag`
 - 10.3: orderStatusRightAfterCheckoutWaitsUpTo1s - asserts 200 when the order appears within 1 s, else 404
 - 10.4: anUnknownOrderAnswers404 - asserts 404
 - 10.5: orderStatusWithTheCurrentVersionAnswers304 - asserts 304 after 1 s
-- 6.1: bothHoldsInAnyOrderConfirmTheOrderInTheSameAppend - asserts `OrderConfirmed` with payment and shipment ids, for both orders of arrival
-- 6.2: aConfirmedOrderRequestsFulfillment - asserts `RequestFulfillment` sent
-- 6.3: aSentPackageMakesThePaymentDueAndCapturesIt - asserts `OrderPackageSent`, `OrderPaymentDue`, `CapturePayment`
-- 6.4: aCapturedPaymentCompletesTheOrder - asserts `OrderPaymentCaptured`, `OrderCompleted`
-- 6.5: anOldPaymentAuthorizationWhileRetryingIsIgnored - asserts nothing appended
-- 6.6: anyPaymentIdIsAcceptedWhileThePaymentIsPending - asserts `OrderPaymentAuthorized`
-- 6.7: captureOrFailureForAnotherPaymentIdIsIgnored - asserts nothing appended
-- 6.8: aRepeatedAuthorizationRecordsNothing - asserts no events
-- 6.9: aLatePackageSentOnACompletedOrderRecordsNothing - asserts nothing appended
-- 7.1: outOfStockWhilePaymentPendingRecordsShipmentFailureAtOnce - asserts `OrderShipmentFailed`, status `Opened`
-- 7.2: thenAnAuthorizationCancelsAndCancelsThePayment - asserts `OrderPaymentAuthorized`, `OrderCanceled`, `CancelPayment`
-- 7.3: aRejectedFulfillmentCancelsAndReleases - asserts `OrderShipmentFailed`, `OrderCanceled`, `CancelPayment` and `ReleaseStock`
-- 7.4: aPaymentFailureSetsDueAtIn7DaysAndKeepsTheOrderOpen - asserts `OrderPaymentFailed.dueAt`
-- 7.5: aPaymentFailureOnAConfirmedOrderCancelsAndReleasesStock - asserts `OrderCanceled`, `ReleaseStock`
-- 7.6: afterDueAtASentUnpaidOrderIsClosedUnpaid - asserts `CloseUnpaidOrder` stored and `OrderClosedUnpaid`
-- 7.7: afterDueAtAnOpenedUnpaidOrderIsCanceled - asserts `OrderCanceled` reason `PaymentFailed`
-- 7.8: beforeDueAtTheWorkerAppendsNothing - asserts nothing appended
+- 6.1: bothHoldsInAnyOrderConfirmTheOrder - asserts status `Confirmed` with payment and shipment ids and published `RequestFulfillment`, for both orders of arrival
+- 6.2: aConfirmedOrderRequestsFulfillment - asserts `RequestFulfillment` published
+- 6.3: aSentPackageMakesThePaymentDueAndCapturesIt - asserts the sent package in the order and published `CapturePayment`
+- 6.4: aCapturedPaymentCompletesTheOrder - asserts status `Completed`; the workflow's unit test asserts `OrderPaymentCaptured`, `OrderCompleted`
+- 6.5: anOldPaymentAuthorizationWhileRetryingIsIgnored - asserts the order is unchanged; the unit test asserts no events
+- 6.6: anyPaymentIdIsAcceptedWhileThePaymentIsPending - asserts the order shows the payment as authorized
+- 6.7: captureOrFailureForAnotherPaymentIdIsIgnored - asserts the order is unchanged and nothing published
+- 6.8: aRepeatedAuthorizationChangesNothing - asserts the order is unchanged and nothing published; the unit test asserts no events
+- 6.9: aLatePackageSentOnACompletedOrderChangesNothing - asserts status `Completed` and nothing published
+- 7.1: outOfStockWhilePaymentPendingShowsShipmentFailureAtOnce - asserts the shipment failure in the order, status `Opened`
+- 7.2: thenAnAuthorizationCancelsTheOrderAndThePayment - asserts status `Canceled`, published `CancelPayment`
+- 7.3: aRejectedFulfillmentCancelsAndReleases - asserts status `Canceled`, published `CancelPayment` and `ReleaseStock`
+- 7.4: aPaymentFailureSetsDueAtIn7DaysAndKeepsTheOrderOpen - asserts status `Opened` and `dueAt`
+- 7.5: aPaymentFailureOnAConfirmedOrderCancelsAndReleasesStock - asserts status `Canceled`, published `ReleaseStock`
+- 7.6: afterDueAtASentUnpaidOrderIsClosedUnpaid - asserts `CloseUnpaidOrder` stored and status `ClosedUnpaid`
+- 7.7: afterDueAtAnOpenedUnpaidOrderIsCanceled - asserts status `Canceled`; the unit test asserts reason `PaymentFailed`
+- 7.8: beforeDueAtTheWorkerChangesNothing - asserts the order stays `Opened`
 - 24.1: workersRunEveryMinute - asserts `handle(now)` calls; setup: the loop takes its interval as a parameter (production: 1 minute), the test passes 20 ms and waits for three calls; no global timer patching
 - 24.2: shutdownStopsTheWorkersLoop - asserts no call after abort
 - 24.3: aTimeStepMovesTheClockAndRunsEachWorkerOnce - asserts one call per worker
-- 8.1: retryingAFailedPaymentStartsANewPayment - asserts 202, `OrderPaymentRetried` with derived id, `AuthorizePayment`
-- 9.1: cancelingAnUnpaidOrderReleasesTheStockOnly - asserts 202, `OrderCanceled` `Requested`, `ReleaseStock` only
-- 9.2: cancelingACompletedOrPaidOrderChangesNothing - asserts 202, nothing appended
+- 8.1: retryingAFailedPaymentStartsANewPayment - asserts 202, the new derived current payment id, published `AuthorizePayment`
+- 9.1: cancelingAnUnpaidOrderReleasesTheStockOnly - asserts 202, status `Canceled`, published `ReleaseStock` only; the unit test asserts reason `Requested`
+- 9.2: cancelingACompletedOrPaidOrderChangesNothing - asserts 202, unchanged status, nothing published
 - 9.3: cancelingAnUnknownOrderAnswers404 - asserts 404
 - extra: anotherCustomersOrderAnswers404 - covers the customer filter (Java `findStatus`)
-- extra: orderDeciderPlacingAPlacedOrderEmitsNothing - covers DeciderSpecification idempotency
-- extra: packageSentBeforeConfirmationRecordsNothing - covers the guard (Confirmed, Authorized, Reserved)
+- extra: packageSentBeforeConfirmationRecordsNothing - covers the guard (Confirmed, Authorized, Reserved) in the workflow's unit tests
 - extra: aWorkerFailureDoesNotStopTheLoop - covers an error in one run
-- extra: retryingWithoutAFailedPaymentChangesNothing - covers the decider guard
+- extra: retryingWithoutAFailedPaymentChangesNothing - covers the workflow's guard (`WorkflowSpecification`)
 
 Existing tests it breaks
 None expected; if a test from an earlier step breaks, update it in this step and say why.
@@ -286,10 +287,10 @@ Use the `implement-step` skill.
 
 What to build
 Part 1. Payments: authorize, capture, cancel, timeouts, the payment workflow and paying now
-The payments module: ported decider and facade (`timesOutAt` 24 h; checkout session 30 min), the payment workflow without state keyed by the payment id (Q44) that takes commands from the timeout and expiry workers, the provider sandbox port and the capture client, and passes them on to the handler; the capture, authorization clients as reactors; the forwarder with its `PaymentSummary` as an inline Pongo projection (the payment part of 19.6, and 19.2's `referenceId` key, re-checked by the tests below) mapping internal to external events; the `PendingPayment` and `AuthorizedPayment` to-do lists and their workers; the `PaymentProvider` fake. The orders endpoint `POST .../payments/{paymentId}/checkout-session` (303, 404, 409, 502). The authorization client logs failures with plain pino (Q41).
+The payments module: the payment workflow keyed by the payment id, with the payment as state (Q44, Q65): its `decide` holds the ported `PaymentDecider` rules (`timesOutAt` 24 h; checkout session 30 min) and its `evolve` builds the payment from its events; its inputs are orders' commands, the timeout and expiry workers' commands and the provider sandbox's answers; the capture and authorization clients are its `outputHandler` (Q64); the forwarder with its `PaymentSummary` as an inline Pongo projection (the payment part of 19.6, and 19.2's `referenceId` key, re-checked by the tests below) mapping internal to external events; the `PendingPayment` and `AuthorizedPayment` to-do lists and their workers; the `PaymentProvider` fake. The orders endpoint `POST .../payments/{paymentId}/checkout-session` (303, 404, 409, 502). The authorization client logs failures with plain pino (Q41).
 
 Part 2. Shipments: reserving, fulfilling and releasing stock
-The shipments module: ported decider (all or nothing, id derived from `referenceId`), facade with `isProductAvailable`, the shipment workflow without state (Q44) for the warehouse's answers, the fulfillment client (logs failures with pino), the forwarder with `ShipmentSummary` as an inline Pongo projection (the shipment part of 19.6 and 19.2), and the `Warehouse` fake.
+The shipments module: the shipment workflow keyed by the shipment id, with the shipment as state (Q44, Q65): its `decide` holds the ported `ShipmentDecider` rules (all or nothing, id derived from `referenceId`); the stock check goes through its `outputHandler`, whose answer comes back as the next input (Q67), and the call retries with back-off until the warehouse answers (Q37); its `evolve` builds the shipment from its events; its inputs are orders' commands and the warehouse's answers; the fulfillment client (logs failures with pino) is its `outputHandler` (Q64); the forwarder with `ShipmentSummary` as an inline Pongo projection (the shipment part of 19.6 and 19.2), and the `Warehouse` fake.
 
 Context
 - Java: `../../../EventSourcing.JVM/samples/e-commerce/src/main/java/io/eventdriven/ecommerce/payments/` (`PaymentDecider`, `PaymentFacade`, `authorization/`, `capture/CaptureGatewayClient.java`, `external/`, `sandbox/SandboxPaymentGateway.java`), `OrdersController.java` checkout session.
@@ -308,50 +309,49 @@ Acceptance criteria
 - 11.3 GIVEN an unknown payment or a payment of another reference WHEN the customer posts THEN the response is 404.
 - 11.4 GIVEN a payment that is not pending WHEN the customer posts THEN the response is 409.
 - 11.5 GIVEN the provider is unreachable WHEN the customer posts THEN the response is 502.
-- 12.1 GIVEN `AuthorizePayment` WHEN payments handles it THEN it records `PaymentAuthorizationRequested` with `timesOutAt` 24 hours later AND sends nothing.
-- 12.2 GIVEN the provider confirms WHEN `ConfirmPaymentAuthorization` arrives THEN the payment records `PaymentAuthorized` with `captureBefore` AND the forwarder sends `payments.external.PaymentAuthorized` with the `referenceId`.
-- 12.3 GIVEN a pending payment WHEN time passes beyond `timesOutAt` THEN the payment-timeout worker appends `TimeOutPayment` AND the payment records `PaymentTimedOut` AND the forwarder sends `payments.external.PaymentFailed` AND the authorization client expires the provider's checkout session.
-- 13.1 GIVEN an authorized payment WHEN `CapturePayment` arrives THEN the payment records `PaymentCaptureRequested` AND the capture client asks the provider AND, on `ConfirmPaymentCapture`, the payment records `PaymentCaptured` AND the forwarder sends `payments.external.PaymentCaptured`.
-- 13.2 GIVEN the provider refuses the capture WHEN the capture client asks THEN it appends `FailPaymentCapture` with reason `UnexpectedError` AND the payment records `PaymentCaptureFailed` AND the forwarder sends `payments.external.PaymentFailed`.
-- 13.3 GIVEN an authorized payment WHEN time passes beyond `captureBefore` THEN the authorization-expiry worker appends `ExpirePaymentAuthorization` AND the payment records `PaymentAuthorizationExpired` AND the forwarder sends `payments.external.PaymentFailed`.
-- 14.1 GIVEN an authorized payment WHEN `CancelPayment` arrives THEN the payment records `PaymentCanceled` AND the authorization client cancels at the provider.
-- 14.2 GIVEN a captured payment WHEN `CancelPayment` arrives THEN nothing is appended.
-- 14.3 GIVEN a pending payment WHEN `TimeOutPayment` arrives before `timesOutAt` THEN nothing is appended.
-- 15.1 GIVEN all products are available WHEN `ReserveStock` arrives THEN the shipment, with an id derived from the `referenceId`, records `StockReserved` AND the forwarder sends `shipments.external.StockReserved`.
-- 15.2 GIVEN one product is out of stock WHEN `ReserveStock` arrives THEN the shipment records `ProductWasOutOfStock` AND nothing is reserved AND the forwarder sends `shipments.external.ShipmentFailed` with reason `ProductsOutOfStock`.
-- 16.1 GIVEN a reserved shipment WHEN `RequestFulfillment` arrives THEN it records `FulfillmentRequested` AND the fulfillment client asks the warehouse.
-- 16.2 GIVEN the warehouse sends the package WHEN `ConfirmPackageSent` arrives THEN the shipment records `PackageWasSent` with carrier and tracking number AND the forwarder sends `shipments.external.PackageWasSent`.
-- 16.3 GIVEN the warehouse rejects WHEN `RejectFulfillment` arrives THEN the shipment records `FulfillmentRejected` AND the forwarder sends `shipments.external.ShipmentFailed` with reason `FulfillmentRejected`.
-- 16.4 GIVEN a sent package WHEN `DeliverPackage` arrives THEN the shipment records `PackageWasDelivered` AND nothing is sent.
-- 16.5 GIVEN a reserved shipment, or a shipment whose fulfillment was rejected WHEN `ReleaseStock` arrives THEN it records `StockReleased`.
+- 12.1 GIVEN `AuthorizePayment` WHEN the payment workflow handles it THEN nothing is published AND the payment-timeout worker times the payment out when time moves 24 hours, and not when it moves 24 hours minus 1 minute (the recorded `PaymentAuthorizationRequested` with `timesOutAt` is checked in the workflow's unit tests).
+- 12.2 GIVEN the provider confirms WHEN `ConfirmPaymentAuthorization` arrives THEN the forwarder sends `payments.external.PaymentAuthorized` with the `referenceId`.
+- 12.3 GIVEN a pending payment WHEN time passes beyond `timesOutAt` THEN the payment-timeout worker stores `TimeOutPayment` as an input of the payment workflow AND the forwarder publishes `payments.external.PaymentFailed` AND the provider's checkout session is expired (`expire-checkout-session`).
+- 13.1 GIVEN an authorized payment WHEN `CapturePayment` arrives THEN the capture client asks the provider AND, on `ConfirmPaymentCapture`, the forwarder sends `payments.external.PaymentCaptured`.
+- 13.2 GIVEN the provider refuses the capture WHEN the capture client asks THEN the capture client's answer `FailPaymentCapture` becomes the payment workflow's next input AND the forwarder publishes `payments.external.PaymentFailed` (the reason `UnexpectedError` is checked in the workflow's unit tests).
+- 13.3 GIVEN an authorized payment WHEN time passes beyond `captureBefore` THEN the authorization-expiry worker stores `ExpirePaymentAuthorization` as an input of the payment workflow AND the forwarder publishes `payments.external.PaymentFailed`.
+- 14.1 GIVEN an authorized payment WHEN `CancelPayment` arrives THEN the authorization client cancels at the provider.
+- 14.2 GIVEN a captured payment WHEN `CancelPayment` arrives THEN the provider is not called AND nothing is published.
+- 14.3 GIVEN a pending payment WHEN `TimeOutPayment` arrives before `timesOutAt` THEN the payment stays pending AND nothing is published.
+- 15.1 GIVEN all products are available WHEN `ReserveStock` arrives THEN the warehouse is asked about the products AND `shipments.external.StockReserved` is published with the shipment id derived from the `referenceId`.
+- 15.2 GIVEN one product is out of stock WHEN `ReserveStock` arrives THEN nothing is reserved AND the forwarder publishes `shipments.external.ShipmentFailed` with reason `ProductsOutOfStock`.
+- 16.1 GIVEN a reserved shipment WHEN `RequestFulfillment` arrives THEN the fulfillment client asks the warehouse.
+- 16.2 GIVEN the warehouse sends the package WHEN `ConfirmPackageSent` arrives THEN the forwarder publishes `shipments.external.PackageWasSent`.
+- 16.3 GIVEN the warehouse rejects WHEN `RejectFulfillment` arrives THEN the forwarder publishes `shipments.external.ShipmentFailed` with reason `FulfillmentRejected`.
+- 16.4 GIVEN a sent package WHEN `DeliverPackage` arrives THEN nothing is published. That `PackageWasDelivered` is recorded is checked in the workflow's unit tests.
+- 16.5 GIVEN a reserved shipment WHEN `ReleaseStock` arrives THEN the stock is released and nothing is published. That the rejected-fulfillment branch also records `StockReleased` is checked in the workflow's unit tests.
 
 Tests
-- 11.1: payingNowRedirectsToTheSandboxCheckout - asserts 303 `Location: /sandbox/checkout/{sessionId}`
+- 11.1: payingNowRedirectsToTheProvidersCheckout - asserts 303 to the checkout URL the provider returns (the `PaymentProvider` fake's URL, as in Java); the sandbox's `/sandbox/checkout/{sessionId}` is checked in step 6
 - 11.2: payingNowAgainReusesTheOpenSession - asserts the same `Location`
 - 11.3: payingNowForAnUnknownOrForeignPaymentAnswers404 - asserts 404
 - 11.4: payingNowForANonPendingPaymentAnswers409 - asserts 409
 - 11.5: payingNowWithAnUnreachableProviderAnswers502 - asserts 502 with `isUnreachableFor`
-- 12.1: authorizePaymentRecordsTheRequestWith24hTimeout - asserts `timesOutAt` and nothing sent
+- 12.1: authorizePaymentTimesOutAfter24hNotBefore - asserts nothing published, no timeout at 24 h minus 1 min and a timeout at 24 h; the unit test asserts `timesOutAt`
 - 12.2: aConfirmedAuthorizationSendsPaymentAuthorizedWithReferenceId - asserts the external event
-- 12.3: after24hAPendingPaymentTimesOut - asserts `TimeOutPayment` stored, `PaymentTimedOut`, `payments.external.PaymentFailed`, session expired
-- 13.1: captureAsksTheProviderAndSendsPaymentCaptured - asserts the event sequence and the external event
-- 13.2: aRefusedCaptureFailsWithUnexpectedError - asserts `FailPaymentCapture`, `PaymentCaptureFailed`, `PaymentFailed` (with `refusesTheFirstCaptureOf`)
-- 13.3: afterCaptureBeforeTheAuthorizationExpires - asserts `PaymentAuthorizationExpired` and `PaymentFailed`
-- 14.1: cancelingAnAuthorizedPaymentCancelsAtTheProvider - asserts `PaymentCanceled` and the provider call
-- 14.2: cancelingACapturedPaymentRecordsNothing - asserts nothing appended
-- 14.3: aTimeoutBeforeTimesOutAtRecordsNothing - asserts nothing appended
-- 15.1: allProductsAvailableReservesStock - asserts `StockReserved` and the external event, derived id
-- 15.2: oneProductOutOfStockReservesNothing - asserts `ProductWasOutOfStock` and `ShipmentFailed` `ProductsOutOfStock`
-- 16.1: aReservedShipmentRequestsFulfillment - asserts `FulfillmentRequested` and the warehouse call
-- 16.2: aSentPackageIsForwarded - asserts `PackageWasSent` with carrier and tracking
-- 16.3: aRejectedFulfillmentSendsShipmentFailed - asserts `FulfillmentRejected` and `ShipmentFailed` `FulfillmentRejected`
-- 16.4: aDeliveredPackageSendsNothing - asserts `PackageWasDelivered`, nothing sent
-- 16.5: releasingReservedOrRejectedStock - asserts `StockReleased` for both states
-- extra: paymentForwarderSendsFromItsSummaryAndKeysByReferenceId - covers the payment part of 19.6 and 19.2
-- extra: aSecondCheckoutSessionIsNotRecordedWhileOneIsOpen - covers the decider rule
+- 12.3: after24hAPendingPaymentTimesOut - asserts `TimeOutPayment` stored, published `payments.external.PaymentFailed`, `expire-checkout-session` called
+- 13.1: captureAsksTheProviderAndSendsPaymentCaptured - asserts the provider call and the external event
+- 13.2: aRefusedCaptureSendsPaymentFailed - asserts published `PaymentFailed` (with `refusesTheFirstCaptureOf`); the unit test asserts reason `UnexpectedError`
+- 13.3: afterCaptureBeforeTheAuthorizationExpires - asserts `ExpirePaymentAuthorization` stored and published `PaymentFailed`
+- 14.1: cancelingAnAuthorizedPaymentCancelsAtTheProvider - asserts the provider call
+- 14.2: cancelingACapturedPaymentChangesNothing - asserts no provider call and nothing published
+- 14.3: aTimeoutBeforeTimesOutAtChangesNothing - asserts the payment stays pending and nothing published
+- 15.1: allProductsAvailableReservesStock - asserts the warehouse stock check and published external `StockReserved` with the derived id
+- 15.2: oneProductOutOfStockReservesNothing - asserts published `ShipmentFailed` `ProductsOutOfStock`
+- 16.1: aReservedShipmentRequestsFulfillment - asserts the warehouse call
+- 16.2: aSentPackageIsForwarded - asserts published `PackageWasSent` with carrier and tracking
+- 16.3: aRejectedFulfillmentSendsShipmentFailed - asserts published `ShipmentFailed` `FulfillmentRejected`
+- 16.4: aDeliveredPackageSendsNothing - asserts nothing published; the unit test asserts `PackageWasDelivered`
+- 16.5: releasingReservedStock - asserts the release and nothing published; the unit test asserts `StockReleased` for reserved and rejected states
+- extra: aSecondCheckoutSessionIsNotRecordedWhileOneIsOpen - covers the payment workflow's rule (`WorkflowSpecification`)
 - extra: authorizationClientLogsAndRecordsNothingOnProviderError - covers the logged failure
-- extra: shipmentForwarderSendsFromItsSummaryAndKeysByReferenceId - covers the shipment part of 19.6 and 19.2
 - extra: fulfillmentClientLogsAndRecordsNothingWhenUnreachable - covers `isUnreachableFor`
+- extra: theStockCheckRetriesUntilTheWarehouseAnswers - covers `isUnreachableFor` for the stock check, then `StockReserved` is published (Q37, Q67)
 
 Existing tests it breaks
 None expected; if a test from an earlier step breaks, update it in this step and say why.
@@ -359,40 +359,36 @@ None expected; if a test from an earlier step breaks, update it in this step and
 
 ---
 
-## Step 5. Kafka, RabbitMQ with PostgreSQL, KurrentDB, workflow delivery and settings
+## Step 5. Kafka, RabbitMQ with PostgreSQL, workflow delivery and settings
 
-Criteria groups: 20, 21, 31, 22, 25.
+Criteria groups: 20, 21, 22, 25.
 
 ```text
 Use the `implement-step` skill.
 
 What to build
 Part 1. Kafka: forwarders, broker-to-workflow forwarders and consumers
-The core's Kafka forwarder handler and Kafka consumer (Emmett's `consumer` with a `subscriptionMessageSource`, Q57) on `@platformatic/kafka` (Q5) with the Java topology, headers, retries, dead letters, restart and catch-up, and the application on Kafka with the SQLite store (any pair works, Q42). Headers include the trace context through `@opentelemetry/api` `propagation.inject/extract`; the `messaging.dead_lettered` counter uses the Almanac meter, and tests read it with an in-memory metric reader. The shared forwarder and consumer suite from step 2 runs on Kafka too, which re-checks 19.1, 19.3, 19.4 and 19.5 for this target (protection for group 19, listed in step 2). Failure setups: stop and start the Kafka Testcontainer for 20.4 and 20.9; a 500 ms publish timeout in tests and a paused container for 20.3; an event store wrapper `FailingInboxWriteEventStore` for 20.5.
+The core's Kafka forwarder handler and Kafka consumer (Emmett's `consumer` with a `subscriptionMessageSource`, Q57) on `@platformatic/kafka` (Q5) with the Java topology, headers, retries, dead letters, restart and catch-up, and the application on Kafka with the PostgreSQL store (the Kafka + PostgreSQL setup, built after Part 2 adds the PostgreSQL store) and with the SQLite store (any pair works, Q42) (any pair works, Q42). Headers include the trace context through `@opentelemetry/api` `propagation.inject/extract`; the `messaging.dead_lettered` counter uses the Almanac meter, and tests read it with an in-memory metric reader. The shared forwarder and consumer suite from step 2 runs on Kafka too, which re-checks 19.1, 19.3, 19.4 and 19.5 for this target (protection for group 19, listed in step 2). Failure setups: stop and start the Kafka Testcontainer for 20.4 and 20.9; a 500 ms publish timeout in tests and a paused container for 20.3; an event store wrapper `FailingInboxWriteEventStore` for 20.5.
 
 Part 2. RabbitMQ: forwarders, broker-to-workflow forwarders and consumers, on PostgreSQL
 The core's RabbitMQ forwarder handler and RabbitMQ consumer (Emmett's `consumer` with a `subscriptionMessageSource`, Q57) on `amqplib` with the Java topology (quorum queues, DLX/DLQ, publisher confirms, mandatory sends on `-requests` and `-internal`), and the application on RabbitMQ with the PostgreSQL store and Pongo on PostgreSQL inline (Q38). Headers with trace context and the dead-letter counter as for Kafka. The shared suite runs on RabbitMQ too (re-checks 19.1, 19.3-19.5, protection). Failure setups: stop and start the RabbitMQ Testcontainer for 21.4 and 21.9; a 500 ms publish timeout and a paused container for 21.3; `FailingInboxWriteEventStore` for 21.5.
 
-Part 3. KurrentDB store with read models checkpointed in PostgreSQL
-The application on `emmett-esdb` against a current KurrentDB image (Q13), with the core's read-model processor that runs the Pongo projections on PostgreSQL and keeps its checkpoint in the same PostgreSQL transaction (Q26); forwarders on KurrentDB keep summaries and checkpoints the same way.
+Part 3. Workflow delivery: retries, transactional checkpoints, delivery of own commands and causation
+The workflows' forwarders and `outputHandler`s retry inside their handlers; the delivery of a module's own commands is chosen by `MESSAGING_INTERNAL_DELIVERY` (`store` or `broker`, Q40); correlation and causation follow Emmett and Almanac across brokers (Q31).
 
-Part 4. Workflow delivery: retries, transactional checkpoints, delivery of own commands and causation
-The workflows' `outputHandler` retries inside the handler; the delivery of a module's own commands is chosen by `MESSAGING_INTERNAL_DELIVERY` (`store` or `broker`, Q40); correlation and causation follow Emmett and Almanac across brokers (Q31).
-
-Part 5. Settings and the temporary SQLite file
+Part 4. Settings and the temporary SQLite file
 All settings from the spec as environment variables, independent bus and store choice (Q42), the temporary SQLite file default removed on shutdown, a given file kept (Q21), the connection settings.
 
 Context
 - Java: `../../../EventSourcing.JVM/samples/e-commerce/src/main/java/io/eventdriven/core/messaging/kafka/KafkaMessageBus.java`, `KafkaVersionedMessageConverter`.
 - Java: `../../../EventSourcing.JVM/samples/e-commerce/src/main/java/io/eventdriven/core/messaging/rabbitmq/RabbitMQMessageBus.java`.
-- Emmett: `../../../emmett/src/packages/emmett-esdb/src/eventStore/consumers/eventStoreDBProcessor.ts` (checkpointers), `processors.ts` `reactor` with `processingScope` L1024-1110.
+- Emmett: `processors.ts` `reactor` with `processingScope` L1024-1110.
 - Steps 6-12. Emmett `handleWorkflow.ts` L272-285 (correlation, causation).
 - Steps 2-13 wire each setup; this step makes the settings the single way to choose.
 
 Similar code
 - Java tests: `MessageBusTests.java`, `KafkaMessageBusTests.java`, `KafkaMessageBusFailureTests.java`, `testing/messaging/kafka/FailingFirstSendKafkaTemplate.java`. Testcontainers: `@testcontainers/kafka`.
 - Java tests: `RabbitMQMessageBusTests.java`, `RabbitMQMessageBusFailureTests.java`, `RabbitMQMessageBusRestartTests.java`. Testcontainers: `@testcontainers/rabbitmq`, PostgreSQL through `emmett-testcontainers`.
-- Java: `core/eventstore/kurrentdb/`, `core/subscriptions/` (`processor_checkpoints`), `SubscriptionCheckpointsTests.java`. Testcontainers: a `GenericContainer` for KurrentDB.
 - Java: `core/messaging/MessageContext.java`, `ApiE2ESpecification` `expectCausation` as a reference for what to check.
 - Java: `ECommerceSettingsTests.java`, `application.properties`.
 
@@ -422,23 +418,22 @@ Acceptance criteria
 - 21.9 GIVEN the broker restarts WHEN the consumer reconnects THEN messages sent after the restart are handled.
 - 21.10 GIVEN messages in flight WHEN a test waits for catch-up THEN the wait ends when a probe message sent to each queue at the start of the wait has been seen by its consumer.
 - 21.11 GIVEN a sent message WHEN a consumer receives it THEN the headers have its type name, message id, correlation id, causation id and trace context.
-- 31.1 GIVEN the KurrentDB store WHEN the read-model processor projects an event THEN the Pongo write and the processor's checkpoint commit in one PostgreSQL transaction.
-- 31.2 GIVEN the Pongo write fails WHEN the processor handles the event THEN neither the read model nor the checkpoint changes AND the processor retries with back-off inside its handler without stopping (Q37).
-- 22.1 GIVEN the broker is down WHEN a workflow's `outputHandler` sends a command THEN it retries with back-off inside the handler AND the workflow processor doesn't stop (Q37).
-- 22.2 GIVEN the workflow processor stops after appending outputs and before saving its checkpoint on PostgreSQL or SQLite WHEN it restarts THEN neither the outputs nor the checkpoint were saved AND it decides the input once (the checkpoint and the outputs commit together).
-- 22.3 GIVEN the setting that delivers a module's own commands through the event store WHEN a worker stores `TimeOutPayment` in the payment workflow THEN a regular consumer on the event store passes it to the payments handler without the broker; GIVEN the setting for the broker THEN it goes through `payments-internal` (Q40).
+- 22.1 GIVEN the broker is down WHEN a forwarder sends a workflow's output command THEN it retries with back-off inside the handler AND the workflow processor doesn't stop (Q37).
+- 22.2 GIVEN the workflow's `outputHandler` fails after the workflow appended its decision, on PostgreSQL or SQLite, WHEN the application restarts THEN the input is decided once AND the `outputHandler` runs again for the same output (Emmett runs the `outputHandler` as its own step after the decision commits, so its call is at least once) (Q72).
+- 22.3 GIVEN the setting that delivers a module's own commands through the event store WHEN a worker sends `TimeOutPayment` THEN it is stored straight in the payment workflow's inbox in the payments store; GIVEN the setting for the broker THEN it goes through `payments-internal` and a reader stores it in that inbox (Q40, Q65).
 - 22.4 GIVEN a module handles a message WHEN its handler appends events THEN their correlation id is the handled message's correlation id AND their causation id is the handled message's id, as Emmett and Almanac set them.
 - 22.5 GIVEN an outside command (provider answer, warehouse answer, worker command) WHEN it is appended THEN its correlation and causation follow Emmett's and Almanac's rules for the current scope.
-- 25.1 GIVEN `MESSAGING_BUS=rabbitmq` and `EVENTSTORE_TYPE=postgresql` WHEN the application is built THEN it has the RabbitMQ forwarders and consumers and the PostgreSQL event store; the same holds for `kafka` with `kurrentdb`, for `in-memory` with `sqlite`, and for `none` with `sqlite`.
+- 25.1 GIVEN `MESSAGING_BUS=rabbitmq` and `EVENTSTORE_TYPE=postgresql` WHEN the application is built THEN it has the RabbitMQ forwarders and consumers and the PostgreSQL event store; the same holds for `kafka` with `postgresql`, for `in-memory` with `sqlite`, and for `none` with `sqlite`.
 - 25.2 GIVEN an unknown value, for example `MESSAGING_BUS=sqs` WHEN the application starts THEN it stops with a message naming the setting and the allowed values.
-- 25.3 GIVEN the SQLite setup and no SQLite file in the settings WHEN the application starts THEN it creates a new file in the operating system's temporary folder AND needs no Docker AND removes the file on shutdown.
-- 25.4 GIVEN a SQLite file in the settings WHEN the application stops and starts again THEN the carts and orders are still there AND the file is not removed.
+- 25.3 GIVEN the SQLite setup and no SQLite folder in the settings WHEN the application starts THEN it creates a new folder in the operating system's temporary folder with one file per module and `broker.db` (Q60) AND needs no Docker AND removes the folder on shutdown.
+- 25.4 GIVEN a SQLite folder in the settings (`SQLITE_FOLDER`) WHEN the application stops and starts again THEN the carts and orders are still there AND the folder is not removed. A given folder that does not exist is created (Q72).
 
 Tests
 - 20.1: topicPatternsDeliverToEachMatchingQueue - asserts deliveries for `*` and `#`
 - 20.2: aNonHashPatternGetsItsOwnTopicFilledByARoutingConsumer - asserts the topic and the copied records
 - 20.3: aSendWithoutAcknowledgementWithinTheTimeoutFailsAndIsRetried - asserts the failure and the retry
 - 20.4: withTheBrokerDownTheForwarderRetriesAndSendsWhenItIsBack - asserts delivery after restart
+- extra: aModuleCanStillAppendWhileAForwarderRetriesADownBroker - on SQLite, appends to the store succeeds while a Kafka or RabbitMQ forwarder retries inside its processor transaction (the open point from step 2)
 - 20.5: theOffsetIsCommittedOnlyAfterTheInboxWrite - asserts redelivery when the write fails
 - 20.6: aHandlerFailingOnceSucceedsOnRetry - asserts two attempts
 - 20.7: aHandlerFailingThreeTimesGoesToDltAndIsCounted - asserts `<queue>-dlt` and `messaging.dead_lettered` +1
@@ -455,23 +450,20 @@ Tests
 - 21.7: aHandlerFailingThreeTimesGoesToDlqAndIsCounted - asserts `<queue>-dlq` and the counter
 - 21.8: anUnreadableMessageGoesToDlqWithoutRetries - asserts one attempt
 - 21.9: afterABrokerRestartNewMessagesAreHandled - asserts handling
-- 21.10: catchUpWaitsForAProbePerQueue - asserts the wait ends after handling
+- 21.10: catchUpEndsWhenEveryMessageSentBeforeTheWaitIsHandled - asserts the wait ends after handling
 - 21.11: headersCarryTypeIdsAndTraceContext - asserts the five headers
-- 31.1: aProjectedEventAndItsCheckpointCommitTogether - asserts both rows after success
-- 31.2: aFailingWriteChangesNeitherAndIsRetried - asserts no row, same checkpoint, a retry, processor still active; setup: a projection that throws on its first call
-- 22.1: anOutputHandlerRetriesWhileTheBrokerIsDown - asserts the processor stays active and sends later (protects behaviour built in step 3; setup: a stopped broker container)
-- 22.2: aStopBeforeTheCheckpointSavesNeitherOutputsNorCheckpoint - asserts one decision after restart on PostgreSQL and SQLite (protects Emmett's transaction; setup: an `outputHandler` that throws once after the append, then a consumer restart)
+- 22.1: aForwarderRetriesWhileTheBrokerIsDown - asserts the processor stays active and sends later (protects behaviour built in step 3; setup: a stopped broker container)
+- 22.2: aFailedOutputHandlerRunsAgainAfterRestartAndTheInputIsDecidedOnce - asserts one decision and a second `outputHandler` call after restart on PostgreSQL and SQLite (setup: an `outputHandler` that throws once, then a consumer restart)
 - 22.3: ownCommandsGoThroughTheStoreOrPaymentsInternal - asserts both settings
 - 22.4: appendedEventsCarryTheHandledMessagesCorrelationAndCausation - asserts metadata across Kafka and RabbitMQ (protects Emmett's rules with the Kafka and RabbitMQ headers of step 5)
 - 22.5: outsideCommandsFollowTheScopesCorrelation - asserts metadata (protects Emmett's rules)
 - 25.1: settingsBuildTheChosenForwardersConsumersAndStore - asserts the built implementations for the three pairs
 - 25.2: anUnknownValueStopsTheStartNamingTheSetting - asserts the message
-- 25.3: withoutSqliteFileATemporaryFileIsCreatedAndRemoved - asserts the file exists while running and not after shutdown
-- 25.4: aGivenSqliteFileKeepsDataAcrossRestarts - asserts the cart after a restart and the file still there
+- 25.3: withoutSqliteFolderATemporaryFolderIsCreatedAndRemoved - asserts the folder and its files exist while running and not after shutdown
+- 25.4: aGivenSqliteFolderKeepsDataAcrossRestarts - asserts the cart after a restart and the folder still there
 - extra: aSendIsPreparedForAllMessagesBeforeAnyIsSent - covers batch routing before sending
 - extra: postgreSQLInlineProjectionsAreConsistentWithTheAppend - covers Q38 on PostgreSQL
 - extra: aRestartContinuesAfterTheCheckpoint - covers resume
-- extra: aForwarderOnKurrentDBCommitsItsSummaryAndCheckpointTogether - covers forwarders on KurrentDB
 - extra: aMixedPairWorks - covers `kafka` + `sqlite`
 
 Existing tests it breaks
@@ -489,7 +481,7 @@ Use the `implement-step` skill.
 
 What to build
 Part 1. Purchases across modules on the three setups
-One set of purchase scenarios that runs on SQLite without a broker, Kafka + KurrentDB, and RabbitMQ + PostgreSQL.
+One set of purchase scenarios that runs on SQLite without a broker, Kafka + PostgreSQL, and RabbitMQ + PostgreSQL.
 
 Part 2. Pages and sandboxes
 The shop pages with `hono/jsx` and htmx 4 (login, products, cart, orders, order status with polling and morphing, the being-placed page), the payment and warehouse sandbox pages, and links to Grafana and EventCatalog from the settings.
@@ -525,9 +517,9 @@ Acceptance criteria
 - 18.3 GIVEN a cart WHEN the customer checks out THEN they are redirected to the order page, which shows "being placed" until the order exists, with a `<meta refresh>` fallback without JavaScript.
 - 18.4 GIVEN an order page WHEN the order changes THEN htmx polls every second while the order is not final AND the order part updates in place (304 when nothing changed within 1 s).
 - 18.5 GIVEN an order page WHEN the customer cancels or retries payment through the forms THEN the page shows the new state.
-- 18.6 GIVEN the payment sandbox page WHEN the customer pays with card `4242424242424242` THEN the sandbox appends `ConfirmPaymentAuthorization` with `captureBefore` 7 days later AND redirects (303) to the success URL.
+- 18.6 GIVEN the payment sandbox page WHEN the customer pays with card `4242424242424242` THEN the sandbox stores `ConfirmPaymentAuthorization` with `captureBefore` 7 days later as an input of the payment workflow AND redirects (303) to the success URL.
 - 18.7 GIVEN the payment sandbox page WHEN the customer pays with card `4000000000000002` THEN the payment is declined AND the page stays.
-- 18.8 GIVEN the warehouse sandbox page WHEN a person sends a package THEN the warehouse appends `ConfirmPackageSent` with carrier "Sandbox Express"; WHEN they reject THEN it appends `RejectFulfillment`; WHEN they deliver THEN it appends `DeliverPackage`.
+- 18.8 GIVEN the warehouse sandbox page WHEN a person sends a package THEN the warehouse stores `ConfirmPackageSent` with carrier "Sandbox Express" as an input of the shipment workflow; WHEN they reject THEN it stores `RejectFulfillment`; WHEN they deliver THEN it stores `DeliverPackage`.
 - 18.9 GIVEN the warehouse sandbox page WHEN a person marks a product out of stock THEN later `ReserveStock` for that product fails with `ProductsOutOfStock` AND no command is appended.
 - 18.10 GIVEN any page WHEN it renders THEN it links to the Grafana and EventCatalog URLs from the settings.
 - 29.1 GIVEN the SQLite setup WHEN a test buys through the pages with Playwright THEN the order page shows the completed order AND no response failed.
@@ -607,7 +599,7 @@ Acceptance criteria
 - 30.4 GIVEN the Grafana dashboards WHEN they load THEN every panel query is valid against Emmett's metric names.
 - 30.5 GIVEN a capture fails for the first time after a start WHEN the alert rule evaluates THEN the "Capture failed" alert fires.
 - 30.6 GIVEN no OTLP endpoint is reachable WHEN the application runs THEN it logs no connection errors.
-- 30.7 GIVEN a command from the broker WHEN the facade handles it THEN the facade sets `now` from the clock, not the sender (Java behaviour).
+- 30.7 GIVEN a command from the broker WHEN the workflow decides it THEN the workflow stamps the decision with its own clock, not the sender's (Java behaviour, Q66).
 
 Tests
 - 27.1: openApiHasTwoGroupsWithMessageTypes - asserts groups and `x-eventcatalog-message-type`
@@ -623,7 +615,7 @@ Tests
 - 30.4: (follow-up spec) - checked by hand: every panel query valid
 - 30.5: (follow-up spec) - checked by hand: the alert fires on the first capture failure
 - 30.6: noOtlpEndpointLogsNoConnectionErrors - asserts the captured logs
-- 30.7: aFacadeSetsNowFromItsClock - asserts the recorded time equals the fake clock, not the sender's
+- 30.7: aWorkflowStampsItsDecisionsWithItsClock - asserts the decision's time equals the fake clock, not the sender's
 - extra: asyncApiDocumentIsValid - covers `@asyncapi/parser`
 - extra: thePublishPageSendsAMessageToTheApplication - covers the Springwolf-like publish
 
@@ -642,7 +634,7 @@ Use the `implement-step` skill.
 
 What to build
 Part 1. Emmett: Hono ApiE2ESpecification takes steps and hooks
-In the Emmett repository, on the branch `hono_api_e2e_specification_steps` (already created from `main`), `emmett-honojs`' `ApiE2ESpecification` gets the shape the sample's core built in step 1 (Q30, Q49): message, time and attempt steps, start and stop hooks, the catch-up loop, and the expectations, including the check of events the `when` step appended, as [emmett#436](https://github.com/event-driven-io/emmett/issues/436) proposes (given requests or event streams in one specification). Given requests keep today's behaviour (Q50). It runs in parallel with the sample; when Oskar releases it, the sample switches to it. Do not commit, push or publish; leave the branch for Oskar.
+In the Emmett repository, on the branch `hono_api_e2e_specification_steps` (already created from `main`), `emmett-honojs`' `ApiE2ESpecification` gets the shape the sample's core built in step 1 (Q30, Q49): message, time and attempt steps, start and stop hooks, the catch-up loop, and the expectations, including the check of events the `when` step appended, named `expectNewEvents` and `expectNoNewEvents` with the core's strictness (exact streams and counts, stream order free, Q58), and the Hono docs updated on the same branch, as [emmett#436](https://github.com/event-driven-io/emmett/issues/436) proposes (given requests or event streams in one specification). Given requests keep today's behaviour (Q50). It runs in parallel with the sample; when Oskar releases it, the sample switches to it. Do not commit, push or publish; leave the branch for Oskar.
 
 Part 2. Emmett: metric series registered at zero (#433)
 In the Emmett repository, on a new branch from `main` (independent of other branches, Q36, Q49), command and event counters are registered at 0 for every known type when a handler or store is set up, so Prometheus `increase()` sees the first failure (Q35). It runs in parallel with the sample; the sample doesn't wait (Q49). Do not commit, push or publish; leave the branch for Oskar.

@@ -1,0 +1,6 @@
+{
+  "type": "payments.ConfirmPaymentCapture",
+  "data": {
+    "paymentId": "urn:ecommerce:payment:customer-1-1"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "shoppingCartId": "urn:ecommerce:cart:customer-1-1",
+  "customerId": "customer-1",
+  "lines": [
+    {
+      "productId": "product-1",
+      "quantity": 2,
+      "unitPrice": 19.99
+    }
+  ],
+  "totalPrice": 39.98,
+  "checkedOut": false,
+  "version": 1
+}

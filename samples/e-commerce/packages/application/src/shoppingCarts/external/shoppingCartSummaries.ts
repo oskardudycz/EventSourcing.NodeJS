@@ -1,8 +1,5 @@
 import type { ReadEvent } from '@event-driven-io/emmett';
-import {
-  pongoSingleStreamProjection,
-  type SQLiteProjectionWithSchema,
-} from '@event-driven-io/emmett-sqlite';
+import { singleStreamReadModel } from '../../readModelProjection';
 import type { PongoClient } from '@event-driven-io/pongo';
 import { ProductItems, type PricedProductItem } from '../productItems';
 import type { ShoppingCartEvent } from '../shoppingCart';
@@ -57,17 +54,19 @@ export const evolveSummary = (
   }
 };
 
-export const shoppingCartSummariesProjection: SQLiteProjectionWithSchema<ShoppingCartEvent> =
-  pongoSingleStreamProjection<ShoppingCartSummary, ShoppingCartEvent>({
-    collectionName: shoppingCartSummariesCollection,
-    canHandle: [
-      'shopping_carts.ProductItemAddedToShoppingCart',
-      'shopping_carts.ProductItemRemovedFromShoppingCart',
-      'shopping_carts.ProductItemPriceChanged',
-    ],
-    getDocumentId: (event) => event.data.shoppingCartId,
-    evolve: evolveSummary,
-  });
+export const shoppingCartSummariesReadModel = singleStreamReadModel<
+  ShoppingCartSummary,
+  ShoppingCartEvent
+>({
+  collectionName: shoppingCartSummariesCollection,
+  canHandle: [
+    'shopping_carts.ProductItemAddedToShoppingCart',
+    'shopping_carts.ProductItemRemovedFromShoppingCart',
+    'shopping_carts.ProductItemPriceChanged',
+  ],
+  getDocumentId: (event) => event.data.shoppingCartId,
+  evolve: evolveSummary,
+});
 
 export const shoppingCartSummaries = (pongo: PongoClient) => {
   const collection = pongo

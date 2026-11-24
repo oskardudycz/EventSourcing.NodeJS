@@ -1,0 +1,8 @@
+{
+  "type": "payments.PaymentCaptureFailed",
+  "data": {
+    "paymentId": "urn:ecommerce:payment:customer-1-1",
+    "reason": "UnexpectedError",
+    "failedAt": "2026-11-24T10:00:00.000Z"
+  }
+}

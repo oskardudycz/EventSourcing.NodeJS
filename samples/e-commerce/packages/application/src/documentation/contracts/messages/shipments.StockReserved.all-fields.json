@@ -1,0 +1,14 @@
+{
+  "type": "shipments.StockReserved",
+  "data": {
+    "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+    "referenceId": "urn:ecommerce:order:customer-1-1",
+    "productItems": [
+      {
+        "productId": "product-1",
+        "quantity": 2
+      }
+    ],
+    "reservedAt": "2026-11-24T10:00:00.000Z"
+  }
+}

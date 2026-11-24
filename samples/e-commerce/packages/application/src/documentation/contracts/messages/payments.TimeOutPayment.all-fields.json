@@ -1,0 +1,6 @@
+{
+  "type": "payments.TimeOutPayment",
+  "data": {
+    "paymentId": "urn:ecommerce:payment:customer-1-1"
+  }
+}

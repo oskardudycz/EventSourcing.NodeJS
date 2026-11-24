@@ -1,0 +1,20 @@
+{
+  "customerId": "customer-1",
+  "productItems": [
+    {
+      "productId": "product-1",
+      "quantity": 2,
+      "unitPrice": 19.99
+    }
+  ],
+  "totalPrice": 39.98,
+  "placedAt": "2026-11-24T10:00:00.000Z",
+  "paymentId": "urn:ecommerce:payment:customer-1-1",
+  "carrier": "Sandbox Express",
+  "trackingNumber": "SB-1",
+  "progress": "Shipped",
+  "stage": "Confirmed",
+  "payment": "Authorized",
+  "shipment": "Sent",
+  "version": 5
+}

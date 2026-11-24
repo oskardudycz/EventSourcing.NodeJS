@@ -1,0 +1,16 @@
+name: e-commerce
+
+services:
+  otel-lgtm:
+    profiles: [otel, all]
+    image: grafana/otel-lgtm:0.41.0
+    environment:
+      - GF_PLUGINS_PREINSTALL_AUTO_UPDATE=false
+    volumes:
+      - ./observability/dashboards:/otel-lgtm/dashboards:ro
+      - ./observability/dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/e-commerce.yaml:ro
+      - ./observability/alerting/ecommerce.yaml:/otel-lgtm/grafana/conf/provisioning/alerting/e-commerce.yaml:ro
+    ports:
+      - '${GRAFANA_PORT:-3000}:3000'
+      - '${OTEL_GRPC_PORT:-4317}:4317'
+      - '${OTEL_HTTP_PORT:-4318}:4318'

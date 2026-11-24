@@ -4,18 +4,18 @@ import {
   type Event,
   type EventStoreSession,
 } from '@event-driven-io/emmett';
-import type { SQLiteEventStore } from '@event-driven-io/emmett-sqlite';
+import type { ModuleStore } from './eventStore';
 
-export type ConflictingEventStore = SQLiteEventStore & {
+export type ConflictingEventStore = ModuleStore & {
   conflictsOnTheNextAppends: (count: number) => void;
 };
 
 export const conflictingEventStore = (
-  eventStore: SQLiteEventStore,
+  eventStore: ModuleStore,
 ): ConflictingEventStore => {
   let conflictsLeft = 0;
 
-  const conflictingOnAppend = (store: SQLiteEventStore): SQLiteEventStore => ({
+  const conflictingOnAppend = (store: ModuleStore): ModuleStore => ({
     ...store,
     appendToStream: <
       EventType extends Event,
@@ -38,7 +38,7 @@ export const conflictingEventStore = (
       return store.appendToStream(streamName, events, options);
     },
     withSession: <T = unknown>(
-      callback: (session: EventStoreSession<SQLiteEventStore>) => Promise<T>,
+      callback: (session: EventStoreSession<ModuleStore>) => Promise<T>,
     ): Promise<T> =>
       store.withSession((session) =>
         callback({

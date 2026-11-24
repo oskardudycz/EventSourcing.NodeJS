@@ -14,7 +14,8 @@ export const ShoppingCartId = {
     Urns.of(namespace, cartType, `${customerId}-${cartNumber}`),
   require: (id: string): string => Urns.requireType(id, cartType),
   tailOf: Urns.tailOf,
-  streamNameOf: (id: string): string => `ShoppingCart-${Urns.tailOf(id)}`,
+  streamNameOf: (id: string): string =>
+    `shopping_carts_cart-${Urns.tailOf(id)}`,
 };
 
 export type ShoppingCartStatus = 'Pending' | 'CheckedOut';

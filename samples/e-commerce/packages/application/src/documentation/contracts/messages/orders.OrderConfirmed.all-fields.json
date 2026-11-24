@@ -1,0 +1,9 @@
+{
+  "type": "orders.OrderConfirmed",
+  "data": {
+    "orderId": "urn:ecommerce:order:customer-1-1",
+    "paymentId": "urn:ecommerce:payment:customer-1-1",
+    "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+    "confirmedAt": "2026-11-24T10:00:00.000Z"
+  }
+}

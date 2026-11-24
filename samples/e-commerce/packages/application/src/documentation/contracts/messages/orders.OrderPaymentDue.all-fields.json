@@ -1,0 +1,8 @@
+{
+  "type": "orders.OrderPaymentDue",
+  "data": {
+    "orderId": "urn:ecommerce:order:customer-1-1",
+    "paymentId": "urn:ecommerce:payment:customer-1-1",
+    "dueAt": "2026-11-25T10:00:00.000Z"
+  }
+}

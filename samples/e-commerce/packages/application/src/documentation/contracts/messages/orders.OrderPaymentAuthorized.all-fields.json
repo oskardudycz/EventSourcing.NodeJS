@@ -1,0 +1,8 @@
+{
+  "type": "orders.OrderPaymentAuthorized",
+  "data": {
+    "orderId": "urn:ecommerce:order:customer-1-1",
+    "paymentId": "urn:ecommerce:payment:customer-1-1",
+    "authorizedAt": "2026-11-24T10:00:00.000Z"
+  }
+}

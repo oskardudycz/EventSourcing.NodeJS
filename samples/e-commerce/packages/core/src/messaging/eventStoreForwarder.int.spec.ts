@@ -1,6 +1,5 @@
-import { dumbo } from '@event-driven-io/dumbo';
-import { sqlite3DumboDriver } from '@event-driven-io/dumbo/sqlite3';
 import {
+  type DefaultRecord,
   type Event,
   type RecordedMessage,
   WorkflowHandler,
@@ -8,7 +7,6 @@ import {
 } from '@event-driven-io/emmett';
 import {
   getSQLiteEventStore,
-  readProcessorCheckpoint,
   type SQLiteEventStore,
 } from '@event-driven-io/emmett-sqlite';
 import { sqlite3EventStoreDriver } from '@event-driven-io/emmett-sqlite/sqlite3';
@@ -20,6 +18,8 @@ import {
 } from '../testing/temporarySQLiteFile';
 import {
   channelStreamName,
+  type ChannelMessageMetadata,
+  type ForwardedMessageMetadata,
   deadLetterStreamName,
   type ForwardedMessage,
   fromChannel,
@@ -27,6 +27,7 @@ import {
 } from './channels';
 import { forwardToChannels, getForwarderId } from './eventStoreForwarder';
 import { externalMessageId } from './messageIds';
+import { describeForwarding } from './forwardingSuite';
 import { messageRoutes, routeChannel, routeKey } from './messageRoutes';
 
 type Something = Event<
@@ -38,7 +39,6 @@ type ExternalSomething = Event<
   { referenceId: string; amount: number }
 >;
 type DoSomething = Event<'test.DoSomething', { entityId: string }>;
-type Unrouted = Event<'test.Unrouted', Record<string, never>>;
 
 const channel = 'test-external';
 
@@ -80,9 +80,6 @@ const toExternal = (
   },
 ];
 
-const failureMessageOf = (error: unknown) =>
-  error instanceof Error ? error.message : String(error);
-
 describe('event store forwarder', () => {
   let fileName: string;
   let store: SQLiteEventStore;
@@ -99,16 +96,6 @@ describe('event store forwarder', () => {
     await store.close();
     await removeSQLiteFiles(fileName);
   });
-
-  const checkpointOf = async (processorId: string) => {
-    const pool = dumbo({ driver: sqlite3DumboDriver, fileName });
-    try {
-      return (await readProcessorCheckpoint(pool.execute, { processorId }))
-        .lastProcessedCheckpoint;
-    } finally {
-      await pool.close();
-    }
-  };
 
   const channelMessages = async () =>
     (await store.readStream(channelStreamName(channel))).events;
@@ -130,67 +117,39 @@ describe('event store forwarder', () => {
     }
   };
 
-  const untilFailures = async (failures: string[], count: number) => {
-    while (failures.length < count)
-      await new Promise((resolve) => setTimeout(resolve, 10));
-  };
-
-  it('aForwarderAppendsToTheRoutedChannelWithTheKeyAndSavesItsCheckpoint', async () => {
-    await withConsumer(
-      (consumer) =>
-        consumer.reactor({
-          processorId: getForwarderId({ name: 'to-channel' }),
-          canHandle: ['test.SomethingHappened'],
-          eachMessage: forwardToChannels<Something>({
-            channels: [channel],
-            routes: [routesToChannel],
-          }),
-        }),
-      async (consumer) => {
-        await store.appendToStream('source-1', [something(reference)]);
-        await consumer.whenCaughtUp({ timeout: 5000 });
-      },
-    );
-
-    expect(await channelMessages()).toMatchObject([
-      {
-        type: 'test.SomethingHappened',
-        metadata: { key: 'ecommerce.order.o-1' },
-      },
-    ]);
-    expect(
-      await checkpointOf(getForwarderId({ name: 'to-channel' })),
-    ).not.toBeNull();
-  });
-
-  it('aForwardedMessageKeepsItsIdCorrelationAndCausation', async () => {
-    await withConsumer(
-      (consumer) =>
-        consumer.reactor({
-          processorId: getForwarderId({ name: 'mapping' }),
-          canHandle: ['test.SomethingHappened'],
-          eachMessage: forwardToChannels<Something, ExternalSomething>({
-            channels: [channel],
-            routes: [routesExternalToChannel],
-            map: toExternal,
-          }),
-        }),
-      async (consumer) => {
-        await store.appendToStream('source-1', [something(reference)]);
-        await consumer.whenCaughtUp({ timeout: 5000 });
-      },
-    );
-
-    const [source] = (await store.readStream('source-1')).events;
-    const [forwarded] = await channelMessages();
-
-    expect(forwarded?.metadata).toMatchObject({
-      messageId: externalMessageId(
-        source?.metadata.messageId ?? '',
-        'test.external.SomethingHappened',
-      ),
-      causationId: source?.metadata.messageId,
+  it('aForwarderAppendsToTheStoreChosenForTheChannel', async () => {
+    const otherFileName = temporarySQLiteFilePath();
+    const otherStore = getSQLiteEventStore({
+      driver: sqlite3EventStoreDriver,
+      fileName: otherFileName,
     });
+
+    try {
+      await withConsumer(
+        (consumer) =>
+          consumer.reactor({
+            processorId: getForwarderId({ name: 'to-other-store' }),
+            canHandle: ['test.SomethingHappened'],
+            eachMessage: forwardToChannels<Something>({
+              channels: [channel],
+              routes: [routesToChannel],
+              storeOf: () => otherStore,
+            }),
+          }),
+        async (consumer) => {
+          await store.appendToStream('source-1', [something(reference)]);
+          await consumer.whenCaughtUp({ timeout: 5000 });
+        },
+      );
+
+      expect(await channelMessages()).toHaveLength(0);
+      expect(
+        (await otherStore.readStream(channelStreamName(channel))).events,
+      ).toHaveLength(1);
+    } finally {
+      await otherStore.close();
+      await removeSQLiteFiles(otherFileName);
+    }
   });
 
   it('routingKeysComeFromURNs', async () => {
@@ -227,73 +186,6 @@ describe('event store forwarder', () => {
       { metadata: { key: 'ecommerce.cart.c-1' } },
       { metadata: { key: 'ecommerce.order.o-1' } },
     ]);
-  });
-
-  it('anUnroutedTypeFailsNamingTheTypeAndRetriesWithoutForwarding', async () => {
-    const failures: string[] = [];
-
-    await withConsumer(
-      (consumer) =>
-        consumer.reactor({
-          processorId: getForwarderId({ name: 'unrouted' }),
-          canHandle: ['test.SomethingHappened', 'test.Unrouted'],
-          eachMessage: forwardToChannels<Something | Unrouted>({
-            channels: [channel],
-            routes: [routesToChannel],
-            signal: abort.signal,
-            retry: {
-              minTimeout: 1,
-              maxTimeout: 5,
-              onRetry: (error) => failures.push(failureMessageOf(error)),
-            },
-          }),
-        }),
-      async () => {
-        await store.appendToStream('source-1', [
-          { type: 'test.Unrouted', data: {} },
-        ]);
-        await untilFailures(failures, 3);
-      },
-    );
-
-    expect(failures.slice(0, 3)).toEqual(
-      Array(3).fill("No route for message type 'test.Unrouted'"),
-    );
-    expect(await channelMessages()).toEqual([]);
-  });
-
-  it('anUndeclaredChannelFailsNamingTheChannel', async () => {
-    const failures: string[] = [];
-
-    await withConsumer(
-      (consumer) =>
-        consumer.reactor({
-          processorId: getForwarderId({ name: 'undeclared' }),
-          canHandle: ['test.SomethingHappened'],
-          eachMessage: forwardToChannels<Something>({
-            channels: [channel],
-            routes: [
-              messageRoutes<ForwardedMessage<Something>>(
-                routeChannel('test.SomethingHappened', 'nowhere'),
-              ),
-            ],
-            signal: abort.signal,
-            retry: {
-              minTimeout: 1,
-              maxTimeout: 5,
-              onRetry: (error) => failures.push(failureMessageOf(error)),
-            },
-          }),
-        }),
-      async () => {
-        await store.appendToStream('source-1', [something(reference)]);
-        await untilFailures(failures, 1);
-      },
-    );
-
-    expect(failures[0]).toBe(
-      "Channel 'nowhere' of message type 'test.SomethingHappened' is not declared",
-    );
   });
 
   it('anExternalEventIdIsDerivedFromTheInternalIdAndType', () => {
@@ -509,3 +401,36 @@ describe('channel reactor', () => {
     expect(decided).toEqual([]);
   });
 });
+
+type ChannelEvent = Event<
+  string,
+  DefaultRecord,
+  ChannelMessageMetadata & ForwardedMessageMetadata
+>;
+
+describeForwarding(
+  'channel streams',
+  () =>
+    Promise.resolve({
+      forwarder: (options) => forwardToChannels(options),
+      declare: () => Promise.resolve(),
+      observe: (subscription, store) =>
+        Promise.resolve({
+          received: async () =>
+            (
+              await store.readStream<ChannelEvent>(
+                channelStreamName(subscription.channel),
+              )
+            ).events.map(({ type, metadata }) => ({
+              type,
+              key: metadata.key,
+              messageId: metadata.messageId,
+              causationId: metadata.causationId,
+            })),
+          caughtUp: () => Promise.resolve(),
+          close: () => Promise.resolve(),
+        }),
+      stop: () => Promise.resolve(),
+    }),
+  { appendRollsBackWithTheCheckpoint: true },
+);

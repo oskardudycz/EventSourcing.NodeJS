@@ -1,0 +1,7 @@
+{
+  "type": "payments.PaymentTimedOut",
+  "data": {
+    "paymentId": "urn:ecommerce:payment:customer-1-1",
+    "timedOutAt": "2026-11-24T10:00:00.000Z"
+  }
+}

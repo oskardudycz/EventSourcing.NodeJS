@@ -20,8 +20,19 @@ export const channelStreamPrefix = 'channel:';
 export const channelStreamName = (channel: string) =>
   `${channelStreamPrefix}${channel}`;
 
+export const isInternalChannel = (channel: string) =>
+  channel.endsWith('-internal');
+
 export const deadLetterStreamName = (queue: string) =>
   channelStreamName(`${queue}-dlq`);
+
+export const isInAChannelStream = (message: object): boolean =>
+  'metadata' in message &&
+  typeof message.metadata === 'object' &&
+  message.metadata !== null &&
+  'streamName' in message.metadata &&
+  typeof message.metadata.streamName === 'string' &&
+  message.metadata.streamName.startsWith(channelStreamPrefix);
 
 export type ChannelMessageMetadata = { key?: string };
 
@@ -29,16 +40,18 @@ export type ForwardedMessageMetadata = {
   messageId: string;
   correlationId?: string;
   causationId?: string;
+  traceId?: string;
+  spanId?: string;
 };
 
 export type ForwardedMessage<MessageType extends Message = Message> =
   CombineMetadata<MessageType, ForwardedMessageMetadata>;
 
-export const appendToChannelStream = <MessageType extends Message>(
+const appendMessageToStream = <MessageType extends Message>(
   store: EventStore,
   streamName: string,
   { type, data, kind, metadata }: ForwardedMessage<MessageType>,
-  key: string | undefined,
+  extraMetadata: Record<string, unknown> = {},
 ) =>
   store.appendToStream(streamName, [
     {
@@ -49,11 +62,18 @@ export const appendToChannelStream = <MessageType extends Message>(
         messageId: metadata.messageId,
         correlationId: metadata.correlationId,
         causationId: metadata.causationId,
-        key,
+        ...extraMetadata,
       },
-      // Emmett's appendToStream takes only events, while a channel carries commands too; Emmett casts the same way when it stores workflow outputs.
+      // Emmett's appendToStream takes only events, while a stream can carry commands too; Emmett casts the same way when it stores workflow outputs.
     } as Event,
   ]);
+
+export const appendToChannelStream = <MessageType extends Message>(
+  store: EventStore,
+  streamName: string,
+  message: ForwardedMessage<MessageType>,
+  key: string | undefined,
+) => appendMessageToStream(store, streamName, message, { key });
 
 export type ChannelSubscription = {
   channel: string;

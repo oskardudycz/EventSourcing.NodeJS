@@ -1,0 +1,6 @@
+{
+  "type": "orders.RetryOrderPayment",
+  "data": {
+    "orderId": "urn:ecommerce:order:customer-1-1"
+  }
+}
