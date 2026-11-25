@@ -1,53 +1,51 @@
 {
   "uid": "e-commerce-purchases",
-  "title": "E-commerce purchases",
+  "title": "Purchases",
+  "description": "What the shop's customers do and what goes wrong: orders, payments and shipments, counted from the events the modules append, and the failures to watch.",
+  "tags": ["purchase"],
   "schemaVersion": 39,
   "version": 1,
-  "refresh": "10s",
+  "editable": true,
   "time": {
     "from": "now-30m",
     "to": "now"
   },
+  "refresh": "10s",
   "panels": [
     {
       "id": 1,
-      "title": "Orders in progress",
-      "type": "stat",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "type": "row",
+      "title": "Orders",
+      "collapsed": false,
       "gridPos": {
-        "h": 8,
-        "w": 6,
         "x": 0,
-        "y": 0
+        "y": 0,
+        "w": 24,
+        "h": 1
       },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum(ecommerce_orders_in_progress)",
-          "legendFormat": "__auto"
-        }
-      ]
+      "panels": []
     },
     {
       "id": 2,
-      "title": "Orders awaiting payment",
       "type": "stat",
+      "title": "Orders placed",
+      "description": "Orders placed in the selected time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
+        "x": 0,
+        "y": 1,
         "w": 6,
-        "x": 6,
-        "y": 0
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -56,24 +54,44 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(ecommerce_orders_awaiting_payment)",
-          "legendFormat": "__auto"
+          "expr": "sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"orders.OrderPlaced\"}[$__range])) or vector(0)",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
         }
-      ]
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
     },
     {
       "id": 3,
-      "title": "Revenue per hour",
-      "type": "timeseries",
+      "type": "stat",
+      "title": "Orders completed",
+      "description": "Orders whose package was sent and whose payment was captured.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 4
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -82,24 +100,44 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(ecommerce_order_revenue_sum[1h]))",
-          "legendFormat": "__auto"
+          "expr": "sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"orders.OrderCompleted\"}[$__range])) or vector(0)",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
         }
-      ]
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
     },
     {
       "id": 4,
-      "title": "Orders placed",
-      "type": "timeseries",
+      "type": "stat",
+      "title": "Orders canceled",
+      "description": "Orders canceled by the customer, or because the shop couldn't ship them.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 12,
-        "y": 4
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -108,24 +146,44 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(emmett_event_appending_count_total{emmett_event_type=\"orders.OrderPlaced\"}[5m]))",
-          "legendFormat": "__auto"
+          "expr": "sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"orders.OrderCanceled\"}[$__range])) or vector(0)",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
         }
-      ]
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
     },
     {
       "id": 5,
-      "title": "Lead time p95 per stage",
-      "type": "timeseries",
+      "type": "stat",
+      "title": "Orders closed unpaid",
+      "description": "Orders sent but never paid, closed when the payment was due.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 12
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -134,24 +192,51 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, ecommerce_order_stage) (rate(ecommerce_order_lead_time_bucket[5m])))",
-          "legendFormat": "__auto"
+          "expr": "sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"orders.OrderClosedUnpaid\"}[$__range])) or vector(0)",
+          "legendFormat": "",
+          "range": false,
+          "instant": true
         }
-      ]
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
     },
     {
       "id": 6,
-      "title": "Events appended per type",
       "type": "timeseries",
+      "title": "Orders by outcome",
+      "description": "How orders move: placed, confirmed (payment authorized and stock reserved), completed, canceled or closed unpaid.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 12
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -160,50 +245,72 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (emmett_event_type) (increase(emmett_event_appending_count_total[5m]))",
-          "legendFormat": "__auto"
+          "expr": "sum by (emmett_event_type) (increase(emmett_event_appending_count_total{emmett_event_type=~\"orders.OrderPlaced|orders.OrderConfirmed|orders.OrderCompleted|orders.OrderCanceled|orders.OrderClosedUnpaid\"}[$__interval]))",
+          "legendFormat": "{{emmett_event_type}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "links": [
+        {
+          "title": "Open the traces in Tempo",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22query%22%3A%22%7B%20span.eventdriven.command.type%20%3D%20%5C%22PlaceOrder%5C%22%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
         }
       ]
     },
     {
       "id": 7,
-      "title": "Payment failures",
-      "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "type": "row",
+      "title": "Payments and shipments",
+      "collapsed": false,
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 20
+        "y": 13,
+        "w": 24,
+        "h": 1
       },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "sum by (emmett_event_type) (increase(emmett_event_appending_count_total{emmett_event_type=~\"payments.PaymentTimedOut|payments.PaymentCaptureFailed|payments.PaymentAuthorizationExpired\"}[5m]))",
-          "legendFormat": "__auto"
-        }
-      ]
+      "panels": []
     },
     {
       "id": 8,
-      "title": "Commands handled per status",
       "type": "timeseries",
+      "title": "Payments",
+      "description": "Payments authorized and captured, and the ones that failed: capture failures, timeouts, expired authorizations and cancellations.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
+        "x": 0,
+        "y": 14,
         "w": 12,
-        "x": 12,
-        "y": 20
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -212,24 +319,52 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (emmett_command_status) (increase(emmett_command_handling_duration_count[5m]))",
-          "legendFormat": "__auto"
+          "expr": "sum by (emmett_event_type) (increase(emmett_event_appending_count_total{emmett_event_type=~\"payments.PaymentAuthorized|payments.PaymentCaptured|payments.PaymentCaptureFailed|payments.PaymentTimedOut|payments.PaymentAuthorizationExpired|payments.PaymentCanceled\"}[$__interval]))",
+          "legendFormat": "{{emmett_event_type}}",
+          "range": true,
+          "instant": false
         }
-      ]
+      ],
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
     },
     {
       "id": 9,
-      "title": "Command duration p95",
       "type": "timeseries",
+      "title": "Shipments",
+      "description": "Stock reserved and packages sent, and the ones that failed: products out of stock, rejected fulfillment and released stock.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
+        "x": 12,
+        "y": 14,
         "w": 12,
-        "x": 0,
-        "y": 28
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -238,50 +373,65 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(emmett_command_handling_duration_bucket[5m])))",
-          "legendFormat": "__auto"
+          "expr": "sum by (emmett_event_type) (increase(emmett_event_appending_count_total{emmett_event_type=~\"shipments.StockReserved|shipments.PackageWasSent|shipments.PackageWasDelivered|shipments.ProductWasOutOfStock|shipments.FulfillmentRejected|shipments.StockReleased\"}[$__interval]))",
+          "legendFormat": "{{emmett_event_type}}",
+          "range": true,
+          "instant": false
         }
-      ]
+      ],
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
     },
     {
       "id": 10,
-      "title": "Processor duration p95",
-      "type": "timeseries",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
+      "type": "row",
+      "title": "Watch out",
+      "collapsed": false,
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 28
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
       },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(emmett_processor_processing_duration_bucket[5m])))",
-          "legendFormat": "__auto"
-        }
-      ]
+      "panels": []
     },
     {
       "id": 11,
-      "title": "Workflow duration p95",
       "type": "timeseries",
+      "title": "Failed commands",
+      "description": "Commands that threw: conflicts that ran out of retries, failing appends or bugs. Each one is in Tempo with its exception.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
         "x": 0,
-        "y": 36
+        "y": 23,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -290,24 +440,59 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(emmett_workflow_processing_duration_bucket[5m])))",
-          "legendFormat": "__auto"
+          "expr": "sum(increase(emmett_command_handling_duration_count{emmett_command_status=\"failure\"}[$__interval]))",
+          "legendFormat": "{{emmett_command_status}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "links": [
+        {
+          "title": "Open the traces in Tempo",
+          "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22command.handle%5C%22%20%26%26%20status%20%3D%20error%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D",
+          "targetBlank": true
         }
       ]
     },
     {
-      "id": 12,
-      "title": "Stream appending duration p95",
+      "id": 13,
       "type": "timeseries",
+      "title": "Timeouts",
+      "description": "Customers who didn't pay in time, authorizations that ran out before the capture, and orders closed unpaid.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 36
+        "x": 16,
+        "y": 23,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
       },
       "targets": [
         {
@@ -316,8 +501,703 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(emmett_stream_appending_duration_bucket[5m])))",
-          "legendFormat": "__auto"
+          "expr": "sum by (emmett_event_type) (increase(emmett_event_appending_count_total{emmett_event_type=~\"payments.PaymentTimedOut|payments.PaymentAuthorizationExpired|orders.OrderClosedUnpaid\"}[$__interval]))",
+          "legendFormat": "{{emmett_event_type}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Dead letters",
+      "description": "Messages a queue gave up on after its retries. They wait in the queue's dead-letter topic or queue.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (messaging_destination_name, message_type) (increase(messaging_dead_lettered_total[$__interval]))",
+          "legendFormat": "{{messaging_destination_name}} {{message_type}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Failed message handlers",
+      "description": "Kafka and RabbitMQ listener calls that threw. The bus retries them, then dead-letters them.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (messaging_destination_name) (increase(messaging_failed_total[$__interval]))",
+          "legendFormat": "kafka {{messaging_destination_name}}",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "interval": "1m",
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["sum"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Subscription lag",
+      "description": "How long after its append each subscription handled an event: the 95th percentile and the worst case. A growing lag means a subscription falls behind its events, for example because a handler fails and is retried.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, messaging_destination_name) (rate(messaging_lag_milliseconds_bucket[$__rate_interval])))",
+          "legendFormat": "p95 {{messaging_destination_name}}",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max by (messaging_destination_name) (rate(messaging_lag_milliseconds_sum[$__rate_interval]) / rate(messaging_lag_milliseconds_count[$__rate_interval]))",
+          "legendFormat": "max {{messaging_destination_name}}",
+          "range": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "row",
+      "title": "Business",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 47,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Checkout to order",
+      "description": "Checked-out carts that became orders. Below 100% means checkouts that the orders module didn't place.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 48,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"orders.OrderPlaced\"}[$__range])) / clamp_min(sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"shopping_carts.ShoppingCartCheckedOut\"}[$__range])), 1) * 100",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "type": "stat",
+      "title": "Paid orders",
+      "description": "Placed orders that the customer paid and the warehouse reserved, so they were confirmed.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 48,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"orders.OrderConfirmed\"}[$__range])) / clamp_min(sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"orders.OrderPlaced\"}[$__range])), 1) * 100",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "stat",
+      "title": "Payment failures",
+      "description": "Payments that timed out, failed to capture or expired, of all payments, counted once per payment.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 48,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"payments.PaymentTimedOut|payments.PaymentCaptureFailed|payments.PaymentAuthorizationExpired\"}[$__range]))) / clamp_min(sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"payments.PaymentAuthorizationRequested\"}[$__range])), 1) * 100",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "type": "stat",
+      "title": "Out of stock",
+      "description": "Reservations that failed because a product was out of stock.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 48,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"shipments.ProductWasOutOfStock\"}[$__range])) / clamp_min(sum(increase(emmett_event_appending_count_total{emmett_event_type=~\"shipments.StockReserved|shipments.ProductWasOutOfStock\"}[$__range])), 1) * 100",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "stat",
+      "title": "Revenue",
+      "description": "Money charged for completed orders in the selected time range.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(ecommerce_order_revenue_dollars_sum[$__range])) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Average order value",
+      "description": "Revenue divided by the charged orders.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 52,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(ecommerce_order_revenue_dollars_sum[$__range])) / clamp_min(sum(increase(ecommerce_order_revenue_dollars_count[$__range])), 1)",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Orders in progress",
+      "description": "Orders placed and not yet completed, canceled or closed unpaid. A number that only grows means stuck orders.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 52,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(ecommerce_orders_in_progress) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "type": "stat",
+      "title": "Awaiting payment again",
+      "description": "Orders whose payment failed and that wait for the customer to pay again.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 52,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(ecommerce_orders_awaiting_payment) or vector(0)",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "type": "timeseries",
+      "title": "Order lead time",
+      "description": "Time from placing an order to its payment, its package leaving and its completion.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": ["mean", "max"]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le, ecommerce_order_stage) (rate(ecommerce_order_lead_time_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "p50 {{ecommerce_order_stage}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, ecommerce_order_stage) (rate(ecommerce_order_lead_time_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "p95 {{ecommerce_order_stage}}"
         }
       ]
     }

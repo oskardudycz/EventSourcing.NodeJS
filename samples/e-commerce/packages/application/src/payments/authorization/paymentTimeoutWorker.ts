@@ -13,7 +13,7 @@ export const paymentTimeoutWorker = ({
     for (const paymentId of await pendingPayments.timedOutAt(now))
       await storeAsInput({
         type: 'payments.TimeOutPayment',
-        data: { paymentId },
+        data: { paymentId, timedOutAt: now.toISOString() },
       });
   },
 });

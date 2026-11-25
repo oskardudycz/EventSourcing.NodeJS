@@ -1,0 +1,12 @@
+---
+id: payment-provider
+name: Payment provider
+version: 1.0.0
+summary: Stripe or Adyen. It shows the payment page, holds the money and charges it. A sandbox plays it in the running sample.
+scope: external
+relationships:
+  - id: payments-system
+    label: "upstream/downstream · provider: OHS + PL · Payments: ACL (PaymentGateway)"
+---
+
+The payments module talks to it only through `PaymentGateway`, so the provider's model stays out of the module.

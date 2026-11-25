@@ -10,14 +10,12 @@ import {
   paymentForwarderTypes,
   paymentsExternalForwarderId,
 } from './payments/external/paymentExternalEventForwarder';
-import type { PaymentSummaries } from './payments/external/paymentSummaries';
 import type { PaymentEvent } from './payments/payment';
 import {
   shipmentExternalEventForwarder,
   shipmentForwarderTypes,
   shipmentsExternalForwarderId,
 } from './shipments/external/shipmentExternalEventForwarder';
-import type { ShipmentSummaries } from './shipments/external/shipmentSummaries';
 import type { ShipmentEvent } from './shipments/shipment';
 import {
   shoppingCartExternalEventForwarder,
@@ -43,15 +41,13 @@ export const registerForwarders = ({
   };
   summaries: {
     shoppingCarts: ShoppingCartSummaries;
-    payments: PaymentSummaries;
-    shipments: ShipmentSummaries;
   };
   forward: ForwardTo;
 }) => {
   consumers.shoppingCarts?.reactor<ShoppingCartEvent>({
     processorId: shoppingCartsExternalForwarderId,
     canHandle: ['shopping_carts.ShoppingCartCheckedOut'],
-    eachMessage: shoppingCartExternalEventForwarder({
+    eachBatch: shoppingCartExternalEventForwarder({
       summaries: summaries.shoppingCarts,
       forward,
       retry,
@@ -61,13 +57,12 @@ export const registerForwarders = ({
   consumers.orders?.reactor<OrderRequest>({
     processorId: ordersRequestForwarderId,
     canHandle: [...orderRequestTypes],
-    eachMessage: orderRequestForwarder({ forward, retry, signal }),
+    eachBatch: orderRequestForwarder({ forward, retry, signal }),
   });
   consumers.payments?.reactor<PaymentEvent>({
     processorId: paymentsExternalForwarderId,
     canHandle: [...paymentForwarderTypes],
-    eachMessage: paymentExternalEventForwarder({
-      summaries: summaries.payments,
+    eachBatch: paymentExternalEventForwarder({
       forward,
       retry,
       signal,
@@ -76,8 +71,7 @@ export const registerForwarders = ({
   consumers.shipments?.reactor<ShipmentEvent>({
     processorId: shipmentsExternalForwarderId,
     canHandle: [...shipmentForwarderTypes],
-    eachMessage: shipmentExternalEventForwarder({
-      summaries: summaries.shipments,
+    eachBatch: shipmentExternalEventForwarder({
       forward,
       retry,
       signal,

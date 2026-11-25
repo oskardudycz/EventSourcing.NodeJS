@@ -1,0 +1,9 @@
+{
+  "referenceId": "urn:ecommerce:order:customer-1-1",
+  "productItems": [
+    {
+      "productId": "product-1",
+      "quantity": 2
+    }
+  ]
+}

@@ -1,5 +1,11 @@
 import { raw } from 'hono/html';
 import type { Child, FC } from 'hono/jsx';
+import {
+  cartPageOf,
+  loginPage,
+  ordersPageOf,
+  productsPageOf,
+} from './shopUrls';
 
 export type ShopLinks = { grafanaUrl: string; eventCatalogUrl: string };
 
@@ -30,29 +36,26 @@ export const ShopHeader: FC<Visitor> = ({
   current,
 }) => (
   <header class="topbar">
-    <a
-      class="brand"
-      href={customerId ? `/shop/customers/${customerId}/products` : '/shop'}
-    >
+    <a class="brand" href={customerId ? productsPageOf(customerId) : '/shop'}>
       Demo Shop
     </a>
     <nav>
       {customerId && (
         <>
           <a
-            href={`/shop/customers/${customerId}/products`}
+            href={productsPageOf(customerId)}
             class={current === 'products' ? 'active' : undefined}
           >
             Products
           </a>
           <a
-            href={`/shop/customers/${customerId}/cart`}
+            href={cartPageOf(customerId)}
             class={current === 'cart' ? 'active' : undefined}
           >
             Cart
           </a>
           <a
-            href={`/shop/customers/${customerId}/orders`}
+            href={ordersPageOf(customerId)}
             class={current === 'orders' ? 'active' : undefined}
           >
             Orders
@@ -64,6 +67,12 @@ export const ShopHeader: FC<Visitor> = ({
         <div class="menu-items">
           <a href={links.grafanaUrl} target="_blank" rel="noopener">
             Grafana: traces, metrics, logs
+          </a>
+          <a href="/swagger" target="_blank" rel="noopener">
+            Swagger UI: the web API
+          </a>
+          <a href="/asyncapi" target="_blank" rel="noopener">
+            AsyncAPI: the messages
           </a>
           <a href={links.eventCatalogUrl} target="_blank" rel="noopener">
             EventCatalog: modules and messages
@@ -83,7 +92,7 @@ export const ShopHeader: FC<Visitor> = ({
           </form>
         </>
       ) : (
-        <a href="/shop/login">Log in</a>
+        <a href={loginPage}>Log in</a>
       )}
     </nav>
   </header>

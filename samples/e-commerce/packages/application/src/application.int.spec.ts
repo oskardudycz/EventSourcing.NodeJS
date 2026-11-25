@@ -8,7 +8,6 @@ import {
 import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createApplication } from './application';
-import { failsOnEmmett } from './knownFailures';
 import { deliverFromOutsideWorld } from './testApplication';
 import { until } from './testInfrastructure';
 import { createModuleStores } from './eventStore';
@@ -106,31 +105,29 @@ const runApplication = async (
 };
 
 const hasOrderEvent =
-  (orderEvents: () => Promise<{ type: string }[]>, type: string) =>
-  async () =>
+  (orderEvents: () => Promise<{ type: string }[]>, type: string) => async () =>
     (await orderEvents()).some((event) => event.type === type);
 
 describe('application workers', () => {
-  failsOnEmmett('#432')(
-    'anApplicationWithWorkersClosesAnOverdueUnpaidOrder',
-    async (signal) => {
-      const { orderEvents, stop } = await runApplication('none', {
-        workers: true,
-      });
+  it('anApplicationWithWorkersClosesAnOverdueUnpaidOrder', async ({
+    signal,
+  }) => {
+    const { orderEvents, stop } = await runApplication('none', {
+      workers: true,
+    });
 
-      signal.addEventListener('abort', () => void stop());
+    signal.addEventListener('abort', () => void stop());
 
-      try {
-        await until(hasOrderEvent(orderEvents, 'orders.OrderCanceled'), 15_000);
+    try {
+      await until(hasOrderEvent(orderEvents, 'orders.OrderCanceled'), 15_000);
 
-        expect((await orderEvents()).map(({ type }) => type)).toContain(
-          'orders.OrderCanceled',
-        );
-      } finally {
-        await stop();
-      }
-    },
-  );
+      expect((await orderEvents()).map(({ type }) => type)).toContain(
+        'orders.OrderCanceled',
+      );
+    } finally {
+      await stop();
+    }
+  });
 
   it('anApplicationWithoutWorkersLeavesAnOverdueUnpaidOrderOpen', async () => {
     const { orderEvents, stop } = await runApplication('none', {
@@ -138,7 +135,10 @@ describe('application workers', () => {
     });
 
     try {
-      await until(hasOrderEvent(orderEvents, 'orders.OrderPaymentFailed'), 15_000);
+      await until(
+        hasOrderEvent(orderEvents, 'orders.OrderPaymentFailed'),
+        15_000,
+      );
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       expect((await orderEvents()).map(({ type }) => type)).not.toContain(

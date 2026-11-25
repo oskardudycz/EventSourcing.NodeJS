@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "shipmentId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-120>"
+    }
+  },
+  "required": [
+    "shipmentId"
+  ],
+  "additionalProperties": false,
+  "x-parser-schema-id": "<anonymous-schema-119>"
+}

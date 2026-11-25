@@ -43,6 +43,8 @@ export type TestApplication = {
   catchUp?: () => Promise<boolean>;
   start?: () => Promise<void>;
   stop?: () => Promise<void>;
+  appendedEvents?: AppendedEvents;
+  isAbout?: (message: PublishedMessage) => boolean;
 };
 
 type FetchOptions = { fetch: Fetch } & Omit<TestApplication, 'fetch'>;
@@ -128,18 +130,22 @@ const appendedCounts = (appendedEvents: AppendedEvents | undefined) =>
 const appendedSince = (
   appendedEvents: AppendedEvents | undefined,
   countsBefore: ReadonlyMap<string, number>,
+  isAbout: (message: PublishedMessage) => boolean,
 ): TestEventStream[] =>
   [...(appendedEvents ?? [])]
     .map(([name, [, events]]): TestEventStream => [
       name,
-      events.slice(countsBefore.get(name) ?? 0),
+      events.slice(countsBefore.get(name) ?? 0).filter(isAbout),
     ])
     .filter(([, events]) => events.length > 0);
+
+const aboutAnything = () => true;
 
 const specificationFor = (
   options: TestApplication,
   appendedEvents: AppendedEvents | undefined,
 ): ApiE2ESpecification => {
+  const isAbout = options.isAbout ?? aboutAnything;
   const published = () => options.published?.() ?? [];
 
   const sendRequest = async (
@@ -194,6 +200,7 @@ const specificationFor = (
     when: (step) => ({
       then: async (...expectations) => {
         const agent = new HonoTestAgent({ fetch: options.fetch });
+        let testFailed = false;
 
         try {
           await options.start?.();
@@ -206,15 +213,20 @@ const specificationFor = (
 
           const outcome: Outcome = {
             response,
-            published: published().slice(publishedBefore),
+            published: published().slice(publishedBefore).filter(isAbout),
             appended: appendedEvents
-              ? appendedSince(appendedEvents, countsBefore)
+              ? appendedSince(appendedEvents, countsBefore, isAbout)
               : undefined,
           };
 
           for (const expectation of expectations) await expectation(outcome);
+        } catch (error) {
+          testFailed = true;
+          throw error;
         } finally {
-          await options.stop?.();
+          await options.stop?.().catch((stopError: unknown) => {
+            if (!testFailed) throw stopError;
+          });
         }
       },
     }),
@@ -242,7 +254,7 @@ function apiE2ESpecificationFor<Store extends EventStore>(
     }
 
     if ('fetch' in options)
-      return specificationFor(options, undefined)(...givenSteps);
+      return specificationFor(options, options.appendedEvents)(...givenSteps);
 
     const eventStore = WrapEventStore(getInMemoryEventStore());
     return specificationFor(

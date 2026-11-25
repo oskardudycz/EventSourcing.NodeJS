@@ -163,7 +163,7 @@ export const createMessaging = ({
               processorId: subscription.queue,
               canHandle: [...canHandle],
               eachMessage: fromBrokerQueue(
-                { deadLetters, retry, signal },
+                { deadLetters, queue: subscription.queue, retry, signal },
                 handle,
               ),
             });
@@ -209,7 +209,7 @@ export const createMessaging = ({
               processorId: subscription.queue,
               canHandle: [...canHandle],
               eachMessage: fromBrokerQueue(
-                { deadLetters, retry, signal },
+                { deadLetters, queue: subscription.queue, retry, signal },
                 handle,
               ),
             });

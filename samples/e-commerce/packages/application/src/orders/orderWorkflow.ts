@@ -84,7 +84,7 @@ export const orderRequestTypes = [
   'shipments.ReleaseStock',
 ] as const;
 
-const orderEventTypes: OrderEvent['type'][] = [
+export const orderEventTypes: OrderEvent['type'][] = [
   'orders.OrderPlaced',
   'orders.OrderPaymentAuthorized',
   'orders.OrderStockReserved',
@@ -392,7 +392,7 @@ const decideEvents = (
   }
 };
 
-const requestsOf = (event: OrderEvent): OrderRequest[] => {
+export const requestsOf = (event: OrderEvent): OrderRequest[] => {
   switch (event.type) {
     case 'orders.OrderPlaced':
       return [
@@ -450,7 +450,7 @@ const requestsOf = (event: OrderEvent): OrderRequest[] => {
             ]
           : []),
         ...(event.data.shipmentStatus === 'Reserved' &&
-        event.data.shipmentId !== null
+        typeof event.data.shipmentId === 'string'
           ? [
               {
                 type: 'shipments.ReleaseStock' as const,

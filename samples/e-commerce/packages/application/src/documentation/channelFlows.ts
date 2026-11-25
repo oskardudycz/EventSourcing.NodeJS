@@ -3,35 +3,44 @@ import {
   type MessageRoutes,
   type Route,
 } from '@e-commerce/core';
-import type { ModuleName } from '../application';
-import { ordersInternalRoutes } from '../orders/ordersConfig';
+import type { ModuleName } from '../modules';
 import {
+  ordersInternalQueue,
+  ordersInternalRoutes,
+  ordersPaymentsResponsesQueue,
+  ordersShipmentsResponsesQueue,
+  ordersShoppingCartsExternalQueue,
+} from '../orders/ordersConfig';
+import {
+  paymentsInternalQueue,
   paymentsInternalRoutes,
   paymentsRequestRoutes,
+  paymentsRequestsQueue,
   paymentsResponseRoutes,
 } from '../payments/paymentsConfig';
 import {
   shipmentsRequestRoutes,
+  shipmentsRequestsQueue,
   shipmentsResponseRoutes,
 } from '../shipments/shipmentsConfig';
 import { shoppingCartsRoutes } from '../shoppingCarts/shoppingCartsConfig';
 import type { MessageContract } from './messageContract';
-import { closeUnpaidOrder } from './orderContracts';
+import { closeUnpaidOrder } from '../orders/orderContracts';
 import {
   expirePaymentAuthorization,
   paymentRequestContracts,
   paymentResponseContracts,
   timeOutPayment,
-} from './paymentContracts';
+} from '../payments/paymentContracts';
 import {
   shipmentRequestContracts,
   shipmentResponseContracts,
-} from './shipmentContracts';
-import { shoppingCartCheckedOutExternal } from './shoppingCartContracts';
+} from '../shipments/shipmentContracts';
+import { shoppingCartCheckedOutExternal } from '../shoppingCarts/shoppingCartContracts';
 
 export type ChannelFlow = {
   sender: ModuleName;
-  receivers: ModuleName[];
+  receivers: { module: ModuleName; queue: string }[];
   routes: MessageRoutes;
   contracts: MessageContract[];
 };
@@ -39,43 +48,43 @@ export type ChannelFlow = {
 export const channelFlows: ChannelFlow[] = [
   {
     sender: 'shopping_carts',
-    receivers: ['orders'],
+    receivers: [{ module: 'orders', queue: ordersShoppingCartsExternalQueue }],
     routes: shoppingCartsRoutes,
     contracts: [shoppingCartCheckedOutExternal],
   },
   {
     sender: 'orders',
-    receivers: ['payments'],
+    receivers: [{ module: 'payments', queue: paymentsRequestsQueue }],
     routes: paymentsRequestRoutes,
     contracts: paymentRequestContracts,
   },
   {
     sender: 'payments',
-    receivers: ['orders'],
+    receivers: [{ module: 'orders', queue: ordersPaymentsResponsesQueue }],
     routes: paymentsResponseRoutes,
     contracts: paymentResponseContracts,
   },
   {
     sender: 'orders',
-    receivers: ['shipments'],
+    receivers: [{ module: 'shipments', queue: shipmentsRequestsQueue }],
     routes: shipmentsRequestRoutes,
     contracts: shipmentRequestContracts,
   },
   {
     sender: 'shipments',
-    receivers: ['orders'],
+    receivers: [{ module: 'orders', queue: ordersShipmentsResponsesQueue }],
     routes: shipmentsResponseRoutes,
     contracts: shipmentResponseContracts,
   },
   {
     sender: 'orders',
-    receivers: ['orders'],
+    receivers: [{ module: 'orders', queue: ordersInternalQueue }],
     routes: ordersInternalRoutes,
     contracts: [closeUnpaidOrder],
   },
   {
     sender: 'payments',
-    receivers: ['payments'],
+    receivers: [{ module: 'payments', queue: paymentsInternalQueue }],
     routes: paymentsInternalRoutes,
     contracts: [timeOutPayment, expirePaymentAuthorization],
   },
@@ -89,4 +98,13 @@ export const exampleMessageOf = (contract: MessageContract) => ({
 export const routeOf = (
   routes: MessageRoutes,
   contract: MessageContract,
-): Route => messageRouter([routes], []).routeFor(exampleMessageOf(contract));
+): Route & { channel: string } => {
+  const route = messageRouter([routes], []).routeFor(
+    exampleMessageOf(contract),
+  );
+
+  if (route.channel === undefined)
+    throw new Error(`No channel for '${contract.type}'`);
+
+  return { ...route, channel: route.channel };
+};

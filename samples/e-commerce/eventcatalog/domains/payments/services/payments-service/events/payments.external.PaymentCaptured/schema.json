@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "referenceId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-54>"
+    },
+    "paymentId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-55>"
+    },
+    "capturedAt": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-56>"
+    }
+  },
+  "required": [
+    "referenceId",
+    "paymentId",
+    "capturedAt"
+  ],
+  "additionalProperties": false,
+  "x-parser-schema-id": "<anonymous-schema-53>"
+}

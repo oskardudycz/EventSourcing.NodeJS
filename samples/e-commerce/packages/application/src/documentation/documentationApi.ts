@@ -3,9 +3,14 @@ import { NotFoundError, ValidationError } from '@event-driven-io/emmett';
 import type { WebApiSetup } from '@event-driven-io/emmett-honojs';
 import { swaggerUI } from '@hono/swagger-ui';
 import { z } from 'zod';
-import type { ModuleName } from '../application';
+import { allModules, type ModuleName } from '../modules';
 import { asyncApiDocument, publishableMessages } from './asyncApiDocument';
-import { openApiDocument } from './openApiDocument';
+import {
+  openApiDocument,
+  openApiModuleNames,
+  type OpenApiModuleName,
+  type OpenApiModules,
+} from './openApiDocument';
 import { asyncApiPage, publishPage } from './documentationPages';
 
 const publishRequest = z.object({
@@ -13,33 +18,43 @@ const publishRequest = z.object({
   data: z.unknown(),
 });
 
-const modules: readonly string[] = [
-  'shopping_carts',
-  'orders',
-  'payments',
-  'shipments',
-];
-
 const moduleOf = (name: string): ModuleName => {
-  const found = modules.find((module) => module === name);
+  const found = allModules.find((module) => module === name);
 
-  if (
-    found !== 'shopping_carts' &&
-    found !== 'orders' &&
-    found !== 'payments' &&
-    found !== 'shipments'
-  )
+  if (found === undefined)
+    throw new NotFoundError({ type: 'Module', id: name });
+
+  return found;
+};
+
+const openApiModuleOf = (name: string): OpenApiModuleName => {
+  const found = openApiModuleNames.find((module) => module === name);
+
+  if (found === undefined)
     throw new NotFoundError({ type: 'Module', id: name });
 
   return found;
 };
 
 export const documentationApi =
-  (dependencies: { publish: SendToChannel }): WebApiSetup =>
+  (dependencies: {
+    publish: SendToChannel;
+    openApi: OpenApiModules;
+  }): WebApiSetup =>
   (router) => {
     const messages = publishableMessages();
 
-    router.get('/openapi.json', (context) => context.json(openApiDocument()));
+    router.get('/openapi.json', (context) =>
+      context.json(openApiDocument(dependencies.openApi)),
+    );
+    router.get('/openapi/modules/:module', (context) =>
+      context.json(
+        openApiDocument(
+          dependencies.openApi,
+          openApiModuleOf(context.req.param('module')),
+        ),
+      ),
+    );
     router.get('/swagger', swaggerUI({ url: '/openapi.json' }));
     router.get('/asyncapi.json', (context) => context.json(asyncApiDocument()));
     router.get('/asyncapi/modules/:module', (context) =>
@@ -70,7 +85,7 @@ export const documentationApi =
         ({ contract }) => contract.type === request.data.type,
       );
 
-      if (!found || found.channel === undefined)
+      if (!found)
         throw new ValidationError(`Unknown message type ${request.data.type}`);
 
       const data = found.contract.schema.safeParse(request.data.data);

@@ -7,7 +7,9 @@ import { getApplication as getHonoApplication } from '@event-driven-io/emmett-ho
 import { routedSender, workersLoop, type Worker } from '@e-commerce/core';
 import pino, { type Logger } from 'pino';
 import { documentationApi } from './documentation/documentationApi';
+import { webApiOf } from './documentation/openApi';
 import { registerForwarders } from './forwarders';
+import { allModules, type ModuleName } from './modules';
 import { sandboxesOf } from './sandboxes';
 import { storesOf, type Database, type ModuleStores } from './eventStore';
 import { createMessaging, type BrokerConnections } from './messaging';
@@ -16,6 +18,7 @@ import { customerOrders } from './orders/getCustomerOrders/customerOrders';
 import type { CloseUnpaidOrder } from './orders/order';
 import { orderPages } from './orders/orderPages';
 import { orderStatuses } from './orders/getOrderStatus/orderStatuses';
+import { httpMetrics } from './telemetry/httpMetrics';
 import { registerOrderMetrics } from './orders/orderMetrics';
 import {
   orderWorkflowHandler,
@@ -40,7 +43,6 @@ import { authorizedPayments } from './payments/authorization/authorizedPayments'
 import { paymentTimeoutWorker } from './payments/authorization/paymentTimeoutWorker';
 import { pendingPayments } from './payments/authorization/pendingPayments';
 import type { PaymentExternalEvent } from './payments/external/paymentExternalEvent';
-import { paymentSummaries } from './payments/external/paymentSummaries';
 import type { PaymentEvent } from './payments/payment';
 import type {
   ExpirePaymentAuthorization,
@@ -60,7 +62,6 @@ import {
   registerPaymentsProcessors,
 } from './payments/paymentsProcessors';
 import type { ShipmentExternalEvent } from './shipments/external/shipmentExternalEvent';
-import { shipmentSummaries } from './shipments/external/shipmentSummaries';
 import type { WarehouseGateway } from './shipments/warehouseGateway';
 import type { ShipmentEvent } from './shipments/shipment';
 import type { ShipmentCommand } from './shipments/shipmentCommand';
@@ -95,14 +96,7 @@ export type ApplicationMessage =
   | ShipmentCommand
   | ShipmentExternalEvent;
 
-export type ModuleName = 'shopping_carts' | 'orders' | 'payments' | 'shipments';
-
-export const allModules: readonly ModuleName[] = [
-  'shopping_carts',
-  'orders',
-  'payments',
-  'shipments',
-];
+export { allModules, type ModuleName };
 
 export type ApplicationOptions = {
   stores: ModuleStores;
@@ -151,7 +145,6 @@ export const createApplication = (
   const shoppingCartsPongo = stores.shoppingCarts.pongo();
   const ordersPongo = stores.orders.pongo();
   const paymentsPongo = stores.payments.pongo();
-  const shipmentsPongo = stores.shipments.pongo();
   const shutdown = new AbortController();
   const messaging = createMessaging({
     stores,
@@ -169,27 +162,38 @@ export const createApplication = (
     'shopping_carts',
     stores.shoppingCarts,
   );
-  const ordersConsumer = ownConsumerOf('orders', stores.orders);
-  const paymentsConsumer = ownConsumerOf('payments', stores.payments);
-  const shipmentsConsumer = ownConsumerOf('shipments', stores.shipments);
+  const projectingConsumerOf = (module: ModuleName, database: Database) =>
+    isRunning(module)
+      ? (database.projectingConsumer() ?? database.consumer())
+      : undefined;
+  const ordersConsumer = projectingConsumerOf('orders', stores.orders);
+  const paymentsConsumer = projectingConsumerOf('payments', stores.payments);
+  const shipmentsConsumer = projectingConsumerOf('shipments', stores.shipments);
+  const ordersForwardingConsumer = ownConsumerOf('orders', stores.orders);
+  const paymentsForwardingConsumer = ownConsumerOf('payments', stores.payments);
+  const shipmentsForwardingConsumer = ownConsumerOf(
+    'shipments',
+    stores.shipments,
+  );
   const ownConsumers = [
     shoppingCartsConsumer,
     ordersConsumer,
+    ordersForwardingConsumer,
     paymentsConsumer,
+    paymentsForwardingConsumer,
     shipmentsConsumer,
+    shipmentsForwardingConsumer,
   ].filter((consumer) => consumer !== undefined);
 
   registerForwarders({
     consumers: {
       shoppingCarts: shoppingCartsConsumer,
-      orders: ordersConsumer,
-      payments: paymentsConsumer,
-      shipments: shipmentsConsumer,
+      orders: ordersForwardingConsumer,
+      payments: paymentsForwardingConsumer,
+      shipments: shipmentsForwardingConsumer,
     },
     summaries: {
       shoppingCarts: shoppingCartSummaries(shoppingCartsPongo),
-      payments: paymentSummaries(paymentsPongo),
-      shipments: shipmentSummaries(shipmentsPongo),
     },
     forward: messaging.forward,
     retry,
@@ -311,20 +315,23 @@ export const createApplication = (
     prices,
     now,
   });
+  const cartsApp = shoppingCartsApi({
+    shoppingCarts: shoppingCartsFacade,
+    customerShoppingCarts: customerCarts,
+    carts: shoppingCartReads,
+  });
+  const ordersApp = ordersApi({
+    sendToOrder,
+    payments,
+    customerOrders: customerOrders(ordersPongo),
+    orderStatuses: orderStatuses(ordersPongo),
+  });
   const app = getHonoApplication({
     mapError,
     apis: [
-      shoppingCartsApi({
-        shoppingCarts: shoppingCartsFacade,
-        customerShoppingCarts: customerCarts,
-        carts: shoppingCartReads,
-      }),
-      ordersApi({
-        sendToOrder,
-        payments,
-        customerOrders: customerOrders(ordersPongo),
-        orderStatuses: orderStatuses(ordersPongo),
-      }),
+      httpMetrics,
+      webApiOf(cartsApp),
+      webApiOf(ordersApp),
       shopPages({ links }),
       shoppingCartPages({
         shoppingCarts: shoppingCartsFacade,
@@ -341,7 +348,10 @@ export const createApplication = (
       }),
       sandboxCheckoutPage(sandboxes.paymentGateway),
       sandboxWarehousePage(sandboxes.warehouse),
-      documentationApi({ publish: messaging.send }),
+      documentationApi({
+        publish: messaging.send,
+        openApi: { shopping_carts: cartsApp, orders: ordersApp },
+      }),
     ],
   });
 
@@ -352,6 +362,7 @@ export const createApplication = (
   return {
     fetch: (request: Request): Response | Promise<Response> =>
       app.fetch(request),
+    routes: app.routes,
     get consumers() {
       return allConsumers();
     },

@@ -1,0 +1,23 @@
+---
+id: payments-system
+name: Payments
+version: 1.0.0
+summary: The money. It holds the payment, charges it after the package left, and times out when the customer never pays.
+scope: internal
+owners:
+  - payments
+services:
+  - id: payments-service
+relationships:
+  - id: orders-system
+    label: "supplier → customer · Payments: OHS + PL · Orders: ACL (order workflow)"
+entities:
+  - id: payment
+containers:
+  - id: event-store
+  - id: projections
+---
+
+## Context diagram
+
+<ContextDiagram />

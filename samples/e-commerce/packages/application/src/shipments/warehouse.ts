@@ -14,7 +14,8 @@ export type WarehouseFake = WarehouseGateway & {
   isOutOf: (productId: string) => ActionStep;
   isUnreachableFor: (shipmentId: string) => ActionStep;
   stockChecks: () => number;
-  stockCheckFails: (times: number) => ActionStep;
+  stockChecksOf: (productId: string) => number;
+  stockCheckOfFails: (productId: string, times: number) => ActionStep;
   wasAskedToSend: (shipmentId: string) => boolean;
   requestsFor: (shipmentId: string) => ShipmentProductItem[][];
   sendsThePackage: (shipmentId: string) => MessagesStep;
@@ -26,22 +27,27 @@ export const warehouse = (): WarehouseFake => {
   const outOfStock = new Set<string>();
   const unreachable = new Set<string>();
   const requests = new Map<string, ShipmentProductItem[][]>();
-  let stockChecks = 0;
-  let failingStockChecks = 0;
+  const stockChecks = new Map<string, number>();
+  const failingStockChecks = new Map<string, number>();
+  const stockChecksOf = (productId: string) => stockChecks.get(productId) ?? 0;
 
   const requestsFor = (shipmentId: string) => requests.get(shipmentId) ?? [];
 
   return {
-    stockChecks: () => stockChecks,
-    stockCheckFails: (times) =>
+    stockChecks: () =>
+      [...stockChecks.values()].reduce((total, checks) => total + checks, 0),
+    stockChecksOf,
+    stockCheckOfFails: (productId, times) =>
       action(() => {
-        failingStockChecks = times;
+        failingStockChecks.set(productId, times);
       }),
     isProductAvailable: ({ productId }) => {
-      stockChecks++;
+      stockChecks.set(productId, stockChecksOf(productId) + 1);
 
-      if (failingStockChecks > 0) {
-        failingStockChecks--;
+      const failuresLeft = failingStockChecks.get(productId) ?? 0;
+
+      if (failuresLeft > 0) {
+        failingStockChecks.set(productId, failuresLeft - 1);
 
         return Promise.reject(new Error('Warehouse is unreachable'));
       }

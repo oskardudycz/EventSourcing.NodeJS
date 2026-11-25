@@ -1,0 +1,641 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "E-commerce shipments",
+    "version": "1.0.0",
+    "description": "The messages the shipments module sends and receives.",
+    "tags": [
+      {
+        "name": "shipments"
+      }
+    ]
+  },
+  "servers": {
+    "kafka": {
+      "host": "localhost:9092",
+      "protocol": "kafka",
+      "description": "Channels are Kafka topics. The body is the message data, the type is in the message-type header"
+    },
+    "rabbitmq": {
+      "host": "localhost:5672",
+      "protocol": "amqp",
+      "description": "Channels are RabbitMQ exchanges. The body is the message data, the type is in the message-type header"
+    },
+    "in-memory": {
+      "host": "in-memory",
+      "protocol": "in-memory",
+      "description": "Channels are streams of the event store"
+    }
+  },
+  "channels": {
+    "shipments-requests": {
+      "address": "shipments-requests",
+      "description": "Channel shipments-requests",
+      "messages": {
+        "shipments.ReserveStock": {
+          "$ref": "#/components/messages/shipments.ReserveStock"
+        },
+        "shipments.RequestFulfillment": {
+          "$ref": "#/components/messages/shipments.RequestFulfillment"
+        },
+        "shipments.ReleaseStock": {
+          "$ref": "#/components/messages/shipments.ReleaseStock"
+        }
+      }
+    },
+    "shipments-responses": {
+      "address": "shipments-responses",
+      "description": "Channel shipments-responses",
+      "messages": {
+        "shipments.external.StockReserved": {
+          "$ref": "#/components/messages/shipments.external.StockReserved"
+        },
+        "shipments.external.PackageWasSent": {
+          "$ref": "#/components/messages/shipments.external.PackageWasSent"
+        },
+        "shipments.external.ShipmentFailed": {
+          "$ref": "#/components/messages/shipments.external.ShipmentFailed"
+        }
+      }
+    }
+  },
+  "operations": {
+    "shipments.receive.shipments.ReserveStock": {
+      "action": "receive",
+      "title": "shipments receives shipments.ReserveStock",
+      "summary": "Ask shipments to reserve the stock for a reference, such as an order.",
+      "tags": [
+        {
+          "name": "shipments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-requests/messages/shipments.ReserveStock"
+        }
+      ]
+    },
+    "shipments.receive.shipments.RequestFulfillment": {
+      "action": "receive",
+      "title": "shipments receives shipments.RequestFulfillment",
+      "summary": "Ask shipments to send the package.",
+      "tags": [
+        {
+          "name": "shipments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-requests/messages/shipments.RequestFulfillment"
+        }
+      ]
+    },
+    "shipments.receive.shipments.ReleaseStock": {
+      "action": "receive",
+      "title": "shipments receives shipments.ReleaseStock",
+      "summary": "Ask shipments to release the reserved stock.",
+      "tags": [
+        {
+          "name": "shipments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-requests/messages/shipments.ReleaseStock"
+        }
+      ]
+    },
+    "shipments.send.shipments.external.StockReserved": {
+      "action": "send",
+      "title": "shipments sends shipments.external.StockReserved",
+      "summary": "The stock of a reference was reserved.",
+      "tags": [
+        {
+          "name": "shipments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-responses/messages/shipments.external.StockReserved"
+        }
+      ]
+    },
+    "shipments.send.shipments.external.PackageWasSent": {
+      "action": "send",
+      "title": "shipments sends shipments.external.PackageWasSent",
+      "summary": "The package of a reference was sent.",
+      "tags": [
+        {
+          "name": "shipments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-responses/messages/shipments.external.PackageWasSent"
+        }
+      ]
+    },
+    "shipments.send.shipments.external.ShipmentFailed": {
+      "action": "send",
+      "title": "shipments sends shipments.external.ShipmentFailed",
+      "summary": "The shipment of a reference failed.",
+      "tags": [
+        {
+          "name": "shipments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-responses/messages/shipments.external.ShipmentFailed"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "shipments.ReserveStock": {
+        "name": "shipments.ReserveStock",
+        "title": "shipments.ReserveStock",
+        "summary": "Ask shipments to reserve the stock for a reference, such as an order.",
+        "description": "Ask shipments to reserve the stock for a reference, such as an order.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.ReserveStock"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "referenceId": {
+              "type": "string"
+            },
+            "productItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "productId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "productId",
+                  "quantity"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "referenceId",
+            "productItems"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.ReserveStock",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "productItems": [
+                {
+                  "productId": "product-1",
+                  "quantity": 2
+                }
+              ]
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "shipments.RequestFulfillment": {
+        "name": "shipments.RequestFulfillment",
+        "title": "shipments.RequestFulfillment",
+        "summary": "Ask shipments to send the package.",
+        "description": "Ask shipments to send the package.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.RequestFulfillment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.RequestFulfillment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "shipments.ReleaseStock": {
+        "name": "shipments.ReleaseStock",
+        "title": "shipments.ReleaseStock",
+        "summary": "Ask shipments to release the reserved stock.",
+        "description": "Ask shipments to release the reserved stock.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.ReleaseStock"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.ReleaseStock",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "shipments.external.StockReserved": {
+        "name": "shipments.external.StockReserved",
+        "title": "shipments.external.StockReserved",
+        "summary": "The stock of a reference was reserved.",
+        "description": "The stock of a reference was reserved.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.external.StockReserved"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            },
+            "referenceId": {
+              "type": "string"
+            },
+            "reservedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId",
+            "referenceId",
+            "reservedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.external.StockReserved",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "reservedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "shipments.external.PackageWasSent": {
+        "name": "shipments.external.PackageWasSent",
+        "title": "shipments.external.PackageWasSent",
+        "summary": "The package of a reference was sent.",
+        "description": "The package of a reference was sent.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.external.PackageWasSent"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            },
+            "referenceId": {
+              "type": "string"
+            },
+            "carrier": {
+              "type": "string"
+            },
+            "trackingNumber": {
+              "type": "string"
+            },
+            "sentAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId",
+            "referenceId",
+            "carrier",
+            "trackingNumber",
+            "sentAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.external.PackageWasSent",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "carrier": "Sandbox Express",
+              "trackingNumber": "SB-1",
+              "sentAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "shipments.external.ShipmentFailed": {
+        "name": "shipments.external.ShipmentFailed",
+        "title": "shipments.external.ShipmentFailed",
+        "summary": "The shipment of a reference failed.",
+        "description": "The shipment of a reference failed.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.external.ShipmentFailed"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            },
+            "referenceId": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "ProductsOutOfStock",
+                "FulfillmentRejected"
+              ]
+            },
+            "failedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId",
+            "referenceId",
+            "reason",
+            "failedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.external.ShipmentFailed",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "reason": "ProductsOutOfStock",
+              "failedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      }
+    }
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "E-commerce shopping_carts",
+    "version": "1.0.0",
+    "description": "The messages the shopping_carts module sends and receives.",
+    "tags": [
+      {
+        "name": "shopping_carts"
+      }
+    ]
+  },
+  "servers": {
+    "kafka": {
+      "host": "localhost:9092",
+      "protocol": "kafka",
+      "description": "Channels are Kafka topics. The body is the message data, the type is in the message-type header"
+    },
+    "rabbitmq": {
+      "host": "localhost:5672",
+      "protocol": "amqp",
+      "description": "Channels are RabbitMQ exchanges. The body is the message data, the type is in the message-type header"
+    },
+    "in-memory": {
+      "host": "in-memory",
+      "protocol": "in-memory",
+      "description": "Channels are streams of the event store"
+    }
+  },
+  "channels": {
+    "shopping_carts-external": {
+      "address": "shopping_carts-external",
+      "description": "Channel shopping_carts-external",
+      "messages": {
+        "shopping_carts.external.ShoppingCartCheckedOut": {
+          "$ref": "#/components/messages/shopping_carts.external.ShoppingCartCheckedOut"
+        }
+      }
+    }
+  },
+  "operations": {
+    "shopping_carts.send.shopping_carts.external.ShoppingCartCheckedOut": {
+      "action": "send",
+      "title": "shopping_carts sends shopping_carts.external.ShoppingCartCheckedOut",
+      "summary": "A customer checked out a shopping cart. Orders places an order from it.",
+      "tags": [
+        {
+          "name": "shopping_carts"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shopping_carts-external"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shopping_carts-external/messages/shopping_carts.external.ShoppingCartCheckedOut"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "shopping_carts.external.ShoppingCartCheckedOut": {
+        "name": "shopping_carts.external.ShoppingCartCheckedOut",
+        "title": "shopping_carts.external.ShoppingCartCheckedOut",
+        "summary": "A customer checked out a shopping cart. Orders places an order from it.",
+        "description": "A customer checked out a shopping cart. Orders places an order from it.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shopping_carts.external.ShoppingCartCheckedOut"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "cartId": {
+              "type": "string"
+            },
+            "customerId": {
+              "type": "string"
+            },
+            "productItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "productId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  },
+                  "unitPrice": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "productId",
+                  "quantity",
+                  "unitPrice"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "totalPrice": {
+              "type": "number"
+            },
+            "checkedOutAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "cartId",
+            "customerId",
+            "productItems",
+            "totalPrice",
+            "checkedOutAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shopping_carts.external.ShoppingCartCheckedOut",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "cartId": "urn:ecommerce:cart:customer-1-1",
+              "customerId": "customer-1",
+              "productItems": [
+                {
+                  "productId": "product-1",
+                  "quantity": 2,
+                  "unitPrice": 19.99
+                }
+              ],
+              "totalPrice": 39.98,
+              "checkedOutAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      }
+    }
+  }
+}

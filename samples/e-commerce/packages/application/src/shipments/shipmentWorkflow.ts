@@ -136,13 +136,18 @@ const decideShipment = (
   }
 };
 
+export const evolveShipmentWorkflow = (
+  shipment: Shipment,
+  message: { type: string },
+): Shipment =>
+  isShipmentEvent(message) ? evolve(shipment, message) : shipment;
+
 export const shipmentWorkflow = (
   now: () => Date,
 ): Workflow<ShipmentWorkflowInput, Shipment, ShipmentWorkflowOutput> => ({
   name: shipmentWorkflowName,
   decide: (input, shipment) => decideShipment(input, shipment, now),
-  evolve: (shipment, output) =>
-    isShipmentEvent(output) ? evolve(shipment, output) : shipment,
+  evolve: evolveShipmentWorkflow,
   initialState: initialShipment,
 });
 

@@ -1,0 +1,10 @@
+{
+  "type": "payments.PaymentAuthorizationRequested",
+  "data": {
+    "paymentId": "urn:ecommerce:payment:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1",
+    "referenceId": "urn:ecommerce:order:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1",
+    "amount": 39.98,
+    "requestedAt": "2026-11-24T10:00:00.000Z",
+    "timesOutAt": "2026-11-25T10:00:00.000Z"
+  }
+}

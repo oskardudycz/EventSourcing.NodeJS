@@ -1,0 +1,79 @@
+---
+id: payment
+name: Payment
+version: 1.0.0
+summary: One attempt to collect the money for a reference. It waits for the customer, holds the money, and charges it once asked.
+identifier: id
+aggregateRoot: true
+owners:
+  - payments
+properties:
+  - name: id
+    type: Payment.Id
+    required: true
+    description: Derived from the reference and the attempt, such as `urn:ecommerce:payment:{customerId}-1`.
+  - name: referenceId
+    type: string
+    required: true
+    description: What the payment is for. Payments doesn't know orders, only this reference.
+  - name: amount
+    type: double
+    required: true
+  - name: status
+    type: string
+    required: true
+    enum:
+      - Pending
+      - Authorized
+      - CaptureRequested
+      - Captured
+      - Canceled
+      - Failed
+  - name: timesOutAt
+    type: OffsetDateTime
+    required: true
+    description: When a payment the customer never pays fails.
+  - name: captureBefore
+    type: OffsetDateTime
+    description: When the provider's hold on the money expires.
+  - name: checkoutSession
+    type: PaymentGateway.CheckoutSession
+    description: The provider's payment page that the customer was sent to.
+---
+
+## Overview
+
+The aggregate behind the payments module. [Payment](https://github.com/oskardudycz/EventSourcing.NodeJS/blob/main/samples/e-commerce/packages/application/src/payments/payment.ts) is the state, folded from the payment's stream, and the [payment workflow](https://github.com/oskardudycz/EventSourcing.NodeJS/blob/main/samples/e-commerce/packages/application/src/payments/paymentWorkflow.ts) decides the events.
+
+<EntityPropertiesTable />
+
+## States
+
+A payment follows the payment providers' own steps: the customer authorizes it on the provider's page, and the shop charges it later. The commands match the providers' operations and webhooks:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: AuthorizePayment
+    Pending --> Pending: CreateCheckoutSession (the customer opens the payment page)
+    Pending --> Authorized: ConfirmPaymentAuthorization
+    Pending --> Failed: TimeOutPayment
+    Authorized --> CaptureRequested: CapturePayment
+    Authorized --> Canceled: CancelPayment
+    Authorized --> Failed: ExpirePaymentAuthorization
+    CaptureRequested --> Captured: ConfirmPaymentCapture
+    CaptureRequested --> Failed: FailPaymentCapture
+    Captured --> [*]
+    Canceled --> [*]
+    Failed --> [*]
+```
+
+| Ours | Stripe | Adyen |
+|---|---|---|
+| `CreateCheckoutSession` | create a Checkout Session with `capture_method: manual` | create a payment session |
+| `ConfirmPaymentAuthorization` | the `payment_intent.amount_capturable_updated` webhook, with `capture_before` | the `AUTHORISATION` webhook |
+| `TimeOutPayment` | expire the Checkout Session | no such operation |
+| `CapturePayment` | capture the PaymentIntent | capture |
+| `CancelPayment` | cancel the PaymentIntent | cancel |
+| `ExpirePaymentAuthorization` | the authorization lapses and the funds are released | the transaction expires |
+
+The [README](https://github.com/oskardudycz/EventSourcing.NodeJS/tree/main/samples/e-commerce#where-the-steps-come-from) explains each step and its sources.

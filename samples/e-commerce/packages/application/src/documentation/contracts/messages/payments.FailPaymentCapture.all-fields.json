@@ -1,7 +1,0 @@
-{
-  "type": "payments.FailPaymentCapture",
-  "data": {
-    "paymentId": "urn:ecommerce:payment:customer-1-1",
-    "reason": "UnexpectedError"
-  }
-}

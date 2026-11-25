@@ -1,0 +1,5 @@
+{
+  "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+  "referenceId": "urn:ecommerce:order:customer-1-1",
+  "reservedAt": "2026-11-24T10:00:00.000Z"
+}

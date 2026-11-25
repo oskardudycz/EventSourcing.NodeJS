@@ -1,120 +1,146 @@
 import {
   expectResponse,
   htmlContaining,
+  htmlNotContaining,
   redirectsTo,
   type Expectation,
 } from '@e-commerce/core';
-import { randomUUID } from 'node:crypto';
-import { describe, it } from 'vitest';
-import { shopTestApplication } from '../shopTestApplication';
-import { demoProducts } from './demoProducts';
-import { customerIdOf } from './customer';
-import { shopRequests } from './shopRequests';
+import { describe, expect, it } from 'vitest';
+import {
+  shopTestApplication,
+  sqliteWithoutABroker,
+} from '../shopTestApplication';
+import { aCustomer, shopRequests } from './shopRequests';
+import { loginPage, productsPageOf } from './shopUrls';
 
-const shop = (options: Parameters<typeof shopTestApplication>[0] = {}) => {
-  const application = shopTestApplication(options);
+const shopApplication = shopTestApplication({ modules: ['shopping_carts'] });
 
-  return { ...application, ...shopRequests(application.fetch) };
-};
+const shop = () => ({
+  ...shopApplication,
+  ...shopRequests(shopApplication.fetch),
+});
 
-const name = () => `Marty ${randomUUID().slice(0, 8)}`;
+const setCookieOf = (outcome: Parameters<Expectation>[0]) =>
+  outcome.response?.headers['set-cookie'] ?? '';
 
 const setsAnHttpOnlyCustomerCookie =
   (customerName: string): Expectation =>
-  ({ response }) => {
-    const cookie = response?.headers['set-cookie'] ?? '';
+  (outcome) => {
+    const cookie = setCookieOf(outcome);
 
-    if (
-      !cookie.includes(`customer=${encodeURIComponent(customerName)}`) ||
-      !cookie.includes('HttpOnly')
-    )
-      throw new Error(`Set-Cookie is not an HttpOnly customer cookie: ${cookie}`);
+    expect(cookie).toContain(`customer=${encodeURIComponent(customerName)}`);
+    expect(cookie).toContain('HttpOnly');
   };
+
+const clearsTheCustomerCookie: Expectation = (outcome) => {
+  const cookie = setCookieOf(outcome);
+
+  expect(cookie).toContain('customer=;');
+  expect(cookie).toContain('Max-Age=0');
+};
+
+const setsNoCookie: Expectation = (outcome) =>
+  expect(setCookieOf(outcome)).toBe('');
+
+const shopWithLinksApplication = shopTestApplication({
+  environment: {
+    ...sqliteWithoutABroker,
+    SHOP_GRAFANA_URL: 'http://grafana.example:3000',
+    SHOP_EVENTCATALOG_URL: 'http://catalog.example:3001',
+  },
+});
+
+const shopWithLinks = () => ({
+  ...shopWithLinksApplication,
+  ...shopRequests(shopWithLinksApplication.fetch),
+});
 
 describe('shop pages', () => {
   it('loggingInWithANameOpensTheProductsWithAnHttpOnlyCookie', () => {
-    const { given, postForm } = shop();
-    const customerName = name();
+    const { given, logsIn } = shop();
+    const customer = aCustomer();
 
     return given()
-      .when(postForm('/shop/login', { name: customerName }))
+      .when(logsIn(customer.name))
       .then(
         expectResponse(303),
-        redirectsTo(`/shop/customers/${customerIdOf(customerName)}/products`),
-        setsAnHttpOnlyCustomerCookie(customerName),
+        redirectsTo(productsPageOf(customer.id)),
+        setsAnHttpOnlyCustomerCookie(customer.name),
       );
   });
 
-  it('loggingInShowsFiveProductsWithTheLastSoldOut', () => {
-    const { given, getPage } = shop();
-    const customerName = name();
+  it('loggingInWithAnEmptyNameStaysOnTheLoginPageWithoutACookie', () => {
+    const { given, logsIn } = shop();
 
     return given()
-      .when(
-        getPage(`/shop/customers/${customerIdOf(customerName)}/products`, {
-          as: customerName,
-        }),
-      )
-      .then(
-        expectResponse(200),
-        htmlContaining(
-          ...demoProducts.map(({ name: productName }) => productName),
-          'Sold out at the warehouse',
-        ),
-      );
+      .when(logsIn('   '))
+      .then(expectResponse(303), redirectsTo(loginPage), setsNoCookie);
   });
 
   it('openingTheShopWithoutLoggingInRedirectsToLogin', () => {
-    const { given, getPage } = shop();
+    const { given, openTheShop } = shop();
 
     return given()
-      .when(getPage('/shop'))
-      .then(expectResponse(303), redirectsTo('/shop/login'));
+      .when(openTheShop())
+      .then(expectResponse(303), redirectsTo(loginPage));
+  });
+
+  it('openingTheShopWhileLoggedInRedirectsToTheProducts', () => {
+    const { given, openTheShop } = shop();
+    const customer = aCustomer();
+
+    return given()
+      .when(openTheShop(customer))
+      .then(expectResponse(303), redirectsTo(productsPageOf(customer.id)));
   });
 
   it('pagesWithoutTheCustomerCookieRedirectToLogin', () => {
     const { given, getPage } = shop();
 
     return given()
-      .when(getPage(`/shop/customers/${customerIdOf(name())}/cart`))
-      .then(expectResponse(303), redirectsTo('/shop/login'));
+      .when(getPage(productsPageOf(aCustomer().id)))
+      .then(expectResponse(303), redirectsTo(loginPage));
   });
 
   it('pagesOfAnotherCustomerRedirectToLogin', () => {
     const { given, getPage } = shop();
 
     return given()
-      .when(
-        getPage(`/shop/customers/${customerIdOf(name())}/orders`, {
-          as: name(),
-        }),
-      )
-      .then(expectResponse(303), redirectsTo('/shop/login'));
+      .when(getPage(productsPageOf(aCustomer().id), { as: aCustomer() }))
+      .then(expectResponse(303), redirectsTo(loginPage));
   });
 
   it('loggingOutClearsTheCookieAndReturnsToLogin', () => {
-    const { given, postForm } = shop();
+    const { given, logsOut } = shop();
 
     return given()
-      .when(postForm('/shop/logout', {}, { as: name() }))
-      .then(expectResponse(303), redirectsTo('/shop/login'));
+      .when(logsOut(aCustomer()))
+      .then(
+        expectResponse(303),
+        redirectsTo(loginPage),
+        clearsTheCustomerCookie,
+      );
   });
 
-  it('pagesLinkToGrafanaAndEventCatalog', () => {
-    const { given, getPage } = shop({
-      links: {
-        grafanaUrl: 'http://grafana.example:3000',
-        eventCatalogUrl: 'http://catalog.example:3001',
-      },
-    });
+  it('theLoginPageLinksToGrafanaAndEventCatalogFromTheSettings', () => {
+    const { given, loginPage: loginPageRequest } = shopWithLinks();
 
     return given()
-      .when(getPage('/shop/login'))
+      .when(loginPageRequest())
       .then(
         htmlContaining(
           'href="http://grafana.example:3000"',
           'href="http://catalog.example:3001"',
         ),
+        htmlNotContaining('href="http://localhost:3000"'),
       );
+  });
+
+  it('theDeveloperToolsLinkToTheWebApiAndTheMessagesDocumentation', () => {
+    const { given, loginPage: loginPageRequest } = shopWithLinks();
+
+    return given()
+      .when(loginPageRequest())
+      .then(htmlContaining('href="/swagger"', 'href="/asyncapi"'));
   });
 });

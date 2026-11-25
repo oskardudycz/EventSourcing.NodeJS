@@ -22,6 +22,7 @@ export const brokerHeaders = {
   causationId: 'causation-id',
   traceId: 'trace-id',
   spanId: 'span-id',
+  forwardedAt: 'forwarded-at',
 } as const;
 
 export type BrokerMessageHeaders = Record<string, string>;
@@ -64,6 +65,8 @@ export const brokerHeadersOf = <MessageType extends Message>(
     headers[brokerHeaders.causationId] = metadata.causationId;
   if (traceId !== undefined) headers[brokerHeaders.traceId] = traceId;
   if (spanId !== undefined) headers[brokerHeaders.spanId] = spanId;
+  if (metadata.forwardedAt !== undefined)
+    headers[brokerHeaders.forwardedAt] = metadata.forwardedAt;
 
   return headers;
 };

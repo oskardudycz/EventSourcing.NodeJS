@@ -252,7 +252,10 @@ describe('outside commands follow the scopes correlation', () => {
       };
       const timeOut: TimeOutPayment = {
         type: 'payments.TimeOutPayment',
-        data: { paymentId },
+        data: {
+          paymentId,
+          timedOutAt: new Date(startedAt.getTime() + oneDayInMs).toISOString(),
+        },
       };
       const sendToPaymentsInternal = routedSender<TimeOutPayment>(
         sendingToChannelStreams(() => stores.payments.store),

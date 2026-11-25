@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "cartId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-10>"
+    },
+    "customerId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-11>"
+    },
+    "productItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "x-parser-schema-id": "<anonymous-schema-14>"
+          },
+          "quantity": {
+            "type": "number",
+            "x-parser-schema-id": "<anonymous-schema-15>"
+          },
+          "unitPrice": {
+            "type": "number",
+            "x-parser-schema-id": "<anonymous-schema-16>"
+          }
+        },
+        "required": [
+          "productId",
+          "quantity",
+          "unitPrice"
+        ],
+        "additionalProperties": false,
+        "x-parser-schema-id": "<anonymous-schema-13>"
+      },
+      "x-parser-schema-id": "<anonymous-schema-12>"
+    },
+    "totalPrice": {
+      "type": "number",
+      "x-parser-schema-id": "<anonymous-schema-17>"
+    },
+    "checkedOutAt": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-18>"
+    }
+  },
+  "required": [
+    "cartId",
+    "customerId",
+    "productItems",
+    "totalPrice",
+    "checkedOutAt"
+  ],
+  "additionalProperties": false,
+  "x-parser-schema-id": "<anonymous-schema-9>"
+}

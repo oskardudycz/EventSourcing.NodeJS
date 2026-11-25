@@ -41,7 +41,11 @@ export const sandboxWarehouse = ({
   const unavailable = new Set(outOfStock);
   const packages = new Map<string, SandboxPackage>();
 
-  const moved = (shipmentId: string, from: PackageStatus, to: PackageStatus) => {
+  const moved = (
+    shipmentId: string,
+    from: PackageStatus,
+    to: PackageStatus,
+  ) => {
     const current = packages.get(shipmentId);
 
     if (current?.status !== from) return false;

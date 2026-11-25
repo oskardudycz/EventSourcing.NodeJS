@@ -1,0 +1,475 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "E-commerce",
+    "version": "1.0.0",
+    "description": "Shopping carts and orders of the e-commerce sample."
+  },
+  "tags": [
+    {
+      "name": "Orders"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "CustomerOrder": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "placedAt": {
+            "type": "string"
+          },
+          "totalPrice": {
+            "type": "number"
+          },
+          "progress": {
+            "type": "string",
+            "enum": [
+              "AwaitingPayment",
+              "PaymentFailed",
+              "OutOfStock",
+              "Processing",
+              "Shipped",
+              "Completed",
+              "Canceled",
+              "ClosedUnpaid"
+            ]
+          },
+          "shipped": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "orderId",
+          "customerId",
+          "placedAt",
+          "totalPrice",
+          "progress",
+          "shipped"
+        ]
+      },
+      "OrderStatus": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "productItems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "number"
+                },
+                "unitPrice": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "productId",
+                "quantity",
+                "unitPrice"
+              ]
+            }
+          },
+          "totalPrice": {
+            "type": "number"
+          },
+          "placedAt": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "carrier": {
+            "type": "string"
+          },
+          "trackingNumber": {
+            "type": "string"
+          },
+          "progress": {
+            "type": "string",
+            "enum": [
+              "AwaitingPayment",
+              "PaymentFailed",
+              "OutOfStock",
+              "Processing",
+              "Shipped",
+              "Completed",
+              "Canceled",
+              "ClosedUnpaid"
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "Opened",
+              "Confirmed",
+              "Ended"
+            ]
+          },
+          "payment": {
+            "type": "string",
+            "enum": [
+              "Pending",
+              "Authorized",
+              "Captured",
+              "Failed"
+            ]
+          },
+          "shipment": {
+            "type": "string",
+            "enum": [
+              "Pending",
+              "Reserved",
+              "Sent",
+              "Failed"
+            ]
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "PayNow",
+                "RetryPayment",
+                "CancelOrder"
+              ]
+            }
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "orderId",
+          "customerId",
+          "productItems",
+          "totalPrice",
+          "placedAt",
+          "paymentId",
+          "progress",
+          "stage",
+          "payment",
+          "shipment",
+          "actions",
+          "version"
+        ]
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/customers/{customerId}/orders": {
+      "get": {
+        "operationId": "getCustomerOrders",
+        "summary": "List the orders of the customer",
+        "tags": [
+          "Orders"
+        ],
+        "x-eventcatalog-message-type": "query",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Id of the customer"
+            },
+            "required": true,
+            "description": "Id of the customer",
+            "name": "customerId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerOrder"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/orders/{orderId}": {
+      "get": {
+        "operationId": "getOrderStatus",
+        "summary": "Get the status of an order",
+        "tags": [
+          "Orders"
+        ],
+        "x-eventcatalog-message-type": "query",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Id of the customer"
+            },
+            "required": true,
+            "description": "Id of the customer",
+            "name": "customerId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Number of the order of the customer"
+            },
+            "required": true,
+            "description": "Number of the order of the customer",
+            "name": "orderId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The status. Send If-None-Match to get 304 when unchanged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderStatus"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "The status did not change"
+          },
+          "404": {
+            "description": "The order does not exist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/orders/{orderId}/cancel": {
+      "post": {
+        "operationId": "cancelOrder",
+        "summary": "Cancel an order",
+        "tags": [
+          "Orders"
+        ],
+        "x-eventcatalog-message-type": "command",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Id of the customer"
+            },
+            "required": true,
+            "description": "Id of the customer",
+            "name": "customerId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Number of the order of the customer"
+            },
+            "required": true,
+            "description": "Number of the order of the customer",
+            "name": "orderId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "404": {
+            "description": "The order does not exist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The order cannot be canceled",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/orders/{orderId}/retry-payment": {
+      "post": {
+        "operationId": "retryOrderPayment",
+        "summary": "Retry the payment of an order",
+        "tags": [
+          "Orders"
+        ],
+        "x-eventcatalog-message-type": "command",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Id of the customer"
+            },
+            "required": true,
+            "description": "Id of the customer",
+            "name": "customerId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Number of the order of the customer"
+            },
+            "required": true,
+            "description": "Number of the order of the customer",
+            "name": "orderId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "404": {
+            "description": "The order does not exist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The payment cannot be retried",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{customerId}/orders/{orderId}/payments/{paymentId}/checkout-session": {
+      "post": {
+        "operationId": "createCheckoutSession",
+        "summary": "Pay now: start a checkout session of the payment provider",
+        "tags": [
+          "Orders"
+        ],
+        "x-eventcatalog-message-type": "command",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "description": "Id of the customer"
+            },
+            "required": true,
+            "description": "Id of the customer",
+            "name": "customerId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Number of the order of the customer"
+            },
+            "required": true,
+            "description": "Number of the order of the customer",
+            "name": "orderId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Number of the payment of the order"
+            },
+            "required": true,
+            "description": "Number of the payment of the order",
+            "name": "paymentId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "Redirects to the checkout page of the provider"
+          },
+          "404": {
+            "description": "The order does not exist",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The payment provider failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

@@ -186,7 +186,7 @@ export const describeForwarding = (
       consumer.reactor({
         processorId: forwarderId,
         canHandle: ['test.SomethingHappened', 'test.Unrouted'],
-        eachMessage: handler,
+        eachBatch: handler,
       });
       const running = consumer.start();
 
@@ -398,52 +398,46 @@ export const describeForwarding = (
       expect(received).toEqual([]);
     });
 
-    // Emmett turns a throwing handler into STOP, so its transaction commits the append (Emmett issue #437). The spec expects the rollback, so this case is expected to fail until the fix lands.
-    const crashCase = appendRollsBackWithTheCheckpoint ? it.fails : it;
+    it('aForwarderThatFailsAfterSendingAndBeforeItsCheckpointSendsTheSameIdsAgain', async () => {
+      let received: ObservedMessage[] = [];
 
-    crashCase(
-      'aForwarderThatFailsAfterSendingAndBeforeItsCheckpointSendsTheSameIdsAgain',
-      async () => {
-        let received: ObservedMessage[] = [];
+      await observing(async (channel, observed) => {
+        const forward = forwardSomething(channel);
+        let crashed = false;
 
-        await observing(async (channel, observed) => {
-          const forward = forwardSomething(channel);
-          let crashed = false;
-
-          await forwarding(
-            async (
-              message: RecordedMessage<Something>,
-              context: WorkflowProcessorContext,
-            ) => {
-              await forward(message, context);
-              if (!crashed) {
-                crashed = true;
-                throw new Error('The forwarder crashed after sending');
-              }
-            },
-            async () => {
-              await store.appendToStream('source-1', [something(reference)]);
-              await until(() => crashed);
-            },
-          );
-          await forwarding(forward, async (consumer) => {
-            await consumer.whenCaughtUp({ timeout: 30_000 });
-            await observed.caughtUp();
-          });
-          received = await observed.received();
+        await forwarding(
+          async (
+            messages: RecordedMessage<Something>[],
+            context: WorkflowProcessorContext,
+          ) => {
+            await forward(messages, context);
+            if (!crashed) {
+              crashed = true;
+              throw new Error('The forwarder crashed after sending');
+            }
+          },
+          async () => {
+            await store.appendToStream('source-1', [something(reference)]);
+            await until(() => crashed);
+          },
+        );
+        await forwarding(forward, async (consumer) => {
+          await consumer.whenCaughtUp({ timeout: 30_000 });
+          await observed.caughtUp();
         });
+        received = await observed.received();
+      });
 
-        const [source] = (await store.readStream('source-1')).events;
-        const sentId = externalMessageId(
-          source?.metadata.messageId ?? '',
-          'test.external.SomethingHappened',
-        );
-        expect(new Set(received.map(({ messageId }) => messageId))).toEqual(
-          new Set([sentId]),
-        );
-        expect(received).toHaveLength(appendRollsBackWithTheCheckpoint ? 1 : 2);
-      },
-    );
+      const [source] = (await store.readStream('source-1')).events;
+      const sentId = externalMessageId(
+        source?.metadata.messageId ?? '',
+        'test.external.SomethingHappened',
+      );
+      expect(new Set(received.map(({ messageId }) => messageId))).toEqual(
+        new Set([sentId]),
+      );
+      expect(received).toHaveLength(appendRollsBackWithTheCheckpoint ? 1 : 2);
+    });
 
     it.fails(
       'aModuleCanStillAppendWhileAForwarderRetriesADownBroker',

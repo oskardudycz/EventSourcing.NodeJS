@@ -1,0 +1,29 @@
+{
+  "name": "e-commerce-eventcatalog",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "specs": "tsx exportSpecs.mjs specs",
+    "generate": "npm run specs && eventcatalog generate",
+    "dev": "eventcatalog dev",
+    "build": "npm run specs && eventcatalog generate && eventcatalog build",
+    "preview": "eventcatalog preview -- --port 3001",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "@eventcatalog/core": "5.12.0",
+    "@eventcatalog/generator-asyncapi": "7.1.2",
+    "@eventcatalog/generator-openapi": "9.1.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "tsx": "^4.23.15"
+  },
+  "overrides": {
+    "glob": "14.0.6",
+    "katex": "0.18.11",
+    "@tailwindcss/typography": {
+      "postcss-selector-parser": "6.1.6"
+    }
+  }
+}

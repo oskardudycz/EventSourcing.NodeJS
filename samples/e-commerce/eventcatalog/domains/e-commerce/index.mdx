@@ -1,0 +1,27 @@
+---
+id: e-commerce
+name: E-Commerce
+version: 1.0.0
+summary: An online shop that sells, charges and ships through four modules, each a bounded context with its own model.
+domains:
+  - id: shopping-carts
+  - id: orders
+  - id: payments
+  - id: shipments
+---
+
+## Context map
+
+Each subdomain is a bounded context: one module, with its own model and its own events. The four modules run in one Node.js application built on Emmett, a modular monolith. Each module has its own [event store](/docs/containers/event-store/1.0.0) and its own [read models](/docs/containers/projections/1.0.0), in its own database: a SQLite file or a PostgreSQL schema. Each module writes only its own streams and read models. The contexts talk only through messages: commands that ask another context to do something, and external events that tell the others what happened. Each context keeps its internal events to itself.
+
+The [system context map](/visualiser/system-context-map) draws the contexts as systems, with the customer and the two outside systems. It follows the notation of [DDD-Crew's context mapping](https://github.com/ddd-crew/context-mapping): each arrow goes from the upstream context to the downstream one, and its label names the team relationship and the pattern on each side. Upstream means that its changes affect the downstream, and not the other way round.
+
+- **Shopping carts → Orders: upstream/downstream.** Shopping carts doesn't know Orders. It offers an *open host service* with a *published language*: its external events, documented in its AsyncAPI document, for anyone to read. Orders reads `ShoppingCartCheckedOut`.
+- **Payments → Orders and Shipments → Orders: supplier → customer.** Payments and Shipments don't know Orders either: they take a `referenceId`, not an order. Each offers an open host service with a published language: its commands, such as `AuthorizePayment` or `ReserveStock`, and its external events, such as `PaymentAuthorized` or `PackageWasSent`. Each module has its own team, and the orders team is their customer: what a purchase needs goes into the planning of the payments and shipments teams.
+- **Orders' anti-corruption layer.** Orders is downstream of all three. Only the order workflow uses their commands and events: it takes their events as its inputs, and sends their commands as its outputs. The order's model keeps only their ids, such as `Payment.Id`.
+- **Payment provider → Payments and fulfillment service → Shipments: upstream/downstream.** The outside systems don't change for us. Payments and Shipments protect their models with anti-corruption layers: `PaymentGateway` and `WarehouseGateway`, with the workflows' output handlers that turn the module's events into calls and the answers into the module's commands. In the running sample, sandboxes play both outside systems.
+
+The [domain diagram](/visualiser/domains/e-commerce/1.0.0) draws the messages between the contexts, from the modules' AsyncAPI documents. Its levels L2 and L3 open the services and the messages. The [purchase flow](/docs/flows/purchase/1.0.0) shows the process that runs across them.
+
+## Architecture diagram
+<NodeGraph />

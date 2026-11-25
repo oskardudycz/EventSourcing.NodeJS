@@ -1,0 +1,25 @@
+---
+id: orders-system
+name: Orders
+version: 1.0.0
+summary: The purchase as a whole. The order workflow decides each step and asks Payments and Shipments to do it.
+scope: internal
+owners:
+  - orders
+services:
+  - id: orders-service
+actors:
+  - id: customer
+    name: Customer
+    label: pays, cancels and follows the order
+    direction: inbound
+entities:
+  - id: order
+containers:
+  - id: event-store
+  - id: projections
+---
+
+## Context diagram
+
+<ContextDiagram />

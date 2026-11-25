@@ -1,0 +1,15 @@
+---
+id: projections
+name: Read models
+version: 1.0.0
+summary: The read models that the projections build from the events, such as the order status, the customer's orders and the cart.
+container_type: database
+technology: Pongo on SQLite or PostgreSQL
+classification: internal
+---
+
+## Overview
+
+Each read model is a Pongo document collection in the module's own database, next to its events. The event store updates it in the same transaction as the append, so it can be dropped and built again from the events.
+
+<NodeGraph />

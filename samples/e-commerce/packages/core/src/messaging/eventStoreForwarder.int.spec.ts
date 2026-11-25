@@ -130,7 +130,7 @@ describe('event store forwarder', () => {
           consumer.reactor({
             processorId: getForwarderId({ name: 'to-other-store' }),
             canHandle: ['test.SomethingHappened'],
-            eachMessage: forwardToChannels<Something>({
+            eachBatch: forwardToChannels<Something>({
               channels: [channel],
               routes: [routesToChannel],
               storeOf: () => otherStore,
@@ -165,7 +165,7 @@ describe('event store forwarder', () => {
         consumer.reactor({
           processorId: getForwarderId({ name: 'keys' }),
           canHandle: ['test.DoSomething', 'test.SomethingHappened'],
-          eachMessage: forwardToChannels<DoSomething | Something>({
+          eachBatch: forwardToChannels<DoSomething | Something>({
             channels: [channel],
             routes: [commandRoutes, routesToChannel],
           }),
@@ -222,7 +222,7 @@ describe('channel reactor', () => {
     consumer.reactor({
       processorId: getForwarderId({ name: 'to-channel' }),
       canHandle: ['test.SomethingHappened'],
-      eachMessage: forwardToChannels<Something, ExternalSomething>({
+      eachBatch: forwardToChannels<Something, ExternalSomething>({
         channels: [channel],
         routes: [routesExternalToChannel],
         map: toExternal,

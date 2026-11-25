@@ -26,6 +26,7 @@ export type SandboxPaymentGateway = PaymentGateway & {
   checkout: (sessionId: string) => SandboxCheckout | undefined;
   checkoutOf: (paymentId: string) => SandboxCheckout | undefined;
   pay: (checkout: SandboxCheckout, cardNumber: string) => Promise<CardOutcome>;
+  refuseNextCaptureOf: (paymentId: string) => void;
 };
 
 export const sandboxPaymentGateway = ({
@@ -38,6 +39,7 @@ export const sandboxPaymentGateway = ({
   now: () => Date;
 }): SandboxPaymentGateway => {
   const checkouts = new Map<string, SandboxCheckout>();
+  const refusingNextCapture = new Set<string>();
 
   const checkoutOf = (paymentId: string) =>
     [...checkouts.values()].findLast(
@@ -74,7 +76,11 @@ export const sandboxPaymentGateway = ({
 
       return Promise.resolve();
     },
+    refuseNextCaptureOf: (paymentId) => void refusingNextCapture.add(paymentId),
     capture: async (paymentId) => {
+      if (refusingNextCapture.delete(paymentId))
+        throw new Error('The sandbox refuses the capture');
+
       await deliver({
         type: 'payments.ConfirmPaymentCapture',
         data: { paymentId },

@@ -1,0 +1,14 @@
+---
+id: shipments
+name: Shipments
+version: 1.0.0
+services:
+  - id: shipments-service
+    version: 1.0.0
+---
+## Overview
+
+The products: reserving the stock, asking the fulfillment service to send the package, and releasing the stock when the order is canceled. `FulfillmentService` keeps the warehouse's model out of this context. See the [context map](/docs/domains/e-commerce/1.0.0#context-map) for how it works with the others.
+
+## Architecture diagram
+<NodeGraph />

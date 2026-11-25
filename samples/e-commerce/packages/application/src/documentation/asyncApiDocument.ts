@@ -1,5 +1,6 @@
+import { brokerHeaders } from '@e-commerce/core';
 import { z } from 'zod';
-import type { ModuleName } from '../application';
+import { allModules, type ModuleName } from '../modules';
 import { channelFlows, routeOf } from './channelFlows';
 import type { MessageContract } from './messageContract';
 
@@ -7,12 +8,14 @@ const servers = {
   kafka: {
     host: 'localhost:9092',
     protocol: 'kafka',
-    description: 'Channels are Kafka topics',
+    description:
+      'Channels are Kafka topics. The body is the message data, the type is in the message-type header',
   },
   rabbitmq: {
     host: 'localhost:5672',
     protocol: 'amqp',
-    description: 'Channels are RabbitMQ exchanges',
+    description:
+      'Channels are RabbitMQ exchanges. The body is the message data, the type is in the message-type header',
   },
   'in-memory': {
     host: 'in-memory',
@@ -21,17 +24,22 @@ const servers = {
   },
 };
 
-const modules: ModuleName[] = [
-  'shopping_carts',
-  'orders',
-  'payments',
-  'shipments',
-];
-
-const payloadOf = ({ type, schema }: MessageContract) =>
-  z.toJSONSchema(z.object({ type: z.literal(type), data: schema }), {
-    target: 'draft-7',
-  });
+const headersOf = ({ type, kind }: MessageContract) => ({
+  type: 'object',
+  properties: {
+    [brokerHeaders.type]: { type: 'string', const: type },
+    [brokerHeaders.kind]: {
+      type: 'string',
+      const: kind === 'command' ? 'Command' : 'Event',
+    },
+    [brokerHeaders.messageId]: { type: 'string' },
+    [brokerHeaders.correlationId]: { type: 'string' },
+    [brokerHeaders.causationId]: { type: 'string' },
+    [brokerHeaders.traceId]: { type: 'string' },
+    [brokerHeaders.spanId]: { type: 'string' },
+  },
+  required: [brokerHeaders.type, brokerHeaders.messageId],
+});
 
 const messageOf = (contract: MessageContract) => ({
   name: contract.type,
@@ -39,8 +47,18 @@ const messageOf = (contract: MessageContract) => ({
   summary: contract.description,
   description: contract.description,
   contentType: 'application/json',
-  payload: payloadOf(contract),
-  examples: [{ payload: { type: contract.type, data: contract.allFields } }],
+  headers: headersOf(contract),
+  payload: z.toJSONSchema(contract.schema, { target: 'draft-7' }),
+  examples: [
+    {
+      headers: {
+        [brokerHeaders.type]: contract.type,
+        [brokerHeaders.kind]: contract.kind === 'command' ? 'Command' : 'Event',
+        [brokerHeaders.messageId]: 'message-1',
+      },
+      payload: contract.allFields,
+    },
+  ],
   'x-eventcatalog-message-type': contract.kind,
 });
 
@@ -48,6 +66,7 @@ type Operation = {
   module: ModuleName;
   action: 'send' | 'receive';
   channel: string;
+  boundTo: string;
   contract: MessageContract;
 };
 
@@ -56,15 +75,19 @@ const operations = (): Operation[] =>
     contracts.flatMap((contract) => {
       const { channel } = routeOf(routes, contract);
 
-      if (channel === undefined)
-        throw new Error(`No channel for '${contract.type}'`);
-
       return [
-        { module: sender, action: 'send' as const, channel, contract },
-        ...receivers.map((module) => ({
+        {
+          module: sender,
+          action: 'send' as const,
+          channel,
+          boundTo: channel,
+          contract,
+        },
+        ...receivers.map(({ module, queue }) => ({
           module,
           action: 'receive' as const,
-          channel,
+          channel: queue,
+          boundTo: channel,
           contract,
         })),
       ];
@@ -76,6 +99,11 @@ export const asyncApiDocument = (module?: ModuleName) => {
     (operation) => module === undefined || operation.module === module,
   );
   const channelNames = [...new Set(selected.map(({ channel }) => channel))];
+  const queueChannels = new Map(
+    selected.flatMap(({ channel, boundTo }) =>
+      boundTo !== channel ? [[channel, boundTo] as const] : [],
+    ),
+  );
 
   return {
     asyncapi: '3.0.0',
@@ -85,7 +113,7 @@ export const asyncApiDocument = (module?: ModuleName) => {
       description: module
         ? `The messages the ${module} module sends and receives.`
         : 'The messages the modules of the e-commerce sample send and receive.',
-      tags: (module ? [module] : modules).map((name) => ({ name })),
+      tags: (module ? [module] : allModules).map((name) => ({ name })),
     },
     servers,
     channels: Object.fromEntries(
@@ -93,7 +121,9 @@ export const asyncApiDocument = (module?: ModuleName) => {
         channel,
         {
           address: channel,
-          description: `Channel ${channel}`,
+          description: queueChannels.has(channel)
+            ? `Queue ${channel}, bound to the channel ${queueChannels.get(channel)}`
+            : `Channel ${channel}`,
           messages: Object.fromEntries(
             selected
               .filter((operation) => operation.channel === channel)
@@ -132,7 +162,6 @@ export const publishableMessages = () =>
   channelFlows.flatMap(({ routes, contracts }) =>
     contracts.map((contract) => ({
       contract,
-      channel: routeOf(routes, contract).channel,
-      key: routeOf(routes, contract).key,
+      ...routeOf(routes, contract),
     })),
   );

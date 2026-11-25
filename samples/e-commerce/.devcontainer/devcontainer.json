@@ -1,0 +1,26 @@
+{
+  "name": "samples/e-commerce",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24.22.1"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "workspaceMount": "source=${localWorkspaceFolder}/../..,target=/workspaces/EventSourcing.NodeJS,type=bind",
+  "workspaceFolder": "/workspaces/EventSourcing.NodeJS/samples/e-commerce",
+  "runArgs": ["--add-host=host.docker.internal:host-gateway"],
+  "containerEnv": {
+    "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "vitest.explorer"
+      ]
+    }
+  },
+  "postCreateCommand": "npm ci && npm --prefix eventcatalog ci && npx --workspace packages/application playwright install --with-deps chromium && npx --prefix eventcatalog playwright install chromium"
+}

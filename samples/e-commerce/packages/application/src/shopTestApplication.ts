@@ -4,17 +4,18 @@ import {
   removeSQLiteFolder,
   temporarySQLiteFolder,
 } from '@e-commerce/core';
-import { delay } from '@event-driven-io/emmett';
-import { createApplication } from './application';
+import { afterAll } from 'vitest';
+import { delay, type Message } from '@event-driven-io/emmett';
+import { createApplication, type ModuleName } from './application';
+import { buildApplication } from './buildApplication';
 import {
   createModuleStores,
   storesOf,
-  type EventStoreLocation,
+  type ModuleStores,
+  type Pulling,
 } from './eventStore';
-import { initialOrder, OrderId, type Order } from './orders/order';
-import { orderWorkflowOptions } from './orders/orderWorkflow';
-import { readSettings } from './settings';
-import type { ShopLinks } from './shop/shopLayout';
+import { readSettings, type Settings } from './settings';
+import { deliverFromOutsideWorld } from './testApplication';
 import { changeablePrices } from './shoppingCarts/pricing/changeablePrices';
 
 export type Environment = Record<string, string>;
@@ -29,142 +30,159 @@ export const inMemoryBusOnSQLite: Environment = {
   EVENTSTORE_TYPE: 'sqlite',
 };
 
-const startOfTests = new Date('2026-01-01T10:00:00.000Z');
 const brokerSettlingInMs = 500;
+const caughtUpWithinMs = 10_000;
+const pulling: Pulling = { pullingFrequencyInMs: 20, batchSize: 1 };
 
-export const eventually = async (
-  assertion: () => void | Promise<void>,
-  timeoutInMs = 30_000,
-) => {
-  const deadline = Date.now() + timeoutInMs;
-
-  for (;;) {
-    try {
-      await assertion();
-      return;
-    } catch (error) {
-      if (Date.now() > deadline) throw error;
-
-      await delay(100);
-    }
-  }
+type Dependencies = {
+  prices: ReturnType<typeof changeablePrices>;
+  now: () => Date;
 };
+
+const applicationOf = (
+  settings: Settings,
+  { prices, now }: Dependencies,
+  modules: readonly ModuleName[] | undefined,
+) => {
+  if (!modules) {
+    const built = buildApplication(settings, { prices, now, pulling });
+
+    return {
+      application: built.application,
+      stores: built.stores,
+      stop: built.stop,
+    };
+  }
+
+  const folder = temporarySQLiteFolder();
+  const stores = createModuleStores(
+    { type: 'sqlite', folder },
+    settings.messagingBus,
+    pulling,
+  );
+  const application = createApplication(
+    {
+      stores,
+      internalDelivery: settings.messagingInternalDelivery,
+      prices,
+      now,
+      messagingRetry: { minTimeout: 20, maxTimeout: 100 },
+    },
+    { modules },
+  );
+
+  return {
+    application,
+    stores,
+    stop: async () => {
+      await application.stop();
+      await removeSQLiteFolder(folder);
+    },
+  };
+};
+
+const storesEndOf = async (stores: ModuleStores) =>
+  (
+    await Promise.all(
+      storesOf(stores).map(async (database) =>
+        database.messageSource().readLastMessageCheckpoint(),
+      ),
+    )
+  ).join();
 
 export const shopTestApplication = ({
   environment = sqliteWithoutABroker,
-  links,
-  signal,
-  gateways,
+  modules,
+  restartsForEachTest = false,
 }: {
-  gateways?: Pick<Parameters<typeof createApplication>[0], 'paymentGateway' | 'warehouse'>;
-  environment?: Environment;
-  links?: ShopLinks;
-  signal?: AbortSignal;
+  environment?: Environment | (() => Environment);
+  modules?: readonly ModuleName[];
+  restartsForEachTest?: boolean;
 } = {}) => {
-  const settings = readSettings({
-    ...environment,
-    WORKERS_SCHEDULED: 'false',
-    MESSAGING_RETRY_INITIAL_INTERVAL: '20ms',
-  });
-  const clock = manualClock(startOfTests);
+  const clock = manualClock(new Date());
   const prices = changeablePrices();
-  const folder =
-    settings.eventStoreType === 'sqlite' ? temporarySQLiteFolder() : undefined;
-  const location: EventStoreLocation = folder
-    ? { type: 'sqlite', folder }
-    : { type: 'postgresql', connectionString: settings.postgreSQLUrl };
-  const stores = createModuleStores(location, settings.messagingBus, {
-    pullingFrequencyInMs: 20,
-    batchSize: 1,
-  });
-  const application = createApplication({
-    stores,
-    internalDelivery: settings.messagingInternalDelivery,
-    connections: {
-      kafka: {
-        connection: { bootstrapBrokers: settings.kafkaBootstrapServers },
-        publishTimeoutInMs: settings.kafkaPublishTimeoutInMs,
-      },
-      rabbitMQ: {
-        connection: { url: settings.rabbitMQUrl },
-        publishTimeoutInMs: settings.rabbitMQPublishTimeoutInMs,
-      },
-    },
-    messagingRetry: { minTimeout: 20, maxTimeout: 100 },
-    prices,
-    now: clock.now,
-    ...gateways,
-    ...(links ? { links } : {}),
-  });
-  const sources = storesOf(stores).map((database) => database.messageSource());
-  const isBroker = settings.messagingBus !== 'none';
 
-  const storesEnd = async () =>
-    (
-      await Promise.all(
-        sources.map((source) => source.readLastMessageCheckpoint()),
-      )
-    ).join();
-
-  const caughtUp = () =>
-    Promise.all(
-      application.consumers.map((consumer) =>
-        consumer.whenCaughtUp({ timeout: 30_000 }),
-      ),
+  const build = () => {
+    const settings = readSettings({
+      ...(typeof environment === 'function' ? environment() : environment),
+      WORKERS_SCHEDULED: 'false',
+      MESSAGING_RETRY_INITIAL_INTERVAL: '20ms',
+    });
+    const { application, stores, stop } = applicationOf(
+      settings,
+      { prices, now: clock.now },
+      modules,
     );
+    const isBroker = settings.messagingBus !== 'none';
+    const caughtUp = () =>
+      Promise.all(
+        application.consumers.map((consumer) =>
+          consumer.whenCaughtUp({ timeout: caughtUpWithinMs }),
+        ),
+      );
 
-  let stopping: Promise<void> | undefined;
-  const stop = () => {
-    stopping ??= application
-      .stop()
-      .then(() => (folder ? removeSQLiteFolder(folder) : undefined));
+    return {
+      application,
+      stores,
+      stop,
+      started: application.start(),
+      catchUp: async () => {
+        const endBefore = await storesEndOf(stores);
 
-    return stopping;
+        await caughtUp();
+        if (isBroker) {
+          await delay(brokerSettlingInMs);
+          await caughtUp();
+        }
+
+        return (await storesEndOf(stores)) !== endBefore;
+      },
+    };
   };
 
-  signal?.addEventListener('abort', () => void stop());
+  let shared: ReturnType<typeof build> | undefined;
+  const running = () => (shared ??= build());
 
-  const given = ApiE2ESpecification.for({
-    fetch: application.fetch,
-    start: application.start,
-    stop,
-    clock,
-    workers: application.workers,
-    catchUp: async () => {
-      if (signal?.aborted) return false;
+  const stopShared = async () => {
+    const stopping = shared;
 
-      const endBefore = await storesEnd();
+    shared = undefined;
+    await stopping?.stop();
+  };
 
-      await caughtUp();
-      if (isBroker) {
-        await delay(brokerSettlingInMs);
-        await caughtUp();
-      }
+  afterAll(stopShared);
 
-      return (await storesEnd()) !== endBefore && !signal?.aborted;
+  const fetch = (request: Request) => running().application.fetch(request);
+
+  const specification = {
+    fetch,
+    start: async () => {
+      await running().started;
     },
-  });
-
-  const orderOf = async (orderId: string): Promise<Order> => {
-    const { workflow } = orderWorkflowOptions(clock.now);
-
-    return (
-      await stores.orders.store.aggregateStream(
-        OrderId.workflowStreamNameOf(orderId),
-        { evolve: workflow.evolve, initialState: initialOrder },
-      )
-    ).state;
+    stop: () => (restartsForEachTest ? stopShared() : Promise.resolve()),
+    clock,
+    workers: [
+      {
+        handle: async (now: Date) => {
+          for (const worker of running().application.workers)
+            await worker.handle(now);
+        },
+      },
+    ],
+    sendMessages: async (messages: readonly Message[]) => {
+      for (const message of messages)
+        await deliverFromOutsideWorld(running().stores, message);
+    },
+    catchUp: () => running().catchUp(),
   };
 
   return {
-    given,
-    fetch: application.fetch,
-    start: application.start,
-    stop,
+    given: ApiE2ESpecification.for(specification),
+    specification,
+    fetch,
     clock,
     prices,
-    sandboxes: application.sandboxes,
-    orderOf,
+    sandboxes: () => running().application.sandboxes,
   };
 };
 

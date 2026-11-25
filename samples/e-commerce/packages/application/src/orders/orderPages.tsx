@@ -1,11 +1,21 @@
 import { retryIfNotFound, retryUntil, versionSeenBy } from '@e-commerce/core';
 import { NotFoundError } from '@event-driven-io/emmett';
-import { setETag, toWeakETag, type WebApiSetup } from '@event-driven-io/emmett-honojs';
+import {
+  setETag,
+  toWeakETag,
+  type WebApiSetup,
+} from '@event-driven-io/emmett-honojs';
 import type { Context } from 'hono';
 import { PaymentId } from '../payments/payment';
 import { customerPage } from '../shop/customer';
 import { demoProductName } from '../shop/demoProducts';
 import { formatPrice, ShopPage, type ShopLinks } from '../shop/shopLayout';
+import {
+  cancelOrderOf,
+  orderPageOf,
+  ordersPageOf,
+  retryPaymentOf,
+} from '../shop/shopUrls';
 import type { CustomerOrders } from './getCustomerOrders/customerOrders';
 import type { OrderStatuses } from './getOrderStatus/orderStatuses';
 import { OrderId, type OrderProgress } from './order';
@@ -29,9 +39,6 @@ const finalProgress: readonly OrderProgress[] = [
 ];
 
 type Status = NonNullable<Awaited<ReturnType<OrderStatuses['get']>>>;
-
-const orderPageOf = (customerId: string, orderNumber: string) =>
-  `/shop/customers/${customerId}/orders/${orderNumber}`;
 
 const OrderPlacing = ({
   customerId,
@@ -149,14 +156,14 @@ const OrderStatusPart = ({
           </form>
         )}
         {order.actions.includes('RetryPayment') && (
-          <form method="post" action={`${pageUrl}/retry-payment`}>
+          <form method="post" action={retryPaymentOf(customerId, orderNumber)}>
             <button class="button primary" type="submit">
               Retry payment
             </button>
           </form>
         )}
         {order.actions.includes('CancelOrder') && (
-          <form method="post" action={`${pageUrl}/cancel`}>
+          <form method="post" action={cancelOrderOf(customerId, orderNumber)}>
             <button class="button" type="submit">
               Cancel order
             </button>
@@ -226,7 +233,7 @@ export const orderPages =
     };
 
     router.get(
-      '/shop/customers/:customerId/orders',
+      ordersPageOf(':customerId'),
       customerPage(async (context, customer) => {
         const orders = await customerOrders.of(customer.id);
 
@@ -276,7 +283,9 @@ export const orderPages =
                               {progressLabels[order.progress]}
                             </span>
                           </td>
-                          <td class="number">{formatPrice(order.totalPrice)}</td>
+                          <td class="number">
+                            {formatPrice(order.totalPrice)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -290,7 +299,7 @@ export const orderPages =
     );
 
     router.get(
-      '/shop/customers/:customerId/orders/:orderNumber',
+      orderPageOf(':customerId', ':orderNumber'),
       customerPage(async (context, customer) => {
         const orderNumber = context.req.param('orderNumber') ?? '';
 
@@ -328,7 +337,7 @@ export const orderPages =
     );
 
     router.post(
-      '/shop/customers/:customerId/orders/:orderNumber/cancel',
+      cancelOrderOf(':customerId', ':orderNumber'),
       customerPage(async (context, customer) => {
         const orderNumber = context.req.param('orderNumber') ?? '';
         const { orderId } = await statusOf(customer.id, orderNumber);
@@ -343,12 +352,15 @@ export const orderPages =
     );
 
     router.post(
-      '/shop/customers/:customerId/orders/:orderNumber/retry-payment',
+      retryPaymentOf(':customerId', ':orderNumber'),
       customerPage(async (context, customer) => {
         const orderNumber = context.req.param('orderNumber') ?? '';
         const { orderId } = await statusOf(customer.id, orderNumber);
 
-        await sendToOrder({ type: 'orders.RetryOrderPayment', data: { orderId } });
+        await sendToOrder({
+          type: 'orders.RetryOrderPayment',
+          data: { orderId },
+        });
 
         return context.redirect(orderPageOf(customer.id, orderNumber), 303);
       }),

@@ -1,0 +1,36 @@
+---
+id: shopping-cart
+name: ShoppingCart
+version: 1.0.0
+summary: The customer's open cart. Its events are the products added and removed, the price changes and the checkout.
+identifier: id
+aggregateRoot: true
+owners:
+  - shopping-carts
+properties:
+  - name: id
+    type: ShoppingCart.Id
+    required: true
+    description: The customer's id and the number of their cart, such as `urn:ecommerce:cart:{customerId}-1`.
+  - name: productItems
+    type: ProductItems
+    required: true
+    description: The products in the cart, each with its quantity and the unit price it had when the customer added it.
+  - name: status
+    type: string
+    required: true
+    enum:
+      - Pending
+      - CheckedOut
+    description: A checked-out cart takes no more changes. The customer's next product starts the next cart.
+---
+
+## Overview
+
+The aggregate behind the shopping-carts module. [ShoppingCart](https://github.com/oskardudycz/EventSourcing.NodeJS/blob/main/samples/e-commerce/packages/application/src/shoppingCarts/shoppingCart.ts) is the state, folded from the cart's stream, and its decider (`decide` and `evolve` in the same file) decides the events.
+
+<EntityPropertiesTable />
+
+## Prices
+
+The customer chooses a product and a quantity, never a price. The price list gives the price when the product first enters the cart. Checking out reads the current prices: if one changed, the cart records `ProductItemPriceChanged` and stays open, and the customer checks out again with the new version. The [README](https://github.com/oskardudycz/EventSourcing.NodeJS/tree/main/samples/e-commerce#where-the-steps-come-from) explains why.

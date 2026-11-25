@@ -1,0 +1,12 @@
+{
+  "headers": {
+    "message-type": "shipments.external.StockReserved",
+    "message-id": "message-1",
+    "message-kind": "Event"
+  },
+  "body": {
+    "shipmentId": "urn:ecommerce:shipment:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1",
+    "referenceId": "urn:ecommerce:order:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1",
+    "reservedAt": "2026-11-24T10:00:00.000Z"
+  }
+}

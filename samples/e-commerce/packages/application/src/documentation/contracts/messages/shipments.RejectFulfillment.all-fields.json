@@ -1,6 +1,0 @@
-{
-  "type": "shipments.RejectFulfillment",
-  "data": {
-    "shipmentId": "urn:ecommerce:shipment:customer-1-1"
-  }
-}

@@ -1,0 +1,15 @@
+---
+id: event-store
+name: Event store
+version: 1.0.0
+summary: The streams of events, one stream for each cart, order, payment and shipment. The source of truth of every module.
+container_type: database
+technology: SQLite or PostgreSQL
+classification: internal
+---
+
+## Overview
+
+Each module appends its events to its own streams, in its own database, and reads a stream to rebuild a state. Consumers read the events again to run the workflows and to forward the external events. The `EVENTSTORE_TYPE` setting picks SQLite (a file for each module) or PostgreSQL (a schema for each module).
+
+<NodeGraph />

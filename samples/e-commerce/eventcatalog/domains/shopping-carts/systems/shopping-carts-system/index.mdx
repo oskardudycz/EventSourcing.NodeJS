@@ -1,0 +1,28 @@
+---
+id: shopping-carts-system
+name: Shopping carts
+version: 1.0.0
+summary: The customer's cart. Checking out publishes the cart in the shop's published language.
+scope: internal
+owners:
+  - shopping-carts
+services:
+  - id: shopping-carts-service
+actors:
+  - id: customer
+    name: Customer
+    label: fills the cart and checks out
+    direction: inbound
+relationships:
+  - id: orders-system
+    label: "upstream/downstream · Shopping carts: OHS + PL · Orders: ACL (order workflow)"
+entities:
+  - id: shopping-cart
+containers:
+  - id: event-store
+  - id: projections
+---
+
+## Context diagram
+
+<ContextDiagram />

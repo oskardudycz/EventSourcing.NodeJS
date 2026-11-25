@@ -8,3 +8,4 @@ export * from './kafka';
 export * from './messageRoutes';
 export * from './rabbitmq';
 export * from './retryInHandler';
+export * from './messagingMetrics';

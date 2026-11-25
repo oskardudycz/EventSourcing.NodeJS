@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync } from 'node:fs';
+import { mkdirSync, mkdtempSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -17,3 +17,9 @@ export const temporarySQLiteFolder = () =>
 
 export const removeSQLiteFolder = (folder: string) =>
   rm(folder, { recursive: true, force: true });
+
+export const ensureSQLiteFolder = (folder: string) => {
+  mkdirSync(folder, { recursive: true });
+
+  return folder;
+};

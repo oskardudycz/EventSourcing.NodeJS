@@ -1,0 +1,14 @@
+---
+id: orders
+name: Orders
+version: 1.0.0
+services:
+  - id: orders-service
+    version: 1.0.0
+---
+## Overview
+
+The purchase as a whole. The order workflow decides what must happen next, and asks Payments and Shipments to do it. When a step fails, the order decides what to undo. See the [context map](/docs/domains/e-commerce/1.0.0#context-map) for how it works with the others.
+
+## Architecture diagram
+<NodeGraph />

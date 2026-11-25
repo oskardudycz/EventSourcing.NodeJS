@@ -16,6 +16,8 @@ describe('settings', () => {
       rabbitMQUrl: 'amqp://guest:guest@localhost:5672',
       grafanaUrl: 'http://localhost:3000',
       eventCatalogUrl: 'http://localhost:3001',
+      otlpEndpoint: 'http://localhost:4318',
+      port: 8080,
     });
   });
 
@@ -36,6 +38,7 @@ describe('settings', () => {
         SHOP_GRAFANA_URL: 'http://grafana',
         SHOP_EVENTCATALOG_URL: 'http://catalog',
         OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel:4318',
+        PORT: '9090',
       }),
     ).toEqual({
       messagingBus: 'rabbitmq',
@@ -52,6 +55,7 @@ describe('settings', () => {
       grafanaUrl: 'http://grafana',
       eventCatalogUrl: 'http://catalog',
       otlpEndpoint: 'http://otel:4318',
+      port: 9090,
     });
   });
 
@@ -65,6 +69,15 @@ describe('settings', () => {
     (name, value, allowed) => {
       expect(() => readSettings({ [name]: value })).toThrow(
         `${name}=${value} is not allowed, use one of: ${allowed}`,
+      );
+    },
+  );
+
+  it.each(['abc', '0', '70000', '80.5'])(
+    'startFailsNamingAPortThatIsNotOne %s',
+    (value) => {
+      expect(() => readSettings({ PORT: value })).toThrow(
+        `PORT=${value} is not a port, use a number from 1 to 65535`,
       );
     },
   );

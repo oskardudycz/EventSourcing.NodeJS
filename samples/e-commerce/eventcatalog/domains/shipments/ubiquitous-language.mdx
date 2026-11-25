@@ -1,0 +1,27 @@
+---
+dictionary:
+  - id: Reservation
+    name: Reservation
+    summary: "Products set aside in the warehouse, so nobody else buys them."
+    description: |
+      A reservation fails when a product is out of stock. A second reservation for the same reference changes nothing.
+    icon: PackageCheck
+  - id: Fulfillment
+    name: Fulfillment
+    summary: "Picking, packing and sending the reserved products."
+    description: |
+      The shipments module asks the fulfillment service to fulfill a reservation. The service answers that the package was sent, with the carrier and the tracking number, or it rejects the request.
+    icon: Truck
+  - id: Release
+    name: Release
+    summary: "Putting reserved products back in stock."
+    description: |
+      A canceled order releases its reservation. A package that left the warehouse can't be released.
+    icon: PackageOpen
+  - id: Delivery
+    name: Delivery
+    summary: "The package reached the customer."
+    description: |
+      Nobody waits for the delivery: the order is already completed when the package leaves and the payment is captured.
+    icon: Home
+---

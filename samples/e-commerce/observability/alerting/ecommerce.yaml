@@ -32,7 +32,7 @@ groups:
         execErrState: Error
         for: 5m
         annotations:
-          summary: "More than 20% of the payments failed in the last 15 minutes: timed out, failed to capture or expired."
+          summary: 'More than 20% of the payments failed in the last 15 minutes: timed out, failed to capture or expired.'
         labels:
           severity: critical
       - uid: capture-failed
@@ -61,7 +61,7 @@ groups:
         execErrState: Error
         for: 0s
         annotations:
-          summary: "A package left the warehouse, but the provider refused to charge the customer. The order waits for the customer to pay again."
+          summary: 'A package left the warehouse, but the provider refused to charge the customer. The order waits for the customer to pay again.'
         labels:
           severity: critical
       - uid: money-lost
@@ -90,7 +90,7 @@ groups:
         execErrState: Error
         for: 0s
         annotations:
-          summary: "An order closed unpaid after its package was sent, or a payment hold expired before the charge."
+          summary: 'An order closed unpaid after its package was sent, or a payment hold expired before the charge.'
         labels:
           severity: critical
       - uid: checkout-broken
@@ -119,9 +119,67 @@ groups:
         execErrState: Error
         for: 2m
         annotations:
-          summary: "Customers checked out in the last 10 minutes, but the orders module placed no order."
+          summary: 'Customers checked out in the last 10 minutes, but the orders module placed no order.'
         labels:
           severity: critical
+      - uid: views-behind
+        title: Views falling behind
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'histogram_quantile(0.95, sum by (le) (rate(messaging_lag_milliseconds_bucket[5m])))'
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5000]
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: 'The 95th percentile of the time from forwarding a message to a module handling it is above 5 seconds.'
+        labels:
+          severity: warning
+      - uid: dead-letters
+        title: Dead letters
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'sum(increase(messaging_dead_lettered_total[5m]))'
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: 'A message failed every retry and went to a dead-letter queue.'
+        labels:
+          severity: warning
       - uid: commands-failing
         title: Commands failing
         condition: C
@@ -148,6 +206,35 @@ groups:
         execErrState: Error
         for: 5m
         annotations:
-          summary: "More than 5% of the commands failed in the last 10 minutes."
+          summary: 'More than 5% of the commands failed in the last 10 minutes.'
+        labels:
+          severity: warning
+      - uid: http-errors
+        title: HTTP errors
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: 'sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~"5.."}[5m])) / clamp_min(sum(rate(http_server_request_duration_seconds_count[5m])), 0.001) * 100'
+              instant: true
+              range: false
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [1]
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: 'More than 1% of the HTTP requests answered with a server error in the last 5 minutes.'
         labels:
           severity: warning

@@ -1,0 +1,12 @@
+---
+id: fulfillment-service
+name: Fulfillment service
+version: 1.0.0
+summary: The warehouse that picks, packs and sends the products. The sandbox warehouse page plays it in the running sample.
+scope: external
+relationships:
+  - id: shipments-system
+    label: "upstream/downstream · Shipments: ACL (WarehouseGateway)"
+---
+
+The shipments module talks to it only through `WarehouseGateway`, so the warehouse's model stays out of the module.

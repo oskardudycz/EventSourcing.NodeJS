@@ -5,14 +5,13 @@ import { deleteCookie, setCookie } from 'hono/cookie';
 import { customerCookie, customerIdOf, signedInCustomer } from './customer';
 import { ShopPage, type ShopLinks } from './shopLayout';
 import { shopStyles } from './shopStyles';
+import { loginPage, productsPageOf } from './shopUrls';
+import { formField } from './formFields';
 
 const htmx = readFileSync(
   createRequire(import.meta.url).resolve('htmx.org/dist/htmx.min.js'),
   'utf8',
 );
-
-export const productsPageOf = (customerId: string) =>
-  `/shop/customers/${customerId}/products`;
 
 export const shopPages =
   ({ links }: { links: ShopLinks }): WebApiSetup =>
@@ -29,12 +28,12 @@ export const shopPages =
       const customer = signedInCustomer(context);
 
       return context.redirect(
-        customer ? productsPageOf(customer.id) : '/shop/login',
+        customer ? productsPageOf(customer.id) : loginPage,
         303,
       );
     });
 
-    router.get('/shop/login', (context) => {
+    router.get(loginPage, (context) => {
       const customer = signedInCustomer(context);
 
       return context.html(
@@ -46,7 +45,7 @@ export const shopPages =
         >
           <main class="page login">
             <h1>Log in</h1>
-            <form class="card" method="post" action="/shop/login">
+            <form class="card" method="post" action={loginPage}>
               <label for="name">Your name</label>
               <input
                 id="name"
@@ -69,11 +68,11 @@ export const shopPages =
       );
     });
 
-    router.post('/shop/login', async (context) => {
+    router.post(loginPage, async (context) => {
       const body = await context.req.parseBody();
-      const name = typeof body['name'] === 'string' ? body['name'].trim() : '';
+      const name = formField(body, 'name').trim();
 
-      if (name === '') return context.redirect('/shop/login', 303);
+      if (name === '') return context.redirect(loginPage, 303);
 
       setCookie(context, customerCookie, name, {
         path: '/',
@@ -87,6 +86,6 @@ export const shopPages =
     router.post('/shop/logout', (context) => {
       deleteCookie(context, customerCookie, { path: '/' });
 
-      return context.redirect('/shop/login', 303);
+      return context.redirect(loginPage, 303);
     });
   };

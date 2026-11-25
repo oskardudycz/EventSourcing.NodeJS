@@ -1,3 +1,4 @@
+import { messagingMetrics } from '../messagingMetrics';
 import type {
   AnyRecordedMessageMetadata,
   Message,
@@ -5,9 +6,9 @@ import type {
   WorkflowProcessorContext,
 } from '@event-driven-io/emmett';
 import { brokerBodyOf, brokerHeadersOf } from '../broker/brokerMessage';
-import { isInAChannelStream, type ForwardedMessage } from '../channels';
+import type { ForwardedMessage } from '../channels';
 import {
-  skippedAsAlreadyInAChannelStream,
+  routedBatchOf,
   type ForwardingAsItIsOptions,
   type ForwardingHandler,
   type ForwardingOptions,
@@ -58,34 +59,28 @@ export function forwardToKafka({
   | ForwardingToKafkaOptions<Message, Message>
   | ForwardingToKafkaAsItIsOptions<Message>): ForwardingHandler<Message> {
   const router = messageRouter(routes, channels);
+  const metrics = messagingMetrics();
 
-  return (message, context) =>
-    isInAChannelStream(message)
-      ? skippedAsAlreadyInAChannelStream()
-      : retryInHandler(
+  return (messages, context) =>
+    retryInHandler(
       async () => {
-        const routed = (await map(message, context)).map(
-          (forwarded: ForwardedMessage) => ({
-            forwarded,
-            route: router.declaredRouteFor(forwarded),
-          }),
-        );
+        const routed = await routedBatchOf(messages, context, map, router);
 
-        for (const { forwarded, route } of routed)
-          await producer.send({
-            messages: [
-              {
-                topic: route.channel,
-                key: route.key,
-                value: brokerBodyOf(forwarded.data),
-                headers: brokerHeadersOf(forwarded, {
-                  traceId:
-                    forwarded.metadata.traceId ?? message.metadata.traceId,
-                  spanId: forwarded.metadata.spanId ?? message.metadata.spanId,
-                }),
-              },
-            ],
-          });
+        if (routed.length === 0) return;
+
+        await producer.send({
+          messages: routed.map(({ source, forwarded, channel, key }) => ({
+            topic: channel,
+            key,
+            value: brokerBodyOf(forwarded.data),
+            headers: brokerHeadersOf(forwarded, {
+              traceId: forwarded.metadata.traceId ?? source.metadata.traceId,
+              spanId: forwarded.metadata.spanId ?? source.metadata.spanId,
+            }),
+          })),
+        });
+        for (const { forwarded, channel } of routed)
+          metrics.published(channel, forwarded.type);
       },
       { retry, signal },
     );

@@ -132,12 +132,14 @@ export const kafkaConsumer = ({
 
     return [...end].reduce((pending, [partition, endOffset]) => {
       const deliveredOffset = delivered.get(partition);
+      const logStart = start.get(partition) ?? 0n;
+      const committedOffset = committed.get(partition) ?? -1n;
       const next =
         deliveredOffset !== undefined
           ? deliveredOffset + 1n
-          : (committed.get(partition) ?? -1n) >= 0n
-            ? (committed.get(partition) ?? 0n)
-            : (start.get(partition) ?? 0n);
+          : committedOffset > logStart
+            ? committedOffset
+            : logStart;
       return endOffset > next ? pending + (endOffset - next) : pending;
     }, 0n);
   };
@@ -146,8 +148,12 @@ export const kafkaConsumer = ({
   let endPosition: Promise<ProcessorCheckpoint | null> | undefined;
 
   const endCheckpoint = () =>
-    (endPosition ??= pendingCount().then((pending) =>
-      ledger.checkpointAfter(pending),
+    (endPosition ??= pendingCount().then(
+      (pending) => ledger.checkpointAfter(pending),
+      (error: unknown) => {
+        endPosition = undefined;
+        throw error;
+      },
     ));
 
   const waitUntilEndOffsetsAreCommitted = async () => {

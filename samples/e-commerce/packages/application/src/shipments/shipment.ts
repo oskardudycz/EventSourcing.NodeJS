@@ -6,7 +6,12 @@ const shipmentType = 'shipment';
 
 export const ShipmentId = {
   require: (id: string): string => Urns.requireType(id, shipmentType),
+  of: (tail: string): string => Urns.of('ecommerce', shipmentType, tail),
   tailOf: Urns.tailOf,
+  numberOf: (id: string): string => {
+    const tail = Urns.tailOf(id);
+    return tail.substring(tail.lastIndexOf('-') + 1);
+  },
   ofCommand: ({ data }: Pick<ShipmentCommand, 'data'>): string =>
     'referenceId' in data
       ? Urns.derive(data.referenceId, shipmentType)

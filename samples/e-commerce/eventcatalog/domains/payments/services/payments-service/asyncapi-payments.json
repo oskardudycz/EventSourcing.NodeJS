@@ -1,0 +1,820 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "E-commerce payments",
+    "version": "1.0.0",
+    "description": "The messages the payments module sends and receives.",
+    "tags": [
+      {
+        "name": "payments"
+      }
+    ]
+  },
+  "servers": {
+    "kafka": {
+      "host": "localhost:9092",
+      "protocol": "kafka",
+      "description": "Channels are Kafka topics. The body is the message data, the type is in the message-type header"
+    },
+    "rabbitmq": {
+      "host": "localhost:5672",
+      "protocol": "amqp",
+      "description": "Channels are RabbitMQ exchanges. The body is the message data, the type is in the message-type header"
+    },
+    "in-memory": {
+      "host": "in-memory",
+      "protocol": "in-memory",
+      "description": "Channels are streams of the event store"
+    }
+  },
+  "channels": {
+    "payments-requests": {
+      "address": "payments-requests",
+      "description": "Channel payments-requests",
+      "messages": {
+        "payments.AuthorizePayment": {
+          "$ref": "#/components/messages/payments.AuthorizePayment"
+        },
+        "payments.CapturePayment": {
+          "$ref": "#/components/messages/payments.CapturePayment"
+        },
+        "payments.CancelPayment": {
+          "$ref": "#/components/messages/payments.CancelPayment"
+        }
+      }
+    },
+    "payments-responses": {
+      "address": "payments-responses",
+      "description": "Channel payments-responses",
+      "messages": {
+        "payments.external.PaymentAuthorized": {
+          "$ref": "#/components/messages/payments.external.PaymentAuthorized"
+        },
+        "payments.external.PaymentCaptured": {
+          "$ref": "#/components/messages/payments.external.PaymentCaptured"
+        },
+        "payments.external.PaymentFailed": {
+          "$ref": "#/components/messages/payments.external.PaymentFailed"
+        }
+      }
+    },
+    "payments-internal": {
+      "address": "payments-internal",
+      "description": "Channel payments-internal",
+      "messages": {
+        "payments.TimeOutPayment": {
+          "$ref": "#/components/messages/payments.TimeOutPayment"
+        },
+        "payments.ExpirePaymentAuthorization": {
+          "$ref": "#/components/messages/payments.ExpirePaymentAuthorization"
+        }
+      }
+    }
+  },
+  "operations": {
+    "payments.receive.payments.AuthorizePayment": {
+      "action": "receive",
+      "title": "payments receives payments.AuthorizePayment",
+      "summary": "Ask payments to authorize a payment for a reference, such as an order.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-requests/messages/payments.AuthorizePayment"
+        }
+      ]
+    },
+    "payments.receive.payments.CapturePayment": {
+      "action": "receive",
+      "title": "payments receives payments.CapturePayment",
+      "summary": "Ask payments to capture an authorized payment.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-requests/messages/payments.CapturePayment"
+        }
+      ]
+    },
+    "payments.receive.payments.CancelPayment": {
+      "action": "receive",
+      "title": "payments receives payments.CancelPayment",
+      "summary": "Ask payments to cancel a payment.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-requests/messages/payments.CancelPayment"
+        }
+      ]
+    },
+    "payments.send.payments.external.PaymentAuthorized": {
+      "action": "send",
+      "title": "payments sends payments.external.PaymentAuthorized",
+      "summary": "The payment of a reference was authorized.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-responses/messages/payments.external.PaymentAuthorized"
+        }
+      ]
+    },
+    "payments.send.payments.external.PaymentCaptured": {
+      "action": "send",
+      "title": "payments sends payments.external.PaymentCaptured",
+      "summary": "The payment of a reference was captured.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-responses/messages/payments.external.PaymentCaptured"
+        }
+      ]
+    },
+    "payments.send.payments.external.PaymentFailed": {
+      "action": "send",
+      "title": "payments sends payments.external.PaymentFailed",
+      "summary": "The payment of a reference failed.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-responses/messages/payments.external.PaymentFailed"
+        }
+      ]
+    },
+    "payments.send.payments.TimeOutPayment": {
+      "action": "send",
+      "title": "payments sends payments.TimeOutPayment",
+      "summary": "Time out a payment that stayed pending.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-internal"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-internal/messages/payments.TimeOutPayment"
+        }
+      ]
+    },
+    "payments.receive.payments.TimeOutPayment": {
+      "action": "receive",
+      "title": "payments receives payments.TimeOutPayment",
+      "summary": "Time out a payment that stayed pending.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-internal"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-internal/messages/payments.TimeOutPayment"
+        }
+      ]
+    },
+    "payments.send.payments.ExpirePaymentAuthorization": {
+      "action": "send",
+      "title": "payments sends payments.ExpirePaymentAuthorization",
+      "summary": "Expire an authorization that was not captured in time.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-internal"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-internal/messages/payments.ExpirePaymentAuthorization"
+        }
+      ]
+    },
+    "payments.receive.payments.ExpirePaymentAuthorization": {
+      "action": "receive",
+      "title": "payments receives payments.ExpirePaymentAuthorization",
+      "summary": "Expire an authorization that was not captured in time.",
+      "tags": [
+        {
+          "name": "payments"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-internal"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-internal/messages/payments.ExpirePaymentAuthorization"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "payments.AuthorizePayment": {
+        "name": "payments.AuthorizePayment",
+        "title": "payments.AuthorizePayment",
+        "summary": "Ask payments to authorize a payment for a reference, such as an order.",
+        "description": "Ask payments to authorize a payment for a reference, such as an order.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.AuthorizePayment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            },
+            "referenceId": {
+              "type": "string"
+            },
+            "amount": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "paymentId",
+            "referenceId",
+            "amount"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.AuthorizePayment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "paymentId": "urn:ecommerce:payment:customer-1-1",
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "amount": 39.98
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "payments.CapturePayment": {
+        "name": "payments.CapturePayment",
+        "title": "payments.CapturePayment",
+        "summary": "Ask payments to capture an authorized payment.",
+        "description": "Ask payments to capture an authorized payment.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.CapturePayment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "paymentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.CapturePayment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "paymentId": "urn:ecommerce:payment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "payments.CancelPayment": {
+        "name": "payments.CancelPayment",
+        "title": "payments.CancelPayment",
+        "summary": "Ask payments to cancel a payment.",
+        "description": "Ask payments to cancel a payment.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.CancelPayment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "paymentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.CancelPayment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "paymentId": "urn:ecommerce:payment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "payments.external.PaymentAuthorized": {
+        "name": "payments.external.PaymentAuthorized",
+        "title": "payments.external.PaymentAuthorized",
+        "summary": "The payment of a reference was authorized.",
+        "description": "The payment of a reference was authorized.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.external.PaymentAuthorized"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "referenceId": {
+              "type": "string"
+            },
+            "paymentId": {
+              "type": "string"
+            },
+            "authorizedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "referenceId",
+            "paymentId",
+            "authorizedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.external.PaymentAuthorized",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "paymentId": "urn:ecommerce:payment:customer-1-1",
+              "authorizedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "payments.external.PaymentCaptured": {
+        "name": "payments.external.PaymentCaptured",
+        "title": "payments.external.PaymentCaptured",
+        "summary": "The payment of a reference was captured.",
+        "description": "The payment of a reference was captured.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.external.PaymentCaptured"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "referenceId": {
+              "type": "string"
+            },
+            "paymentId": {
+              "type": "string"
+            },
+            "capturedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "referenceId",
+            "paymentId",
+            "capturedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.external.PaymentCaptured",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "paymentId": "urn:ecommerce:payment:customer-1-1",
+              "capturedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "payments.external.PaymentFailed": {
+        "name": "payments.external.PaymentFailed",
+        "title": "payments.external.PaymentFailed",
+        "summary": "The payment of a reference failed.",
+        "description": "The payment of a reference failed.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.external.PaymentFailed"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "referenceId": {
+              "type": "string"
+            },
+            "paymentId": {
+              "type": "string"
+            },
+            "failedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "referenceId",
+            "paymentId",
+            "failedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.external.PaymentFailed",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "paymentId": "urn:ecommerce:payment:customer-1-1",
+              "failedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "payments.TimeOutPayment": {
+        "name": "payments.TimeOutPayment",
+        "title": "payments.TimeOutPayment",
+        "summary": "Time out a payment that stayed pending.",
+        "description": "Time out a payment that stayed pending.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.TimeOutPayment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "paymentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.TimeOutPayment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "paymentId": "urn:ecommerce:payment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "payments.ExpirePaymentAuthorization": {
+        "name": "payments.ExpirePaymentAuthorization",
+        "title": "payments.ExpirePaymentAuthorization",
+        "summary": "Expire an authorization that was not captured in time.",
+        "description": "Expire an authorization that was not captured in time.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.ExpirePaymentAuthorization"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "paymentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.ExpirePaymentAuthorization",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "paymentId": "urn:ecommerce:payment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      }
+    }
+  }
+}

@@ -7,15 +7,7 @@ import {
   sendingToRabbitMQ,
   type SendToChannel,
 } from '@e-commerce/core';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApplication } from './buildApplication';
 import { paymentProvider } from './payments/paymentProvider';
 import { readSettings } from './settings';
@@ -176,6 +168,48 @@ describe('PostgreSQL', () => {
     expect(added.status).toBe(200);
     expect(cart).toMatchObject({ lines: [{ quantity: 2 }] });
   });
+
+  it('anApplicationStartedOnTheDatabaseOfAStoppedOneProcessesNewCarts', async () => {
+    const environment = {
+      MESSAGING_BUS: 'in-memory',
+      EVENTSTORE_TYPE: 'postgresql',
+      POSTGRESQL_URL: postgreSQL.connectionString,
+    };
+    const first = runningOn(environment);
+    const earlier = customerSteps(crypto.randomUUID());
+    await first.start();
+    await earlier.addProduct(first.application);
+    await earlier.checkOut(first.application);
+    await until(
+      async () =>
+        (
+          await streamTypes(
+            first.stores.orders,
+            OrderId.workflowStreamNameOf(earlier.orderId),
+          )
+        ).includes('orders.OrderPlaced'),
+      30_000,
+    );
+    await first.stop();
+    const second = runningOn(environment);
+    const customer = customerSteps(crypto.randomUUID());
+    await second.start();
+
+    await customer.addProduct(second.application);
+    await customer.checkOut(second.application);
+
+    await until(
+      async () =>
+        (
+          await streamTypes(
+            second.stores.orders,
+            OrderId.workflowStreamNameOf(customer.orderId),
+          )
+        ).includes('orders.OrderPlaced'),
+      30_000,
+    );
+    await second.stop();
+  }, 60_000);
 });
 
 describe.each([
@@ -191,23 +225,22 @@ describe.each([
 
     beforeAll(async () => {
       brokers = { kafka: await startKafka(), rabbitMQ: await startRabbitMQ() };
+      postgreSQL = await startPostgreSQL();
     }, 120_000);
 
     afterAll(async () => {
       await brokers.kafka.stop();
       await brokers.rabbitMQ.stop();
-    });
-
-    beforeEach(async () => {
-      postgreSQL = await startPostgreSQL();
-    }, 120_000);
-
-    afterEach(async () => {
       await postgreSQL.stop();
     });
 
-    const environment = () =>
-      environmentOf({ messagingBus, eventStoreType, postgreSQL, brokers });
+    const environment = (database = postgreSQL) =>
+      environmentOf({
+        messagingBus,
+        eventStoreType,
+        postgreSQL: database,
+        brokers,
+      });
 
     it('aCheckedOutCartBecomesAnOrderThroughTheBroker', async () => {
       const built = runningOn(environment());
@@ -328,18 +361,12 @@ describe.each(['kafka', 'rabbitmq'])(
 
     beforeAll(async () => {
       brokers = { kafka: await startKafka(), rabbitMQ: await startRabbitMQ() };
+      postgreSQL = await startPostgreSQL();
     }, 120_000);
 
     afterAll(async () => {
       await brokers.kafka.stop();
       await brokers.rabbitMQ.stop();
-    });
-
-    beforeEach(async () => {
-      postgreSQL = await startPostgreSQL();
-    }, 120_000);
-
-    afterEach(async () => {
       await postgreSQL.stop();
     });
 
@@ -369,6 +396,53 @@ describe.each(['kafka', 'rabbitmq'])(
       await customer.checkOut(built.application);
       await new Promise((resolve) => setTimeout(resolve, 3000));
       await broker().container.start();
+
+      await until(
+        async () =>
+          (
+            await streamTypes(
+              built.stores.orders,
+              OrderId.workflowStreamNameOf(customer.orderId),
+            )
+          ).includes('orders.OrderPlaced'),
+        90_000,
+      );
+      await built.stop();
+    }, 180_000);
+
+    it('aSendWithoutAcknowledgementWithinTheTimeoutFailsAndIsRetried', async () => {
+      const built = runningWithAShortPublishTimeout();
+      const customer = customerSteps(crypto.randomUUID());
+      await built.start();
+      await customer.addProduct(built.application);
+
+      await broker().container.pause();
+      await customer.checkOut(built.application);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await broker().container.unpause();
+
+      await until(
+        async () =>
+          (
+            await streamTypes(
+              built.stores.orders,
+              OrderId.workflowStreamNameOf(customer.orderId),
+            )
+          ).includes('orders.OrderPlaced'),
+        90_000,
+      );
+      await built.stop();
+    }, 180_000);
+
+    it('afterABrokerRestartNewMessagesAreHandled', async () => {
+      const built = runningWithAShortPublishTimeout();
+      const customer = customerSteps(crypto.randomUUID());
+      await built.start();
+
+      await broker().container.stop();
+      await broker().container.start();
+      await customer.addProduct(built.application);
+      await customer.checkOut(built.application);
 
       await until(
         async () =>

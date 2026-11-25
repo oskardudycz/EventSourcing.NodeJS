@@ -1,6 +1,7 @@
 import type { WebApiSetup } from '@event-driven-io/emmett-honojs';
 import { NotFoundError } from '@event-driven-io/emmett';
 import { raw } from 'hono/html';
+import { formField } from '../../shop/formFields';
 import { formatPrice } from '../../shop/shopLayout';
 import { checkoutStyles } from './checkoutStyles';
 import type {
@@ -107,7 +108,8 @@ export const sandboxCheckoutPage =
     const checkoutOf = (sessionId: string) => {
       const checkout = gateway.checkout(sessionId);
 
-      if (!checkout) throw new NotFoundError({ type: 'Checkout', id: sessionId });
+      if (!checkout)
+        throw new NotFoundError({ type: 'Checkout', id: sessionId });
 
       return checkout;
     };
@@ -127,7 +129,10 @@ export const sandboxCheckoutPage =
     router.post('/sandbox/checkout/:sessionId', async (context) => {
       const checkout = checkoutOf(context.req.param('sessionId'));
       const body = await context.req.parseBody();
-      const outcome = await gateway.pay(checkout, String(body['cardNumber']));
+      const outcome = await gateway.pay(
+        checkout,
+        formField(body, 'cardNumber'),
+      );
 
       switch (outcome) {
         case 'Paid':

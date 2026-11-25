@@ -1,7 +1,0 @@
-{
-  "type": "orders.OrderClosedUnpaid",
-  "data": {
-    "orderId": "urn:ecommerce:order:customer-1-1",
-    "closedAt": "2026-11-24T10:00:00.000Z"
-  }
-}

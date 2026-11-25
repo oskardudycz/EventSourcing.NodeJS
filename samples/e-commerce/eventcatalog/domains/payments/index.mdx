@@ -1,0 +1,14 @@
+---
+id: payments
+name: Payments
+version: 1.0.0
+services:
+  - id: payments-service
+    version: 1.0.0
+---
+## Overview
+
+The money: authorizing the payment, capturing it after the package left, and timing out when the customer never pays. `PaymentGateway` keeps the payment provider's model out of this context. See the [context map](/docs/domains/e-commerce/1.0.0#context-map) for how it works with the others.
+
+## Architecture diagram
+<NodeGraph />

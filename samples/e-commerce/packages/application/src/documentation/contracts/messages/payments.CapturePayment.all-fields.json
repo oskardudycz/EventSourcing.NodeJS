@@ -1,6 +1,0 @@
-{
-  "type": "payments.CapturePayment",
-  "data": {
-    "paymentId": "urn:ecommerce:payment:customer-1-1"
-  }
-}

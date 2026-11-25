@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "shipmentId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-44>"
+    },
+    "referenceId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-45>"
+    },
+    "reservedAt": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-46>"
+    }
+  },
+  "required": [
+    "shipmentId",
+    "referenceId",
+    "reservedAt"
+  ],
+  "additionalProperties": false,
+  "x-parser-schema-id": "<anonymous-schema-43>"
+}

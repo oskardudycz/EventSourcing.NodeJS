@@ -1,4 +1,17 @@
-import type { TestRequest } from '@event-driven-io/emmett-honojs';
+import type { Expectation } from '@e-commerce/core';
+import {
+  HonoTestAgent,
+  type TestRequest,
+} from '@event-driven-io/emmett-honojs';
+import { expect } from 'vitest';
+import type { SignedInCustomer } from '../shop/customer';
+import type { ShopRequests } from '../shop/shopRequests';
+import {
+  cancelOrderOf,
+  orderPageOf,
+  ordersPageOf,
+  retryPaymentOf,
+} from '../shop/shopUrls';
 
 const ordersPath = (customerId: string) => `/customers/${customerId}/orders`;
 
@@ -36,3 +49,45 @@ export const payNow =
     request.post(
       `${ordersPath(customerId)}/${orderNumber}/payments/${paymentNumber}/checkout-session`,
     );
+
+export const orderPagesOf = ({ getPage, postForm }: ShopRequests) => ({
+  ordersPage: (customer: SignedInCustomer) =>
+    getPage(ordersPageOf(customer.id), { as: customer }),
+  orderPage: (customer: SignedInCustomer, orderNumber: string) =>
+    getPage(orderPageOf(customer.id, orderNumber), { as: customer }),
+  orderPart: (
+    customer: SignedInCustomer,
+    orderNumber: string,
+    seenETag?: string,
+  ) =>
+    getPage(orderPageOf(customer.id, orderNumber), {
+      as: customer,
+      headers: {
+        'HX-Request': 'true',
+        ...(seenETag ? { 'If-None-Match': seenETag } : {}),
+      },
+    }),
+  cancelOnPage: (customer: SignedInCustomer, orderNumber: string) =>
+    postForm(cancelOrderOf(customer.id, orderNumber), {}, { as: customer }),
+  retryPaymentOnPage: (customer: SignedInCustomer, orderNumber: string) =>
+    postForm(retryPaymentOf(customer.id, orderNumber), {}, { as: customer }),
+});
+
+export const orderStatusIs =
+  (
+    fetch: (request: Request) => Response | Promise<Response>,
+    customerId: string,
+    orderNumber: string,
+    expected: Record<string, unknown>,
+  ): Expectation =>
+  async () => {
+    const request = getOrderStatus(
+      customerId,
+      orderNumber,
+    )(new HonoTestAgent({ fetch }));
+    const response =
+      request instanceof Promise ? await request : await request.execute();
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject(expected);
+  };

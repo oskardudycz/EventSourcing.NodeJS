@@ -1,4 +1,3 @@
-import { Urns } from '@e-commerce/core';
 import { NotFoundError } from '@event-driven-io/emmett';
 import type { WebApiSetup } from '@event-driven-io/emmett-honojs';
 import { raw } from 'hono/html';
@@ -11,7 +10,7 @@ const packageRow = ({ shipmentId, productItems }: SandboxPackage) => {
 
   return {
     tail,
-    order: `Order #${tail.slice(tail.lastIndexOf('-') + 1)} of customer ${tail.slice(0, 8)}`,
+    order: `Order #${ShipmentId.numberOf(shipmentId)} of customer ${tail.slice(0, 8)}`,
     products: productItems
       .map(
         ({ quantity, productId }) =>
@@ -172,7 +171,7 @@ export const sandboxWarehousePage =
   (warehouse: SandboxWarehouse): WebApiSetup =>
   (router) => {
     const shipmentIdOf = (shipmentTail: string) => {
-      const shipmentId = Urns.of('ecommerce', 'shipment', shipmentTail);
+      const shipmentId = ShipmentId.of(shipmentTail);
 
       if (!warehouse.find(shipmentId))
         throw new NotFoundError({ type: 'Shipment', id: shipmentTail });

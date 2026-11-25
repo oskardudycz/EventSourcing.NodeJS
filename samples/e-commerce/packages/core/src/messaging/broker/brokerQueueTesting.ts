@@ -127,7 +127,7 @@ export const forwardingFromStore = ({
   consumer.reactor({
     processorId: getForwarderId({ name: `to-${channel}` }),
     canHandle: ['test.external.SomethingHappened'],
-    eachMessage: forwarding,
+    eachBatch: forwarding,
   });
   const running = consumer.start();
 
@@ -199,7 +199,7 @@ export const invoke = (
   message: RecordedMessage<Something>,
   messageStore: SQLiteEventStore,
 ) =>
-  handler(message, {
+  handler([message], {
     session: { messageStore },
     observabilityScope: noopScope,
   });

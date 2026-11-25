@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "shipmentId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-70>"
+    },
+    "referenceId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-71>"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "ProductsOutOfStock",
+        "FulfillmentRejected"
+      ],
+      "x-parser-schema-id": "<anonymous-schema-72>"
+    },
+    "failedAt": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-73>"
+    }
+  },
+  "required": [
+    "shipmentId",
+    "referenceId",
+    "reason",
+    "failedAt"
+  ],
+  "additionalProperties": false,
+  "x-parser-schema-id": "<anonymous-schema-69>"
+}

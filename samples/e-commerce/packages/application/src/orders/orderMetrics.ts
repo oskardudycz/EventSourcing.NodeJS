@@ -23,7 +23,7 @@ export const registerOrderMetrics = (
   { eventStore, pongo }: { eventStore: EventStore; pongo: PongoClient },
 ) => {
   const meter = metrics.getMeter('e-commerce');
-  const revenue = meter.createHistogram('ecommerce.order.revenue', {
+  const revenue = meter.createHistogram('ecommerce.order.revenue.dollars', {
     description: 'The amounts charged for completed orders',
   });
   const leadTime = meter.createHistogram('ecommerce.order.lead.time', {
@@ -47,18 +47,22 @@ export const registerOrderMetrics = (
 
   inProgress.addCallback(async (result) =>
     result.observe(
-      await pongo
-        .db()
-        .collection(orderStatusesCollection)
-        .countDocuments({ stage: { $ne: 'Ended' } }),
+      Number(
+        await pongo
+          .db()
+          .collection(orderStatusesCollection)
+          .countDocuments({ stage: { $ne: 'Ended' } }),
+      ),
     ),
   );
   awaitingPayment.addCallback(async (result) =>
     result.observe(
-      await pongo
-        .db()
-        .collection(ordersAwaitingPaymentCollection)
-        .countDocuments({}),
+      Number(
+        await pongo
+          .db()
+          .collection(ordersAwaitingPaymentCollection)
+          .countDocuments({}),
+      ),
     ),
   );
 

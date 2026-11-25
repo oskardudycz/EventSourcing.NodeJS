@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "referenceId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-96>"
+    },
+    "productItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "x-parser-schema-id": "<anonymous-schema-99>"
+          },
+          "quantity": {
+            "type": "number",
+            "x-parser-schema-id": "<anonymous-schema-100>"
+          }
+        },
+        "required": [
+          "productId",
+          "quantity"
+        ],
+        "additionalProperties": false,
+        "x-parser-schema-id": "<anonymous-schema-98>"
+      },
+      "x-parser-schema-id": "<anonymous-schema-97>"
+    }
+  },
+  "required": [
+    "referenceId",
+    "productItems"
+  ],
+  "additionalProperties": false,
+  "x-parser-schema-id": "<anonymous-schema-95>"
+}

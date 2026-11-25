@@ -1,7 +1,0 @@
-{
-  "type": "payments.PaymentAuthorizationExpired",
-  "data": {
-    "paymentId": "urn:ecommerce:payment:customer-1-1",
-    "expiredAt": "2026-11-24T10:00:00.000Z"
-  }
-}

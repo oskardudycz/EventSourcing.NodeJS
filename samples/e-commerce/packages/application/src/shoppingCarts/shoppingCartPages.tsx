@@ -2,12 +2,22 @@ import { retryUntil } from '@e-commerce/core';
 import {
   ConcurrencyError,
   IllegalStateError,
+  ValidationError,
 } from '@event-driven-io/emmett';
 import type { WebApiSetup } from '@event-driven-io/emmett-honojs';
 import { OrderId } from '../orders/order';
+import { formField } from '../shop/formFields';
 import { customerPage } from '../shop/customer';
 import { demoProductName, demoProducts } from '../shop/demoProducts';
 import { formatPrice, ShopPage, type ShopLinks } from '../shop/shopLayout';
+import {
+  addToCartOf,
+  cartPageOf,
+  checkOutOf,
+  orderPageOf,
+  productsPageOf,
+  removeFromCartOf,
+} from '../shop/shopUrls';
 import type { CustomerShoppingCarts } from './currentCart/customerShoppingCarts';
 import type { Carts } from './getCart/carts';
 import type { ProductPriceCalculator } from './pricing/productPriceCalculator';
@@ -22,8 +32,14 @@ const messages = {
 const isMessage = (value: string | undefined): value is keyof typeof messages =>
   value !== undefined && value in messages;
 
-const cartPageOf = (customerId: string, query = '') =>
-  `/shop/customers/${customerId}/cart${query}`;
+const versionOf = (body: Record<string, unknown>): bigint => {
+  const version = formField(body, 'version');
+
+  if (!/^-?\d+$/.test(version))
+    throw new ValidationError('The cart version has to be a number');
+
+  return BigInt(version);
+};
 
 const isConflict = (error: unknown) =>
   error instanceof ConcurrencyError || error instanceof IllegalStateError;
@@ -50,7 +66,7 @@ export const shoppingCartPages =
     };
 
     router.get(
-      '/shop/customers/:customerId/products',
+      productsPageOf(':customerId'),
       customerPage(async (context, customer) => {
         const cart = await cartOf(customer.id);
 
@@ -82,11 +98,12 @@ export const shoppingCartPages =
                         }).unitPrice,
                       )}
                     </p>
-                    <form
-                      method="post"
-                      action={`/shop/customers/${customer.id}/cart/items`}
-                    >
-                      <input type="hidden" name="productId" value={product.id} />
+                    <form method="post" action={addToCartOf(customer.id)}>
+                      <input
+                        type="hidden"
+                        name="productId"
+                        value={product.id}
+                      />
                       <input type="hidden" name="quantity" value="1" />
                       <button class="button primary" type="submit">
                         Add to cart
@@ -102,7 +119,7 @@ export const shoppingCartPages =
     );
 
     router.post(
-      '/shop/customers/:customerId/cart/items',
+      addToCartOf(':customerId'),
       customerPage(async (context, customer) => {
         const body = await context.req.parseBody();
         const version = await shoppingCarts.addProductItem(
@@ -121,13 +138,16 @@ export const shoppingCartPages =
     );
 
     router.get(
-      '/shop/customers/:customerId/cart',
+      cartPageOf(':customerId'),
       customerPage(async (context, customer) => {
-        const written = Number(context.req.query('written') ?? -1);
-        const found = await retryUntil(
-          () => cartOf(customer.id),
-          (cart) => cart.version >= written,
-        );
+        const written = context.req.query('written');
+        const found =
+          written === undefined
+            ? await cartOf(customer.id)
+            : await retryUntil(
+                () => cartOf(customer.id),
+                (cart) => cart.version >= Number(written),
+              );
         const cart = found && found.lines.length > 0 ? found : null;
         const message = context.req.query('message');
 
@@ -145,10 +165,7 @@ export const shoppingCartPages =
               {cart === null ? (
                 <section class="card empty">
                   <p>Your cart is empty.</p>
-                  <a
-                    class="button primary"
-                    href={`/shop/customers/${customer.id}/products`}
-                  >
+                  <a class="button primary" href={productsPageOf(customer.id)}>
                     Browse products
                   </a>
                 </section>
@@ -176,7 +193,10 @@ export const shoppingCartPages =
                           <td class="number">
                             <form
                               method="post"
-                              action={`/shop/customers/${customer.id}/cart/items/${line.productId}/remove`}
+                              action={removeFromCartOf(
+                                customer.id,
+                                line.productId,
+                              )}
                             >
                               <input
                                 type="hidden"
@@ -201,10 +221,7 @@ export const shoppingCartPages =
                     <span>Total</span>
                     <strong>{formatPrice(cart.totalPrice)}</strong>
                   </div>
-                  <form
-                    method="post"
-                    action={`/shop/customers/${customer.id}/cart/checkout`}
-                  >
+                  <form method="post" action={checkOutOf(customer.id)}>
                     <input type="hidden" name="version" value={cart.version} />
                     <button class="button primary wide" type="submit">
                       Check out
@@ -219,7 +236,7 @@ export const shoppingCartPages =
     );
 
     router.post(
-      '/shop/customers/:customerId/cart/items/:productId/remove',
+      removeFromCartOf(':customerId', ':productId'),
       customerPage(async (context, customer) => {
         const body = await context.req.parseBody();
         const cartId = await customerShoppingCarts.currentOf(customer.id);
@@ -233,7 +250,7 @@ export const shoppingCartPages =
               productId: context.req.param('productId'),
               quantity: Number(body['quantity']),
             }),
-            BigInt(String(body['version'])),
+            versionOf(body),
           );
 
           return context.redirect(
@@ -252,7 +269,7 @@ export const shoppingCartPages =
     );
 
     router.post(
-      '/shop/customers/:customerId/cart/checkout',
+      checkOutOf(':customerId'),
       customerPage(async (context, customer) => {
         const body = await context.req.parseBody();
         const cartId = await customerShoppingCarts.currentOf(customer.id);
@@ -262,12 +279,15 @@ export const shoppingCartPages =
         try {
           const { isCheckedOut, version } = await shoppingCarts.checkOut(
             cartId,
-            BigInt(String(body['version'])),
+            versionOf(body),
           );
 
           return isCheckedOut
             ? context.redirect(
-                `/shop/customers/${customer.id}/orders/${OrderId.numberOf(OrderId.derivedFrom(cartId))}`,
+                orderPageOf(
+                  customer.id,
+                  OrderId.numberOf(OrderId.derivedFrom(cartId)),
+                ),
                 303,
               )
             : context.redirect(

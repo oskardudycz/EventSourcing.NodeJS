@@ -1,0 +1,20 @@
+{
+  "orderId": "urn:ecommerce:order:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1",
+  "customerId": "b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af",
+  "productItems": [
+    {
+      "productId": "6f1d3a52-0c5e-4b8a-9d61-1f3c2a7e9b01",
+      "quantity": 2,
+      "unitPrice": 19.99
+    }
+  ],
+  "totalPrice": 39.98,
+  "placedAt": "2026-11-24T10:00:00.000Z",
+  "paymentId": "urn:ecommerce:payment:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1",
+  "progress": "AwaitingPayment",
+  "actions": [
+    "PayNow",
+    "CancelOrder"
+  ],
+  "version": 1
+}

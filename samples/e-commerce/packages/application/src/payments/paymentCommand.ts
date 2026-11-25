@@ -37,12 +37,12 @@ export type FailPaymentCapture = Command<
 
 export type TimeOutPayment = Command<
   'payments.TimeOutPayment',
-  { paymentId: string }
+  { paymentId: string; timedOutAt: string }
 >;
 
 export type ExpirePaymentAuthorization = Command<
   'payments.ExpirePaymentAuthorization',
-  { paymentId: string }
+  { paymentId: string; expiredAt: string }
 >;
 
 export type RecordCheckoutSession = Command<

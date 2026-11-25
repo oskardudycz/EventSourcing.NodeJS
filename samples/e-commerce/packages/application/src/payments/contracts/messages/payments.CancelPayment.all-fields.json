@@ -1,0 +1,10 @@
+{
+  "headers": {
+    "message-type": "payments.CancelPayment",
+    "message-id": "message-1",
+    "message-kind": "Command"
+  },
+  "body": {
+    "paymentId": "urn:ecommerce:payment:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1"
+  }
+}

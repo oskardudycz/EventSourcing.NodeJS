@@ -23,7 +23,8 @@ export type Settings = {
   rabbitMQUrl: string;
   grafanaUrl: string;
   eventCatalogUrl: string;
-  otlpEndpoint?: string;
+  otlpEndpoint: string;
+  port: number;
 };
 
 type Environment = Record<string, string | undefined>;
@@ -69,6 +70,25 @@ const durationInMs = (
   return Number(match[1]) * (units[match[2] ?? 'ms'] ?? 1);
 };
 
+const portOf = (
+  environment: Environment,
+  name: string,
+  fallback: number,
+): number => {
+  const value = environment[name];
+
+  if (value === undefined || value === '') return fallback;
+
+  const port = Number(value);
+
+  if (!/^\d+$/.test(value) || port < 1 || port > 65_535)
+    throw new Error(
+      `${name}=${value} is not a port, use a number from 1 to 65535`,
+    );
+
+  return port;
+};
+
 const optional = (environment: Environment, name: string) => {
   const value = environment[name];
 
@@ -77,7 +97,6 @@ const optional = (environment: Environment, name: string) => {
 
 export const readSettings = (environment: Environment): Settings => {
   const sqliteFolder = optional(environment, 'SQLITE_FOLDER');
-  const otlpEndpoint = optional(environment, 'OTEL_EXPORTER_OTLP_ENDPOINT');
 
   return {
     messagingBus: oneOf(environment, 'MESSAGING_BUS', messagingBuses, 'kafka'),
@@ -125,6 +144,9 @@ export const readSettings = (environment: Environment): Settings => {
       optional(environment, 'SHOP_GRAFANA_URL') ?? 'http://localhost:3000',
     eventCatalogUrl:
       optional(environment, 'SHOP_EVENTCATALOG_URL') ?? 'http://localhost:3001',
-    ...(otlpEndpoint ? { otlpEndpoint } : {}),
+    otlpEndpoint:
+      optional(environment, 'OTEL_EXPORTER_OTLP_ENDPOINT') ??
+      'http://localhost:4318',
+    port: portOf(environment, 'PORT', 8080),
   };
 };

@@ -11,13 +11,13 @@ await start();
 
 const server = serve({
   fetch: application.fetch,
-  port: Number(process.env.PORT ?? 8080),
+  port: settings.port,
 });
 
 const shutdown = async () => {
   server.close();
   await stop();
-  await telemetry?.stop();
+  await telemetry.stop();
   process.exit(0);
 };
 

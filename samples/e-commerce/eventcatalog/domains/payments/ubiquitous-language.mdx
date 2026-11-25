@@ -1,0 +1,33 @@
+---
+dictionary:
+  - id: Authorization
+    name: Authorization
+    summary: "The provider holds the money for the shop, but doesn't charge it yet."
+    description: |
+      The customer authorizes the payment on the provider's page. The hold lasts until a deadline, after which the provider releases it.
+    icon: ShieldCheck
+  - id: Capture
+    name: Capture
+    summary: "Charging the held money."
+    description: |
+      The shop captures the payment only after the package left, so it never charges for products it didn't send.
+    icon: Banknote
+  - id: Checkout session
+    name: Checkout session
+    summary: "The provider's payment page for one payment."
+    description: |
+      The shop opens a session and sends the customer to its page. An expired session is replaced by a new one for the same payment.
+    icon: CreditCard
+  - id: Timeout
+    name: Timeout
+    summary: "A payment the customer never paid."
+    description: |
+      A payment that isn't authorized within 24 hours fails, and the provider's session is expired.
+    icon: Timer
+  - id: Reference
+    name: Reference
+    summary: "What a payment is for."
+    description: |
+      Payments doesn't know orders. Each payment carries a reference, and the caller decides what it means.
+    icon: Link
+---

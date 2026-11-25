@@ -1,17 +1,26 @@
+import { randomUUID } from 'node:crypto';
 import {
   expectError,
+  expectNothingPublished,
   expectPublished,
   expectResponse,
+  htmlContaining,
   Urns,
   type Expectation,
 } from '@e-commerce/core';
 import { Parser } from '@asyncapi/parser';
 import type { TestRequest } from '@event-driven-io/emmett-honojs';
 import { describe, expect, it } from 'vitest';
+import { buildApplication } from '../buildApplication';
+import { readSettings } from '../settings';
 import { ordersPublishedTypes, testApplication } from '../testApplication';
-import { shoppingCartCheckedOutExternal } from './shoppingCartContracts';
+import { shoppingCartCheckedOutExternal } from '../shoppingCarts/shoppingCartContracts';
 
-const given = () => testApplication({ publishedTypes: ordersPublishedTypes });
+const documentation = testApplication({
+  publishedTypes: ordersPublishedTypes,
+});
+
+const given = () => documentation;
 
 const getJson = (path: string) =>
   given()
@@ -44,6 +53,20 @@ const recordAt = (
 
   return current;
 };
+
+const errorSeverity = 0;
+
+const stringsOf = (values: unknown): string[] =>
+  Array.isArray(values)
+    ? values.filter((value): value is string => typeof value === 'string')
+    : [];
+
+const tagNamesOf = (tags: unknown): string[] =>
+  Array.isArray(tags)
+    ? tags.flatMap((tag: unknown) =>
+        isRecord(tag) && typeof tag.name === 'string' ? [tag.name] : [],
+      )
+    : [];
 
 const entriesOf = (record: Record<string, unknown>) =>
   Object.entries(record).filter(
@@ -78,7 +101,7 @@ describe('API documentation', () => {
         );
 
         expect([
-          ...new Set(operations.flatMap(({ tags }) => tags as string[])),
+          ...new Set(operations.flatMap(({ tags }) => stringsOf(tags))),
         ]).toEqual(['Shopping carts', 'Orders']);
         expect(operations).toHaveLength(9);
         for (const { method, type } of operations)
@@ -89,9 +112,56 @@ describe('API documentation', () => {
       given()
         .given()
         .when((request) => request.get('/swagger'))
-        .then((outcome) => {
-          expect(outcome.response?.body).toContain('/openapi.json');
-        }));
+        .then(expectResponse(200), htmlContaining('/openapi.json')));
+
+    it('aModuleHasItsOwnOpenApiDocument', () =>
+      getJson('/openapi/modules/orders').then(
+        expectResponse(200),
+        (outcome) => {
+          const paths = Object.keys(recordAt(documentOf(outcome), 'paths'));
+
+          expect(paths).toHaveLength(5);
+          expect(
+            paths.every((path) =>
+              path.startsWith('/customers/{customerId}/orders'),
+            ),
+          ).toBe(true);
+        },
+      ));
+
+    it('aModuleWithoutHttpEndpointsHasNoOpenApiDocument', () =>
+      given()
+        .given()
+        .when((request) => request.get('/openapi/modules/payments'))
+        .then(expectError(404)));
+
+    it('everyApiRouteOfTheApplicationIsInTheOpenApiDocumentAndTheOtherWayAround', async () => {
+      const { application, stop } = buildApplication(
+        readSettings({ EVENTSTORE_TYPE: 'sqlite', MESSAGING_BUS: 'none' }),
+        {},
+      );
+
+      try {
+        const response = await application.fetch(
+          new Request('http://localhost/openapi.json'),
+        );
+        const documented = entriesOf(
+          recordAt(await response.json(), 'paths'),
+        ).flatMap(([path, item]) =>
+          Object.keys(item).map(
+            (method) =>
+              `${method.toUpperCase()} ${path.replaceAll(/\{(\w+)\}/g, ':$1')}`,
+          ),
+        );
+        const served = application.routes
+          .filter(({ path }) => path.startsWith('/customers/'))
+          .map(({ method, path }) => `${method} ${path}`);
+
+        expect([...new Set(served)].sort()).toEqual(documented.sort());
+      } finally {
+        await stop();
+      }
+    });
   });
 
   describe('AsyncAPI', () => {
@@ -107,15 +177,14 @@ describe('API documentation', () => {
         ]);
         expect(
           [
-            ...new Set(
-              operations.flatMap(([, { tags }]) =>
-                Array.isArray(tags) ? tags.map((tag) => tag.name) : [],
-              ),
-            ),
+            ...new Set(operations.flatMap(([, { tags }]) => tagNamesOf(tags))),
           ].sort(),
         ).toEqual(['orders', 'payments', 'shipments', 'shopping_carts']);
         expect(Object.keys(recordAt(document, 'channels')).sort()).toEqual([
           'orders-internal',
+          'orders-payments-responses',
+          'orders-shipments-responses',
+          'orders-shopping_carts-external',
           'payments-internal',
           'payments-requests',
           'payments-responses',
@@ -135,15 +204,37 @@ describe('API documentation', () => {
         }
       }));
 
+    it('aMessageIsDescribedAsItsBodyOnTheBrokerWithItsTypeInTheHeaders', () =>
+      getJson('/asyncapi.json').then(expectResponse(200), (outcome) => {
+        const message = recordAt(
+          documentOf(outcome),
+          'components',
+          'messages',
+          'payments.AuthorizePayment',
+        );
+
+        expect(
+          Object.keys(recordAt(message, 'payload', 'properties')).sort(),
+        ).toEqual(['amount', 'paymentId', 'referenceId']);
+        expect(
+          recordAt(message, 'headers', 'properties', 'message-type'),
+        ).toMatchObject({ const: 'payments.AuthorizePayment' });
+        expect(
+          recordAt(message, 'headers', 'properties', 'message-kind'),
+        ).toMatchObject({ const: 'Command' });
+      }));
+
     it('asyncApiDocumentIsValid', () =>
       getJson('/asyncapi.json').then(async (outcome) => {
         const { diagnostics } = await new Parser().parse(
           JSON.stringify(documentOf(outcome)),
         );
 
-        expect(diagnostics.filter(({ severity }) => severity === 0)).toEqual(
-          [],
-        );
+        expect(
+          diagnostics.filter(
+            ({ severity }) => Number(severity) === errorSeverity,
+          ),
+        ).toEqual([]);
       }));
 
     it('aModuleHasItsOwnAsyncApiDocument', () =>
@@ -166,7 +257,8 @@ describe('API documentation', () => {
   });
 
   describe('publishing a message', () => {
-    const customerId = 'customer-1';
+    const customerId = randomUUID();
+    const shoes = randomUUID();
     const cartId = 'urn:ecommerce:cart:customer-1-1';
     const publishCheckout =
       (data: unknown): TestRequest =>
@@ -182,7 +274,7 @@ describe('API documentation', () => {
           publishCheckout({
             cartId,
             customerId,
-            productItems: [{ productId: 'shoes', quantity: 1, unitPrice: 10 }],
+            productItems: [{ productId: shoes, quantity: 1, unitPrice: 10 }],
             totalPrice: 10,
             checkedOutAt: '2026-01-01T10:00:00.000Z',
           }),
@@ -205,7 +297,7 @@ describe('API documentation', () => {
               type: 'shipments.ReserveStock',
               data: {
                 referenceId: 'urn:ecommerce:order:customer-1-1',
-                productItems: [{ productId: 'shoes', quantity: 1 }],
+                productItems: [{ productId: shoes, quantity: 1 }],
               },
             },
           ),
@@ -214,17 +306,42 @@ describe('API documentation', () => {
     it('theMessageHasToMatchItsSchema', () =>
       given().given().when(publishCheckout({ cartId })).then(expectError(400)));
 
+    it('aBodyWithoutATypeIsRejected', () =>
+      given()
+        .given()
+        .when((request) => request.post('/asyncapi/publish').send({ data: {} }))
+        .then(expectError(400), expectNothingPublished()));
+
+    it('aBodyWithoutDataIsRejected', () =>
+      given()
+        .given()
+        .when((request) =>
+          request
+            .post('/asyncapi/publish')
+            .send({ type: shoppingCartCheckedOutExternal.type }),
+        )
+        .then(expectError(400), expectNothingPublished()));
+
+    it('aMessageTypeTheApplicationDoesNotSendIsRejected', () =>
+      given()
+        .given()
+        .when((request) =>
+          request
+            .post('/asyncapi/publish')
+            .send({ type: 'orders.OrderPlaced', data: {} }),
+        )
+        .then(expectError(400), expectNothingPublished()));
+
     it('thePublishPageListsEveryMessageWithItsChannel', () =>
       given()
         .given()
         .when((request) => request.get('/asyncapi/publish'))
-        .then((outcome) => {
-          const html = outcome.response?.body ?? '';
-
-          expect(html).toContain(
+        .then(
+          expectResponse(200),
+          htmlContaining(
             'shopping_carts.external.ShoppingCartCheckedOut',
-          );
-          expect(html).toContain('payments-requests');
-        }));
+            'payments-requests',
+          ),
+        ));
   });
 });

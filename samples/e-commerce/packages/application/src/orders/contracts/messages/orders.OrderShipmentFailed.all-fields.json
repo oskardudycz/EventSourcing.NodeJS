@@ -1,0 +1,8 @@
+{
+  "type": "orders.OrderShipmentFailed",
+  "data": {
+    "orderId": "urn:ecommerce:order:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1",
+    "reason": "ProductWasOutOfStock",
+    "failedAt": "2026-11-24T10:00:00.000Z"
+  }
+}

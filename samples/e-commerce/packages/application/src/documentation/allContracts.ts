@@ -1,20 +1,19 @@
-import { bodyContracts } from './httpContracts';
 import type { MessageContract } from './messageContract';
-import { orderStoredContracts } from './orderContracts';
+import { orderStoredContracts } from '../orders/orderContracts';
 import {
   paymentRequestContracts,
   paymentResponseContracts,
   paymentStoredContracts,
-} from './paymentContracts';
+} from '../payments/paymentContracts';
 import {
   shipmentRequestContracts,
   shipmentResponseContracts,
   shipmentStoredContracts,
-} from './shipmentContracts';
+} from '../shipments/shipmentContracts';
 import {
   shoppingCartCheckedOutExternal,
   shoppingCartStoredContracts,
-} from './shoppingCartContracts';
+} from '../shoppingCarts/shoppingCartContracts';
 
 export const messageContracts: MessageContract[] = [
   ...shoppingCartStoredContracts,
@@ -27,5 +26,3 @@ export const messageContracts: MessageContract[] = [
   ...shipmentRequestContracts,
   ...shipmentResponseContracts,
 ];
-
-export { bodyContracts };

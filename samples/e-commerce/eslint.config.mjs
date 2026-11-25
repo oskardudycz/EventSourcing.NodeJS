@@ -15,6 +15,8 @@ export default [
       '**/node_modules',
       '**/*.d.ts',
       'eslint.config.mjs',
+      'eventcatalog/.astro/',
+      'eventcatalog/.eventcatalog-core/',
     ],
   },
   js.configs.recommended,
@@ -65,7 +67,12 @@ export default [
     },
   },
   {
-    files: ['**/**.spec.ts', 'packages/**/src/testing/**'],
+    files: [
+      '**/**.spec.ts',
+      'packages/**/src/testing/**',
+      'packages/application/src/shop/shopPages.tsx',
+      'packages/application/src/documentation/contractSnapshotTests.ts',
+    ],
     rules: {
       'no-restricted-imports': 'off',
     },

@@ -13,7 +13,7 @@ export const authorizationExpiryWorker = ({
     for (const paymentId of await authorizedPayments.expiredAt(now))
       await storeAsInput({
         type: 'payments.ExpirePaymentAuthorization',
-        data: { paymentId },
+        data: { paymentId, expiredAt: now.toISOString() },
       });
   },
 });

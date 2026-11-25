@@ -1,0 +1,23 @@
+---
+id: shipments-system
+name: Shipments
+version: 1.0.0
+summary: The products. It reserves the stock, asks the warehouse to send the package, and releases the stock on a cancellation.
+scope: internal
+owners:
+  - shipments
+services:
+  - id: shipments-service
+relationships:
+  - id: orders-system
+    label: "supplier → customer · Shipments: OHS + PL · Orders: ACL (order workflow)"
+entities:
+  - id: shipment
+containers:
+  - id: event-store
+  - id: projections
+---
+
+## Context diagram
+
+<ContextDiagram />

@@ -1,4 +1,8 @@
-import { removeSQLiteFolder, temporarySQLiteFolder } from '@e-commerce/core';
+import {
+  ensureSQLiteFolder,
+  removeSQLiteFolder,
+  temporarySQLiteFolder,
+} from '@e-commerce/core';
 import { createApplication, type ApplicationOptions } from './application';
 import {
   createModuleStores,
@@ -24,7 +28,12 @@ const locationOf = (
     };
 
   if (settings.sqliteFolder)
-    return { location: { type: 'sqlite', folder: settings.sqliteFolder } };
+    return {
+      location: {
+        type: 'sqlite',
+        folder: ensureSQLiteFolder(settings.sqliteFolder),
+      },
+    };
 
   const folder = temporarySQLiteFolder();
 
@@ -41,6 +50,10 @@ export const buildApplication = (
     ...dependencies,
     stores,
     internalDelivery: settings.messagingInternalDelivery,
+    links: {
+      grafanaUrl: settings.grafanaUrl,
+      eventCatalogUrl: settings.eventCatalogUrl,
+    },
     connections: {
       kafka: {
         connection: { bootstrapBrokers: settings.kafkaBootstrapServers },

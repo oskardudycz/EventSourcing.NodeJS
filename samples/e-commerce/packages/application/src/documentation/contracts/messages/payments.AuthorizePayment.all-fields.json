@@ -1,8 +1,0 @@
-{
-  "type": "payments.AuthorizePayment",
-  "data": {
-    "paymentId": "urn:ecommerce:payment:customer-1-1",
-    "referenceId": "urn:ecommerce:order:customer-1-1",
-    "amount": 39.98
-  }
-}

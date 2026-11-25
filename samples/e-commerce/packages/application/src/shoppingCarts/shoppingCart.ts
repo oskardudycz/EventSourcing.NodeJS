@@ -91,6 +91,12 @@ export type ShoppingCartCommand =
   | RemoveProductItemFromShoppingCart
   | CheckOutShoppingCart;
 
+export const shoppingCartCommandTypes: ShoppingCartCommand['type'][] = [
+  'shopping_carts.AddProductItemToShoppingCart',
+  'shopping_carts.RemoveProductItemFromShoppingCart',
+  'shopping_carts.CheckOutShoppingCart',
+];
+
 export type ShoppingCart = {
   id?: string;
   productItems: PricedProductItem[];

@@ -30,6 +30,17 @@ export type OrderStatus = {
 
 type OrderStatusDocument = Omit<OrderStatus, 'version'>;
 
+type InternalStages = 'stage' | 'payment' | 'shipment';
+
+export const publicOrderStatusOf = <
+  Status extends Pick<OrderStatus, InternalStages>,
+>({
+  stage: _stage,
+  payment: _payment,
+  shipment: _shipment,
+  ...status
+}: Status): Omit<Status, InternalStages> => status;
+
 const refreshed = (status: OrderStatusDocument): OrderStatusDocument => {
   if (status.stage === 'Ended') return status;
 

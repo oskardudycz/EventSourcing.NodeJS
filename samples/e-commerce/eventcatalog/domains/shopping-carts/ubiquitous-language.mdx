@@ -1,0 +1,27 @@
+---
+dictionary:
+  - id: Cart
+    name: Cart
+    summary: "The products a customer picked, before they buy them."
+    description: |
+      A customer has one open cart at a time. Checking it out closes it, and the next product the customer adds starts the next cart.
+    icon: ShoppingCart
+  - id: Product item
+    name: Product item
+    summary: "A product and its quantity in the cart."
+    description: |
+      Each product item keeps the unit price it had when the customer added it, so a later price change doesn't change the cart silently.
+    icon: Package
+  - id: Price change
+    name: Price change
+    summary: "A product whose price changed since the customer added it."
+    description: |
+      Checking out compares the cart's prices with the current ones. A changed price stops the checkout and records the new price, and the customer checks out again with it.
+    icon: Tag
+  - id: Checkout
+    name: Checkout
+    summary: "The customer decides to buy the cart."
+    description: |
+      Checking out closes the cart and publishes ShoppingCartCheckedOut with the products, their prices and the total: everything an order needs.
+    icon: ShoppingBag
+---

@@ -1,0 +1,273 @@
+---
+id: purchase
+name: Purchase
+version: 1.0.0
+summary: From checking out the cart to the charged payment and the sent package, with what the shop undoes when a step fails.
+steps:
+  - id: customer_checks_out
+    title: Customer checks out
+    actor:
+      name: Customer
+    next_step:
+      id: check_out
+      label: Check out
+
+  - id: check_out
+    message:
+      id: CheckOutShoppingCart
+      version: 1.0.0
+    next_step: shopping_carts
+
+  - id: shopping_carts
+    service:
+      id: shopping-carts-service
+      version: 1.0.0
+    next_step:
+      id: cart_checked_out
+      label: publishes
+
+  - id: cart_checked_out
+    message:
+      id: shopping_carts.external.ShoppingCartCheckedOut
+      version: 1.0.0
+    next_step: orders_places_the_order
+
+  - id: orders_places_the_order
+    title: Orders places the order
+    service:
+      id: orders-service
+      version: 1.0.0
+    next_steps:
+      - id: authorize_payment
+        label: asks for the money
+      - id: reserve_stock
+        label: asks for the products
+
+  - id: authorize_payment
+    message:
+      id: payments.AuthorizePayment
+      version: 1.0.0
+    next_step: payments_wait_for_the_customer
+
+  - id: payments_wait_for_the_customer
+    title: Payments waits for the customer to pay
+    service:
+      id: payments-service
+      version: 1.0.0
+    next_step:
+      id: payment_provider
+      label: Pay now
+
+  - id: payment_provider
+    title: Payment provider
+    externalSystem:
+      name: Payment provider
+      summary: Stripe or Adyen. A sandbox in the running sample.
+    next_steps:
+      - id: payment_authorized
+        label: the customer paid
+      - id: payment_failed
+        label: the customer never paid
+
+  - id: payment_authorized
+    message:
+      id: payments.external.PaymentAuthorized
+      version: 1.0.0
+    next_step: orders_confirms_the_order
+
+  - id: reserve_stock
+    message:
+      id: shipments.ReserveStock
+      version: 1.0.0
+    next_step: shipments_reserves_the_stock
+
+  - id: shipments_reserves_the_stock
+    title: Shipments reserves the stock
+    service:
+      id: shipments-service
+      version: 1.0.0
+    next_steps:
+      - id: stock_reserved
+        label: in stock
+      - id: shipment_failed
+        label: out of stock
+
+  - id: stock_reserved
+    message:
+      id: shipments.external.StockReserved
+      version: 1.0.0
+    next_step: orders_confirms_the_order
+
+  - id: orders_confirms_the_order
+    title: Orders confirms the order once it holds both
+    service:
+      id: orders-service
+      version: 1.0.0
+    next_step:
+      id: request_fulfillment
+      label: asks to send
+
+  - id: request_fulfillment
+    message:
+      id: shipments.RequestFulfillment
+      version: 1.0.0
+    next_step: fulfillment_service
+
+  - id: fulfillment_service
+    title: Fulfillment service
+    externalSystem:
+      name: Fulfillment service
+      summary: The warehouse. A sandbox in the running sample.
+    next_step:
+      id: package_was_sent
+      label: sends the package
+
+  - id: package_was_sent
+    message:
+      id: shipments.external.PackageWasSent
+      version: 1.0.0
+    next_step: orders_charges
+
+  - id: orders_charges
+    title: Orders charges only for what it sent
+    service:
+      id: orders-service
+      version: 1.0.0
+    next_step: capture_payment
+
+  - id: capture_payment
+    message:
+      id: payments.CapturePayment
+      version: 1.0.0
+    next_step: payment_captured
+
+  - id: payment_captured
+    message:
+      id: payments.external.PaymentCaptured
+      version: 1.0.0
+    next_step: order_completed
+
+  - id: order_completed
+    title: Order completed
+
+  - id: payment_failed
+    message:
+      id: payments.external.PaymentFailed
+      version: 1.0.0
+    next_step:
+      id: orders_compensates
+      label: the stock is still held
+
+  - id: shipment_failed
+    message:
+      id: shipments.external.ShipmentFailed
+      version: 1.0.0
+    next_step:
+      id: orders_compensates
+      label: the money may be held
+
+  - id: orders_compensates
+    title: Orders undoes what the other step holds
+    service:
+      id: orders-service
+      version: 1.0.0
+    next_steps:
+      - id: cancel_payment
+        label: if the payment was authorized
+      - id: release_stock
+        label: if the stock was reserved
+
+  - id: cancel_payment
+    message:
+      id: payments.CancelPayment
+      version: 1.0.0
+
+  - id: release_stock
+    message:
+      id: shipments.ReleaseStock
+      version: 1.0.0
+---
+
+The purchase is a process across the four contexts. Orders runs it: the order workflow takes the other contexts' events and the customer's commands as its inputs, decides the order's events, and sends the commands that the other contexts must run. The shop takes the money and the products on hold first, and charges only after the package left. When one step fails, the order undoes what the other one holds. The [README](https://github.com/oskardudycz/EventSourcing.NodeJS/tree/main/samples/e-commerce#cross-module-processes-with-compensation) explains each step.
+
+<NodeGraph />
+
+## The messages, in order
+
+```mermaid
+sequenceDiagram
+    participant Customer
+    participant Cart as ShoppingCarts
+    participant Order as Order workflow
+    participant Pay as Payments
+    participant Ship as Shipments
+
+    Customer->>Cart: CheckOutShoppingCart
+    Cart->>Order: ShoppingCartCheckedOut (external)
+    Note over Order: decides OrderPlaced
+
+    par payment
+        Order->>Pay: AuthorizePayment
+        Customer->>Pay: CreateCheckoutSession ("Pay now" on the order status page)
+        Pay-->>Customer: 303 to the provider's payment page
+        Note over Customer: pays on the provider's page, then comes back to the order status page
+        Pay->>Pay: the provider's webhook answers with ConfirmPaymentAuthorization
+        Pay->>Order: PaymentAuthorized (external)
+        Note over Order: decides OrderPaymentAuthorized
+    and products
+        Order->>Ship: ReserveStock
+        Ship->>Ship: the warehouse answers the stock check with ConfirmStockAvailability
+        Ship->>Order: StockReserved (external)
+        Note over Order: decides OrderStockReserved
+    end
+
+    Note over Order: the second reservation to arrive confirms the order: OrderConfirmed
+
+    Order->>Ship: RequestFulfillment
+    Ship->>Ship: the fulfillment service answers with ConfirmPackageSent
+    Ship->>Order: PackageWasSent (external, carries the carrier and the tracking number)
+    Note over Order: decides OrderPackageSent and OrderPaymentDue
+    Order->>Pay: CapturePayment
+    Pay->>Pay: the provider confirms the charge
+    Pay->>Order: PaymentCaptured (external)
+
+    Note over Order: sent and charged, so the order completes: OrderCompleted
+```
+
+## When a step fails
+
+Four kinds of failure cancel an order. In each of them, the order decides what to release:
+
+```mermaid
+sequenceDiagram
+    participant Customer
+    participant Worker as Unpaid orders worker
+    participant Order as Order workflow
+    participant Pay as Payments
+    participant Ship as Shipments
+
+    alt the products are out of stock, or the fulfillment service rejects the request
+        Ship->>Order: ShipmentFailed (external)
+        Note over Order: cancels once the payment has answered
+    else the customer cancels before the confirmation
+        Customer->>Order: CancelOrder
+    else the order is still unpaid at its dueAt, and nothing was sent
+        Worker->>Order: CloseUnpaidOrder
+    else the authorization expires between the confirmation and sending the package
+        Pay->>Order: PaymentFailed (external)
+    end
+
+    Note over Order: decides OrderCanceled, which records where the payment and the products stood
+    Order->>Pay: CancelPayment (only if the payment is still authorized)
+    Order->>Ship: ReleaseStock (only if the products are still reserved)
+```
+
+The order's state says where both participants stood, and the workflow sends only what is still held:
+
+| Status | The workflow sends |
+|---|---|
+| `paymentStatus = Authorized` | `CancelPayment` |
+| `shipmentStatus = Reserved` | `ReleaseStock` |
+| anything else | nothing, because there is nothing to release |
+
+The [README](https://github.com/oskardudycz/EventSourcing.NodeJS/tree/main/samples/e-commerce#when-a-step-fails) explains the failures, paying again and the deadlines.

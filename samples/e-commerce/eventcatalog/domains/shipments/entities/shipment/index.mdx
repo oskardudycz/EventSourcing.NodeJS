@@ -1,0 +1,58 @@
+---
+id: shipment
+name: Shipment
+version: 1.0.0
+summary: The products of one reference, from the reserved stock to the delivered package.
+identifier: id
+aggregateRoot: true
+owners:
+  - shipments
+properties:
+  - name: id
+    type: Shipment.Id
+    required: true
+    description: Derived from the reference, so a second reservation for the same reference changes nothing.
+  - name: productItems
+    type: ProductItem[]
+    required: true
+    description: The products and their quantities.
+  - name: status
+    type: string
+    required: true
+    enum:
+      - Reserved
+      - FulfillmentRequested
+      - FulfillmentRejected
+      - Sent
+      - Delivered
+      - Released
+      - ProductsOutOfStock
+---
+
+## Overview
+
+The aggregate behind the shipments module. [Shipment](https://github.com/oskardudycz/EventSourcing.NodeJS/blob/main/samples/e-commerce/packages/application/src/shipments/shipment.ts) is the state, folded from the shipment's stream, and the [shipment workflow](https://github.com/oskardudycz/EventSourcing.NodeJS/blob/main/samples/e-commerce/packages/application/src/shipments/shipmentWorkflow.ts) decides the events.
+
+<EntityPropertiesTable />
+
+## States
+
+A shipment reserves the products, asks the fulfillment service to send them, and releases them if the order is canceled first:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Reserved: ReserveStock
+    [*] --> ProductsOutOfStock: ReserveStock (not everything is available)
+    Reserved --> FulfillmentRequested: RequestFulfillment (only once the order is confirmed)
+    Reserved --> Released: ReleaseStock
+    FulfillmentRequested --> Sent: ConfirmPackageSent
+    FulfillmentRequested --> FulfillmentRejected: RejectFulfillment
+    FulfillmentRequested --> Released: ReleaseStock
+    FulfillmentRejected --> Released: ReleaseStock
+    Sent --> Delivered: DeliverPackage
+    Delivered --> [*]
+    Released --> [*]
+    ProductsOutOfStock --> [*]
+```
+
+The [README](https://github.com/oskardudycz/EventSourcing.NodeJS/tree/main/samples/e-commerce#where-the-steps-come-from) explains each step and its sources.

@@ -1,13 +1,10 @@
-import {
-  projections,
-  type Event,
-  type MessageSource,
-} from '@event-driven-io/emmett';
+import { projections, type MessageSource } from '@event-driven-io/emmett';
 import {
   getPostgreSQLEventStore,
   type PostgresEventStore,
   postgreSQLEventStoreConsumer,
   postgreSQLMessageSource,
+  type PostgresEventStoreOptions,
 } from '@event-driven-io/emmett-postgresql';
 import { pgEventStoreDriver } from '@event-driven-io/emmett-postgresql/pg';
 import {
@@ -16,6 +13,7 @@ import {
   sqliteEventStoreConsumer,
   sqliteMessageSource,
   type SQLiteEventStoreConsumerConfig,
+  type SQLiteEventStoreOptions,
 } from '@event-driven-io/emmett-sqlite';
 import { sqlite3EventStoreDriver } from '@event-driven-io/emmett-sqlite/sqlite3';
 import { dumbo } from '@event-driven-io/dumbo';
@@ -32,9 +30,6 @@ import { orderStatusesReadModel } from './orders/getOrderStatus/orderStatuses';
 import { ordersAwaitingPaymentReadModel } from './orders/unpaid/ordersAwaitingPayment';
 import { authorizedPaymentsReadModel } from './payments/authorization/authorizedPayments';
 import { pendingPaymentsReadModel } from './payments/authorization/pendingPayments';
-import { paymentSummariesReadModel } from './payments/external/paymentSummaries';
-import type { ReadModel } from './readModelProjection';
-import { shipmentSummariesReadModel } from './shipments/external/shipmentSummaries';
 import { customerShoppingCartsReadModel } from './shoppingCarts/currentCart/customerShoppingCarts';
 import { shoppingCartSummariesReadModel } from './shoppingCarts/external/shoppingCartSummaries';
 import { cartsReadModel } from './shoppingCarts/getCart/carts';
@@ -53,6 +48,7 @@ export type Database = {
   name: string;
   store: ModuleStore;
   consumer: (readingFrom?: Database) => ModuleConsumer;
+  projectingConsumer: () => ModuleConsumer | undefined;
   messageSource: () => MessageSource;
   pongo: () => PongoClient;
   close: () => Promise<void>;
@@ -70,21 +66,36 @@ export type ModuleStores = {
   | { messagingBus: 'kafka' | 'rabbitmq' }
 );
 
-type DatabaseOptions<EventType extends Event> = {
+export type ModuleProjections = {
+  sqlite: () => NonNullable<SQLiteEventStoreOptions['projections']>;
+  postgresql: () => NonNullable<PostgresEventStoreOptions['projections']>;
+};
+
+const noProjections: ModuleProjections = {
+  sqlite: () => [],
+  postgresql: () => [],
+};
+
+type DatabaseOptions = {
   name: string;
-  readModels: ReadModel<EventType>[];
+  projections: ModuleProjections;
   pulling?: Pulling;
 };
 
-const sqliteDatabaseOf = <EventType extends Event>(
+const hasAsyncProjections = (registrations: { type: string }[]) =>
+  registrations.some(({ type }) => type === 'async');
+
+const sqliteDatabaseOf = (
   folder: string,
-  { name, readModels, pulling }: DatabaseOptions<EventType>,
+  { name, projections: moduleProjections, pulling }: DatabaseOptions,
 ): Database => {
   const fileName = `${folder}/${name}.db`;
+  const registrations = moduleProjections.sqlite();
   const store = getSQLiteEventStore({
     driver: sqlite3EventStoreDriver,
     fileName,
-    projections: projections.inline(readModels.map((model) => model.sqlite())),
+    schema: { autoMigration: 'None' },
+    projections: registrations,
   });
   let pool: ReturnType<typeof newPool> | undefined;
   const newPool = () => dumbo({ driver: sqlite3DumboDriver, fileName });
@@ -97,15 +108,25 @@ const sqliteDatabaseOf = <EventType extends Event>(
     store,
     messageSource,
     consumer: (readingFrom) =>
-      sqliteEventStoreConsumer<
-        ApplicationMessage,
-        typeof sqlite3EventStoreDriver
-      >({
-        driver: sqlite3EventStoreDriver,
-        fileName,
-        source: readingFrom?.messageSource(),
-        pulling,
-      }),
+      readingFrom
+        ? sqliteEventStoreConsumer<
+            ApplicationMessage,
+            typeof sqlite3EventStoreDriver
+          >({
+            driver: sqlite3EventStoreDriver,
+            fileName,
+            schema: { autoMigration: 'None' },
+            source: readingFrom.messageSource(),
+            pulling,
+          })
+        : store.consumer<ApplicationMessage>({ pulling }),
+    projectingConsumer: () =>
+      hasAsyncProjections(registrations)
+        ? store.consumer<ApplicationMessage>({
+            pulling,
+            includeAsyncProjections: true,
+          })
+        : undefined,
     pongo: () => {
       const client = pongoClient({
         driver: sqlitePongoDriver,
@@ -123,17 +144,16 @@ const sqliteDatabaseOf = <EventType extends Event>(
   };
 };
 
-const postgreSQLDatabaseOf = <EventType extends Event>(
+const postgreSQLDatabaseOf = (
   connectionString: string,
-  { name, readModels, pulling }: DatabaseOptions<EventType>,
+  { name, projections: moduleProjections, pulling }: DatabaseOptions,
 ): Database => {
+  const registrations = moduleProjections.postgresql();
   const store = getPostgreSQLEventStore({
     driver: pgEventStoreDriver,
     connectionString,
-    schema: { databaseSchemaName: name },
-    projections: projections.inline(
-      readModels.map((model) => model.postgresql()),
-    ),
+    schema: { databaseSchemaName: name, autoMigration: 'None' },
+    projections: registrations,
   });
   let pool: ReturnType<typeof newPool> | undefined;
   const newPool = () => dumbo({ driver: pgDumboDriver, connectionString });
@@ -147,13 +167,22 @@ const postgreSQLDatabaseOf = <EventType extends Event>(
     store,
     messageSource,
     consumer: (readingFrom) =>
-      postgreSQLEventStoreConsumer<ApplicationMessage>({
-        driver: pgEventStoreDriver,
-        connectionString,
-        schema: { databaseSchemaName: name },
-        source: readingFrom?.messageSource(),
-        pulling,
-      }),
+      readingFrom
+        ? postgreSQLEventStoreConsumer<ApplicationMessage>({
+            driver: pgEventStoreDriver,
+            connectionString,
+            schema: { databaseSchemaName: name, autoMigration: 'None' },
+            source: readingFrom.messageSource(),
+            pulling,
+          })
+        : store.consumer<ApplicationMessage>({ pulling }),
+    projectingConsumer: () =>
+      hasAsyncProjections(registrations)
+        ? store.consumer<ApplicationMessage>({
+            pulling,
+            includeAsyncProjections: true,
+          })
+        : undefined,
     pongo: () => {
       const client = pongoClient({
         driver: pgPongoDriver,
@@ -172,10 +201,7 @@ const postgreSQLDatabaseOf = <EventType extends Event>(
   };
 };
 
-const databaseOf = <EventType extends Event>(
-  location: EventStoreLocation,
-  options: DatabaseOptions<EventType>,
-) =>
+const databaseOf = (location: EventStoreLocation, options: DatabaseOptions) =>
   location.type === 'sqlite'
     ? sqliteDatabaseOf(location.folder, options)
     : postgreSQLDatabaseOf(location.connectionString, options);
@@ -185,32 +211,57 @@ export const createModuleStores = (
   messagingBus: MessagingBus,
   pulling?: Pulling,
 ): ModuleStores => {
-  const database = <EventType extends Event>(
+  const database = (
     name: string,
-    readModels: ReadModel<EventType>[],
-  ) => databaseOf(location, { name, readModels, pulling });
+    moduleProjections: ModuleProjections = noProjections,
+  ) => databaseOf(location, { name, projections: moduleProjections, pulling });
   const shared = {
     location,
-    shoppingCarts: database('shopping_carts', [
-      cartsReadModel,
-      customerShoppingCartsReadModel,
-      shoppingCartSummariesReadModel,
-    ]),
-    orders: database('orders', [
-      orderStatusesReadModel,
-      customerOrdersReadModel,
-      ordersAwaitingPaymentReadModel,
-    ]),
-    payments: database('payments', [
-      paymentSummariesReadModel,
-      pendingPaymentsReadModel,
-      authorizedPaymentsReadModel,
-    ]),
-    shipments: database('shipments', [shipmentSummariesReadModel]),
+    shoppingCarts: database('shopping_carts', {
+      sqlite: () =>
+        projections.inline([
+          cartsReadModel.sqlite(),
+          customerShoppingCartsReadModel.sqlite(),
+          shoppingCartSummariesReadModel.sqlite(),
+        ]),
+      postgresql: () =>
+        projections.inline([
+          cartsReadModel.postgresql(),
+          customerShoppingCartsReadModel.postgresql(),
+          shoppingCartSummariesReadModel.postgresql(),
+        ]),
+    }),
+    orders: database('orders', {
+      sqlite: () =>
+        projections.async([
+          orderStatusesReadModel.sqlite(),
+          customerOrdersReadModel.sqlite(),
+          ordersAwaitingPaymentReadModel.sqlite(),
+        ]),
+      postgresql: () =>
+        projections.async([
+          orderStatusesReadModel.postgresql(),
+          customerOrdersReadModel.postgresql(),
+          ordersAwaitingPaymentReadModel.postgresql(),
+        ]),
+    }),
+    payments: database('payments', {
+      sqlite: () =>
+        projections.async([
+          pendingPaymentsReadModel.sqlite(),
+          authorizedPaymentsReadModel.sqlite(),
+        ]),
+      postgresql: () =>
+        projections.async([
+          pendingPaymentsReadModel.postgresql(),
+          authorizedPaymentsReadModel.postgresql(),
+        ]),
+    }),
+    shipments: database('shipments'),
   };
 
   return messagingBus === 'in-memory'
-    ? { ...shared, messagingBus, broker: database('broker', []) }
+    ? { ...shared, messagingBus, broker: database('broker') }
     : { ...shared, messagingBus };
 };
 

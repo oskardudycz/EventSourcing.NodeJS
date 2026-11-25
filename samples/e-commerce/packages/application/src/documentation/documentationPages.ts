@@ -26,7 +26,7 @@ export const asyncApiPage = () => `<!doctype html>
 
 export type PublishableMessage = {
   type: string;
-  channel: string | undefined;
+  channel: string;
   example: unknown;
 };
 

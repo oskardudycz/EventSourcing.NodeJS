@@ -18,16 +18,10 @@ import {
   type Message,
 } from '@event-driven-io/emmett';
 import pino from 'pino';
-import {
-  createApplication,
-  type ApplicationMessage,
-  type ModuleName,
-} from './application';
+import { afterAll } from 'vitest';
+import { createApplication, type ModuleName } from './application';
 import { channelStoreOf } from './channelStores';
-import {
-  conflictingEventStore,
-  type ConflictingEventStore,
-} from './conflictingEventStore';
+import { conflictingEventStore } from './conflictingEventStore';
 import {
   createModuleStores,
   storesOf,
@@ -155,21 +149,28 @@ export type TestApplicationOptions = {
   internalDelivery?: InternalDelivery;
   publishedTypes?: readonly string[];
   modules?: readonly ModuleName[];
-  signal?: AbortSignal;
 };
+
+const mentionsAnyOf =
+  (ids: readonly string[]) =>
+  (message: unknown): boolean => {
+    const text = JSON.stringify(message);
+
+    return ids.some((id) => text.includes(id));
+  };
 
 export const testApplication = ({
   messagingBus = 'in-memory',
   internalDelivery,
   publishedTypes = shoppingCartsPublishedTypes,
   modules = ['shopping_carts', 'orders'],
-  signal,
 }: TestApplicationOptions = {}) => {
   const prices = changeablePrices();
-  const clock = manualClock(new Date('2026-01-01T10:00:00.000Z'));
+  const clock = manualClock(new Date());
   const provider = paymentProvider();
   const stock = warehouse();
   const logLines: string[] = [];
+  let firstLogLineOfTheTest = 0;
   const logger = pino(
     { level: 'info' },
     {
@@ -178,146 +179,174 @@ export const testApplication = ({
       },
     },
   );
-  let folder = '';
-  let stores: ModuleStores | undefined;
-  let eventStoreInUse: ConflictingEventStore | undefined;
 
-  const given = ApiE2ESpecification.for({
-    getEventStore: () => {
-      folder = temporarySQLiteFolder();
-      stores = createModuleStores({ type: 'sqlite', folder }, messagingBus, {
+  const build = () => {
+    const folder = temporarySQLiteFolder();
+    const stores = createModuleStores(
+      { type: 'sqlite', folder },
+      messagingBus,
+      {
         pullingFrequencyInMs: 20,
         batchSize: 1,
+      },
+    );
+    const shoppingCartsStore = conflictingEventStore(
+      stores.shoppingCarts.store,
+    );
+    const shoppingCarts = WrapEventStore(shoppingCartsStore);
+    const orders = recordingAppends(stores.orders);
+    const payments = recordingAppends(stores.payments);
+    const shipments = recordingAppends(stores.shipments);
+    const broker =
+      stores.messagingBus === 'in-memory'
+        ? recordingAppends(stores.broker)
+        : undefined;
+    const recordedStores: ModuleStores = {
+      ...stores,
+      shoppingCarts: { ...stores.shoppingCarts, store: shoppingCarts },
+      orders: orders.database,
+      payments: payments.database,
+      shipments: shipments.database,
+      ...(broker ? { broker: broker.database } : {}),
+    };
+    const appended = [orders, payments, shipments, broker].filter(
+      (recording) => recording !== undefined,
+    );
+    const application = createApplication(
+      {
+        stores: recordedStores,
+        internalDelivery,
+        prices,
+        now: clock.now,
+        messagingRetry: { minTimeout: 5, maxTimeout: 50 },
+        paymentGateway: provider,
+        warehouse: stock,
+        logger,
+      },
+      { modules },
+    );
+    const published: PublishedMessage[] = [];
+    const publishedCounts = new Map<string, number>();
+    const collectPublished = () => {
+      appended.forEach(({ appendedEvents }, index) => {
+        for (const [streamName, [, events]] of appendedEvents) {
+          if (!streamName.startsWith(channelStreamPrefix)) continue;
+
+          const countKey = `${index}:${streamName}`;
+
+          published.push(
+            ...events
+              .slice(publishedCounts.get(countKey) ?? 0)
+              .filter(({ type }) => publishedTypes.includes(type))
+              .map((event) => ({
+                type: event.type,
+                data: event.data,
+                metadata: { key: keyOf(event) },
+              })),
+          );
+          publishedCounts.set(countKey, events.length);
+        }
       });
-      eventStoreInUse = conflictingEventStore(stores.shoppingCarts.store);
-      return eventStoreInUse;
-    },
-    getApplication: (eventStore) => {
-      const modulesStores = stores;
 
-      if (!modulesStores) throw new Error('The module stores are not created');
+      return published;
+    };
+    const sources = storesOf(stores).map((database) =>
+      database.messageSource(),
+    );
+    const storesEnd = async () => {
+      const ends: (string | null)[] = [];
 
-      const orders = recordingAppends(modulesStores.orders);
-      const payments = recordingAppends(modulesStores.payments);
-      const shipments = recordingAppends(modulesStores.shipments);
-      const broker =
-        modulesStores.messagingBus === 'in-memory'
-          ? recordingAppends(modulesStores.broker)
-          : undefined;
-      const recordedStores: ModuleStores = {
-        ...modulesStores,
-        shoppingCarts: { ...modulesStores.shoppingCarts, store: eventStore },
-        orders: orders.database,
-        payments: payments.database,
-        shipments: shipments.database,
-        ...(broker ? { broker: broker.database } : {}),
-      };
-      const appended = [orders, payments, shipments, broker].filter(
-        (recording) => recording !== undefined,
+      for (const source of sources)
+        ends.push(await source.readLastMessageCheckpoint());
+
+      return ends.join();
+    };
+    const caughtUp = () =>
+      Promise.all(
+        application.consumers.map((consumer) =>
+          consumer.whenCaughtUp({ timeout: 10_000 }),
+        ),
       );
-      const application = createApplication(
-        {
-          stores: recordedStores,
-          internalDelivery,
-          prices,
-          now: clock.now,
-          messagingRetry: { minTimeout: 5, maxTimeout: 50 },
-          paymentGateway: provider,
-          warehouse: stock,
-          logger,
-        },
-        { modules },
-      );
-      const published: PublishedMessage[] = [];
-      const publishedCounts = new Map<string, number>();
-      const collectPublished = () => {
-        appended.forEach(({ appendedEvents }, index) => {
-          for (const [streamName, [, events]] of appendedEvents) {
-            if (!streamName.startsWith(channelStreamPrefix)) continue;
 
-            const countKey = `${index}:${streamName}`;
+    return {
+      application,
+      shoppingCartsStore,
+      appendedEvents: shoppingCarts.appendedEvents,
+      started: application.start(),
+      stop: () => application.stop().then(() => removeSQLiteFolder(folder)),
+      sendMessages: async (messages: readonly Message[]) => {
+        for (const message of messages)
+          await deliverFromOutsideWorld(recordedStores, message);
+      },
+      catchUp: async () => {
+        const endBefore = await storesEnd();
 
-            published.push(
-              ...events
-                .slice(publishedCounts.get(countKey) ?? 0)
-                .filter(({ type }) => publishedTypes.includes(type))
-                .map((event) => ({
-                  type: event.type,
-                  data: event.data,
-                  metadata: { key: keyOf(event) },
-                })),
-            );
-            publishedCounts.set(countKey, events.length);
-          }
-        });
+        await caughtUp();
+        await caughtUp();
 
-        return published;
-      };
-      const sources = storesOf(modulesStores).map((database) =>
-        database.messageSource(),
-      );
-      const storesEnd = async () =>
-        (
-          await Promise.all(
-            sources.map((source) => source.readLastMessageCheckpoint()),
-          )
-        ).join();
-      let stopping: Promise<void> | undefined;
-      const stop = () => {
-        stopping ??= application
-          .stop()
-          .then(() => removeSQLiteFolder(folder));
+        return (await storesEnd()) !== endBefore;
+      },
+      published: collectPublished,
+    };
+  };
 
-        return stopping;
-      };
+  let shared: ReturnType<typeof build> | undefined;
+  const running = () => (shared ??= build());
 
-      signal?.addEventListener('abort', () => void stop());
-
-      return {
-        fetch: application.fetch,
-        start: application.start,
-        sendMessages: async (messages) => {
-          for (const message of messages)
-            await deliverFromOutsideWorld(recordedStores, message);
-        },
-        workers: application.workers,
-        stop,
-        catchUp: async () => {
-          if (signal?.aborted) return false;
-
-          const endBefore = await storesEnd();
-          const caughtUp = () =>
-            Promise.all(
-              application.consumers.map((consumer) =>
-                consumer.whenCaughtUp({ timeout: 10_000 }),
-              ),
-            );
-
-          await caughtUp();
-          await caughtUp();
-
-          return (await storesEnd()) !== endBefore && !signal?.aborted;
-        },
-        clock,
-        published: collectPublished,
-      };
-    },
+  afterAll(async () => {
+    await shared?.stop();
   });
+
+  const specificationAbout = (isAbout?: (message: unknown) => boolean) => {
+    const application = running();
+
+    return ApiE2ESpecification.for({
+      fetch: application.application.fetch,
+      start: async () => {
+        await application.started;
+        firstLogLineOfTheTest = logLines.length;
+      },
+      sendMessages: application.sendMessages,
+      workers: application.application.workers,
+      catchUp: application.catchUp,
+      clock,
+      published: application.published,
+      appendedEvents: application.appendedEvents,
+      ...(isAbout ? { isAbout } : {}),
+    });
+  };
+
+  const given: ApiE2ESpecification = (...steps) =>
+    specificationAbout()(...steps);
 
   const priceOf = (productId: string, unitPrice: number): ActionStep =>
     action(() => prices.setPriceOf(productId, unitPrice));
 
   const appendsConflict = (count: number): ActionStep =>
-    action(() => eventStoreInUse?.conflictsOnTheNextAppends(count));
+    action(() => running().shoppingCartsStore.conflictsOnTheNextAppends(count));
 
-  return {
-    given,
+  const logs = (isAbout: (line: string) => boolean = () => true) =>
+    logLines.slice(firstLogLineOfTheTest).filter(isAbout);
+
+  const helpers = {
     prices,
     clock,
     priceOf,
     appendsConflict,
     paymentProvider: provider,
     warehouse: stock,
-    logs: () => logLines,
+  };
+
+  return {
+    ...helpers,
+    given,
+    logs: () => logs(),
+    about: (...ids: string[]) => {
+      const isAbout = mentionsAnyOf(ids);
+      const about: ApiE2ESpecification = (...steps) =>
+        specificationAbout(isAbout)(...steps);
+
+      return { ...helpers, given: about, logs: () => logs(isAbout) };
+    },
   };
 };

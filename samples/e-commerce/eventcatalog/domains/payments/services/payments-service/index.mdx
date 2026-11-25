@@ -1,0 +1,67 @@
+---
+id: payments-service
+name: Payments
+version: 1.0.0
+summary: The messages the payments module sends and receives.
+badges:
+  - content: payments
+    textColor: blue
+    backgroundColor: blue
+sends:
+  - id: payments.external.PaymentAuthorized
+    version: 1.0.0
+    to:
+      - id: payments-responses
+  - id: payments.external.PaymentCaptured
+    version: 1.0.0
+    to:
+      - id: payments-responses
+  - id: payments.external.PaymentFailed
+    version: 1.0.0
+    to:
+      - id: payments-responses
+  - id: payments.TimeOutPayment
+    version: 1.0.0
+    to:
+      - id: payments-internal
+  - id: payments.ExpirePaymentAuthorization
+    version: 1.0.0
+    to:
+      - id: payments-internal
+receives:
+  - id: payments.AuthorizePayment
+    version: 1.0.0
+    from:
+      - id: payments-requests
+  - id: payments.CapturePayment
+    version: 1.0.0
+    from:
+      - id: payments-requests
+  - id: payments.CancelPayment
+    version: 1.0.0
+    from:
+      - id: payments-requests
+  - id: payments.TimeOutPayment
+    version: 1.0.0
+    from:
+      - id: payments-internal
+  - id: payments.ExpirePaymentAuthorization
+    version: 1.0.0
+    from:
+      - id: payments-internal
+schemaPath: asyncapi-payments.json
+specifications:
+  asyncapiPath: asyncapi-payments.json
+owners:
+  - payments
+writesTo:
+  - id: event-store
+  - id: projections
+readsFrom:
+  - id: event-store
+  - id: projections
+---
+The messages the payments module sends and receives.
+
+## Architecture diagram
+<NodeGraph />

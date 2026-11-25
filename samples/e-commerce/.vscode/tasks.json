@@ -13,6 +13,73 @@
       "detail": "tsc -b --watch"
     },
     {
+      "type": "npm",
+      "script": "build",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "build (full)",
+      "detail": "lint and tsc -b"
+    },
+    {
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "label": "test",
+      "detail": "unit, integration, API and end-to-end tests"
+    },
+    {
+      "type": "npm",
+      "script": "test:eventcatalog",
+      "group": "test",
+      "problemMatcher": [],
+      "label": "test (EventCatalog)"
+    },
+    {
+      "label": "start Docker Compose services",
+      "type": "shell",
+      "command": "docker compose --profile sample up -d --wait",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "start",
+      "problemMatcher": [],
+      "isBackground": true,
+      "label": "start the application",
+      "detail": "needs the Docker Compose services"
+    },
+    {
+      "label": "stop Docker Compose services",
+      "type": "shell",
+      "command": "docker compose --profile all down",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "fix",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "format"
+    },
+    {
+      "type": "npm",
+      "script": "lint",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "verify format"
+    },
+    {
+      "type": "npm",
+      "script": "build:ts:clean",
+      "group": "build",
+      "problemMatcher": [],
+      "label": "clean"
+    },
+    {
       "label": "Install All Recommended Extensions",
       "type": "shell",
       "windows": {

@@ -1,8 +1,0 @@
-{
-  "type": "shipments.ConfirmPackageSent",
-  "data": {
-    "shipmentId": "urn:ecommerce:shipment:customer-1-1",
-    "carrier": "Sandbox Express",
-    "trackingNumber": "SB-1"
-  }
-}

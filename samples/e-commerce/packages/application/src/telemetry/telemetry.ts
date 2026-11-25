@@ -48,7 +48,5 @@ export const startTelemetry = (
   };
 };
 
-export const startTelemetryFor = (settings: { otlpEndpoint?: string }) =>
-  settings.otlpEndpoint
-    ? startTelemetry(exportingOverOtlp(settings.otlpEndpoint))
-    : undefined;
+export const startTelemetryFor = ({ otlpEndpoint }: { otlpEndpoint: string }) =>
+  startTelemetry(exportingOverOtlp(otlpEndpoint));

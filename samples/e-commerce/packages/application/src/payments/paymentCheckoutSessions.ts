@@ -1,3 +1,4 @@
+import { retryUntil } from '@e-commerce/core';
 import {
   EmmettError,
   IllegalStateError,
@@ -54,9 +55,12 @@ export const paymentCheckoutSessions = ({
       cancelUrl,
     }: CreateCheckoutSession): Promise<CheckoutSession> => {
       const createdAt = now();
-      const payment = await paymentOf(paymentId);
+      const payment = await retryUntil(
+        () => paymentOf(paymentId),
+        (found) => found.status !== undefined,
+      );
 
-      if (payment.status === undefined || payment.referenceId !== referenceId)
+      if (payment?.status === undefined || payment.referenceId !== referenceId)
         throw new NotFoundError({ type: 'Payment', id: paymentId });
 
       if (payment.status !== 'Pending')

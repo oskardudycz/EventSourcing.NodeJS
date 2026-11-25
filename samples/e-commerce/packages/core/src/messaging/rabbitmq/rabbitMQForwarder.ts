@@ -1,3 +1,4 @@
+import { messagingMetrics } from '../messagingMetrics';
 import type {
   AnyRecordedMessageMetadata,
   Message,
@@ -11,13 +12,9 @@ import {
   brokerHeadersOf,
   type BrokerMessageHeaders,
 } from '../broker/brokerMessage';
+import { isInternalChannel, type ForwardedMessage } from '../channels';
 import {
-  isInAChannelStream,
-  isInternalChannel,
-  type ForwardedMessage,
-} from '../channels';
-import {
-  skippedAsAlreadyInAChannelStream,
+  routedBatchOf,
   type ForwardingAsItIsOptions,
   type ForwardingHandler,
   type ForwardingOptions,
@@ -140,40 +137,43 @@ export function forwardToRabbitMQ({
   | ForwardingToRabbitMQOptions<Message, Message>
   | ForwardingToRabbitMQAsItIsOptions<Message>): ForwardingHandler<Message> {
   const router = messageRouter(routes, channels);
+  const metrics = messagingMetrics();
 
-  return (message, context) =>
-    isInAChannelStream(message)
-      ? skippedAsAlreadyInAChannelStream()
-      : retryInHandler(
+  return (messages, context) =>
+    retryInHandler(
       async () => {
-        const routed = (await map(message, context)).map(
-          (forwarded: ForwardedMessage) => ({
-            forwarded,
-            route: router.declaredRouteFor(forwarded),
-          }),
-        );
+        const routed = await routedBatchOf(messages, context, map, router);
 
-        for (const { forwarded, route } of routed)
-          try {
-            await publishConfirmed(
-              await confirmChannel.current(),
-              {
-                exchange: route.channel,
-                key: route.key,
-                headers: brokerHeadersOf(forwarded, {
-                  traceId:
-                    forwarded.metadata.traceId ?? message.metadata.traceId,
-                  spanId: forwarded.metadata.spanId ?? message.metadata.spanId,
-                }),
-                body: brokerBodyOf(forwarded.data),
-                mandatory: isMandatory(route.channel),
-              },
-              publishTimeoutInMs,
-            );
-          } catch (error) {
-            confirmChannel.reset();
-            throw error;
-          }
+        if (routed.length === 0) return;
+
+        const channel = await confirmChannel.current();
+
+        try {
+          await Promise.all(
+            routed.map(({ source, forwarded, channel: exchange, key }) =>
+              publishConfirmed(
+                channel,
+                {
+                  exchange,
+                  key,
+                  headers: brokerHeadersOf(forwarded, {
+                    traceId:
+                      forwarded.metadata.traceId ?? source.metadata.traceId,
+                    spanId: forwarded.metadata.spanId ?? source.metadata.spanId,
+                  }),
+                  body: brokerBodyOf(forwarded.data),
+                  mandatory: isMandatory(exchange),
+                },
+                publishTimeoutInMs,
+              ),
+            ),
+          );
+        } catch (error) {
+          confirmChannel.reset();
+          throw error;
+        }
+        for (const { forwarded, channel: exchange } of routed)
+          metrics.published(exchange, forwarded.type);
       },
       { retry, signal },
     );

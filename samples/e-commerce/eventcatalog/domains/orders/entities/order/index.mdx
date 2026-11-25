@@ -1,0 +1,92 @@
+---
+id: order
+name: Order
+version: 1.0.0
+summary: The purchase. It holds both participants' progress and decides each next step, and what to undo when a step fails.
+identifier: id
+aggregateRoot: true
+owners:
+  - orders
+properties:
+  - name: id
+    type: Order.Id
+    required: true
+    description: Derived from the cart's id, so a checkout places one order only, such as `urn:ecommerce:order:{customerId}-1`.
+  - name: totalPrice
+    type: double
+    required: true
+    description: The total of the checked-out cart.
+  - name: status
+    type: string
+    required: true
+    enum:
+      - Opened
+      - Confirmed
+      - Completed
+      - ClosedUnpaid
+      - Canceled
+    description: Opened until both holds are taken, confirmed until the money is collected.
+  - name: payment
+    type: PaymentProgress
+    required: true
+    description: How far the payment got. The order needs it to know what to undo.
+  - name: shipment
+    type: ShipmentProgress
+    required: true
+    description: How far the shipment got.
+  - name: paymentId
+    type: Payment.Id
+    required: true
+    description: The current payment. A retried payment gets a new id.
+    references: payment
+    relationType: paidBy
+    referencesIdentifier: id
+  - name: shipmentId
+    type: Shipment.Id
+    description: The shipment, once the stock is reserved.
+    references: shipment
+    relationType: shippedBy
+    referencesIdentifier: id
+  - name: paymentAttempts
+    type: int
+    required: true
+    description: How many payments the customer started. The next payment's id uses it.
+  - name: dueAt
+    type: OffsetDateTime
+    description: When the customer must have paid after a failed payment.
+  - name: shipmentFailureReason
+    type: CancellationReason
+    description: Why the products can't ship, such as `ProductWasOutOfStock`.
+---
+
+## Overview
+
+The aggregate behind the orders module. [Order](https://github.com/oskardudycz/EventSourcing.NodeJS/blob/main/samples/e-commerce/packages/application/src/orders/order.ts) is the state, folded from the order's stream, and the [order workflow](https://github.com/oskardudycz/EventSourcing.NodeJS/blob/main/samples/e-commerce/packages/application/src/orders/orderWorkflow.ts) decides the events. The order keeps only the other contexts' ids: their models stay in their contexts.
+
+<EntityPropertiesTable />
+
+## States
+
+The order holds one status for each participant:
+
+| Participant | Statuses |
+|---|---|
+| payment | `Pending` → `Authorized` → `Captured` (only after `Sent`), or `Failed`; paying again goes from `Failed` to `Retrying` and then `Authorized`, before the confirmation or after `Sent` |
+| shipment | `Pending` → `Reserved` → `Sent`, or `Failed` (out of stock), or `Rejected` (the products are still reserved) |
+
+and goes through these statuses itself:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Opened: ShoppingCartCheckedOut
+    Opened --> Confirmed: both reservations recorded
+    Opened --> Canceled: a shipment failure, CancelOrder, or CloseUnpaidOrder at dueAt
+    Confirmed --> Completed: package sent and customer charged
+    Confirmed --> Canceled: the fulfillment service rejects the request, or the authorization expires before the package is sent
+    Confirmed --> ClosedUnpaid: CloseUnpaidOrder at dueAt, after the package was sent
+    Completed --> [*]
+    Canceled --> [*]
+    ClosedUnpaid --> [*]
+```
+
+The [README](https://github.com/oskardudycz/EventSourcing.NodeJS/tree/main/samples/e-commerce#the-order-decides) explains why the order decides.

@@ -1,0 +1,51 @@
+---
+id: shipments-service
+name: Shipments
+version: 1.0.0
+summary: The messages the shipments module sends and receives.
+badges:
+  - content: shipments
+    textColor: blue
+    backgroundColor: blue
+sends:
+  - id: shipments.external.StockReserved
+    version: 1.0.0
+    to:
+      - id: shipments-responses
+  - id: shipments.external.PackageWasSent
+    version: 1.0.0
+    to:
+      - id: shipments-responses
+  - id: shipments.external.ShipmentFailed
+    version: 1.0.0
+    to:
+      - id: shipments-responses
+receives:
+  - id: shipments.ReserveStock
+    version: 1.0.0
+    from:
+      - id: shipments-requests
+  - id: shipments.RequestFulfillment
+    version: 1.0.0
+    from:
+      - id: shipments-requests
+  - id: shipments.ReleaseStock
+    version: 1.0.0
+    from:
+      - id: shipments-requests
+schemaPath: asyncapi-shipments.json
+specifications:
+  asyncapiPath: asyncapi-shipments.json
+owners:
+  - shipments
+writesTo:
+  - id: event-store
+  - id: projections
+readsFrom:
+  - id: event-store
+  - id: projections
+---
+The messages the shipments module sends and receives.
+
+## Architecture diagram
+<NodeGraph />

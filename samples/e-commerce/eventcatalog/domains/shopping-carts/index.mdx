@@ -1,0 +1,14 @@
+---
+id: shopping-carts
+name: Shopping carts
+version: 1.0.0
+services:
+  - id: shopping-carts-service
+    version: 1.0.0
+---
+## Overview
+
+The customer's cart: the products they picked, at the price each had when they added it. Checking out publishes `ShoppingCartCheckedOut`, the published language that the other contexts read. See the [context map](/docs/domains/e-commerce/1.0.0#context-map) for how it works with the others.
+
+## Architecture diagram
+<NodeGraph />

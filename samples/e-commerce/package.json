@@ -34,7 +34,12 @@
     "test:int:watch": "vitest \".int.spec\"",
     "test:api:watch": "vitest \".api.spec\"",
     "test:e2e:watch": "vitest \".e2e.spec\"",
-    "test:file": "vitest run --no-file-parallelism --reporter=verbose"
+    "test:file": "vitest run --no-file-parallelism --reporter=verbose",
+    "start": "npm --workspace packages/application start",
+    "test:eventcatalog": "npm --prefix eventcatalog run build && npm --prefix eventcatalog test",
+    "screenshots": "run-s screenshots:howto screenshots:eventcatalog",
+    "screenshots:howto": "SCREENSHOTS_DIR=assets/howto vitest run \"InBrowser.e2e.spec\"",
+    "screenshots:eventcatalog": "npm --prefix eventcatalog run build && SCREENSHOTS_DIR=../assets/howto npm --prefix eventcatalog test"
   },
   "repository": {
     "type": "git",
@@ -49,6 +54,9 @@
     "url": "https://github.com/oskardudycz/EventSourcing.NodeJS/issues"
   },
   "homepage": "https://github.com/oskardudycz/EventSourcing.NodeJS#readme",
+  "dependencies": {
+    "tsx": "^4.23.15"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.19.2",
@@ -61,7 +69,6 @@
     "globals": "^17.14.0",
     "npm-run-all2": "^9.0.4",
     "prettier": "^3.10.1",
-    "tsx": "^4.23.15",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vitest": "^5.1.0"
   },

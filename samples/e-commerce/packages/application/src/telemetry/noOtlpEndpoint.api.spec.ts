@@ -1,7 +1,7 @@
 import { expectResponse } from '@e-commerce/core';
+import { diag, DiagLogLevel } from '@opentelemetry/api';
 import { createServer } from 'node:net';
-import { setTimeout as sleep } from 'node:timers/promises';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { addProductItem } from '../shoppingCarts/shoppingCartRequests';
 import { testApplication } from '../testApplication';
 import { exportingOverOtlp, startTelemetry } from './telemetry';
@@ -21,37 +21,45 @@ const closedPort = () =>
   });
 
 describe('telemetry without an OTLP endpoint', () => {
-  const logged: string[] = [];
+  const application = testApplication();
+  const diagnostics: string[] = [];
   let stop: (() => Promise<void>) | undefined;
+
   beforeEach(async () => {
-    logged.length = 0;
-    const port = await closedPort();
+    diagnostics.length = 0;
+    const record = (...messages: unknown[]) => {
+      diagnostics.push(messages.map(String).join(' '));
+    };
+    diag.setLogger(
+      {
+        error: record,
+        warn: record,
+        info: record,
+        debug: record,
+        verbose: record,
+      },
+      DiagLogLevel.WARN,
+    );
     ({ stop } = startTelemetry(
-      exportingOverOtlp(`http://localhost:${port}`, 100),
+      exportingOverOtlp(`http://localhost:${await closedPort()}`, 600_000),
     ));
-    for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const)
-      vi.spyOn(console, method).mockImplementation((...args: unknown[]) => {
-        logged.push(args.join(' '));
-      });
-    for (const stream of [process.stdout, process.stderr])
-      vi.spyOn(stream, 'write').mockImplementation((chunk: unknown) => {
-        logged.push(String(chunk));
-        return true;
-      });
   });
 
   afterEach(async () => {
     await stop?.();
-    vi.restoreAllMocks();
+    diag.disable();
   });
 
   it('noOtlpEndpointLogsNoConnectionErrors', () =>
-    testApplication()
+    application
       .given()
-      .when(addProductItem('customer-1', { productId: 'shoes', quantity: 1 }))
-      .then(expectResponse(200), async () => {
-        await sleep(1500);
-
-        expect(logged).toEqual([]);
+      .when(
+        addProductItem(crypto.randomUUID(), {
+          productId: crypto.randomUUID(),
+          quantity: 1,
+        }),
+      )
+      .then(expectResponse(200), () => {
+        expect(diagnostics).toEqual([]);
       }));
 });

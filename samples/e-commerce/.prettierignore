@@ -1,2 +1,11 @@
 **/dist/
 **/lib/
+**/node_modules/
+eventcatalog/.astro/
+eventcatalog/.eventcatalog-core/
+eventcatalog/specs/
+eventcatalog/domains/
+eventcatalog/channels/
+eventcatalog/test-results/
+eventcatalog/playwright-report/
+packages/application/src/**/contracts/

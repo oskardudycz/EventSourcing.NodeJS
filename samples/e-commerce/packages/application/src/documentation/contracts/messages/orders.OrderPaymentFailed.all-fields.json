@@ -1,8 +1,0 @@
-{
-  "type": "orders.OrderPaymentFailed",
-  "data": {
-    "orderId": "urn:ecommerce:order:customer-1-1",
-    "failedAt": "2026-11-24T10:00:00.000Z",
-    "dueAt": "2026-11-25T10:00:00.000Z"
-  }
-}

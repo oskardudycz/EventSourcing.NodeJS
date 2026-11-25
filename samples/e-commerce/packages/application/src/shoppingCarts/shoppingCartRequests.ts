@@ -1,4 +1,12 @@
 import type { TestRequest } from '@event-driven-io/emmett-honojs';
+import type { SignedInCustomer } from '../shop/customer';
+import type { ShopRequests } from '../shop/shopRequests';
+import {
+  addToCartOf,
+  cartPageOf,
+  checkOutOf,
+  removeFromCartOf,
+} from '../shop/shopUrls';
 
 const cartPath = (customerId: string) =>
   `/customers/${customerId}/shopping-carts/current`;
@@ -37,3 +45,31 @@ export const getCart =
       ? call
       : call.set({ 'If-None-Match': seenETag });
   };
+
+export const cartPagesOf = ({ getPage, postForm }: ShopRequests) => ({
+  addToCartOnPage: (
+    customer: SignedInCustomer,
+    productId: string,
+    quantity = 1,
+  ) =>
+    postForm(
+      addToCartOf(customer.id),
+      { productId, quantity: String(quantity) },
+      { as: customer },
+    ),
+  cartPage: (customer: SignedInCustomer, query = '') =>
+    getPage(cartPageOf(customer.id, query), { as: customer }),
+  removeFromCartOnPage: (
+    customer: SignedInCustomer,
+    productId: string,
+    quantity: number,
+    version: string,
+  ) =>
+    postForm(
+      removeFromCartOf(customer.id, productId),
+      { quantity: String(quantity), version },
+      { as: customer },
+    ),
+  checkOutOnPage: (customer: SignedInCustomer, version: string) =>
+    postForm(checkOutOf(customer.id), { version }, { as: customer }),
+});

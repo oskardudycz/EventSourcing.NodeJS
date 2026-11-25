@@ -1,0 +1,1457 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "E-commerce orders",
+    "version": "1.0.0",
+    "description": "The messages the orders module sends and receives.",
+    "tags": [
+      {
+        "name": "orders"
+      }
+    ]
+  },
+  "servers": {
+    "kafka": {
+      "host": "localhost:9092",
+      "protocol": "kafka",
+      "description": "Channels are Kafka topics. The body is the message data, the type is in the message-type header"
+    },
+    "rabbitmq": {
+      "host": "localhost:5672",
+      "protocol": "amqp",
+      "description": "Channels are RabbitMQ exchanges. The body is the message data, the type is in the message-type header"
+    },
+    "in-memory": {
+      "host": "in-memory",
+      "protocol": "in-memory",
+      "description": "Channels are streams of the event store"
+    }
+  },
+  "channels": {
+    "shopping_carts-external": {
+      "address": "shopping_carts-external",
+      "description": "Channel shopping_carts-external",
+      "messages": {
+        "shopping_carts.external.ShoppingCartCheckedOut": {
+          "$ref": "#/components/messages/shopping_carts.external.ShoppingCartCheckedOut"
+        }
+      }
+    },
+    "payments-requests": {
+      "address": "payments-requests",
+      "description": "Channel payments-requests",
+      "messages": {
+        "payments.AuthorizePayment": {
+          "$ref": "#/components/messages/payments.AuthorizePayment"
+        },
+        "payments.CapturePayment": {
+          "$ref": "#/components/messages/payments.CapturePayment"
+        },
+        "payments.CancelPayment": {
+          "$ref": "#/components/messages/payments.CancelPayment"
+        }
+      }
+    },
+    "payments-responses": {
+      "address": "payments-responses",
+      "description": "Channel payments-responses",
+      "messages": {
+        "payments.external.PaymentAuthorized": {
+          "$ref": "#/components/messages/payments.external.PaymentAuthorized"
+        },
+        "payments.external.PaymentCaptured": {
+          "$ref": "#/components/messages/payments.external.PaymentCaptured"
+        },
+        "payments.external.PaymentFailed": {
+          "$ref": "#/components/messages/payments.external.PaymentFailed"
+        }
+      }
+    },
+    "shipments-requests": {
+      "address": "shipments-requests",
+      "description": "Channel shipments-requests",
+      "messages": {
+        "shipments.ReserveStock": {
+          "$ref": "#/components/messages/shipments.ReserveStock"
+        },
+        "shipments.RequestFulfillment": {
+          "$ref": "#/components/messages/shipments.RequestFulfillment"
+        },
+        "shipments.ReleaseStock": {
+          "$ref": "#/components/messages/shipments.ReleaseStock"
+        }
+      }
+    },
+    "shipments-responses": {
+      "address": "shipments-responses",
+      "description": "Channel shipments-responses",
+      "messages": {
+        "shipments.external.StockReserved": {
+          "$ref": "#/components/messages/shipments.external.StockReserved"
+        },
+        "shipments.external.PackageWasSent": {
+          "$ref": "#/components/messages/shipments.external.PackageWasSent"
+        },
+        "shipments.external.ShipmentFailed": {
+          "$ref": "#/components/messages/shipments.external.ShipmentFailed"
+        }
+      }
+    },
+    "orders-internal": {
+      "address": "orders-internal",
+      "description": "Channel orders-internal",
+      "messages": {
+        "orders.CloseUnpaidOrder": {
+          "$ref": "#/components/messages/orders.CloseUnpaidOrder"
+        }
+      }
+    }
+  },
+  "operations": {
+    "orders.receive.shopping_carts.external.ShoppingCartCheckedOut": {
+      "action": "receive",
+      "title": "orders receives shopping_carts.external.ShoppingCartCheckedOut",
+      "summary": "A customer checked out a shopping cart. Orders places an order from it.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shopping_carts-external"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shopping_carts-external/messages/shopping_carts.external.ShoppingCartCheckedOut"
+        }
+      ]
+    },
+    "orders.send.payments.AuthorizePayment": {
+      "action": "send",
+      "title": "orders sends payments.AuthorizePayment",
+      "summary": "Ask payments to authorize a payment for a reference, such as an order.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-requests/messages/payments.AuthorizePayment"
+        }
+      ]
+    },
+    "orders.send.payments.CapturePayment": {
+      "action": "send",
+      "title": "orders sends payments.CapturePayment",
+      "summary": "Ask payments to capture an authorized payment.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-requests/messages/payments.CapturePayment"
+        }
+      ]
+    },
+    "orders.send.payments.CancelPayment": {
+      "action": "send",
+      "title": "orders sends payments.CancelPayment",
+      "summary": "Ask payments to cancel a payment.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-requests/messages/payments.CancelPayment"
+        }
+      ]
+    },
+    "orders.receive.payments.external.PaymentAuthorized": {
+      "action": "receive",
+      "title": "orders receives payments.external.PaymentAuthorized",
+      "summary": "The payment of a reference was authorized.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-responses/messages/payments.external.PaymentAuthorized"
+        }
+      ]
+    },
+    "orders.receive.payments.external.PaymentCaptured": {
+      "action": "receive",
+      "title": "orders receives payments.external.PaymentCaptured",
+      "summary": "The payment of a reference was captured.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-responses/messages/payments.external.PaymentCaptured"
+        }
+      ]
+    },
+    "orders.receive.payments.external.PaymentFailed": {
+      "action": "receive",
+      "title": "orders receives payments.external.PaymentFailed",
+      "summary": "The payment of a reference failed.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/payments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/payments-responses/messages/payments.external.PaymentFailed"
+        }
+      ]
+    },
+    "orders.send.shipments.ReserveStock": {
+      "action": "send",
+      "title": "orders sends shipments.ReserveStock",
+      "summary": "Ask shipments to reserve the stock for a reference, such as an order.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-requests/messages/shipments.ReserveStock"
+        }
+      ]
+    },
+    "orders.send.shipments.RequestFulfillment": {
+      "action": "send",
+      "title": "orders sends shipments.RequestFulfillment",
+      "summary": "Ask shipments to send the package.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-requests/messages/shipments.RequestFulfillment"
+        }
+      ]
+    },
+    "orders.send.shipments.ReleaseStock": {
+      "action": "send",
+      "title": "orders sends shipments.ReleaseStock",
+      "summary": "Ask shipments to release the reserved stock.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-requests"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-requests/messages/shipments.ReleaseStock"
+        }
+      ]
+    },
+    "orders.receive.shipments.external.StockReserved": {
+      "action": "receive",
+      "title": "orders receives shipments.external.StockReserved",
+      "summary": "The stock of a reference was reserved.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-responses/messages/shipments.external.StockReserved"
+        }
+      ]
+    },
+    "orders.receive.shipments.external.PackageWasSent": {
+      "action": "receive",
+      "title": "orders receives shipments.external.PackageWasSent",
+      "summary": "The package of a reference was sent.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-responses/messages/shipments.external.PackageWasSent"
+        }
+      ]
+    },
+    "orders.receive.shipments.external.ShipmentFailed": {
+      "action": "receive",
+      "title": "orders receives shipments.external.ShipmentFailed",
+      "summary": "The shipment of a reference failed.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/shipments-responses"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/shipments-responses/messages/shipments.external.ShipmentFailed"
+        }
+      ]
+    },
+    "orders.send.orders.CloseUnpaidOrder": {
+      "action": "send",
+      "title": "orders sends orders.CloseUnpaidOrder",
+      "summary": "Close an order that stayed unpaid.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/orders-internal"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/orders-internal/messages/orders.CloseUnpaidOrder"
+        }
+      ]
+    },
+    "orders.receive.orders.CloseUnpaidOrder": {
+      "action": "receive",
+      "title": "orders receives orders.CloseUnpaidOrder",
+      "summary": "Close an order that stayed unpaid.",
+      "tags": [
+        {
+          "name": "orders"
+        }
+      ],
+      "channel": {
+        "$ref": "#/channels/orders-internal"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/orders-internal/messages/orders.CloseUnpaidOrder"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "shopping_carts.external.ShoppingCartCheckedOut": {
+        "name": "shopping_carts.external.ShoppingCartCheckedOut",
+        "title": "shopping_carts.external.ShoppingCartCheckedOut",
+        "summary": "A customer checked out a shopping cart. Orders places an order from it.",
+        "description": "A customer checked out a shopping cart. Orders places an order from it.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shopping_carts.external.ShoppingCartCheckedOut"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "cartId": {
+              "type": "string"
+            },
+            "customerId": {
+              "type": "string"
+            },
+            "productItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "productId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  },
+                  "unitPrice": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "productId",
+                  "quantity",
+                  "unitPrice"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "totalPrice": {
+              "type": "number"
+            },
+            "checkedOutAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "cartId",
+            "customerId",
+            "productItems",
+            "totalPrice",
+            "checkedOutAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shopping_carts.external.ShoppingCartCheckedOut",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "cartId": "urn:ecommerce:cart:customer-1-1",
+              "customerId": "customer-1",
+              "productItems": [
+                {
+                  "productId": "product-1",
+                  "quantity": 2,
+                  "unitPrice": 19.99
+                }
+              ],
+              "totalPrice": 39.98,
+              "checkedOutAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "payments.AuthorizePayment": {
+        "name": "payments.AuthorizePayment",
+        "title": "payments.AuthorizePayment",
+        "summary": "Ask payments to authorize a payment for a reference, such as an order.",
+        "description": "Ask payments to authorize a payment for a reference, such as an order.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.AuthorizePayment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            },
+            "referenceId": {
+              "type": "string"
+            },
+            "amount": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "paymentId",
+            "referenceId",
+            "amount"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.AuthorizePayment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "paymentId": "urn:ecommerce:payment:customer-1-1",
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "amount": 39.98
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "payments.CapturePayment": {
+        "name": "payments.CapturePayment",
+        "title": "payments.CapturePayment",
+        "summary": "Ask payments to capture an authorized payment.",
+        "description": "Ask payments to capture an authorized payment.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.CapturePayment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "paymentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.CapturePayment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "paymentId": "urn:ecommerce:payment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "payments.CancelPayment": {
+        "name": "payments.CancelPayment",
+        "title": "payments.CancelPayment",
+        "summary": "Ask payments to cancel a payment.",
+        "description": "Ask payments to cancel a payment.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.CancelPayment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "paymentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "paymentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.CancelPayment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "paymentId": "urn:ecommerce:payment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "payments.external.PaymentAuthorized": {
+        "name": "payments.external.PaymentAuthorized",
+        "title": "payments.external.PaymentAuthorized",
+        "summary": "The payment of a reference was authorized.",
+        "description": "The payment of a reference was authorized.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.external.PaymentAuthorized"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "referenceId": {
+              "type": "string"
+            },
+            "paymentId": {
+              "type": "string"
+            },
+            "authorizedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "referenceId",
+            "paymentId",
+            "authorizedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.external.PaymentAuthorized",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "paymentId": "urn:ecommerce:payment:customer-1-1",
+              "authorizedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "payments.external.PaymentCaptured": {
+        "name": "payments.external.PaymentCaptured",
+        "title": "payments.external.PaymentCaptured",
+        "summary": "The payment of a reference was captured.",
+        "description": "The payment of a reference was captured.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.external.PaymentCaptured"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "referenceId": {
+              "type": "string"
+            },
+            "paymentId": {
+              "type": "string"
+            },
+            "capturedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "referenceId",
+            "paymentId",
+            "capturedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.external.PaymentCaptured",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "paymentId": "urn:ecommerce:payment:customer-1-1",
+              "capturedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "payments.external.PaymentFailed": {
+        "name": "payments.external.PaymentFailed",
+        "title": "payments.external.PaymentFailed",
+        "summary": "The payment of a reference failed.",
+        "description": "The payment of a reference failed.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "payments.external.PaymentFailed"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "referenceId": {
+              "type": "string"
+            },
+            "paymentId": {
+              "type": "string"
+            },
+            "failedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "referenceId",
+            "paymentId",
+            "failedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "payments.external.PaymentFailed",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "paymentId": "urn:ecommerce:payment:customer-1-1",
+              "failedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "shipments.ReserveStock": {
+        "name": "shipments.ReserveStock",
+        "title": "shipments.ReserveStock",
+        "summary": "Ask shipments to reserve the stock for a reference, such as an order.",
+        "description": "Ask shipments to reserve the stock for a reference, such as an order.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.ReserveStock"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "referenceId": {
+              "type": "string"
+            },
+            "productItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "productId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "productId",
+                  "quantity"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "referenceId",
+            "productItems"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.ReserveStock",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "productItems": [
+                {
+                  "productId": "product-1",
+                  "quantity": 2
+                }
+              ]
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "shipments.RequestFulfillment": {
+        "name": "shipments.RequestFulfillment",
+        "title": "shipments.RequestFulfillment",
+        "summary": "Ask shipments to send the package.",
+        "description": "Ask shipments to send the package.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.RequestFulfillment"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.RequestFulfillment",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "shipments.ReleaseStock": {
+        "name": "shipments.ReleaseStock",
+        "title": "shipments.ReleaseStock",
+        "summary": "Ask shipments to release the reserved stock.",
+        "description": "Ask shipments to release the reserved stock.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.ReleaseStock"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.ReleaseStock",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      },
+      "shipments.external.StockReserved": {
+        "name": "shipments.external.StockReserved",
+        "title": "shipments.external.StockReserved",
+        "summary": "The stock of a reference was reserved.",
+        "description": "The stock of a reference was reserved.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.external.StockReserved"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            },
+            "referenceId": {
+              "type": "string"
+            },
+            "reservedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId",
+            "referenceId",
+            "reservedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.external.StockReserved",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "reservedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "shipments.external.PackageWasSent": {
+        "name": "shipments.external.PackageWasSent",
+        "title": "shipments.external.PackageWasSent",
+        "summary": "The package of a reference was sent.",
+        "description": "The package of a reference was sent.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.external.PackageWasSent"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            },
+            "referenceId": {
+              "type": "string"
+            },
+            "carrier": {
+              "type": "string"
+            },
+            "trackingNumber": {
+              "type": "string"
+            },
+            "sentAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId",
+            "referenceId",
+            "carrier",
+            "trackingNumber",
+            "sentAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.external.PackageWasSent",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "carrier": "Sandbox Express",
+              "trackingNumber": "SB-1",
+              "sentAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "shipments.external.ShipmentFailed": {
+        "name": "shipments.external.ShipmentFailed",
+        "title": "shipments.external.ShipmentFailed",
+        "summary": "The shipment of a reference failed.",
+        "description": "The shipment of a reference failed.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "shipments.external.ShipmentFailed"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Event"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "shipmentId": {
+              "type": "string"
+            },
+            "referenceId": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "ProductsOutOfStock",
+                "FulfillmentRejected"
+              ]
+            },
+            "failedAt": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "shipmentId",
+            "referenceId",
+            "reason",
+            "failedAt"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "shipments.external.ShipmentFailed",
+              "message-kind": "Event",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "shipmentId": "urn:ecommerce:shipment:customer-1-1",
+              "referenceId": "urn:ecommerce:order:customer-1-1",
+              "reason": "ProductsOutOfStock",
+              "failedAt": "2026-11-24T10:00:00.000Z"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "event"
+      },
+      "orders.CloseUnpaidOrder": {
+        "name": "orders.CloseUnpaidOrder",
+        "title": "orders.CloseUnpaidOrder",
+        "summary": "Close an order that stayed unpaid.",
+        "description": "Close an order that stayed unpaid.",
+        "contentType": "application/json",
+        "headers": {
+          "type": "object",
+          "properties": {
+            "message-type": {
+              "type": "string",
+              "const": "orders.CloseUnpaidOrder"
+            },
+            "message-kind": {
+              "type": "string",
+              "const": "Command"
+            },
+            "message-id": {
+              "type": "string"
+            },
+            "correlation-id": {
+              "type": "string"
+            },
+            "causation-id": {
+              "type": "string"
+            },
+            "trace-id": {
+              "type": "string"
+            },
+            "span-id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message-type",
+            "message-id"
+          ]
+        },
+        "payload": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "orderId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "orderId"
+          ],
+          "additionalProperties": false
+        },
+        "examples": [
+          {
+            "headers": {
+              "message-type": "orders.CloseUnpaidOrder",
+              "message-kind": "Command",
+              "message-id": "message-1"
+            },
+            "payload": {
+              "orderId": "urn:ecommerce:order:customer-1-1"
+            }
+          }
+        ],
+        "x-eventcatalog-message-type": "command"
+      }
+    }
+  }
+}

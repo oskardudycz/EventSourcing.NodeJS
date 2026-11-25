@@ -50,5 +50,17 @@ jobs:
       - name: Build
         run: npm run build:ts
 
+      - name: Install Playwright browser for the browser tests
+        run: npx --workspace packages/application playwright install --with-deps chromium
+
       - name: Run tests
         run: npm test
+
+      - name: Install EventCatalog dependencies
+        run: npm --prefix eventcatalog ci
+
+      - name: Install Playwright browser for EventCatalog
+        run: npx --prefix eventcatalog playwright install --with-deps chromium
+
+      - name: Build EventCatalog and run its tests
+        run: npm run test:eventcatalog

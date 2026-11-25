@@ -15,6 +15,7 @@
     "node_modules/": true,
     "**/node_modules/": true,
     "**/dist/": true,
+    "**/lib/": true,
     "**/*.tsbuildinfo": true
   },
   "files.eol": "\n",
@@ -25,7 +26,7 @@
     }
   ],
   "debug.javascript.terminalOptions": {
-    "nodeVersionHint": 20
+    "nodeVersionHint": 24
   },
   "nodejs-testing.include": ["./**/**"],
   "nodejs-testing.extensions": [

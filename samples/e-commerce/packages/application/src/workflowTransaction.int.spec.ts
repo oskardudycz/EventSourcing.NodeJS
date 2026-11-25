@@ -44,11 +44,12 @@ const aFailedOutputHandlerRunsAgainAfterRestartAndTheInputIsDecidedOnce = (
       ShoppingCartId.of(crypto.randomUUID(), 1),
     );
     const shipmentId = ShipmentId.derivedFrom(referenceId);
+    const productId = crypto.randomUUID();
     const reserve: ReserveStock = {
       type: 'shipments.ReserveStock',
       data: {
         referenceId,
-        productItems: [{ productId: crypto.randomUUID(), quantity: 1 }],
+        productItems: [{ productId, quantity: 1 }],
       },
     };
     const decisionsOf = async (type: string) =>
@@ -58,7 +59,7 @@ const aFailedOutputHandlerRunsAgainAfterRestartAndTheInputIsDecidedOnce = (
         )
       ).events.filter((event) => event.type === type);
     const stock = warehouse();
-    await stock.stockCheckFails(1).run();
+    await stock.stockCheckOfFails(productId, 1).run();
     await shipmentWorkflowInbox(now)(stores.shipments.store, reserve);
 
     const failing = shipmentsConsumerOn(stores, stock);

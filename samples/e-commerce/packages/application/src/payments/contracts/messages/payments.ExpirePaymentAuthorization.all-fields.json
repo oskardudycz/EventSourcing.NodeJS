@@ -1,0 +1,11 @@
+{
+  "headers": {
+    "message-type": "payments.ExpirePaymentAuthorization",
+    "message-id": "message-1",
+    "message-kind": "Command"
+  },
+  "body": {
+    "paymentId": "urn:ecommerce:payment:b7313efd-c0b2-3d42-bdf9-3eb4c7a5c2af-1",
+    "expiredAt": "2026-11-25T10:00:00.000Z"
+  }
+}

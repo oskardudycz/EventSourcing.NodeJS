@@ -163,6 +163,7 @@ export const rabbitMQConsumer = ({
             catchUpTimeoutInMs,
           );
           onStopped = resolve;
+          if (stoppedSignal?.aborted) resolve();
           stoppedSignal?.addEventListener('abort', onStopped);
         }),
       ]);

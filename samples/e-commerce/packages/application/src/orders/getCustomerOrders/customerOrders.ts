@@ -11,10 +11,12 @@ export type CustomerOrder = {
   placedAt: string;
   totalPrice: number;
   progress: OrderProgress;
-  shipped: boolean;
+  version: number;
 };
 
-type CustomerOrderDocument = Omit<CustomerOrder, 'orderId'>;
+type CustomerOrderDocument = Omit<CustomerOrder, 'orderId' | 'version'> & {
+  shipped: boolean;
+};
 
 const evolveOrder = (
   current: CustomerOrderDocument | null,
@@ -84,9 +86,10 @@ export const customerOrders = (pongo: PongoClient) => {
   return {
     of: async (customerId: string): Promise<CustomerOrder[]> =>
       (await collection.find({ customerId }, { sort: { placedAt: -1 } })).map(
-        ({ _id, _version: _ignored, ...order }) => ({
+        ({ _id, _version, shipped: _shipped, ...order }) => ({
           orderId: _id,
           ...order,
+          version: Number(_version),
         }),
       ),
   };

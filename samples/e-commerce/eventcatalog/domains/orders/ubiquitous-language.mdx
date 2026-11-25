@@ -1,0 +1,39 @@
+---
+dictionary:
+  - id: Order
+    name: Order
+    summary: "The purchase that a checkout starts."
+    description: |
+      The order decides each step of the purchase and what to undo when a step fails. Its id comes from the cart's id, so one checkout places one order.
+    icon: ClipboardList
+  - id: Hold
+    name: Hold
+    summary: "Something set aside for the order, but not taken yet."
+    description: |
+      An order takes two holds: the money, as an authorized payment, and the products, as reserved stock. The order is confirmed once it has both.
+    icon: Lock
+  - id: Confirmation
+    name: Confirmation
+    summary: "Both holds are taken, so the order can be sent."
+    description: |
+      A confirmed order asks the warehouse to send the package. Until then, nothing leaves the warehouse and nobody is charged.
+    icon: CircleCheck
+  - id: Compensation
+    name: Compensation
+    summary: "Undoing a hold after another step failed."
+    description: |
+      When the stock runs out, the order cancels the payment hold. When the payment fails for good, it releases the stock. The order knows which holds it has, so it undoes only those.
+    icon: Undo2
+  - id: Workflow
+    name: Workflow
+    summary: "The order's process across the other contexts."
+    description: |
+      The order workflow takes the other contexts' events and the customer's commands as its inputs, decides the order's events from its state, and sends the commands that the other contexts must run.
+    icon: Workflow
+  - id: Payment terms
+    name: Payment terms
+    summary: "How long the customer has to pay after a failed capture."
+    description: |
+      When the money can't be collected after the package left, the customer has 14 days to pay again. After that, the order is closed unpaid.
+    icon: CalendarClock
+---

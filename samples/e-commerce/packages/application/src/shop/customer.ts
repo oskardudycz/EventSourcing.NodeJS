@@ -1,26 +1,15 @@
-import { createHash } from 'node:crypto';
+import { v5 } from 'uuid';
 import type { Context } from 'hono';
 import { getCookie } from 'hono/cookie';
 
+import { loginPage } from './shopUrls';
+
 export const customerCookie = 'customer';
 
-export const customerIdOf = (name: string): string => {
-  const bytes = createHash('md5')
-    .update(name.trim().toLowerCase())
-    .digest()
-    .subarray(0, 16);
-  bytes[6] = (bytes[6]! & 0x0f) | 0x30;
-  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
-  const hex = bytes.toString('hex');
+const customerNamespace = '6f1d3a52-0c5e-4b8a-9d61-1f3c2a7e9b00';
 
-  return [
-    hex.slice(0, 8),
-    hex.slice(8, 12),
-    hex.slice(12, 16),
-    hex.slice(16, 20),
-    hex.slice(20),
-  ].join('-');
-};
+export const customerIdOf = (name: string): string =>
+  v5(name.trim().toLowerCase(), customerNamespace);
 
 export type SignedInCustomer = { name: string; id: string };
 
@@ -44,5 +33,5 @@ export const customerPage =
 
     return customer && customer.id === context.req.param('customerId')
       ? handle(context, customer)
-      : context.redirect('/shop/login', 303);
+      : context.redirect(loginPage, 303);
   };

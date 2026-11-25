@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "shipmentId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-56>"
+    },
+    "referenceId": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-57>"
+    },
+    "carrier": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-58>"
+    },
+    "trackingNumber": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-59>"
+    },
+    "sentAt": {
+      "type": "string",
+      "x-parser-schema-id": "<anonymous-schema-60>"
+    }
+  },
+  "required": [
+    "shipmentId",
+    "referenceId",
+    "carrier",
+    "trackingNumber",
+    "sentAt"
+  ],
+  "additionalProperties": false,
+  "x-parser-schema-id": "<anonymous-schema-55>"
+}

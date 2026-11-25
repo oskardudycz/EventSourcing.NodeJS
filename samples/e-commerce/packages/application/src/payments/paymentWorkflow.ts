@@ -128,7 +128,8 @@ const decidePayment = (
             },
           ];
     case 'payments.TimeOutPayment':
-      return payment.status !== 'Pending' || isBefore(now, payment.timesOutAt)
+      return payment.status !== 'Pending' ||
+        isBefore(input.data.timedOutAt, payment.timesOutAt)
         ? []
         : [
             {
@@ -138,7 +139,7 @@ const decidePayment = (
           ];
     case 'payments.ExpirePaymentAuthorization':
       return payment.status !== 'Authorized' ||
-        isBefore(now, payment.captureBefore)
+        isBefore(input.data.expiredAt, payment.captureBefore)
         ? []
         : [
             {
@@ -149,6 +150,11 @@ const decidePayment = (
   }
 };
 
+export const evolvePaymentWorkflow = (
+  payment: Payment,
+  message: { type: string },
+): Payment => (isPaymentEvent(message) ? evolve(payment, message) : payment);
+
 export const paymentWorkflow = ({
   now,
 }: {
@@ -156,8 +162,7 @@ export const paymentWorkflow = ({
 }): Workflow<PaymentWorkflowInput, Payment, PaymentWorkflowOutput> => ({
   name: paymentWorkflowName,
   decide: (input, payment) => decidePayment(input, payment, now()),
-  evolve: (payment, output) =>
-    isPaymentEvent(output) ? evolve(payment, output) : payment,
+  evolve: evolvePaymentWorkflow,
   initialState: initialPayment,
 });
 

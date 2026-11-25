@@ -1,0 +1,43 @@
+---
+id: shopping-carts-service
+name: Shopping carts
+version: 1.0.0
+summary: The messages the shopping_carts module sends and receives.
+badges:
+  - content: Shopping carts
+    textColor: blue
+    backgroundColor: blue
+sends:
+  - id: shopping_carts.external.ShoppingCartCheckedOut
+    version: 1.0.0
+    to:
+      - id: shopping_carts-external
+receives:
+  - id: getCurrentShoppingCart
+    version: 1.0.0
+  - id: addProductItem
+    version: 1.0.0
+  - id: removeProductItem
+    version: 1.0.0
+  - id: checkOutShoppingCart
+    version: 1.0.0
+schemaPath: asyncapi-shopping_carts.json
+specifications:
+  - type: openapi
+    path: openapi-shopping_carts.json
+    name: E-commerce
+  - type: asyncapi
+    path: asyncapi-shopping_carts.json
+owners:
+  - shopping-carts
+writesTo:
+  - id: event-store
+  - id: projections
+readsFrom:
+  - id: event-store
+  - id: projections
+---
+Shopping carts and orders of the e-commerce sample.  
+
+## Architecture diagram
+<NodeGraph />

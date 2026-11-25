@@ -1,0 +1,101 @@
+---
+id: orders-service
+name: Orders
+version: 1.0.0
+summary: The messages the orders module sends and receives.
+badges:
+  - content: Orders
+    textColor: blue
+    backgroundColor: blue
+sends:
+  - id: payments.AuthorizePayment
+    version: 1.0.0
+    to:
+      - id: payments-requests
+  - id: payments.CapturePayment
+    version: 1.0.0
+    to:
+      - id: payments-requests
+  - id: payments.CancelPayment
+    version: 1.0.0
+    to:
+      - id: payments-requests
+  - id: shipments.ReserveStock
+    version: 1.0.0
+    to:
+      - id: shipments-requests
+  - id: shipments.RequestFulfillment
+    version: 1.0.0
+    to:
+      - id: shipments-requests
+  - id: shipments.ReleaseStock
+    version: 1.0.0
+    to:
+      - id: shipments-requests
+  - id: orders.CloseUnpaidOrder
+    version: 1.0.0
+    to:
+      - id: orders-internal
+receives:
+  - id: getCustomerOrders
+    version: 1.0.0
+  - id: getOrderStatus
+    version: 1.0.0
+  - id: cancelOrder
+    version: 1.0.0
+  - id: retryOrderPayment
+    version: 1.0.0
+  - id: createCheckoutSession
+    version: 1.0.0
+  - id: shopping_carts.external.ShoppingCartCheckedOut
+    version: 1.0.0
+    from:
+      - id: shopping_carts-external
+  - id: payments.external.PaymentAuthorized
+    version: 1.0.0
+    from:
+      - id: payments-responses
+  - id: payments.external.PaymentCaptured
+    version: 1.0.0
+    from:
+      - id: payments-responses
+  - id: payments.external.PaymentFailed
+    version: 1.0.0
+    from:
+      - id: payments-responses
+  - id: shipments.external.StockReserved
+    version: 1.0.0
+    from:
+      - id: shipments-responses
+  - id: shipments.external.PackageWasSent
+    version: 1.0.0
+    from:
+      - id: shipments-responses
+  - id: shipments.external.ShipmentFailed
+    version: 1.0.0
+    from:
+      - id: shipments-responses
+  - id: orders.CloseUnpaidOrder
+    version: 1.0.0
+    from:
+      - id: orders-internal
+schemaPath: asyncapi-orders.json
+specifications:
+  - type: openapi
+    path: openapi-orders.json
+    name: E-commerce
+  - type: asyncapi
+    path: asyncapi-orders.json
+owners:
+  - orders
+writesTo:
+  - id: event-store
+  - id: projections
+readsFrom:
+  - id: event-store
+  - id: projections
+---
+Shopping carts and orders of the e-commerce sample.  
+
+## Architecture diagram
+<NodeGraph />

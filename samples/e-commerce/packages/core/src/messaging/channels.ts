@@ -1,3 +1,4 @@
+import { messagingMetrics } from './messagingMetrics';
 import {
   MessageProcessor,
   type AnyCommand,
@@ -42,38 +43,46 @@ export type ForwardedMessageMetadata = {
   causationId?: string;
   traceId?: string;
   spanId?: string;
+  forwardedAt?: string;
 };
 
 export type ForwardedMessage<MessageType extends Message = Message> =
   CombineMetadata<MessageType, ForwardedMessageMetadata>;
-
-const appendMessageToStream = <MessageType extends Message>(
-  store: EventStore,
-  streamName: string,
-  { type, data, kind, metadata }: ForwardedMessage<MessageType>,
-  extraMetadata: Record<string, unknown> = {},
-) =>
-  store.appendToStream(streamName, [
-    {
-      type,
-      data,
-      kind,
-      metadata: {
-        messageId: metadata.messageId,
-        correlationId: metadata.correlationId,
-        causationId: metadata.causationId,
-        ...extraMetadata,
-      },
-      // Emmett's appendToStream takes only events, while a stream can carry commands too; Emmett casts the same way when it stores workflow outputs.
-    } as Event,
-  ]);
 
 export const appendToChannelStream = <MessageType extends Message>(
   store: EventStore,
   streamName: string,
   message: ForwardedMessage<MessageType>,
   key: string | undefined,
-) => appendMessageToStream(store, streamName, message, { key });
+) => appendMessagesToChannelStream(store, streamName, [{ message, key }]);
+
+export const appendMessagesToChannelStream = <MessageType extends Message>(
+  store: EventStore,
+  streamName: string,
+  messages: {
+    message: ForwardedMessage<MessageType>;
+    key: string | undefined;
+  }[],
+) =>
+  store.appendToStream(
+    streamName,
+    messages.map(
+      ({ message: { type, data, kind, metadata }, key }) =>
+        ({
+          type,
+          data,
+          kind,
+          metadata: {
+            messageId: metadata.messageId,
+            correlationId: metadata.correlationId,
+            causationId: metadata.causationId,
+            forwardedAt: metadata.forwardedAt,
+            key,
+          },
+          // Emmett's appendToStream takes only events, while a stream can carry commands too; Emmett casts the same way when it stores workflow outputs.
+        }) as Event,
+    ),
+  );
 
 export type ChannelSubscription = {
   channel: string;
@@ -101,6 +110,11 @@ export const isDeliveredThrough = (
 ): boolean =>
   message.metadata.streamName === channelStreamName(channel) &&
   matchesBindingKey(bindingKey, message.metadata.key ?? '');
+
+const forwardedAtOf = (metadata: object): string | undefined =>
+  'forwardedAt' in metadata && typeof metadata.forwardedAt === 'string'
+    ? metadata.forwardedAt
+    : undefined;
 
 export const fromChannel =
   <
@@ -136,20 +150,25 @@ export const fromChannel =
         reason: `Not delivered through channel '${channel}'`,
       });
 
+    const metrics = messagingMetrics();
+
     try {
       await retryInHandler(async () => handle(message, context), {
         retry: { ...defaultChannelReaderRetry, ...retry },
         signal,
       });
+      metrics.handled(queue, message.type, forwardedAtOf(message.metadata));
     } catch (error) {
       if (signal?.aborted) throw error;
 
+      metrics.failed(queue, message.type);
       await appendToChannelStream(
         context.session.messageStore,
         deadLetterStreamName(queue),
         message,
         message.metadata.key,
       );
+      metrics.deadLettered(queue, message.type);
     }
   };
 

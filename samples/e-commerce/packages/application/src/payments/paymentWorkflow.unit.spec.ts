@@ -205,7 +205,10 @@ describe('payment workflow', () => {
     atTime(timesOutAt);
 
     return given([requested])
-      .when({ type: 'payments.TimeOutPayment', data: { paymentId } })
+      .when({
+        type: 'payments.TimeOutPayment',
+        data: { paymentId, timedOutAt: timesOutAt },
+      })
       .then([
         {
           type: 'payments.PaymentTimedOut',
@@ -218,7 +221,38 @@ describe('payment workflow', () => {
     atTime(at(1));
 
     return given([requested])
-      .when({ type: 'payments.TimeOutPayment', data: { paymentId } })
+      .when({
+        type: 'payments.TimeOutPayment',
+        data: { paymentId, timedOutAt: at(1) },
+      })
+      .thenNothingHappened();
+  });
+
+  it('aWorkflowStampsItsDecisionsWithItsClockNotTheSendersClock', () => {
+    atTime(timesOutAt);
+
+    return given([requested])
+      .when({
+        type: 'payments.TimeOutPayment',
+        data: { paymentId, timedOutAt: timesOutAt },
+        metadata: { now: new Date(now) },
+      })
+      .then([
+        {
+          type: 'payments.PaymentTimedOut',
+          data: { paymentId, timedOutAt: timesOutAt },
+        },
+      ]);
+  });
+
+  it('aTimeOutIsDecidedOnTheTimeTheWorkerSawNotWhenItArrives', () => {
+    atTime(timesOutAt);
+
+    return given([requested])
+      .when({
+        type: 'payments.TimeOutPayment',
+        data: { paymentId, timedOutAt: at(1) },
+      })
       .thenNothingHappened();
   });
 
@@ -226,7 +260,10 @@ describe('payment workflow', () => {
     atTime(timesOutAt);
 
     return given([requested, authorized])
-      .when({ type: 'payments.TimeOutPayment', data: { paymentId } })
+      .when({
+        type: 'payments.TimeOutPayment',
+        data: { paymentId, timedOutAt: timesOutAt },
+      })
       .thenNothingHappened();
   });
 
@@ -236,7 +273,7 @@ describe('payment workflow', () => {
     return given([requested, authorized])
       .when({
         type: 'payments.ExpirePaymentAuthorization',
-        data: { paymentId },
+        data: { paymentId, expiredAt: captureBefore },
       })
       .then([
         {
@@ -252,7 +289,7 @@ describe('payment workflow', () => {
     return given([requested, authorized])
       .when({
         type: 'payments.ExpirePaymentAuthorization',
-        data: { paymentId },
+        data: { paymentId, expiredAt: at(1) },
       })
       .thenNothingHappened();
   });
@@ -263,7 +300,7 @@ describe('payment workflow', () => {
     return given([requested, authorized, canceled])
       .when({
         type: 'payments.ExpirePaymentAuthorization',
-        data: { paymentId },
+        data: { paymentId, expiredAt: captureBefore },
       })
       .thenNothingHappened();
   });

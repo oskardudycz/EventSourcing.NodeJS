@@ -1,3 +1,4 @@
+import { getInMemoryEventStore, WrapEventStore } from '@event-driven-io/emmett';
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
 import {
@@ -490,6 +491,26 @@ describe('ApiE2ESpecification', () => {
       ).rejects.toThrow();
     });
 
+    it('aSpecificationAboutOneIdSeesOnlyTheMessagesAboutIt', async () => {
+      const published: PublishedMessage[] = [];
+      const given = ApiE2ESpecification.for({
+        fetch: () => new Response(),
+        sendMessages: () => {
+          published.push(
+            { type: 'Sent', data: { id: 'mine' } },
+            { type: 'Sent', data: { id: 'another-test' } },
+          );
+          return Promise.resolve();
+        },
+        published: () => published,
+        isAbout: (message) => JSON.stringify(message).includes('mine'),
+      });
+
+      await given()
+        .when(send({ type: 'Any', data: {} }))
+        .then(expectPublished({ type: 'Sent', data: { id: 'mine' } }));
+    });
+
     it('expectNothingPublishedFailsWhenSomethingWasSent', async () => {
       const quiet = publishedBy();
       await quiet
@@ -556,6 +577,29 @@ describe('ApiE2ESpecification', () => {
           .then(expectNothingAppended()),
       ).rejects.toThrow();
     });
+  });
+
+  it('anApplicationThatOutlivesTheTestReportsItsAppendsAboutTheTestOnly', async () => {
+    const eventStore = WrapEventStore(getInMemoryEventStore());
+    const given = ApiE2ESpecification.for({
+      fetch: () => new Response(),
+      sendMessages: async () => {
+        await eventStore.appendToStream('mine', [
+          { type: 'Happened', data: { id: 'mine' } },
+        ]);
+        await eventStore.appendToStream('another-test', [
+          { type: 'Happened', data: { id: 'another-test' } },
+        ]);
+      },
+      appendedEvents: eventStore.appendedEvents,
+      isAbout: (message) => JSON.stringify(message).includes('mine'),
+    });
+
+    await given()
+      .when(send({ type: 'Any', data: {} }))
+      .then(
+        expectAppended(['mine', [{ type: 'Happened', data: { id: 'mine' } }]]),
+      );
   });
 
   it('checkingAppendedEventsWithoutAnEventStoreFailsNamingTheOption', async () => {
@@ -675,6 +719,49 @@ describe('ApiE2ESpecification', () => {
       ).rejects.toThrow();
 
       expect(log).toEqual(['start', 'first', 'stop']);
+    });
+
+    it('hooksStopAlsoWhenAGivenStepThrows', async () => {
+      const log: string[] = [];
+
+      await expect(
+        hooked(log)(
+          action(() => {
+            throw new Error('Step failed');
+          }),
+        )
+          .when((request) => request.get('/first'))
+          .then(),
+      ).rejects.toThrow('Step failed');
+
+      expect(log).toEqual(['start', 'stop']);
+    });
+
+    it('aFailingStopKeepsTheErrorOfTheTest', async () => {
+      const given = ApiE2ESpecification.for({
+        fetch: () => new Response(),
+        start: () => Promise.reject(new Error('Start failed')),
+        stop: () => Promise.reject(new Error('Stop failed')),
+      });
+
+      await expect(
+        given()
+          .when((request) => request.get('/first'))
+          .then(),
+      ).rejects.toThrow('Start failed');
+    });
+
+    it('aFailingStopFailsAPassingTest', async () => {
+      const given = ApiE2ESpecification.for({
+        fetch: () => new Response(),
+        stop: () => Promise.reject(new Error('Stop failed')),
+      });
+
+      await expect(
+        given()
+          .when((request) => request.get('/first'))
+          .then(),
+      ).rejects.toThrow('Stop failed');
     });
   });
 });

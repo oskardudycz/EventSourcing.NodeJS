@@ -1,8 +1,65 @@
 name: e-commerce
 
 services:
+  postgres:
+    profiles: [postgres, all, sample]
+    image: postgres:18.7-alpine
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: pg_isready -U postgres -d postgres
+      interval: 5s
+      timeout: 10s
+      retries: 100
+
+  kafka:
+    profiles: [kafka, all, sample]
+    image: confluentinc/confluent-local:8.4.1
+    hostname: kafka
+    ports:
+      - '${KAFKA_PORT:-9092}:9092'
+    healthcheck:
+      test: kafka-broker-api-versions --bootstrap-server localhost:9092 > /dev/null 2>&1 || exit 1
+      interval: 5s
+      timeout: 10s
+      retries: 100
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:${KAFKA_PORT:-9092}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+
+  rabbitmq:
+    profiles: [rabbitmq, all]
+    image: rabbitmq:4.4.0-management
+    ports:
+      - '${RABBITMQ_PORT:-5672}:5672'
+      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 10s
+      retries: 100
+
   otel-lgtm:
-    profiles: [otel, all]
+    profiles: [otel, all, sample]
     image: grafana/otel-lgtm:0.41.0
     environment:
       - GF_PLUGINS_PREINSTALL_AUTO_UPDATE=false
@@ -14,3 +71,7 @@ services:
       - '${GRAFANA_PORT:-3000}:3000'
       - '${OTEL_GRPC_PORT:-4317}:4317'
       - '${OTEL_HTTP_PORT:-4318}:4318'
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
